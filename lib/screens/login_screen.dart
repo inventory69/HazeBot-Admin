@@ -78,7 +78,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(height: 16),
                       Text(
                         'HazeBot Admin',
-                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineMedium
+                            ?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
                         textAlign: TextAlign.center,
@@ -150,7 +153,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           child: Row(
                             children: [
-                              Icon(Icons.error_outline, color: Colors.red.shade700),
+                              Icon(Icons.error_outline,
+                                  color: Colors.red.shade700),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
@@ -172,7 +176,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             ? const SizedBox(
                                 height: 20,
                                 width: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
                               )
                             : const Text('Login'),
                       ),

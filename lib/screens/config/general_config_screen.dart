@@ -23,12 +23,12 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
 
   Future<void> _loadConfig() async {
     final authService = Provider.of<AuthService>(context, listen: false);
-    
+
     setState(() => _isLoading = true);
-    
+
     try {
       final config = await authService.apiService.getGeneralConfig();
-      
+
       _controllers['bot_name'] = TextEditingController(
         text: config['bot_name']?.toString() ?? '',
       );
@@ -44,7 +44,7 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
       _controllers['fuzzy_matching_threshold'] = TextEditingController(
         text: config['fuzzy_matching_threshold']?.toString() ?? '',
       );
-      
+
       setState(() {});
     } catch (e) {
       if (mounted) {
@@ -71,9 +71,11 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
       final config = {
         'bot_name': _controllers['bot_name']!.text,
         'command_prefix': _controllers['command_prefix']!.text,
-        'presence_update_interval': int.parse(_controllers['presence_update_interval']!.text),
+        'presence_update_interval':
+            int.parse(_controllers['presence_update_interval']!.text),
         'message_cooldown': int.parse(_controllers['message_cooldown']!.text),
-        'fuzzy_matching_threshold': double.parse(_controllers['fuzzy_matching_threshold']!.text),
+        'fuzzy_matching_threshold':
+            double.parse(_controllers['fuzzy_matching_threshold']!.text),
       };
 
       await configService.updateGeneralConfig(authService.apiService, config);
@@ -123,13 +125,13 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
     if (confirmed != true) return;
 
     final authService = Provider.of<AuthService>(context, listen: false);
-    
+
     setState(() => _isLoading = true);
 
     try {
       // Call API to reset to defaults
       await authService.apiService.resetGeneralConfig();
-      
+
       // Reload config to show defaults
       await _loadConfig();
 
@@ -236,7 +238,8 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
                       controller: _controllers['presence_update_interval'],
                       decoration: const InputDecoration(
                         labelText: 'Presence Update Interval (seconds)',
-                        helperText: 'How often to update the bot\'s presence status',
+                        helperText:
+                            'How often to update the bot\'s presence status',
                       ),
                       keyboardType: TextInputType.number,
                       validator: (value) {
@@ -272,9 +275,11 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
                       controller: _controllers['fuzzy_matching_threshold'],
                       decoration: const InputDecoration(
                         labelText: 'Fuzzy Matching Threshold',
-                        helperText: 'Similarity threshold for command matching (0.0-1.0)',
+                        helperText:
+                            'Similarity threshold for command matching (0.0-1.0)',
                       ),
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Please enter a threshold';
@@ -299,7 +304,8 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
                   icon: const Icon(Icons.restore),
                   label: const Text('Reset to Defaults'),
                   style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 16),
                     foregroundColor: Colors.orange,
                   ),
                 ),
@@ -315,7 +321,8 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
                       : const Icon(Icons.save),
                   label: const Text('Save Configuration'),
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 16),
                   ),
                 ),
               ],

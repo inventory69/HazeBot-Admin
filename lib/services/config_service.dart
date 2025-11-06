@@ -4,14 +4,14 @@ import 'api_service.dart';
 class ConfigService extends ChangeNotifier {
   Map<String, dynamic>? _config;
   bool _isLoading = false;
-  
+
   Map<String, dynamic>? get config => _config;
   bool get isLoading => _isLoading;
-  
+
   Future<void> loadConfig(ApiService apiService) async {
     _isLoading = true;
     notifyListeners();
-    
+
     try {
       _config = await apiService.getConfig();
     } catch (e) {
@@ -22,11 +22,12 @@ class ConfigService extends ChangeNotifier {
       notifyListeners();
     }
   }
-  
-  Future<void> updateGeneralConfig(ApiService apiService, Map<String, dynamic> config) async {
+
+  Future<void> updateGeneralConfig(
+      ApiService apiService, Map<String, dynamic> config) async {
     _isLoading = true;
     notifyListeners();
-    
+
     try {
       await apiService.updateGeneralConfig(config);
       await loadConfig(apiService);
@@ -38,11 +39,12 @@ class ConfigService extends ChangeNotifier {
       notifyListeners();
     }
   }
-  
-  Future<void> updateChannelsConfig(ApiService apiService, Map<String, dynamic> config) async {
+
+  Future<void> updateChannelsConfig(
+      ApiService apiService, Map<String, dynamic> config) async {
     _isLoading = true;
     notifyListeners();
-    
+
     try {
       await apiService.updateChannelsConfig(config);
       await loadConfig(apiService);
@@ -54,11 +56,12 @@ class ConfigService extends ChangeNotifier {
       notifyListeners();
     }
   }
-  
-  Future<void> updateRolesConfig(ApiService apiService, Map<String, dynamic> config) async {
+
+  Future<void> updateRolesConfig(
+      ApiService apiService, Map<String, dynamic> config) async {
     _isLoading = true;
     notifyListeners();
-    
+
     try {
       await apiService.updateRolesConfig(config);
       await loadConfig(apiService);
@@ -70,11 +73,12 @@ class ConfigService extends ChangeNotifier {
       notifyListeners();
     }
   }
-  
-  Future<void> updateMemeConfig(ApiService apiService, Map<String, dynamic> config) async {
+
+  Future<void> updateMemeConfig(
+      ApiService apiService, Map<String, dynamic> config) async {
     _isLoading = true;
     notifyListeners();
-    
+
     try {
       await apiService.updateMemeConfig(config);
       await loadConfig(apiService);
@@ -86,11 +90,12 @@ class ConfigService extends ChangeNotifier {
       notifyListeners();
     }
   }
-  
-  Future<void> updateRocketLeagueConfig(ApiService apiService, Map<String, dynamic> config) async {
+
+  Future<void> updateRocketLeagueConfig(
+      ApiService apiService, Map<String, dynamic> config) async {
     _isLoading = true;
     notifyListeners();
-    
+
     try {
       await apiService.updateRocketLeagueConfig(config);
       await loadConfig(apiService);
@@ -102,11 +107,12 @@ class ConfigService extends ChangeNotifier {
       notifyListeners();
     }
   }
-  
-  Future<void> updateWelcomeConfig(ApiService apiService, Map<String, dynamic> config) async {
+
+  Future<void> updateWelcomeConfig(
+      ApiService apiService, Map<String, dynamic> config) async {
     _isLoading = true;
     notifyListeners();
-    
+
     try {
       await apiService.updateWelcomeConfig(config);
       await loadConfig(apiService);

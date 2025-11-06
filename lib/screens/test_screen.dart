@@ -27,7 +27,7 @@ class _TestScreenState extends State<TestScreen> {
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
       final result = await authService.apiService.getRandomMeme();
-      
+
       setState(() {
         _randomMemeData = result['meme'];
         _isLoadingRandomMeme = false;
@@ -42,7 +42,7 @@ class _TestScreenState extends State<TestScreen> {
 
   Future<void> _sendMemeToDiscord() async {
     if (_randomMemeData == null) return;
-    
+
     setState(() {
       _isSendingMeme = true;
       _errorMessage = null;
@@ -50,12 +50,13 @@ class _TestScreenState extends State<TestScreen> {
 
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
-      final result = await authService.apiService.sendMemeToDiscord(_randomMemeData!);
-      
+      final result =
+          await authService.apiService.sendMemeToDiscord(_randomMemeData!);
+
       setState(() {
         _isSendingMeme = false;
       });
-      
+
       // Show success message
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -84,7 +85,7 @@ class _TestScreenState extends State<TestScreen> {
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
       final result = await authService.apiService.testDailyMeme();
-      
+
       setState(() {
         _dailyMemeResult = result.toString();
         _isLoadingDailyMeme = false;
@@ -143,8 +144,13 @@ class _TestScreenState extends State<TestScreen> {
                             const SizedBox(height: 4),
                             Text(
                               'Get a random meme from configured sources',
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
                                   ),
                             ),
                           ],
@@ -162,9 +168,12 @@ class _TestScreenState extends State<TestScreen> {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Icon(Icons.play_arrow),
-                    label: Text(_isLoadingRandomMeme ? 'Loading...' : 'Get Random Meme'),
+                    label: Text(_isLoadingRandomMeme
+                        ? 'Loading...'
+                        : 'Get Random Meme'),
                     style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 16),
                     ),
                   ),
                   if (_randomMemeData != null) ...[
@@ -172,10 +181,15 @@ class _TestScreenState extends State<TestScreen> {
                     Container(
                       width: double.infinity,
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                        color: Theme.of(context)
+                            .colorScheme
+                            .surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                          color: Theme.of(context)
+                              .colorScheme
+                              .outline
+                              .withOpacity(0.2),
                         ),
                       ),
                       child: Column(
@@ -183,7 +197,8 @@ class _TestScreenState extends State<TestScreen> {
                         children: [
                           // Meme Image
                           ClipRRect(
-                            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                            borderRadius: const BorderRadius.vertical(
+                                top: Radius.circular(12)),
                             child: Image.network(
                               _randomMemeData!['url'],
                               width: double.infinity,
@@ -194,11 +209,15 @@ class _TestScreenState extends State<TestScreen> {
                                   color: Colors.grey[800],
                                   child: const Center(
                                     child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: [
-                                        Icon(Icons.broken_image, size: 48, color: Colors.grey),
+                                        Icon(Icons.broken_image,
+                                            size: 48, color: Colors.grey),
                                         SizedBox(height: 8),
-                                        Text('Failed to load image', style: TextStyle(color: Colors.grey)),
+                                        Text('Failed to load image',
+                                            style:
+                                                TextStyle(color: Colors.grey)),
                                       ],
                                     ),
                                   ),
@@ -214,7 +233,10 @@ class _TestScreenState extends State<TestScreen> {
                               children: [
                                 Text(
                                   _randomMemeData!['title'] ?? 'Untitled',
-                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleMedium
+                                      ?.copyWith(
                                         fontWeight: FontWeight.bold,
                                       ),
                                 ),
@@ -225,17 +247,23 @@ class _TestScreenState extends State<TestScreen> {
                                   children: [
                                     Chip(
                                       avatar: const Icon(Icons.forum, size: 16),
-                                      label: Text(_randomMemeData!['subreddit'] ?? 'Unknown'),
+                                      label: Text(
+                                          _randomMemeData!['subreddit'] ??
+                                              'Unknown'),
                                       visualDensity: VisualDensity.compact,
                                     ),
                                     Chip(
-                                      avatar: const Icon(Icons.person, size: 16),
-                                      label: Text(_randomMemeData!['author'] ?? 'Unknown'),
+                                      avatar:
+                                          const Icon(Icons.person, size: 16),
+                                      label: Text(_randomMemeData!['author'] ??
+                                          'Unknown'),
                                       visualDensity: VisualDensity.compact,
                                     ),
                                     Chip(
-                                      avatar: const Icon(Icons.arrow_upward, size: 16),
-                                      label: Text('${_randomMemeData!['score'] ?? 0}'),
+                                      avatar: const Icon(Icons.arrow_upward,
+                                          size: 16),
+                                      label: Text(
+                                          '${_randomMemeData!['score'] ?? 0}'),
                                       visualDensity: VisualDensity.compact,
                                     ),
                                   ],
@@ -245,19 +273,30 @@ class _TestScreenState extends State<TestScreen> {
                                   children: [
                                     Expanded(
                                       child: ElevatedButton.icon(
-                                        onPressed: _isSendingMeme ? null : _sendMemeToDiscord,
+                                        onPressed: _isSendingMeme
+                                            ? null
+                                            : _sendMemeToDiscord,
                                         icon: _isSendingMeme
                                             ? const SizedBox(
                                                 width: 20,
                                                 height: 20,
-                                                child: CircularProgressIndicator(strokeWidth: 2),
+                                                child:
+                                                    CircularProgressIndicator(
+                                                        strokeWidth: 2),
                                               )
                                             : const Icon(Icons.send),
-                                        label: Text(_isSendingMeme ? 'Sending...' : 'Send to Discord'),
+                                        label: Text(_isSendingMeme
+                                            ? 'Sending...'
+                                            : 'Send to Discord'),
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor: Theme.of(context).colorScheme.primary,
-                                          foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                                          padding: const EdgeInsets.symmetric(vertical: 12),
+                                          backgroundColor: Theme.of(context)
+                                              .colorScheme
+                                              .primary,
+                                          foregroundColor: Theme.of(context)
+                                              .colorScheme
+                                              .onPrimary,
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 12),
                                         ),
                                       ),
                                     ),
@@ -310,8 +349,13 @@ class _TestScreenState extends State<TestScreen> {
                             const SizedBox(height: 4),
                             Text(
                               'Test the daily meme posting function',
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
                                   ),
                             ),
                           ],
@@ -329,9 +373,11 @@ class _TestScreenState extends State<TestScreen> {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Icon(Icons.play_arrow),
-                    label: Text(_isLoadingDailyMeme ? 'Testing...' : 'Test Daily Meme'),
+                    label: Text(
+                        _isLoadingDailyMeme ? 'Testing...' : 'Test Daily Meme'),
                     style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 16),
                     ),
                   ),
                   if (_dailyMemeResult != null) ...[
@@ -340,10 +386,15 @@ class _TestScreenState extends State<TestScreen> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                        color: Theme.of(context)
+                            .colorScheme
+                            .surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                          color: Theme.of(context)
+                              .colorScheme
+                              .outline
+                              .withOpacity(0.2),
                         ),
                       ),
                       child: Column(
@@ -359,7 +410,10 @@ class _TestScreenState extends State<TestScreen> {
                               const SizedBox(width: 8),
                               Text(
                                 'Result:',
-                                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleSmall
+                                    ?.copyWith(
                                       fontWeight: FontWeight.bold,
                                     ),
                               ),
@@ -368,7 +422,10 @@ class _TestScreenState extends State<TestScreen> {
                           const SizedBox(height: 8),
                           SelectableText(
                             _dailyMemeResult!,
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
                                   fontFamily: 'monospace',
                                 ),
                           ),
