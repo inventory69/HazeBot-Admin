@@ -50,6 +50,27 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
       
+      - name: Generate version number
+        run: |
+          # Generate version: YYYY.MM.DD
+          VERSION_NAME="$(date +'%Y.%m.%d')"
+          # Use GitHub run number as build number
+          BUILD_NUMBER="${{ github.run_number }}"
+          
+          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
+          echo "BUILD_NUMBER=$BUILD_NUMBER" >> $GITHUB_ENV
+          echo "VERSION_TAG=v$VERSION_NAME-build.$BUILD_NUMBER" >> $GITHUB_ENV
+          
+          echo "📦 Generated version: $VERSION_NAME+$BUILD_NUMBER"
+      
+      - name: Update pubspec.yaml with version
+        run: |
+          # Update version in pubspec.yaml
+          sed -i "s/^version: .*/version: ${{ env.VERSION_NAME }}+${{ env.BUILD_NUMBER }}/" pubspec.yaml
+          
+          echo "✅ Updated pubspec.yaml:"
+          grep "^version:" pubspec.yaml
+      
       - name: Run tests
         run: flutter test --no-pub
         continue-on-error: true  # Don't fail build if tests fail
@@ -81,25 +102,23 @@ jobs:
           path: ${{ env.apk_path }}
           retention-days: 30
       
-      - name: Generate version number
+      - name: Get commit SHA
         if: github.ref == 'refs/heads/main'
-        run: |
-          echo "VERSION=v$(date +'%Y.%m.%d')-build.${{ github.run_number }}" >> $GITHUB_ENV
-          echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+        run: echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
       
       - name: Create Versioned Release
         if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ env.VERSION }}
-          name: Test Build ${{ env.VERSION }}
+          tag_name: ${{ env.VERSION_TAG }}
+          name: Test Build ${{ env.VERSION_TAG }}
           files: ${{ env.apk_path }}
           draft: false
           prerelease: false
           body: |
             ## 🔥 Test Build
             
-            **Version:** ${{ env.VERSION }}
+            **Version:** ${{ env.VERSION_NAME }}+${{ env.BUILD_NUMBER }}
             **Build Date:** ${{ github.event.head_commit.timestamp }}
             **Commit:** ${{ env.SHORT_SHA }}
             **Commit Message:** ${{ github.event.head_commit.message }}
