@@ -1,24 +1,20 @@
-# HazeBot Admin# HazeBot Admin - Flutter Application
+# HazeBot Admin
 
+Flutter-based admin interface for the HazeBot Discord bot. Available as web and Android app.
 
+## 📥 Quick Download
 
-Flutter-based admin interface for the HazeBot Discord bot. Available as web and Android app.Modern web and Android interface for configuring the HazeBot Discord bot.
+**Want the APK?** → [Download Guide](APK_DOWNLOAD.md)
 
+**Latest Release:** [Download APK](https://github.com/inventory69/HazeBot-Admin/releases/tag/latest)
 
+## Features
 
-## Features## Features
-
-
-
-- 🔐 **Secure Authentication** - JWT-based login system- 🌐 Cross-platform: Web and Android support
-
-- ⚙️ **Configuration Management** - Manage bot settings, subreddits, and channels- 🎨 Modern Material Design UI
-
-- 📊 **Test Functions** - Test bot features like daily memes, Rocket League stats, and Warframe data- 🔐 Secure JWT authentication
-
-- 📱 **Cross-Platform** - Works on Web, Linux Desktop, and Android- ⚙️ Full bot configuration management
-
-- 🎨 **Material Design 3** - Modern UI with light/dark theme support- 📱 Responsive design for all screen sizes
+- 🔐 **Secure Authentication** - JWT-based login system
+- ⚙️ **Configuration Management** - Manage bot settings, subreddits, and channels
+- 📊 **Test Functions** - Test bot features like daily memes, Rocket League stats, and Warframe data
+- 📱 **Cross-Platform** - Works on Web, Linux Desktop, and Android
+- 🎨 **Material Design 3** - Modern UI with light/dark theme support
 
 - 🌙 Dark mode support
 
