@@ -6,7 +6,9 @@ Flutter-based admin interface for the HazeBot Discord bot. Available as web and 
 
 **Want the APK?** → [Download Guide](APK_DOWNLOAD.md)
 
-**Latest Release:** [Download APK](https://github.com/inventory69/HazeBot-Admin/releases/tag/latest)
+**Latest Release:** [Download APK](https://github.com/inventory69/HazeBot-Admin/releases/latest)
+
+💡 **Tip:** Use [Obtainium](https://github.com/ImranR98/Obtainium) for automatic updates!
 
 ## Features
 
@@ -15,20 +17,15 @@ Flutter-based admin interface for the HazeBot Discord bot. Available as web and 
 - 📊 **Test Functions** - Test bot features like daily memes, Rocket League stats, and Warframe data
 - 📱 **Cross-Platform** - Works on Web, Linux Desktop, and Android
 - 🎨 **Material Design 3** - Modern UI with light/dark theme support
-
-- 🌙 Dark mode support
+- 🔄 **Auto-Updates** - New versioned releases for every build (Obtainium compatible)
 
 ## Setup
-
-## Prerequisites
 
 ### Prerequisites
 
 - Flutter SDK (3.0.0 or higher)
-
-- Flutter SDK (3.0.0 or higher)- Dart SDK (3.0.0 or higher)
-
-- For Android builds: Android SDK with Java 21- For Android: Android Studio with Android SDK
+- Dart SDK (3.0.0 or higher)
+- For Android builds: Android SDK with Java 21
 
 - Running HazeBot API server
 

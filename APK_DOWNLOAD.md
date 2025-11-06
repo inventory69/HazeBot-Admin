@@ -5,7 +5,7 @@
 ### Option 1: Latest Release (Empfohlen)
 
 **Direkt herunterladen:**
-1. Gehe zu: https://github.com/inventory69/HazeBot-Admin/releases/tag/latest
+1. Gehe zu: https://github.com/inventory69/HazeBot-Admin/releases/latest
 2. Scrolle zu **Assets**
 3. Klicke auf `hazebot-admin-test-release.apk`
 4. APK wird heruntergeladen
@@ -14,7 +14,8 @@
 - ✅ Immer die neueste Version
 - ✅ Direkte APK-Datei (kein ZIP)
 - ✅ Release-Notes mit Commit-Info
-- ✅ Wird automatisch bei jedem Push aktualisiert
+- ✅ Eindeutige Versionsnummer für jeden Build
+- ✅ Kompatibel mit Obtainium für automatische Updates
 
 ### Option 2: Workflow Artifacts
 
@@ -35,7 +36,7 @@
 
 Bei jedem Push auf `main`:
 1. GitHub Actions baut automatisch die Test-APK
-2. Erstellt/aktualisiert das "latest" Release
+2. Erstellt einen neuen Release mit eindeutiger Versionsnummer (Format: `vYYYY.MM.DD-build.NNN`)
 3. APK wird als Asset angehängt
 4. Release-Notes enthalten Commit-Info
 
@@ -57,18 +58,6 @@ Bei Git Tags (z.B. `v1.0.0`):
 
 ---
 
-## 🔐 Login-Daten
-
-**Admin:**
-- Username: `inventory69`
-- Password: `x8vDJ1FHkkM0s7`
-
-**Test User:**
-- Username: `duke`
-- Password: `eLourKNqRyh7x4`
-
----
-
 ## ⚙️ Test-Konfiguration
 
 Alle APKs sind für **TEST** konfiguriert:
@@ -78,9 +67,21 @@ Alle APKs sind für **TEST** konfiguriert:
 
 ---
 
+## 📦 Obtainium Integration
+
+Obtainium kann automatisch Updates von GitHub Releases erkennen:
+
+1. **App-URL in Obtainium:** `https://github.com/inventory69/HazeBot-Admin`
+2. **Versionserkennung:** Automatisch (verwendet Release-Tags)
+3. **Update-Benachrichtigung:** Bei neuem Release
+
+Jeder Build erhält eine eindeutige Versionsnummer (z.B. `v2025.11.06-build.123`).
+
+---
+
 ## 🏷️ Release-Tags erstellen
 
-Für versionierte Releases:
+Für manuelle versionierte Releases:
 
 ```bash
 cd /home/liq/gitProjects/HazeBot-Admin
@@ -88,4 +89,4 @@ git tag v1.0.0
 git push origin v1.0.0
 ```
 
-Erstellt Release: `v1.0.0` zusätzlich zu "latest"
+Erstellt zusätzlichen Release mit eigenem Tag neben den automatischen Builds.
