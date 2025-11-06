@@ -1,0 +1,94 @@
+name: Build Android Test APK
+
+on:
+  push:
+    branches: [ main ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  build:
+    name: Build Test APK
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.35.7'
+          channel: 'stable'
+      
+      - name: Create .env file with test API URL
+        run: |
+          echo "API_BASE_URL=${{ secrets.TEST_API_BASE_URL }}" > .env
+      
+      - name: Get dependencies
+        run: flutter pub get
+      
+      - name: Run tests
+        run: flutter test --no-pub
+        continue-on-error: true  # Don't fail build if tests fail
+      
+      - name: Build APK (Debug)
+        if: github.ref != 'refs/heads/main' && !startsWith(github.ref, 'refs/tags/')
+        run: flutter build apk --debug
+      
+      - name: Build APK (Release)
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
+        run: flutter build apk --release
+      
+      - name: Rename APK to indicate test version
+        run: |
+          if [ "${{ github.ref }}" == "refs/heads/main" ] || [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/hazebot-admin-test-release.apk
+            echo "apk_path=build/app/outputs/flutter-apk/hazebot-admin-test-release.apk" >> $GITHUB_ENV
+            echo "apk_name=hazebot-admin-test-release.apk" >> $GITHUB_ENV
+          else
+            mv build/app/outputs/flutter-apk/app-debug.apk build/app/outputs/flutter-apk/hazebot-admin-test-debug.apk
+            echo "apk_path=build/app/outputs/flutter-apk/hazebot-admin-test-debug.apk" >> $GITHUB_ENV
+            echo "apk_name=hazebot-admin-test-debug.apk" >> $GITHUB_ENV
+          fi
+      
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.apk_name }}
+          path: ${{ env.apk_path }}
+          retention-days: 30
+      
+      - name: Create Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ${{ env.apk_path }}
+          draft: false
+          prerelease: false
+          body: |
+            ## Test Build
+            
+            ⚠️ **This is a TEST build** configured with test API URL.
+            
+            ### What's included:
+            - Configured for test environment
+            - API URL: Test server
+            - Ready for testing on Android devices
+            
+            ### Installation:
+            1. Download the APK
+            2. Enable "Install from unknown sources" on your Android device
+            3. Install the APK
+            4. Login with your credentials
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
