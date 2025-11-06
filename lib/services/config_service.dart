@@ -4,18 +4,28 @@ import 'api_service.dart';
 class ConfigService extends ChangeNotifier {
   Map<String, dynamic>? _config;
   bool _isLoading = false;
+  String? _error;
 
   Map<String, dynamic>? get config => _config;
   bool get isLoading => _isLoading;
+  String? get error => _error;
 
   Future<void> loadConfig(ApiService apiService) async {
     _isLoading = true;
+    _error = null;
     notifyListeners();
 
     try {
       _config = await apiService.getConfig();
-    } catch (e) {
+      debugPrint('Config loaded successfully: ${_config?.keys}');
+    } on TokenExpiredException catch (e) {
+      debugPrint('Token expired: $e');
+      _error = 'token_expired';
+      _config = null;
+    } catch (e, stackTrace) {
       debugPrint('Error loading config: $e');
+      debugPrint('Stack trace: $stackTrace');
+      _error = e.toString();
       _config = null;
     } finally {
       _isLoading = false;

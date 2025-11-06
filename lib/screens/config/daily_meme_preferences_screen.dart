@@ -175,272 +175,503 @@ class _DailyMemePreferencesScreenState
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Daily Meme Preferences'),
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Selection Settings
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Selection Criteria',
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                            const SizedBox(height: 16),
+    return _isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : LayoutBuilder(
+            builder: (context, constraints) {
+              final isMobile = constraints.maxWidth < 600;
+              final padding = isMobile ? 12.0 : 24.0;
 
-                            // Min Score Slider
-                            Column(
+              return SingleChildScrollView(
+                padding: EdgeInsets.all(padding),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header
+                      Row(
+                        children: [
+                          Icon(Icons.tune,
+                              size: isMobile ? 28 : 32,
+                              color: Theme.of(context).colorScheme.primary),
+                          SizedBox(width: isMobile ? 8 : 12),
+                          Expanded(
+                            child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Minimum Score: ${_minScore.toInt()}',
-                                  style: Theme.of(context).textTheme.bodyMedium,
+                                  'Daily Meme Preferences',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineLarge
+                                      ?.copyWith(
+                                        fontSize: isMobile ? 24 : null,
+                                      ),
                                 ),
-                                const Text(
-                                  'Minimum upvotes required for a meme',
-                                  style: TextStyle(
-                                      fontSize: 12, color: Colors.grey),
-                                ),
-                                Slider(
-                                  value: _minScore,
-                                  min: 0,
-                                  max: 10000,
-                                  divisions: 100,
-                                  label: _minScore.toInt().toString(),
-                                  onChanged: (value) =>
-                                      setState(() => _minScore = value),
+                                Text(
+                                  'Fine-tune meme selection criteria and choose which sources to use',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurfaceVariant,
+                                        fontSize: isMobile ? 13 : null,
+                                      ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 16),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: isMobile ? 20 : 32),
 
-                            // Max Sources
-                            TextFormField(
-                              controller: _maxSourcesController,
-                              decoration: const InputDecoration(
-                                labelText: 'Max Sources',
-                                hintText: 'Number of sources to fetch from',
-                                helperText:
-                                    'How many subreddits/communities to use',
-                                border: OutlineInputBorder(),
-                                prefixIcon: Icon(Icons.source),
+                      // Info Box (keeping the existing one)
+                      Container(
+                        padding: EdgeInsets.all(isMobile ? 10 : 12),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: Colors.blue.withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.info_outline,
+                                size: isMobile ? 18 : 20,
+                                color: Colors.blue[700]),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Configure how memes are selected and which sources are used.',
+                                style: TextStyle(
+                                  fontSize: isMobile ? 11 : 12,
+                                  color: Colors.blue[700],
+                                ),
                               ),
-                              keyboardType: TextInputType.number,
-                              inputFormatters: [
-                                FilteringTextInputFormatter.digitsOnly,
-                              ],
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Required';
-                                }
-                                final num = int.tryParse(value);
-                                if (num == null || num < 1 || num > 20) {
-                                  return 'Must be 1-20';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 16),
-
-                            // Pool Size
-                            TextFormField(
-                              controller: _poolSizeController,
-                              decoration: const InputDecoration(
-                                labelText: 'Pool Size',
-                                hintText: 'Number of memes in selection pool',
-                                helperText: 'Pick from top X memes',
-                                border: OutlineInputBorder(),
-                                prefixIcon: Icon(Icons.pool),
-                              ),
-                              keyboardType: TextInputType.number,
-                              inputFormatters: [
-                                FilteringTextInputFormatter.digitsOnly,
-                              ],
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Required';
-                                }
-                                final num = int.tryParse(value);
-                                if (num == null || num < 10 || num > 200) {
-                                  return 'Must be 10-200';
-                                }
-                                return null;
-                              },
                             ),
                           ],
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
+                      SizedBox(height: isMobile ? 12 : 16),
 
-                    // Subreddit Selection
-                    if (_availableSubreddits.isNotEmpty) ...[
+                      // Selection Settings
                       Card(
                         child: Padding(
-                          padding: const EdgeInsets.all(16),
+                          padding: EdgeInsets.all(isMobile ? 12.0 : 16.0),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
                                 children: [
+                                  Icon(Icons.tune,
+                                      color: Colors.green,
+                                      size: isMobile ? 20 : 24),
+                                  const SizedBox(width: 8),
                                   Text(
-                                    'Reddit Sources',
-                                    style:
-                                        Theme.of(context).textTheme.titleMedium,
-                                  ),
-                                  TextButton(
-                                    onPressed: () {
-                                      setState(() {
-                                        if (_selectedSubreddits.length ==
-                                            _availableSubreddits.length) {
-                                          _selectedSubreddits.clear();
-                                        } else {
-                                          _selectedSubreddits =
-                                              List.from(_availableSubreddits);
-                                        }
-                                      });
-                                    },
-                                    child: Text(
-                                      _selectedSubreddits.length ==
-                                              _availableSubreddits.length
-                                          ? 'Deselect All'
-                                          : 'Select All',
-                                    ),
+                                    'Selection Criteria',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(
+                                          fontSize: isMobile ? 16 : null,
+                                        ),
                                   ),
                                 ],
                               ),
-                              const Divider(),
-                              ..._availableSubreddits.map((subreddit) =>
-                                  CheckboxListTile(
-                                    title: Text('r/$subreddit'),
-                                    value:
-                                        _selectedSubreddits.contains(subreddit),
-                                    onChanged: (checked) {
-                                      setState(() {
-                                        if (checked == true) {
-                                          _selectedSubreddits.add(subreddit);
-                                        } else {
-                                          _selectedSubreddits.remove(subreddit);
-                                        }
-                                      });
-                                    },
-                                    dense: true,
-                                  )),
+                              SizedBox(height: isMobile ? 12 : 16),
+
+                              // Min Score Slider
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Minimum Score: ${_minScore.toInt()}',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          fontSize: isMobile ? 13 : null,
+                                        ),
+                                  ),
+                                  Text(
+                                    'Minimum upvotes required for a meme',
+                                    style: TextStyle(
+                                        fontSize: isMobile ? 11 : 12,
+                                        color: Colors.grey),
+                                  ),
+                                  Slider(
+                                    value: _minScore,
+                                    min: 0,
+                                    max: 10000,
+                                    divisions: 100,
+                                    label: _minScore.toInt().toString(),
+                                    onChanged: (value) =>
+                                        setState(() => _minScore = value),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: isMobile ? 12 : 16),
+
+                              // Max Sources
+                              TextFormField(
+                                controller: _maxSourcesController,
+                                decoration: InputDecoration(
+                                  labelText: 'Max Sources',
+                                  hintText: 'Number of sources to fetch from',
+                                  helperText:
+                                      'How many subreddits/communities to use',
+                                  border: const OutlineInputBorder(),
+                                  prefixIcon: const Icon(Icons.source),
+                                  isDense: isMobile,
+                                ),
+                                keyboardType: TextInputType.number,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                ],
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Required';
+                                  }
+                                  final num = int.tryParse(value);
+                                  if (num == null || num < 1 || num > 20) {
+                                    return 'Must be 1-20';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              SizedBox(height: isMobile ? 12 : 16),
+
+                              // Pool Size
+                              TextFormField(
+                                controller: _poolSizeController,
+                                decoration: InputDecoration(
+                                  labelText: 'Pool Size',
+                                  hintText: 'Number of memes in selection pool',
+                                  helperText: 'Pick from top X memes',
+                                  border: const OutlineInputBorder(),
+                                  prefixIcon: const Icon(Icons.pool),
+                                  isDense: isMobile,
+                                ),
+                                keyboardType: TextInputType.number,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                ],
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Required';
+                                  }
+                                  final num = int.tryParse(value);
+                                  if (num == null || num < 10 || num > 200) {
+                                    return 'Must be 10-200';
+                                  }
+                                  return null;
+                                },
+                              ),
                             ],
                           ),
                         ),
                       ),
-                      const SizedBox(height: 16),
-                    ],
+                      SizedBox(height: isMobile ? 12 : 16),
 
-                    // Lemmy Selection
-                    if (_availableLemmy.isNotEmpty) ...[
-                      Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    'Lemmy Sources',
-                                    style:
-                                        Theme.of(context).textTheme.titleMedium,
-                                  ),
-                                  TextButton(
-                                    onPressed: () {
-                                      setState(() {
-                                        if (_selectedLemmy.length ==
-                                            _availableLemmy.length) {
-                                          _selectedLemmy.clear();
-                                        } else {
-                                          _selectedLemmy =
-                                              List.from(_availableLemmy);
-                                        }
-                                      });
-                                    },
-                                    child: Text(
-                                      _selectedLemmy.length ==
-                                              _availableLemmy.length
-                                          ? 'Deselect All'
-                                          : 'Select All',
+                      // Subreddit Selection
+                      if (_availableSubreddits.isNotEmpty) ...[
+                        Card(
+                          child: Padding(
+                            padding: EdgeInsets.all(isMobile ? 12.0 : 16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Row(
+                                        children: [
+                                          Icon(Icons.reddit,
+                                              color: Colors.deepOrange,
+                                              size: isMobile ? 20 : 24),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(
+                                              'Reddit Sources',
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .titleMedium
+                                                  ?.copyWith(
+                                                    fontSize:
+                                                        isMobile ? 16 : null,
+                                                  ),
+                                            ),
+                                          ),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 8, vertical: 4),
+                                            decoration: BoxDecoration(
+                                              color: Colors.deepOrange
+                                                  .withValues(alpha: 0.1),
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                            ),
+                                            child: Text(
+                                              '${_selectedSubreddits.length}/${_availableSubreddits.length}',
+                                              style: TextStyle(
+                                                fontSize: isMobile ? 11 : 12,
+                                                fontWeight: FontWeight.w600,
+                                                color: Colors.deepOrange[700],
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                              const Divider(),
-                              ..._availableLemmy
-                                  .map((community) => CheckboxListTile(
-                                        title: Text(community),
-                                        value:
-                                            _selectedLemmy.contains(community),
-                                        onChanged: (checked) {
-                                          setState(() {
-                                            if (checked == true) {
-                                              _selectedLemmy.add(community);
-                                            } else {
-                                              _selectedLemmy.remove(community);
-                                            }
-                                          });
-                                        },
-                                        dense: true,
-                                      )),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                    ],
-
-                    // Action Buttons
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: _isLoading ? null : _resetToDefaults,
-                            icon: const Icon(Icons.restore),
-                            label: const Text('Reset to Defaults'),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.orange,
-                              padding: const EdgeInsets.all(16),
+                                    TextButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          if (_selectedSubreddits.length ==
+                                              _availableSubreddits.length) {
+                                            _selectedSubreddits.clear();
+                                          } else {
+                                            _selectedSubreddits =
+                                                List.from(_availableSubreddits);
+                                          }
+                                        });
+                                      },
+                                      child: Text(
+                                        _selectedSubreddits.length ==
+                                                _availableSubreddits.length
+                                            ? 'Deselect All'
+                                            : 'Select All',
+                                        style: TextStyle(
+                                            fontSize: isMobile ? 12 : null),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const Divider(),
+                                ..._availableSubreddits
+                                    .map((subreddit) => CheckboxListTile(
+                                          title: Text(
+                                            'r/$subreddit',
+                                            style: TextStyle(
+                                                fontSize: isMobile ? 13 : null),
+                                          ),
+                                          value: _selectedSubreddits
+                                              .contains(subreddit),
+                                          onChanged: (checked) {
+                                            setState(() {
+                                              if (checked == true) {
+                                                _selectedSubreddits
+                                                    .add(subreddit);
+                                              } else {
+                                                _selectedSubreddits
+                                                    .remove(subreddit);
+                                              }
+                                            });
+                                          },
+                                          dense: true,
+                                        )),
+                              ],
                             ),
                           ),
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: _isLoading ? null : _savePreferences,
-                            icon: const Icon(Icons.save),
-                            label: const Text('Save Preferences'),
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.all(16),
-                            ),
-                          ),
-                        ),
+                        SizedBox(height: isMobile ? 12 : 16),
                       ],
-                    ),
-                  ],
+
+                      // Lemmy Selection
+                      if (_availableLemmy.isNotEmpty) ...[
+                        Card(
+                          child: Padding(
+                            padding: EdgeInsets.all(isMobile ? 12.0 : 16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Row(
+                                        children: [
+                                          Icon(Icons.group,
+                                              color: Colors.teal,
+                                              size: isMobile ? 20 : 24),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(
+                                              'Lemmy Sources',
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .titleMedium
+                                                  ?.copyWith(
+                                                    fontSize:
+                                                        isMobile ? 16 : null,
+                                                  ),
+                                            ),
+                                          ),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 8, vertical: 4),
+                                            decoration: BoxDecoration(
+                                              color: Colors.teal
+                                                  .withValues(alpha: 0.1),
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                            ),
+                                            child: Text(
+                                              '${_selectedLemmy.length}/${_availableLemmy.length}',
+                                              style: TextStyle(
+                                                fontSize: isMobile ? 11 : 12,
+                                                fontWeight: FontWeight.w600,
+                                                color: Colors.teal[700],
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          if (_selectedLemmy.length ==
+                                              _availableLemmy.length) {
+                                            _selectedLemmy.clear();
+                                          } else {
+                                            _selectedLemmy =
+                                                List.from(_availableLemmy);
+                                          }
+                                        });
+                                      },
+                                      child: Text(
+                                        _selectedLemmy.length ==
+                                                _availableLemmy.length
+                                            ? 'Deselect All'
+                                            : 'Select All',
+                                        style: TextStyle(
+                                            fontSize: isMobile ? 12 : null),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const Divider(),
+                                ..._availableLemmy.map((community) =>
+                                    CheckboxListTile(
+                                      title: Text(
+                                        community,
+                                        style: TextStyle(
+                                            fontSize: isMobile ? 13 : null),
+                                      ),
+                                      value: _selectedLemmy.contains(community),
+                                      onChanged: (checked) {
+                                        setState(() {
+                                          if (checked == true) {
+                                            _selectedLemmy.add(community);
+                                          } else {
+                                            _selectedLemmy.remove(community);
+                                          }
+                                        });
+                                      },
+                                      dense: true,
+                                    )),
+                              ],
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: isMobile ? 12 : 16),
+                      ],
+
+                      // Action Buttons
+                      if (isMobile)
+                        Column(
+                          children: [
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                onPressed: _isLoading ? null : _resetToDefaults,
+                                icon: const Icon(Icons.restore),
+                                label: const Text('Reset to Defaults'),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.orange,
+                                  padding: const EdgeInsets.all(14),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                onPressed: _isLoading ? null : _savePreferences,
+                                icon: _isLoading
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                                  Colors.white),
+                                        ),
+                                      )
+                                    : const Icon(Icons.save),
+                                label: Text(_isLoading
+                                    ? 'Saving...'
+                                    : 'Save Preferences'),
+                                style: ElevatedButton.styleFrom(
+                                  padding: const EdgeInsets.all(14),
+                                ),
+                              ),
+                            ),
+                          ],
+                        )
+                      else
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: _isLoading ? null : _resetToDefaults,
+                                icon: const Icon(Icons.restore),
+                                label: const Text('Reset to Defaults'),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.orange,
+                                  padding: const EdgeInsets.all(16),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: _isLoading ? null : _savePreferences,
+                                icon: _isLoading
+                                    ? const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                                  Colors.white),
+                                        ),
+                                      )
+                                    : const Icon(Icons.save),
+                                label: Text(_isLoading
+                                    ? 'Saving...'
+                                    : 'Save Preferences'),
+                                style: ElevatedButton.styleFrom(
+                                  padding: const EdgeInsets.all(16),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
                 ),
-              ),
-            ),
-    );
+              );
+            },
+          );
   }
 }

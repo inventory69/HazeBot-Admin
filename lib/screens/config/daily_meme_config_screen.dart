@@ -18,23 +18,54 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
   bool _enabled = true;
   final _hourController = TextEditingController();
   final _minuteController = TextEditingController();
-  final _channelIdController = TextEditingController();
-  final _pingRoleIdController = TextEditingController();
+  String? _selectedChannelId;
+  String? _selectedRoleId;
   bool _allowNsfw = true;
+
+  // Dropdowns data
+  List<Map<String, dynamic>> _channels = [];
+  List<Map<String, dynamic>> _roles = [];
+
+  // Meme sources
+  List<String> _subreddits = [];
+  List<String> _lemmyCommunities = [];
 
   @override
   void initState() {
     super.initState();
-    _loadConfig();
+    _initializeData();
+  }
+
+  Future<void> _initializeData() async {
+    // Load guild data first, then config (so dropdown values can be validated)
+    await _loadGuildData();
+    await _loadConfig();
   }
 
   @override
   void dispose() {
     _hourController.dispose();
     _minuteController.dispose();
-    _channelIdController.dispose();
-    _pingRoleIdController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadGuildData() async {
+    try {
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final channels = await authService.apiService.getGuildChannels();
+      final roles = await authService.apiService.getGuildRoles();
+
+      setState(() {
+        _channels = channels;
+        _roles = roles;
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading guild data: $e')),
+        );
+      }
+    }
   }
 
   Future<void> _loadConfig() async {
@@ -44,13 +75,28 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
       final authService = Provider.of<AuthService>(context, listen: false);
       final config = await authService.apiService.getDailyMemeConfig();
 
+      final configChannelId = config['channel_id']?.toString();
+      final configRoleId = config['ping_role_id']?.toString();
+
       setState(() {
         _enabled = config['enabled'] ?? true;
         _hourController.text = (config['hour'] ?? 12).toString();
         _minuteController.text = (config['minute'] ?? 0).toString();
-        _channelIdController.text = (config['channel_id'] ?? '').toString();
-        _pingRoleIdController.text = (config['ping_role_id'] ?? '').toString();
         _allowNsfw = config['allow_nsfw'] ?? true;
+
+        // Load meme sources
+        _subreddits = List<String>.from(config['available_subreddits'] ?? []);
+        _lemmyCommunities = List<String>.from(config['available_lemmy'] ?? []);
+
+        // Only set selected IDs if they exist in the loaded lists
+        if (configChannelId != null &&
+            _channels.any((ch) => ch['id'] == configChannelId)) {
+          _selectedChannelId = configChannelId;
+        }
+        if (configRoleId != null &&
+            _roles.any((r) => r['id'] == configRoleId)) {
+          _selectedRoleId = configRoleId;
+        }
       });
     } catch (e) {
       if (mounted) {
@@ -75,9 +121,13 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
         'enabled': _enabled,
         'hour': int.parse(_hourController.text),
         'minute': int.parse(_minuteController.text),
-        'channel_id': int.tryParse(_channelIdController.text),
-        'ping_role_id': int.tryParse(_pingRoleIdController.text),
+        'channel_id':
+            _selectedChannelId != null ? int.parse(_selectedChannelId!) : null,
+        'ping_role_id':
+            _selectedRoleId != null ? int.parse(_selectedRoleId!) : null,
         'allow_nsfw': _allowNsfw,
+        'subreddits': _subreddits,
+        'lemmy_communities': _lemmyCommunities,
       };
 
       await authService.apiService.updateDailyMemeConfig(config);
@@ -152,201 +202,578 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
     }
   }
 
+  Future<void> _addSubreddit() async {
+    final controller = TextEditingController();
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Add Subreddit'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            labelText: 'Subreddit name',
+            hintText: 'e.g., memes, dankmemes',
+            prefixText: 'r/',
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, controller.text.trim()),
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+
+    if (result != null && result.isNotEmpty) {
+      setState(() {
+        if (!_subreddits.contains(result)) {
+          _subreddits.add(result);
+        }
+      });
+    }
+  }
+
+  Future<void> _addLemmyCommunity() async {
+    final controller = TextEditingController();
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Add Lemmy Community'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            labelText: 'Community',
+            hintText: 'e.g., memes@lemmy.ml',
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, controller.text.trim()),
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+
+    if (result != null && result.isNotEmpty) {
+      setState(() {
+        if (!_lemmyCommunities.contains(result)) {
+          _lemmyCommunities.add(result);
+        }
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Daily Meme Configuration'),
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Enabled Switch
-                    Card(
-                      child: SwitchListTile(
-                        title: const Text('Enable Daily Memes'),
-                        subtitle: const Text('Automatically post memes daily'),
-                        value: _enabled,
-                        onChanged: (value) => setState(() => _enabled = value),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
+    return _isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : LayoutBuilder(
+            builder: (context, constraints) {
+              final isMobile = constraints.maxWidth < 600;
+              final padding = isMobile ? 12.0 : 24.0;
 
-                    // Time Configuration
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Posting Time',
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                            const SizedBox(height: 16),
-                            Row(
+              return SingleChildScrollView(
+                padding: EdgeInsets.all(padding),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header
+                      Row(
+                        children: [
+                          Icon(Icons.schedule_send,
+                              size: isMobile ? 28 : 32,
+                              color: Theme.of(context).colorScheme.primary),
+                          SizedBox(width: isMobile ? 8 : 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Expanded(
-                                  child: TextFormField(
-                                    controller: _hourController,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Hour (0-23)',
-                                      border: OutlineInputBorder(),
-                                      prefixIcon: Icon(Icons.access_time),
-                                    ),
-                                    keyboardType: TextInputType.number,
-                                    inputFormatters: [
-                                      FilteringTextInputFormatter.digitsOnly,
-                                    ],
-                                    validator: (value) {
-                                      if (value == null || value.isEmpty) {
-                                        return 'Required';
-                                      }
-                                      final hour = int.tryParse(value);
-                                      if (hour == null ||
-                                          hour < 0 ||
-                                          hour > 23) {
-                                        return 'Must be 0-23';
-                                      }
-                                      return null;
-                                    },
-                                  ),
+                                Text(
+                                  'Daily Meme Configuration',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineLarge
+                                      ?.copyWith(
+                                        fontSize: isMobile ? 24 : null,
+                                      ),
                                 ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: TextFormField(
-                                    controller: _minuteController,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Minute (0-59)',
-                                      border: OutlineInputBorder(),
-                                      prefixIcon: Icon(Icons.schedule),
-                                    ),
-                                    keyboardType: TextInputType.number,
-                                    inputFormatters: [
-                                      FilteringTextInputFormatter.digitsOnly,
-                                    ],
-                                    validator: (value) {
-                                      if (value == null || value.isEmpty) {
-                                        return 'Required';
-                                      }
-                                      final minute = int.tryParse(value);
-                                      if (minute == null ||
-                                          minute < 0 ||
-                                          minute > 59) {
-                                        return 'Must be 0-59';
-                                      }
-                                      return null;
-                                    },
-                                  ),
+                                Text(
+                                  'Configure when and how daily memes are automatically posted',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurfaceVariant,
+                                        fontSize: isMobile ? 13 : null,
+                                      ),
                                 ),
                               ],
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 16),
+                      SizedBox(height: isMobile ? 20 : 32),
 
-                    // Channel & Role Configuration
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                      // Info Box
+                      Container(
+                        padding: EdgeInsets.all(isMobile ? 10 : 12),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: Colors.blue.withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Row(
                           children: [
-                            Text(
-                              'Channel & Role Settings',
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                            const SizedBox(height: 16),
-                            TextFormField(
-                              controller: _channelIdController,
-                              decoration: const InputDecoration(
-                                labelText: 'Channel ID',
-                                hintText: 'Discord Channel ID',
-                                border: OutlineInputBorder(),
-                                prefixIcon: Icon(Icons.tag),
+                            Icon(Icons.info_outline,
+                                size: isMobile ? 18 : 20,
+                                color: Colors.blue[700]),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Set up automatic meme posting schedule and source configuration.',
+                                style: TextStyle(
+                                  fontSize: isMobile ? 11 : 12,
+                                  color: Colors.blue[700],
+                                ),
                               ),
-                              keyboardType: TextInputType.number,
-                              inputFormatters: [
-                                FilteringTextInputFormatter.digitsOnly,
-                              ],
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Channel ID is required';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 16),
-                            TextFormField(
-                              controller: _pingRoleIdController,
-                              decoration: const InputDecoration(
-                                labelText: 'Ping Role ID (Optional)',
-                                hintText: 'Role to ping with memes',
-                                border: OutlineInputBorder(),
-                                prefixIcon: Icon(Icons.alternate_email),
-                              ),
-                              keyboardType: TextInputType.number,
-                              inputFormatters: [
-                                FilteringTextInputFormatter.digitsOnly,
-                              ],
                             ),
                           ],
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
+                      SizedBox(height: isMobile ? 12 : 16),
 
-                    // NSFW Switch
-                    Card(
-                      child: SwitchListTile(
-                        title: const Text('Allow NSFW Content'),
-                        subtitle: const Text('Include NSFW memes in selection'),
-                        value: _allowNsfw,
-                        onChanged: (value) =>
-                            setState(() => _allowNsfw = value),
+                      // Enabled Switch
+                      Card(
+                        child: SwitchListTile(
+                          title: Row(
+                            children: [
+                              Icon(Icons.power_settings_new,
+                                  color: _enabled ? Colors.green : Colors.grey,
+                                  size: isMobile ? 20 : 24),
+                              const SizedBox(width: 8),
+                              Text('Enable Daily Memes',
+                                  style: TextStyle(
+                                      fontSize: isMobile ? 14 : null)),
+                            ],
+                          ),
+                          subtitle: Text('Automatically post memes daily',
+                              style: TextStyle(fontSize: isMobile ? 12 : null)),
+                          value: _enabled,
+                          onChanged: (value) =>
+                              setState(() => _enabled = value),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 24),
+                      SizedBox(height: isMobile ? 12 : 16),
 
-                    // Action Buttons
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: _isLoading ? null : _resetToDefaults,
-                            icon: const Icon(Icons.restore),
-                            label: const Text('Reset to Defaults'),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.orange,
-                              padding: const EdgeInsets.all(16),
-                            ),
+                      // Time Configuration
+                      Card(
+                        child: Padding(
+                          padding: EdgeInsets.all(isMobile ? 12.0 : 16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(Icons.schedule,
+                                      color: Colors.orange,
+                                      size: isMobile ? 20 : 24),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Posting Time',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(
+                                          fontSize: isMobile ? 16 : null,
+                                        ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: isMobile ? 12 : 16),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: TextFormField(
+                                      controller: _hourController,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Hour (0-23)',
+                                        border: OutlineInputBorder(),
+                                        prefixIcon: Icon(Icons.access_time),
+                                      ),
+                                      keyboardType: TextInputType.number,
+                                      inputFormatters: [
+                                        FilteringTextInputFormatter.digitsOnly,
+                                      ],
+                                      validator: (value) {
+                                        if (value == null || value.isEmpty) {
+                                          return 'Required';
+                                        }
+                                        final hour = int.tryParse(value);
+                                        if (hour == null ||
+                                            hour < 0 ||
+                                            hour > 23) {
+                                          return 'Must be 0-23';
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: TextFormField(
+                                      controller: _minuteController,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Minute (0-59)',
+                                        border: OutlineInputBorder(),
+                                        prefixIcon: Icon(Icons.schedule),
+                                      ),
+                                      keyboardType: TextInputType.number,
+                                      inputFormatters: [
+                                        FilteringTextInputFormatter.digitsOnly,
+                                      ],
+                                      validator: (value) {
+                                        if (value == null || value.isEmpty) {
+                                          return 'Required';
+                                        }
+                                        final minute = int.tryParse(value);
+                                        if (minute == null ||
+                                            minute < 0 ||
+                                            minute > 59) {
+                                          return 'Must be 0-59';
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: _isLoading ? null : _saveConfig,
-                            icon: const Icon(Icons.save),
-                            label: const Text('Save Configuration'),
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.all(16),
-                            ),
+                      ),
+                      SizedBox(height: isMobile ? 12 : 16),
+
+                      // Channel & Role Configuration
+                      Card(
+                        child: Padding(
+                          padding: EdgeInsets.all(isMobile ? 12.0 : 16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(Icons.tag,
+                                      color: Colors.purple,
+                                      size: isMobile ? 20 : 24),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Channel & Role Settings',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(
+                                          fontSize: isMobile ? 16 : null,
+                                        ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: isMobile ? 12 : 16),
+                              DropdownButtonFormField<String>(
+                                value: _selectedChannelId,
+                                decoration: const InputDecoration(
+                                  labelText: 'Meme Channel',
+                                  border: OutlineInputBorder(),
+                                  prefixIcon: Icon(Icons.tag),
+                                ),
+                                items: _channels.map((channel) {
+                                  final category = channel['category'] != null
+                                      ? '${channel['category']} / '
+                                      : '';
+                                  return DropdownMenuItem<String>(
+                                    value: channel['id'],
+                                    child: Text('$category#${channel['name']}'),
+                                  );
+                                }).toList(),
+                                onChanged: (value) {
+                                  setState(() {
+                                    _selectedChannelId = value;
+                                  });
+                                },
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Channel is required';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 16),
+                              DropdownButtonFormField<String>(
+                                value: _selectedRoleId,
+                                decoration: const InputDecoration(
+                                  labelText: 'Ping Role (Optional)',
+                                  hintText: 'Select role to mention',
+                                  border: OutlineInputBorder(),
+                                  prefixIcon: Icon(Icons.alternate_email),
+                                ),
+                                items: [
+                                  const DropdownMenuItem<String>(
+                                    value: null,
+                                    child: Text('None'),
+                                  ),
+                                  ..._roles.map((role) {
+                                    return DropdownMenuItem<String>(
+                                      value: role['id'],
+                                      child: Text('@${role['name']}'),
+                                    );
+                                  }).toList(),
+                                ],
+                                onChanged: (value) {
+                                  setState(() {
+                                    _selectedRoleId = value;
+                                  });
+                                },
+                              ),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
-                  ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      // NSFW Switch
+                      Card(
+                        child: SwitchListTile(
+                          title: const Text('Allow NSFW Content'),
+                          subtitle:
+                              const Text('Include NSFW memes in selection'),
+                          value: _allowNsfw,
+                          onChanged: (value) =>
+                              setState(() => _allowNsfw = value),
+                        ),
+                      ),
+                      SizedBox(height: isMobile ? 12 : 16),
+
+                      // Meme Sources Card
+                      Card(
+                        child: Padding(
+                          padding: EdgeInsets.all(isMobile ? 12.0 : 16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(Icons.source,
+                                      color: Colors.red,
+                                      size: isMobile ? 20 : 24),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      'Meme Sources',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium
+                                          ?.copyWith(
+                                            fontSize: isMobile ? 16 : null,
+                                          ),
+                                    ),
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.blue.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      '${_subreddits.length + _lemmyCommunities.length} total',
+                                      style: TextStyle(
+                                        fontSize: isMobile ? 11 : 12,
+                                        color: Colors.blue[700],
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: isMobile ? 12 : 16),
+
+                              // Subreddits Section
+                              Row(
+                                children: [
+                                  const Icon(Icons.reddit, size: 20),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Subreddits (${_subreddits.length})',
+                                    style:
+                                        Theme.of(context).textTheme.titleSmall,
+                                  ),
+                                  const Spacer(),
+                                  IconButton(
+                                    icon: const Icon(Icons.add),
+                                    onPressed: () => _addSubreddit(),
+                                    tooltip: 'Add Subreddit',
+                                  ),
+                                ],
+                              ),
+                              if (_subreddits.isEmpty)
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 8.0),
+                                  child: Text('No subreddits configured'),
+                                )
+                              else
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: _subreddits.map((sub) {
+                                    return Chip(
+                                      label: Text('r/$sub'),
+                                      onDeleted: () {
+                                        setState(() => _subreddits.remove(sub));
+                                      },
+                                    );
+                                  }).toList(),
+                                ),
+                              const SizedBox(height: 16),
+
+                              // Lemmy Communities Section
+                              Row(
+                                children: [
+                                  const Icon(Icons.forum, size: 20),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Lemmy Communities (${_lemmyCommunities.length})',
+                                    style:
+                                        Theme.of(context).textTheme.titleSmall,
+                                  ),
+                                  const Spacer(),
+                                  IconButton(
+                                    icon: const Icon(Icons.add),
+                                    onPressed: () => _addLemmyCommunity(),
+                                    tooltip: 'Add Lemmy Community',
+                                  ),
+                                ],
+                              ),
+                              if (_lemmyCommunities.isEmpty)
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 8.0),
+                                  child:
+                                      Text('No Lemmy communities configured'),
+                                )
+                              else
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: _lemmyCommunities.map((community) {
+                                    return Chip(
+                                      label: Text(community),
+                                      onDeleted: () {
+                                        setState(() => _lemmyCommunities
+                                            .remove(community));
+                                      },
+                                    );
+                                  }).toList(),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: isMobile ? 16 : 24),
+
+                      // Action Buttons
+                      if (isMobile)
+                        Column(
+                          children: [
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                onPressed: _isLoading ? null : _resetToDefaults,
+                                icon: const Icon(Icons.restore, size: 20),
+                                label: const Text('Reset to Defaults',
+                                    style: TextStyle(fontSize: 14)),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.orange,
+                                  padding: const EdgeInsets.all(14),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                onPressed: _isLoading ? null : _saveConfig,
+                                icon: _isLoading
+                                    ? const SizedBox(
+                                        width: 14,
+                                        height: 14,
+                                        child: CircularProgressIndicator(
+                                            strokeWidth: 2),
+                                      )
+                                    : const Icon(Icons.save, size: 20),
+                                label: const Text('Save Configuration',
+                                    style: TextStyle(fontSize: 14)),
+                                style: ElevatedButton.styleFrom(
+                                  padding: const EdgeInsets.all(14),
+                                ),
+                              ),
+                            ),
+                          ],
+                        )
+                      else
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: _isLoading ? null : _resetToDefaults,
+                                icon: const Icon(Icons.restore),
+                                label: const Text('Reset to Defaults'),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.orange,
+                                  padding: const EdgeInsets.all(16),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: _isLoading ? null : _saveConfig,
+                                icon: _isLoading
+                                    ? const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                            strokeWidth: 2),
+                                      )
+                                    : const Icon(Icons.save),
+                                label: const Text('Save Configuration'),
+                                style: ElevatedButton.styleFrom(
+                                  padding: const EdgeInsets.all(16),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
                 ),
-              ),
-            ),
-    );
+              );
+            },
+          );
   }
 }

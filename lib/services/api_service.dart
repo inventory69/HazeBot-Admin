@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
@@ -55,15 +56,28 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> getConfig() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/config'),
-      headers: _headers,
-    );
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/config'),
+        headers: _headers,
+      );
 
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else {
-      throw Exception('Failed to load configuration');
+      debugPrint('getConfig response status: ${response.statusCode}');
+
+      if (response.statusCode == 401) {
+        // Token expired or invalid
+        throw TokenExpiredException('Token has expired or is invalid');
+      }
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception(
+            'Failed to load configuration. Status: ${response.statusCode}, Body: ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('Exception in getConfig: $e');
+      rethrow;
     }
   }
 
@@ -240,6 +254,69 @@ class ApiService {
     }
   }
 
+  Future<void> resetRocketLeagueConfig() async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/config/rocket_league/reset'),
+      headers: _headers,
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to reset Rocket League configuration');
+    }
+  }
+
+  // Rocket League Account Management
+  Future<List<Map<String, dynamic>>> getRocketLeagueAccounts() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/rocket-league/accounts'),
+      headers: _headers,
+    );
+
+    if (response.statusCode == 200) {
+      return List<Map<String, dynamic>>.from(jsonDecode(response.body));
+    } else {
+      throw Exception('Failed to load Rocket League accounts');
+    }
+  }
+
+  Future<void> deleteRocketLeagueAccount(String userId) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/rocket-league/accounts/$userId'),
+      headers: _headers,
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete Rocket League account');
+    }
+  }
+
+  Future<Map<String, dynamic>> triggerRankCheck() async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/rocket-league/check-ranks'),
+      headers: _headers,
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to trigger rank check: ${response.body}');
+    }
+  }
+
+  Future<Map<String, dynamic>> getRocketLeagueStats(
+      String platform, String username) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/rocket-league/stats/$platform/$username'),
+      headers: _headers,
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to get Rocket League stats: ${response.body}');
+    }
+  }
+
   Future<Map<String, dynamic>> getWelcomeConfig() async {
     final response = await http.get(
       Uri.parse('$baseUrl/config/welcome'),
@@ -262,6 +339,57 @@ class ApiService {
 
     if (response.statusCode != 200) {
       throw Exception('Failed to update welcome configuration');
+    }
+  }
+
+  Future<Map<String, dynamic>> resetWelcomeConfig() async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/config/welcome/reset'),
+      headers: _headers,
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to reset welcome configuration');
+    }
+  }
+
+  Future<Map<String, dynamic>> getRocketLeagueTextsConfig() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/config/rocket_league_texts'),
+      headers: _headers,
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to load Rocket League texts configuration');
+    }
+  }
+
+  Future<void> updateRocketLeagueTextsConfig(Map<String, dynamic> config) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/config/rocket_league_texts'),
+      headers: _headers,
+      body: jsonEncode(config),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to update Rocket League texts configuration');
+    }
+  }
+
+  Future<Map<String, dynamic>> resetRocketLeagueTextsConfig() async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/config/rocket_league_texts/reset'),
+      headers: _headers,
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to reset Rocket League texts configuration');
     }
   }
 
@@ -331,4 +459,62 @@ class ApiService {
       throw Exception('Failed to send meme to Discord: ${response.body}');
     }
   }
+
+  // Guild Info
+  Future<List<Map<String, dynamic>>> getGuildChannels() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/guild/channels'),
+      headers: _headers,
+    );
+
+    if (response.statusCode == 200) {
+      return List<Map<String, dynamic>>.from(jsonDecode(response.body));
+    } else {
+      throw Exception('Failed to load guild channels');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getGuildRoles() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/guild/roles'),
+      headers: _headers,
+    );
+
+    if (response.statusCode == 200) {
+      return List<Map<String, dynamic>>.from(jsonDecode(response.body));
+    } else {
+      throw Exception('Failed to load guild roles');
+    }
+  }
+
+  Future<void> resetChannelsConfig() async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/config/channels/reset'),
+      headers: _headers,
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to reset channels configuration');
+    }
+  }
+
+  Future<void> resetRolesConfig() async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/config/roles/reset'),
+      headers: _headers,
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to reset roles configuration');
+    }
+  }
+}
+
+// Custom exception for token expiration
+class TokenExpiredException implements Exception {
+  final String message;
+  TokenExpiredException(this.message);
+
+  @override
+  String toString() => message;
 }

@@ -3,7 +3,7 @@ description: HazeBot Configuration Admin Interface - Web and Android app for man
 
 publish_to: 'none'
 
-version: 1.0.0+1
+version: 2025.11.06+16
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -32,6 +32,12 @@ dependencies:
   
   # Dynamic Colors (Material You)
   dynamic_color: ^1.7.0
+  
+  # App Info
+  package_info_plus: ^8.0.0
+  
+  # Color Picker
+  flex_color_picker: ^3.4.1
 
 dev_dependencies:
   flutter_test:

@@ -1,9 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import '../services/theme_service.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  String _version = 'Loading...';
+  String _buildNumber = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPackageInfo();
+  }
+
+  Future<void> _loadPackageInfo() async {
+    final packageInfo = await PackageInfo.fromPlatform();
+    setState(() {
+      _version = packageInfo.version;
+      _buildNumber = packageInfo.buildNumber;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -61,10 +84,10 @@ class SettingsScreen extends StatelessWidget {
               ),
             ),
           ),
-          const ListTile(
-            leading: Icon(Icons.info),
-            title: Text('Version'),
-            subtitle: Text('2025.11.06'),
+          ListTile(
+            leading: const Icon(Icons.info),
+            title: const Text('Version'),
+            subtitle: Text('$_version+$_buildNumber'),
           ),
           const ListTile(
             leading: Icon(Icons.badge),
