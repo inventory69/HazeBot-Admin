@@ -49,3 +49,10 @@ app.*.map.json
 
 # Local properties (Android SDK location)
 android/local.properties
+
+# Android signing keys and properties
+android/key.properties
+android/app/upload-keystore.jks
+android/app/*.keystore
+android/app/*.jks
+android/app/keystore.b64
