@@ -19,6 +19,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
+  bool _isDrawerExpanded = true; // Track drawer state
   
   @override
   void initState() {
@@ -52,6 +53,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(_isDrawerExpanded ? Icons.menu_open : Icons.menu),
+          tooltip: _isDrawerExpanded ? 'Collapse Menu' : 'Expand Menu',
+          onPressed: () {
+            setState(() {
+              _isDrawerExpanded = !_isDrawerExpanded;
+            });
+          },
+        ),
         title: const Text('HazeBot Admin'),
         actions: [
           IconButton(
@@ -70,15 +80,21 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Row(
         children: [
-          NavigationRail(
-            selectedIndex: _selectedIndex,
-            onDestinationSelected: (index) {
-              setState(() {
-                _selectedIndex = index;
-              });
-            },
-            labelType: NavigationRailLabelType.all,
-            destinations: const [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            width: _isDrawerExpanded ? null : 72,
+            child: NavigationRail(
+              selectedIndex: _selectedIndex,
+              onDestinationSelected: (index) {
+                setState(() {
+                  _selectedIndex = index;
+                });
+              },
+              extended: _isDrawerExpanded,
+              labelType: _isDrawerExpanded 
+                  ? NavigationRailLabelType.none 
+                  : NavigationRailLabelType.all,
+              destinations: const [
               NavigationRailDestination(
                 icon: Icon(Icons.dashboard),
                 label: Text('Dashboard'),
