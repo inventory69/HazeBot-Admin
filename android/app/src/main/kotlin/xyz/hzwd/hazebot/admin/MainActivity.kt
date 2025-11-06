@@ -1,4 +1,4 @@
-package com.example.hazebot_admin
+package xyz.hzwd.hazebot.admin
 
 import io.flutter.embedding.android.FlutterActivity
 
