@@ -115,6 +115,8 @@ jobs:
           files: ${{ env.apk_path }}
           draft: false
           prerelease: false
+          make_latest: true
+          generate_release_notes: false
           body: |
             ## 🔥 Test Build
             
