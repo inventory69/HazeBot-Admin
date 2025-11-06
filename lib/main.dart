@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:dynamic_color/dynamic_color.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
 import 'services/auth_service.dart';
@@ -23,62 +24,81 @@ class HazeBotAdminApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthService()),
         ChangeNotifierProvider(create: (_) => ConfigService()),
       ],
-      child: MaterialApp(
-        title: 'HazeBot Admin',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFFAD1457), // PINK color from Config.py
-            brightness: Brightness.light,
-          ),
-          useMaterial3: true,
-          appBarTheme: const AppBarTheme(
-            centerTitle: true,
-            elevation: 2,
-          ),
-          cardTheme: CardThemeData(
-            elevation: 2,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+      child: DynamicColorBuilder(
+        builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
+          // Use system color scheme if available, otherwise use fallback
+          ColorScheme lightColorScheme;
+          ColorScheme darkColorScheme;
+
+          if (lightDynamic != null && darkDynamic != null) {
+            // Use dynamic colors from system (Material You)
+            lightColorScheme = lightDynamic.harmonized();
+            darkColorScheme = darkDynamic.harmonized();
+          } else {
+            // Fallback to custom pink theme
+            lightColorScheme = ColorScheme.fromSeed(
+              seedColor: const Color(0xFFAD1457),
+              brightness: Brightness.light,
+            );
+            darkColorScheme = ColorScheme.fromSeed(
+              seedColor: const Color(0xFFAD1457),
+              brightness: Brightness.dark,
+            );
+          }
+
+          return MaterialApp(
+            title: 'HazeBot Admin',
+            debugShowCheckedModeBanner: false,
+            theme: ThemeData(
+              colorScheme: lightColorScheme,
+              useMaterial3: true,
+              appBarTheme: const AppBarTheme(
+                centerTitle: true,
+                elevation: 2,
+              ),
+              cardTheme: CardThemeData(
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              inputDecorationTheme: InputDecorationTheme(
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                filled: true,
+              ),
             ),
-          ),
-          inputDecorationTheme: InputDecorationTheme(
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+            darkTheme: ThemeData(
+              colorScheme: darkColorScheme,
+              useMaterial3: true,
+              appBarTheme: const AppBarTheme(
+                centerTitle: true,
+                elevation: 2,
+              ),
+              cardTheme: CardThemeData(
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              inputDecorationTheme: InputDecorationTheme(
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                filled: true,
+              ),
             ),
-            filled: true,
-          ),
-        ),
-        darkTheme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFFAD1457),
-            brightness: Brightness.dark,
-          ),
-          useMaterial3: true,
-          appBarTheme: const AppBarTheme(
-            centerTitle: true,
-            elevation: 2,
-          ),
-          cardTheme: CardThemeData(
-            elevation: 2,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+            themeMode: ThemeMode.system, // Follow system theme
+            home: Consumer<AuthService>(
+              builder: (context, authService, _) {
+                return authService.isAuthenticated
+                    ? const HomeScreen()
+                    : const LoginScreen();
+              },
             ),
-          ),
-          inputDecorationTheme: InputDecorationTheme(
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            filled: true,
-          ),
-        ),
-        home: Consumer<AuthService>(
-          builder: (context, authService, _) {
-            return authService.isAuthenticated
-                ? const HomeScreen()
-                : const LoginScreen();
-          },
-        ),
+          );
+        },
       ),
     );
   }

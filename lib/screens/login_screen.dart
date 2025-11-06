@@ -98,6 +98,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           labelText: 'Username',
                           prefixIcon: Icon(Icons.person),
                         ),
+                        autofillHints: const [AutofillHints.username],
+                        textInputAction: TextInputAction.next,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Please enter your username';
@@ -126,6 +128,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                         obscureText: _obscurePassword,
+                        autofillHints: const [AutofillHints.password],
+                        textInputAction: TextInputAction.done,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Please enter your password';

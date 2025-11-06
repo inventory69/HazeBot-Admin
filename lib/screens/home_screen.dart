@@ -141,6 +141,11 @@ class DashboardScreen extends StatelessWidget {
           );
         }
 
+        // Calculate meme sources count
+        final subredditCount = (config['meme']?['subreddits'] as List?)?.length ?? 0;
+        final lemmyCount = (config['meme']?['lemmy_communities'] as List?)?.length ?? 0;
+        final totalMemeSources = subredditCount + lemmyCount;
+
         return SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
           child: Column(
@@ -151,52 +156,64 @@ class DashboardScreen extends StatelessWidget {
                 style: Theme.of(context).textTheme.headlineLarge,
               ),
               const SizedBox(height: 24),
-              GridView.count(
-                crossAxisCount: 3,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                mainAxisSpacing: 16,
-                crossAxisSpacing: 16,
-                children: [
-                  _DashboardCard(
-                    title: 'Bot Name',
-                    value: config['general']?['bot_name'] ?? 'N/A',
-                    icon: Icons.smart_toy,
-                    color: Colors.blue,
-                  ),
-                  _DashboardCard(
-                    title: 'Mode',
-                    value: config['general']?['prod_mode'] == true ? 'Production' : 'Test',
-                    icon: Icons.flag,
-                    color: config['general']?['prod_mode'] == true 
-                        ? Colors.green 
-                        : Colors.orange,
-                  ),
-                  _DashboardCard(
-                    title: 'Command Prefix',
-                    value: config['general']?['command_prefix'] ?? 'N/A',
-                    icon: Icons.terminal,
-                    color: Colors.purple,
-                  ),
-                  _DashboardCard(
-                    title: 'Guild ID',
-                    value: config['discord_ids']?['guild_id']?.toString() ?? 'N/A',
-                    icon: Icons.badge,
-                    color: Colors.teal,
-                  ),
-                  _DashboardCard(
-                    title: 'Meme Sources',
-                    value: (config['meme']?['meme_sources'] as List?)?.length.toString() ?? '0',
-                    icon: Icons.image,
-                    color: Colors.pink,
-                  ),
-                  _DashboardCard(
-                    title: 'RL Check Interval',
-                    value: '${config['rocket_league']?['rank_check_interval_hours'] ?? 'N/A'}h',
-                    icon: Icons.sports_esports,
-                    color: Colors.indigo,
-                  ),
-                ],
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  // Responsive grid: 1 column for narrow, 2 for medium, 3 for wide
+                  int crossAxisCount = 1;
+                  if (constraints.maxWidth > 600) crossAxisCount = 2;
+                  if (constraints.maxWidth > 900) crossAxisCount = 3;
+                  
+                  return GridView.count(
+                    crossAxisCount: crossAxisCount,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    mainAxisSpacing: 16,
+                    crossAxisSpacing: 16,
+                    childAspectRatio: 2.5, // Wider cards for better text display
+                    children: [
+                      _DashboardCard(
+                        title: 'Bot Name',
+                        value: config['general']?['bot_name'] ?? 'N/A',
+                        icon: Icons.smart_toy,
+                        color: Colors.blue,
+                      ),
+                      _DashboardCard(
+                        title: 'Mode',
+                        value: config['general']?['prod_mode'] == true ? 'Production' : 'Test',
+                        icon: Icons.flag,
+                        color: config['general']?['prod_mode'] == true 
+                            ? Colors.green 
+                            : Colors.orange,
+                      ),
+                      _DashboardCard(
+                        title: 'Command Prefix',
+                        value: config['general']?['command_prefix'] ?? 'N/A',
+                        icon: Icons.terminal,
+                        color: Colors.purple,
+                      ),
+                      _DashboardCard(
+                        title: 'Discord Server',
+                        value: config['discord_ids']?['guild_name']?.toString() ?? 
+                                config['discord_ids']?['guild_id']?.toString() ?? 'N/A',
+                        icon: Icons.discord,
+                        color: Colors.teal,
+                      ),
+                      _DashboardCard(
+                        title: 'Meme Sources',
+                        value: '$subredditCount subreddits + $lemmyCount lemmy',
+                        subtitle: 'Total: $totalMemeSources',
+                        icon: Icons.image,
+                        color: Colors.pink,
+                      ),
+                      _DashboardCard(
+                        title: 'RL Check Interval',
+                        value: '${config['rocket_league']?['rank_check_interval_hours'] ?? 'N/A'}h',
+                        icon: Icons.sports_esports,
+                        color: Colors.indigo,
+                      ),
+                    ],
+                  );
+                },
               ),
               const SizedBox(height: 32),
               Card(
@@ -261,12 +278,14 @@ class DashboardScreen extends StatelessWidget {
 class _DashboardCard extends StatelessWidget {
   final String title;
   final String value;
+  final String? subtitle;
   final IconData icon;
   final Color color;
 
   const _DashboardCard({
     required this.title,
     required this.value,
+    this.subtitle,
     required this.icon,
     required this.color,
   });
@@ -276,25 +295,43 @@ class _DashboardCard extends StatelessWidget {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Row(
           children: [
             Icon(icon, size: 40, color: color),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              style: Theme.of(context).textTheme.bodySmall,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              value,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    title,
+                    style: Theme.of(context).textTheme.bodySmall,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+                  const SizedBox(height: 4),
+                  Text(
+                    value,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle!,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.grey,
+                          ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ],
+              ),
             ),
           ],
         ),
