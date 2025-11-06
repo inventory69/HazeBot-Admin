@@ -78,7 +78,54 @@ jobs:
           path: ${{ env.apk_path }}
           retention-days: 30
       
-      - name: Create Release
+      - name: Get short commit SHA
+        if: github.ref == 'refs/heads/main'
+        run: echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+      
+      - name: Create/Update Latest Release
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: latest
+          name: Latest Test Build
+          files: ${{ env.apk_path }}
+          draft: false
+          prerelease: false
+          body: |
+            ## 🔥 Latest Test Build
+            
+            **Build Date:** ${{ github.event.head_commit.timestamp }}
+            **Commit:** ${{ github.sha }}
+            **Commit Message:** ${{ github.event.head_commit.message }}
+            
+            ---
+            
+            ⚠️ **This is a TEST build** configured with test API URL.
+            
+            ### 📦 Download
+            
+            👉 **Download:** `hazebot-admin-test-release.apk` below
+            
+            ### 📱 Installation
+            
+            1. Download the APK from the assets below
+            2. Enable "Install from unknown sources" on your Android device
+            3. Install the APK
+            4. Login with your credentials:
+               - Username: `inventory69` or `duke`
+            
+            ### ⚙️ Configuration
+            
+            - **API URL:** Test server (`https://test-hazebot-admin.hzwd.xyz/api`)
+            - **Environment:** TEST
+            
+            ---
+            
+            This release is automatically updated with every push to main branch.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Create Versioned Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v1
         with:
