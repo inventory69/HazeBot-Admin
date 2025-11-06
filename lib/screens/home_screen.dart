@@ -6,6 +6,8 @@ import 'config/general_config_screen.dart';
 import 'config/channels_config_screen.dart';
 import 'config/roles_config_screen.dart';
 import 'config/meme_config_screen.dart';
+import 'config/daily_meme_config_screen.dart';
+import 'config/daily_meme_preferences_screen.dart';
 import 'config/rocket_league_config_screen.dart';
 import 'config/welcome_config_screen.dart';
 import 'test_screen.dart';
@@ -46,6 +48,8 @@ class _HomeScreenState extends State<HomeScreen> {
       const ChannelsConfigScreen(),
       const RolesConfigScreen(),
       const MemeConfigScreen(),
+      const DailyMemeConfigScreen(),
+      const DailyMemePreferencesScreen(),
       const RocketLeagueConfigScreen(),
       const WelcomeConfigScreen(),
       const TestScreen(),
@@ -114,6 +118,14 @@ class _HomeScreenState extends State<HomeScreen> {
               NavigationRailDestination(
                 icon: Icon(Icons.image),
                 label: Text('Memes'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.schedule),
+                label: Text('Daily Meme'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.tune),
+                label: Text('Meme Prefs'),
               ),
               NavigationRailDestination(
                 icon: Icon(Icons.sports_esports),

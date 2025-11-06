@@ -91,6 +91,17 @@ class ApiService {
     }
   }
   
+  Future<void> resetGeneralConfig() async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/config/general/reset'),
+      headers: _headers,
+    );
+    
+    if (response.statusCode != 200) {
+      throw Exception('Failed to reset general configuration');
+    }
+  }
+  
   Future<Map<String, dynamic>> getChannelsConfig() async {
     final response = await http.get(
       Uri.parse('$baseUrl/config/channels'),
@@ -163,6 +174,43 @@ class ApiService {
     
     if (response.statusCode != 200) {
       throw Exception('Failed to update meme configuration');
+    }
+  }
+  
+  // Daily Meme Configuration
+  Future<Map<String, dynamic>> getDailyMemeConfig() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/daily-meme/config'),
+      headers: _headers,
+    );
+    
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to load daily meme configuration');
+    }
+  }
+  
+  Future<void> updateDailyMemeConfig(Map<String, dynamic> config) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/daily-meme/config'),
+      headers: _headers,
+      body: jsonEncode(config),
+    );
+    
+    if (response.statusCode != 200) {
+      throw Exception('Failed to update daily meme configuration');
+    }
+  }
+  
+  Future<void> resetDailyMemeConfig() async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/daily-meme/config/reset'),
+      headers: _headers,
+    );
+    
+    if (response.statusCode != 200) {
+      throw Exception('Failed to reset daily meme configuration');
     }
   }
   
