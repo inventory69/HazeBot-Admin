@@ -30,9 +30,19 @@ jobs:
           flutter-version: '3.35.7'
           channel: 'stable'
       
+      - name: Verify API_BASE_URL secret is set
+        run: |
+          if [ -z "${{ secrets.API_BASE_URL }}" ]; then
+            echo "::error::Secret API_BASE_URL is not set!"
+            echo "Please add API_BASE_URL to your repository secrets."
+            echo "Go to: Settings → Secrets and variables → Actions → New repository secret"
+            exit 1
+          fi
+      
       - name: Create .env file with test API URL
         run: |
-          echo "API_BASE_URL=${{ secrets.TEST_API_BASE_URL }}" > .env
+          echo "API_BASE_URL=${{ secrets.API_BASE_URL }}" > .env
+          echo "✅ .env file created with API URL"
       
       - name: Get dependencies
         run: flutter pub get
