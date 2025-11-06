@@ -140,6 +140,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 label: Text('Test'),
               ),
             ],
+            ),
           ),
           const VerticalDivider(thickness: 1, width: 1),
           Expanded(
