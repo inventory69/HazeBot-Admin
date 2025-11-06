@@ -11,9 +11,11 @@ The APK build requires the **test** API URL to be configured. Add it as a GitHub
 1. Go to your repository on GitHub
 2. Click on **Settings** → **Secrets and variables** → **Actions**
 3. Click **New repository secret**
-4. Name: `TEST_API_BASE_URL`
+4. Name: `API_BASE_URL`
 5. Value: `https://test-hazebot-admin.hzwd.xyz/api` (your test API URL, without trailing slash)
 6. Click **Add secret**
+
+**Important:** The workflow will fail if this secret is not set.
 
 ### 2. Workflow Triggers
 
@@ -83,8 +85,8 @@ All APKs are clearly named to indicate they are test builds:
 
 ## Troubleshooting
 
-### Build fails with "TEST_API_BASE_URL not found"
-Make sure you added the `TEST_API_BASE_URL` secret in repository settings.
+### Build fails with "Secret API_BASE_URL is not set!"
+Make sure you added the `API_BASE_URL` secret in repository settings (not `TEST_API_BASE_URL`).
 
 ### Build fails with Java error
 The workflow uses Java 21. If you need a different version, edit `.github/workflows/build-apk.yml`.

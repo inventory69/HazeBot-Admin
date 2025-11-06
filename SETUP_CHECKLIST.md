@@ -33,9 +33,11 @@ git push -u origin main
 
 1. Gehe zu: `https://github.com/YOURUSERNAME/HazeBot-Admin/settings/secrets/actions`
 2. Klicke: **New repository secret**
-3. Name: `TEST_API_BASE_URL`
+3. Name: `API_BASE_URL`
 4. Value: `https://test-hazebot-admin.hzwd.xyz/api`
 5. Klicke: **Add secret**
+
+⚠️ **Wichtig:** Der Secret-Name muss exakt `API_BASE_URL` sein (nicht `TEST_API_BASE_URL`)!
 
 ### 3. Workflow testen
 
