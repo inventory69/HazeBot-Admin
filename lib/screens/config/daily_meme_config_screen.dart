@@ -13,7 +13,7 @@ class DailyMemeConfigScreen extends StatefulWidget {
 class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
-  
+
   // Form fields
   bool _enabled = true;
   final _hourController = TextEditingController();
@@ -21,13 +21,13 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
   final _channelIdController = TextEditingController();
   final _pingRoleIdController = TextEditingController();
   bool _allowNsfw = true;
-  
+
   @override
   void initState() {
     super.initState();
     _loadConfig();
   }
-  
+
   @override
   void dispose() {
     _hourController.dispose();
@@ -36,14 +36,14 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
     _pingRoleIdController.dispose();
     super.dispose();
   }
-  
+
   Future<void> _loadConfig() async {
     setState(() => _isLoading = true);
-    
+
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
       final config = await authService.apiService.getDailyMemeConfig();
-      
+
       setState(() {
         _enabled = config['enabled'] ?? true;
         _hourController.text = (config['hour'] ?? 12).toString();
@@ -62,15 +62,15 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
       setState(() => _isLoading = false);
     }
   }
-  
+
   Future<void> _saveConfig() async {
     if (!_formKey.currentState!.validate()) return;
-    
+
     setState(() => _isLoading = true);
-    
+
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
-      
+
       final config = {
         'enabled': _enabled,
         'hour': int.parse(_hourController.text),
@@ -79,9 +79,9 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
         'ping_role_id': int.tryParse(_pingRoleIdController.text),
         'allow_nsfw': _allowNsfw,
       };
-      
+
       await authService.apiService.updateDailyMemeConfig(config);
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Configuration saved successfully')),
@@ -97,7 +97,7 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
       setState(() => _isLoading = false);
     }
   }
-  
+
   Future<void> _resetToDefaults() async {
     // Show confirmation dialog
     final confirmed = await showDialog<bool>(
@@ -126,16 +126,16 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
         ],
       ),
     );
-    
+
     if (confirmed != true) return;
-    
+
     setState(() => _isLoading = true);
-    
+
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
       await authService.apiService.resetDailyMemeConfig();
       await _loadConfig();
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Configuration reset to defaults')),
@@ -151,7 +151,7 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
       setState(() => _isLoading = false);
     }
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -177,7 +177,7 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    
+
                     // Time Configuration
                     Card(
                       child: Padding(
@@ -209,7 +209,9 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                                         return 'Required';
                                       }
                                       final hour = int.tryParse(value);
-                                      if (hour == null || hour < 0 || hour > 23) {
+                                      if (hour == null ||
+                                          hour < 0 ||
+                                          hour > 23) {
                                         return 'Must be 0-23';
                                       }
                                       return null;
@@ -234,7 +236,9 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                                         return 'Required';
                                       }
                                       final minute = int.tryParse(value);
-                                      if (minute == null || minute < 0 || minute > 59) {
+                                      if (minute == null ||
+                                          minute < 0 ||
+                                          minute > 59) {
                                         return 'Must be 0-59';
                                       }
                                       return null;
@@ -248,7 +252,7 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    
+
                     // Channel & Role Configuration
                     Card(
                       child: Padding(
@@ -299,18 +303,19 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    
+
                     // NSFW Switch
                     Card(
                       child: SwitchListTile(
                         title: const Text('Allow NSFW Content'),
                         subtitle: const Text('Include NSFW memes in selection'),
                         value: _allowNsfw,
-                        onChanged: (value) => setState(() => _allowNsfw = value),
+                        onChanged: (value) =>
+                            setState(() => _allowNsfw = value),
                       ),
                     ),
                     const SizedBox(height: 24),
-                    
+
                     // Action Buttons
                     Row(
                       children: [

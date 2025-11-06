@@ -21,8 +21,8 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
-  bool _isDrawerExpanded = true; // Track drawer state
-  
+  bool _isDrawerVisible = true; // Track drawer visibility
+
   @override
   void initState() {
     super.initState();
@@ -31,7 +31,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _loadConfig();
     });
   }
-  
+
   Future<void> _loadConfig() async {
     final authService = Provider.of<AuthService>(context, listen: false);
     final configService = Provider.of<ConfigService>(context, listen: false);
@@ -41,7 +41,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final authService = Provider.of<AuthService>(context);
-    
+
     final screens = [
       const DashboardScreen(),
       const GeneralConfigScreen(),
@@ -58,11 +58,11 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: Icon(_isDrawerExpanded ? Icons.menu_open : Icons.menu),
-          tooltip: _isDrawerExpanded ? 'Collapse Menu' : 'Expand Menu',
+          icon: Icon(_isDrawerVisible ? Icons.menu_open : Icons.menu),
+          tooltip: _isDrawerVisible ? 'Hide Menu' : 'Show Menu',
           onPressed: () {
             setState(() {
-              _isDrawerExpanded = !_isDrawerExpanded;
+              _isDrawerVisible = !_isDrawerVisible;
             });
           },
         ),
@@ -84,65 +84,64 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Row(
         children: [
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            width: _isDrawerExpanded ? null : 72,
-            child: NavigationRail(
-              selectedIndex: _selectedIndex,
-              onDestinationSelected: (index) {
-                setState(() {
-                  _selectedIndex = index;
-                });
-              },
-              extended: _isDrawerExpanded,
-              labelType: _isDrawerExpanded 
-                  ? NavigationRailLabelType.none 
-                  : NavigationRailLabelType.all,
-              destinations: const [
-              NavigationRailDestination(
-                icon: Icon(Icons.dashboard),
-                label: Text('Dashboard'),
+          if (_isDrawerVisible)
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: 72,
+              child: NavigationRail(
+                selectedIndex: _selectedIndex,
+                onDestinationSelected: (index) {
+                  setState(() {
+                    _selectedIndex = index;
+                  });
+                },
+                extended: false,
+                labelType: NavigationRailLabelType.all,
+                destinations: const [
+                  NavigationRailDestination(
+                    icon: Icon(Icons.dashboard),
+                    label: Text('Dashboard'),
+                  ),
+                  NavigationRailDestination(
+                    icon: Icon(Icons.settings),
+                    label: Text('General'),
+                  ),
+                  NavigationRailDestination(
+                    icon: Icon(Icons.tag),
+                    label: Text('Channels'),
+                  ),
+                  NavigationRailDestination(
+                    icon: Icon(Icons.people),
+                    label: Text('Roles'),
+                  ),
+                  NavigationRailDestination(
+                    icon: Icon(Icons.image),
+                    label: Text('Memes'),
+                  ),
+                  NavigationRailDestination(
+                    icon: Icon(Icons.schedule),
+                    label: Text('Daily Meme'),
+                  ),
+                  NavigationRailDestination(
+                    icon: Icon(Icons.tune),
+                    label: Text('Meme Prefs'),
+                  ),
+                  NavigationRailDestination(
+                    icon: Icon(Icons.sports_esports),
+                    label: Text('Rocket League'),
+                  ),
+                  NavigationRailDestination(
+                    icon: Icon(Icons.waving_hand),
+                    label: Text('Welcome'),
+                  ),
+                  NavigationRailDestination(
+                    icon: Icon(Icons.science),
+                    label: Text('Test'),
+                  ),
+                ],
               ),
-              NavigationRailDestination(
-                icon: Icon(Icons.settings),
-                label: Text('General'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.tag),
-                label: Text('Channels'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.people),
-                label: Text('Roles'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.image),
-                label: Text('Memes'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.schedule),
-                label: Text('Daily Meme'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.tune),
-                label: Text('Meme Prefs'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.sports_esports),
-                label: Text('Rocket League'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.waving_hand),
-                label: Text('Welcome'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.science),
-                label: Text('Test'),
-              ),
-            ],
             ),
-          ),
-          const VerticalDivider(thickness: 1, width: 1),
+          if (_isDrawerVisible) const VerticalDivider(thickness: 1, width: 1),
           Expanded(
             child: screens[_selectedIndex],
           ),
@@ -162,7 +161,7 @@ class DashboardScreen extends StatelessWidget {
         if (configService.isLoading) {
           return const Center(child: CircularProgressIndicator());
         }
-        
+
         final config = configService.config;
         if (config == null) {
           return const Center(
@@ -171,8 +170,10 @@ class DashboardScreen extends StatelessWidget {
         }
 
         // Calculate meme sources count
-        final subredditCount = (config['meme']?['subreddits'] as List?)?.length ?? 0;
-        final lemmyCount = (config['meme']?['lemmy_communities'] as List?)?.length ?? 0;
+        final subredditCount =
+            (config['meme']?['subreddits'] as List?)?.length ?? 0;
+        final lemmyCount =
+            (config['meme']?['lemmy_communities'] as List?)?.length ?? 0;
         final totalMemeSources = subredditCount + lemmyCount;
 
         return SingleChildScrollView(
@@ -191,14 +192,15 @@ class DashboardScreen extends StatelessWidget {
                   int crossAxisCount = 1;
                   if (constraints.maxWidth > 600) crossAxisCount = 2;
                   if (constraints.maxWidth > 900) crossAxisCount = 3;
-                  
+
                   return GridView.count(
                     crossAxisCount: crossAxisCount,
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     mainAxisSpacing: 16,
                     crossAxisSpacing: 16,
-                    childAspectRatio: 2.5, // Wider cards for better text display
+                    childAspectRatio:
+                        2.5, // Wider cards for better text display
                     children: [
                       _DashboardCard(
                         title: 'Bot Name',
@@ -208,10 +210,12 @@ class DashboardScreen extends StatelessWidget {
                       ),
                       _DashboardCard(
                         title: 'Mode',
-                        value: config['general']?['prod_mode'] == true ? 'Production' : 'Test',
+                        value: config['general']?['prod_mode'] == true
+                            ? 'Production'
+                            : 'Test',
                         icon: Icons.flag,
-                        color: config['general']?['prod_mode'] == true 
-                            ? Colors.green 
+                        color: config['general']?['prod_mode'] == true
+                            ? Colors.green
                             : Colors.orange,
                       ),
                       _DashboardCard(
@@ -222,8 +226,10 @@ class DashboardScreen extends StatelessWidget {
                       ),
                       _DashboardCard(
                         title: 'Discord Server',
-                        value: config['discord_ids']?['guild_name']?.toString() ?? 
-                                config['discord_ids']?['guild_id']?.toString() ?? 'N/A',
+                        value: config['discord_ids']?['guild_name']
+                                ?.toString() ??
+                            config['discord_ids']?['guild_id']?.toString() ??
+                            'N/A',
                         icon: Icons.discord,
                         color: Colors.teal,
                       ),
@@ -236,7 +242,8 @@ class DashboardScreen extends StatelessWidget {
                       ),
                       _DashboardCard(
                         title: 'RL Check Interval',
-                        value: '${config['rocket_league']?['rank_check_interval_hours'] ?? 'N/A'}h',
+                        value:
+                            '${config['rocket_league']?['rank_check_interval_hours'] ?? 'N/A'}h',
                         icon: Icons.sports_esports,
                         color: Colors.indigo,
                       ),
@@ -253,8 +260,8 @@ class DashboardScreen extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.info_outline, 
-                               color: Theme.of(context).colorScheme.primary),
+                          Icon(Icons.info_outline,
+                              color: Theme.of(context).colorScheme.primary),
                           const SizedBox(width: 8),
                           Text(
                             'Configuration Info',

@@ -7,59 +7,65 @@ class DailyMemePreferencesScreen extends StatefulWidget {
   const DailyMemePreferencesScreen({super.key});
 
   @override
-  State<DailyMemePreferencesScreen> createState() => _DailyMemePreferencesScreenState();
+  State<DailyMemePreferencesScreen> createState() =>
+      _DailyMemePreferencesScreenState();
 }
 
-class _DailyMemePreferencesScreenState extends State<DailyMemePreferencesScreen> {
+class _DailyMemePreferencesScreenState
+    extends State<DailyMemePreferencesScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
-  
+
   // Selection Settings
   double _minScore = 100;
   final _maxSourcesController = TextEditingController();
   final _poolSizeController = TextEditingController();
-  
+
   // Source selection
   List<String> _availableSubreddits = [];
   List<String> _availableLemmy = [];
   List<String> _selectedSubreddits = [];
   List<String> _selectedLemmy = [];
-  
+
   @override
   void initState() {
     super.initState();
     _loadConfig();
   }
-  
+
   @override
   void dispose() {
     _maxSourcesController.dispose();
     _poolSizeController.dispose();
     super.dispose();
   }
-  
+
   Future<void> _loadConfig() async {
     setState(() => _isLoading = true);
-    
+
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
       final config = await authService.apiService.getDailyMemeConfig();
-      
+
       setState(() {
         _minScore = (config['min_score'] ?? 100).toDouble();
         _maxSourcesController.text = (config['max_sources'] ?? 5).toString();
         _poolSizeController.text = (config['pool_size'] ?? 50).toString();
-        
+
         // Load available sources
-        _availableSubreddits = List<String>.from(config['available_subreddits'] ?? []);
+        _availableSubreddits =
+            List<String>.from(config['available_subreddits'] ?? []);
         _availableLemmy = List<String>.from(config['available_lemmy'] ?? []);
-        
+
         // Load selected sources (empty = all selected)
         final useSubreddits = List<String>.from(config['use_subreddits'] ?? []);
         final useLemmy = List<String>.from(config['use_lemmy'] ?? []);
-        
-        _selectedSubreddits = useSubreddits.isEmpty ? List.from(_availableSubreddits) : useSubreddits;
-        _selectedLemmy = useLemmy.isEmpty ? List.from(_availableLemmy) : useLemmy;
+
+        _selectedSubreddits = useSubreddits.isEmpty
+            ? List.from(_availableSubreddits)
+            : useSubreddits;
+        _selectedLemmy =
+            useLemmy.isEmpty ? List.from(_availableLemmy) : useLemmy;
       });
     } catch (e) {
       if (mounted) {
@@ -71,30 +77,31 @@ class _DailyMemePreferencesScreenState extends State<DailyMemePreferencesScreen>
       setState(() => _isLoading = false);
     }
   }
-  
+
   Future<void> _savePreferences() async {
     if (!_formKey.currentState!.validate()) return;
-    
+
     setState(() => _isLoading = true);
-    
+
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
-      
+
       final config = {
         'min_score': _minScore.toInt(),
         'max_sources': int.parse(_maxSourcesController.text),
         'pool_size': int.parse(_poolSizeController.text),
         // If all selected, send empty array (= use all)
-        'use_subreddits': _selectedSubreddits.length == _availableSubreddits.length 
-            ? [] 
-            : _selectedSubreddits,
-        'use_lemmy': _selectedLemmy.length == _availableLemmy.length 
-            ? [] 
+        'use_subreddits':
+            _selectedSubreddits.length == _availableSubreddits.length
+                ? []
+                : _selectedSubreddits,
+        'use_lemmy': _selectedLemmy.length == _availableLemmy.length
+            ? []
             : _selectedLemmy,
       };
-      
+
       await authService.apiService.updateDailyMemeConfig(config);
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Preferences saved successfully')),
@@ -110,7 +117,7 @@ class _DailyMemePreferencesScreenState extends State<DailyMemePreferencesScreen>
       setState(() => _isLoading = false);
     }
   }
-  
+
   Future<void> _resetToDefaults() async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -140,16 +147,16 @@ class _DailyMemePreferencesScreenState extends State<DailyMemePreferencesScreen>
         ],
       ),
     );
-    
+
     if (confirmed != true) return;
-    
+
     setState(() => _isLoading = true);
-    
+
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
       await authService.apiService.resetDailyMemeConfig();
       await _loadConfig();
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Preferences reset to defaults')),
@@ -165,7 +172,7 @@ class _DailyMemePreferencesScreenState extends State<DailyMemePreferencesScreen>
       setState(() => _isLoading = false);
     }
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -193,7 +200,7 @@ class _DailyMemePreferencesScreenState extends State<DailyMemePreferencesScreen>
                               style: Theme.of(context).textTheme.titleMedium,
                             ),
                             const SizedBox(height: 16),
-                            
+
                             // Min Score Slider
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -204,7 +211,8 @@ class _DailyMemePreferencesScreenState extends State<DailyMemePreferencesScreen>
                                 ),
                                 const Text(
                                   'Minimum upvotes required for a meme',
-                                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                                  style: TextStyle(
+                                      fontSize: 12, color: Colors.grey),
                                 ),
                                 Slider(
                                   value: _minScore,
@@ -212,19 +220,21 @@ class _DailyMemePreferencesScreenState extends State<DailyMemePreferencesScreen>
                                   max: 10000,
                                   divisions: 100,
                                   label: _minScore.toInt().toString(),
-                                  onChanged: (value) => setState(() => _minScore = value),
+                                  onChanged: (value) =>
+                                      setState(() => _minScore = value),
                                 ),
                               ],
                             ),
                             const SizedBox(height: 16),
-                            
+
                             // Max Sources
                             TextFormField(
                               controller: _maxSourcesController,
                               decoration: const InputDecoration(
                                 labelText: 'Max Sources',
                                 hintText: 'Number of sources to fetch from',
-                                helperText: 'How many subreddits/communities to use',
+                                helperText:
+                                    'How many subreddits/communities to use',
                                 border: OutlineInputBorder(),
                                 prefixIcon: Icon(Icons.source),
                               ),
@@ -244,7 +254,7 @@ class _DailyMemePreferencesScreenState extends State<DailyMemePreferencesScreen>
                               },
                             ),
                             const SizedBox(height: 16),
-                            
+
                             // Pool Size
                             TextFormField(
                               controller: _poolSizeController,
@@ -275,7 +285,7 @@ class _DailyMemePreferencesScreenState extends State<DailyMemePreferencesScreen>
                       ),
                     ),
                     const SizedBox(height: 16),
-                    
+
                     // Subreddit Selection
                     if (_availableSubreddits.isNotEmpty) ...[
                       Card(
@@ -285,24 +295,29 @@ class _DailyMemePreferencesScreenState extends State<DailyMemePreferencesScreen>
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
                                     'Reddit Sources',
-                                    style: Theme.of(context).textTheme.titleMedium,
+                                    style:
+                                        Theme.of(context).textTheme.titleMedium,
                                   ),
                                   TextButton(
                                     onPressed: () {
                                       setState(() {
-                                        if (_selectedSubreddits.length == _availableSubreddits.length) {
+                                        if (_selectedSubreddits.length ==
+                                            _availableSubreddits.length) {
                                           _selectedSubreddits.clear();
                                         } else {
-                                          _selectedSubreddits = List.from(_availableSubreddits);
+                                          _selectedSubreddits =
+                                              List.from(_availableSubreddits);
                                         }
                                       });
                                     },
                                     child: Text(
-                                      _selectedSubreddits.length == _availableSubreddits.length
+                                      _selectedSubreddits.length ==
+                                              _availableSubreddits.length
                                           ? 'Deselect All'
                                           : 'Select All',
                                     ),
@@ -310,27 +325,29 @@ class _DailyMemePreferencesScreenState extends State<DailyMemePreferencesScreen>
                                 ],
                               ),
                               const Divider(),
-                              ..._availableSubreddits.map((subreddit) => CheckboxListTile(
-                                title: Text('r/$subreddit'),
-                                value: _selectedSubreddits.contains(subreddit),
-                                onChanged: (checked) {
-                                  setState(() {
-                                    if (checked == true) {
-                                      _selectedSubreddits.add(subreddit);
-                                    } else {
-                                      _selectedSubreddits.remove(subreddit);
-                                    }
-                                  });
-                                },
-                                dense: true,
-                              )),
+                              ..._availableSubreddits.map((subreddit) =>
+                                  CheckboxListTile(
+                                    title: Text('r/$subreddit'),
+                                    value:
+                                        _selectedSubreddits.contains(subreddit),
+                                    onChanged: (checked) {
+                                      setState(() {
+                                        if (checked == true) {
+                                          _selectedSubreddits.add(subreddit);
+                                        } else {
+                                          _selectedSubreddits.remove(subreddit);
+                                        }
+                                      });
+                                    },
+                                    dense: true,
+                                  )),
                             ],
                           ),
                         ),
                       ),
                       const SizedBox(height: 16),
                     ],
-                    
+
                     // Lemmy Selection
                     if (_availableLemmy.isNotEmpty) ...[
                       Card(
@@ -340,24 +357,29 @@ class _DailyMemePreferencesScreenState extends State<DailyMemePreferencesScreen>
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
                                     'Lemmy Sources',
-                                    style: Theme.of(context).textTheme.titleMedium,
+                                    style:
+                                        Theme.of(context).textTheme.titleMedium,
                                   ),
                                   TextButton(
                                     onPressed: () {
                                       setState(() {
-                                        if (_selectedLemmy.length == _availableLemmy.length) {
+                                        if (_selectedLemmy.length ==
+                                            _availableLemmy.length) {
                                           _selectedLemmy.clear();
                                         } else {
-                                          _selectedLemmy = List.from(_availableLemmy);
+                                          _selectedLemmy =
+                                              List.from(_availableLemmy);
                                         }
                                       });
                                     },
                                     child: Text(
-                                      _selectedLemmy.length == _availableLemmy.length
+                                      _selectedLemmy.length ==
+                                              _availableLemmy.length
                                           ? 'Deselect All'
                                           : 'Select All',
                                     ),
@@ -365,27 +387,29 @@ class _DailyMemePreferencesScreenState extends State<DailyMemePreferencesScreen>
                                 ],
                               ),
                               const Divider(),
-                              ..._availableLemmy.map((community) => CheckboxListTile(
-                                title: Text(community),
-                                value: _selectedLemmy.contains(community),
-                                onChanged: (checked) {
-                                  setState(() {
-                                    if (checked == true) {
-                                      _selectedLemmy.add(community);
-                                    } else {
-                                      _selectedLemmy.remove(community);
-                                    }
-                                  });
-                                },
-                                dense: true,
-                              )),
+                              ..._availableLemmy
+                                  .map((community) => CheckboxListTile(
+                                        title: Text(community),
+                                        value:
+                                            _selectedLemmy.contains(community),
+                                        onChanged: (checked) {
+                                          setState(() {
+                                            if (checked == true) {
+                                              _selectedLemmy.add(community);
+                                            } else {
+                                              _selectedLemmy.remove(community);
+                                            }
+                                          });
+                                        },
+                                        dense: true,
+                                      )),
                             ],
                           ),
                         ),
                       ),
                       const SizedBox(height: 16),
                     ],
-                    
+
                     // Action Buttons
                     Row(
                       children: [
