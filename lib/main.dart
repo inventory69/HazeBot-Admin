@@ -64,7 +64,7 @@ class HazeBotAdminApp extends StatelessWidget {
                   ),
                   cardTheme: CardThemeData(
                     elevation: 2,
-                    color: lightColorScheme.surfaceContainerHighest,
+                    color: lightColorScheme.surfaceContainer, // Better contrast
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -97,7 +97,7 @@ class HazeBotAdminApp extends StatelessWidget {
                   ),
                   cardTheme: CardThemeData(
                     elevation: 2,
-                    color: darkColorScheme.surfaceContainerHighest,
+                    color: darkColorScheme.surfaceContainer, // Better contrast
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),

@@ -218,7 +218,8 @@ class ApiService {
     debugPrint('Daily meme config response body: ${response.body}');
 
     if (response.statusCode != 200) {
-      throw Exception('Failed to update daily meme configuration: ${response.body}');
+      throw Exception(
+          'Failed to update daily meme configuration: ${response.body}');
     }
   }
 
@@ -359,6 +360,44 @@ class ApiService {
     }
   }
 
+  Future<Map<String, dynamic>> getWelcomeTextsConfig() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/config/welcome_texts'),
+      headers: _headers,
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to load welcome texts configuration');
+    }
+  }
+
+  Future<void> updateWelcomeTextsConfig(Map<String, dynamic> config) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/config/welcome_texts'),
+      headers: _headers,
+      body: jsonEncode(config),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to update welcome texts configuration');
+    }
+  }
+
+  Future<Map<String, dynamic>> resetWelcomeTextsConfig() async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/config/welcome_texts/reset'),
+      headers: _headers,
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to reset welcome texts configuration');
+    }
+  }
+
   Future<Map<String, dynamic>> getRocketLeagueTextsConfig() async {
     final response = await http.get(
       Uri.parse('$baseUrl/config/rocket_league_texts'),
@@ -372,7 +411,8 @@ class ApiService {
     }
   }
 
-  Future<void> updateRocketLeagueTextsConfig(Map<String, dynamic> config) async {
+  Future<void> updateRocketLeagueTextsConfig(
+      Map<String, dynamic> config) async {
     final response = await http.put(
       Uri.parse('$baseUrl/config/rocket_league_texts'),
       headers: _headers,
@@ -510,6 +550,59 @@ class ApiService {
 
     if (response.statusCode != 200) {
       throw Exception('Failed to reset roles configuration');
+    }
+  }
+
+  // ===== LOGS ENDPOINTS =====
+
+  Future<Map<String, dynamic>> getLogs({
+    String? cog,
+    String? level,
+    int limit = 500,
+    String? search,
+  }) async {
+    // Build query parameters
+    final params = <String, String>{
+      'limit': limit.toString(),
+    };
+    if (cog != null) params['cog'] = cog;
+    if (level != null) params['level'] = level;
+    if (search != null && search.isNotEmpty) params['search'] = search;
+
+    final queryString = params.entries
+        .map((e) => '${e.key}=${Uri.encodeComponent(e.value)}')
+        .join('&');
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/logs?$queryString'),
+      headers: _headers,
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else if (response.statusCode == 404) {
+      // Log file not found
+      return {
+        'total': 0,
+        'logs': [],
+        'error': 'Log file not found',
+      };
+    } else {
+      throw Exception('Failed to load logs');
+    }
+  }
+
+  Future<List<String>> getAvailableCogs() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/logs/cogs'),
+      headers: _headers,
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return List<String>.from(data['cogs'] ?? []);
+    } else {
+      throw Exception('Failed to load available cogs');
     }
   }
 }

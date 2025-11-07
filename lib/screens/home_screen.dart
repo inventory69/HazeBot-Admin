@@ -11,6 +11,7 @@ import 'config/daily_meme_config_screen.dart';
 import 'config/daily_meme_preferences_screen.dart';
 import 'config/rocket_league_config_screen.dart';
 import 'config/texts_config_screen.dart';
+import 'logs_screen.dart';
 import 'settings_screen.dart';
 import 'test_screen.dart';
 
@@ -64,7 +65,7 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         _reloadCounter++;
       });
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Row(
@@ -92,9 +93,11 @@ class _HomeScreenState extends State<HomeScreen> {
       RolesConfigScreen(key: ValueKey('roles_$_reloadCounter')),
       MemeConfigScreen(key: ValueKey('meme_$_reloadCounter')),
       DailyMemeConfigScreen(key: ValueKey('daily_meme_$_reloadCounter')),
-      DailyMemePreferencesScreen(key: ValueKey('daily_meme_prefs_$_reloadCounter')),
+      DailyMemePreferencesScreen(
+          key: ValueKey('daily_meme_prefs_$_reloadCounter')),
       RocketLeagueConfigScreen(key: ValueKey('rocket_league_$_reloadCounter')),
       TextsConfigScreen(key: ValueKey('texts_$_reloadCounter')),
+      LogsScreen(key: ValueKey('logs_$_reloadCounter')),
       SettingsScreen(key: ValueKey('settings_$_reloadCounter')),
       TestScreen(key: ValueKey('test_$_reloadCounter')),
     ];
@@ -173,19 +176,29 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         NavigationRailDestination(
                           icon: const Icon(Icons.schedule),
-                          label: Text('Daily\nMeme', textAlign: TextAlign.center, style: const TextStyle(fontSize: 11)),
+                          label: Text('Daily\nMeme',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(fontSize: 11)),
                         ),
                         NavigationRailDestination(
                           icon: const Icon(Icons.tune),
-                          label: Text('Meme\nPrefs', textAlign: TextAlign.center, style: const TextStyle(fontSize: 11)),
+                          label: Text('Meme\nPrefs',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(fontSize: 11)),
                         ),
                         NavigationRailDestination(
                           icon: const Icon(Icons.sports_esports),
-                          label: Text('Rocket\nLeague', textAlign: TextAlign.center, style: const TextStyle(fontSize: 11)),
+                          label: Text('Rocket\nLeague',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(fontSize: 11)),
                         ),
                         NavigationRailDestination(
                           icon: const Icon(Icons.text_fields),
                           label: Text('Texts', textAlign: TextAlign.center),
+                        ),
+                        NavigationRailDestination(
+                          icon: const Icon(Icons.description),
+                          label: Text('Logs', textAlign: TextAlign.center),
                         ),
                         NavigationRailDestination(
                           icon: const Icon(Icons.settings),
@@ -553,16 +566,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
               // Quick Tips
               Card(
-                color: Theme.of(context)
-                    .colorScheme
-                    .surfaceVariant
-                    .withOpacity(0.3),
+                color: Theme.of(context).colorScheme.primaryContainer,
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Row(
                     children: [
                       Icon(Icons.lightbulb_outline,
-                          color: Theme.of(context).colorScheme.primary,
+                          color:
+                              Theme.of(context).colorScheme.onPrimaryContainer,
                           size: 28),
                       const SizedBox(width: 16),
                       Expanded(
@@ -576,12 +587,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   .titleMedium
                                   ?.copyWith(
                                     fontWeight: FontWeight.bold,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onPrimaryContainer,
                                   ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               'Use the navigation menu to configure bot settings. Changes are saved in real-time!',
-                              style: Theme.of(context).textTheme.bodyMedium,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onPrimaryContainer,
+                                  ),
                             ),
                           ],
                         ),
@@ -652,8 +673,11 @@ class _InfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Card(
       elevation: 1,
+      // Uses theme default (surfaceContainer) for better contrast
       child: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Column(
@@ -667,7 +691,7 @@ class _InfoCard extends StatelessWidget {
                   child: Text(
                     title,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.grey[600],
+                          color: colorScheme.onSurfaceVariant,
                           fontWeight: FontWeight.w500,
                         ),
                     maxLines: 1,
@@ -681,6 +705,7 @@ class _InfoCard extends StatelessWidget {
               value,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
+                    color: colorScheme.onSurface,
                   ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -690,7 +715,7 @@ class _InfoCard extends StatelessWidget {
               Text(
                 subtitle!,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.grey[500],
+                      color: colorScheme.onSurfaceVariant.withOpacity(0.8),
                     ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,

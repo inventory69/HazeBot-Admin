@@ -52,10 +52,17 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
         text: config['fuzzy_matching_threshold']?.toString() ?? '',
       );
 
-      // Load color
+      // Load color (RGB from backend -> add alpha channel for Flutter)
       if (config['pink_color'] != null) {
-        _pinkColor = Color(config['pink_color'] as int);
+        final rgbValue = config['pink_color'] as int;
+        // Add full opacity alpha channel (0xFF) to RGB value
+        _pinkColor = Color(0xFF000000 | rgbValue);
       }
+
+      // Load footer text
+      _controllers['embed_footer_text'] = TextEditingController(
+        text: config['embed_footer_text']?.toString() ?? '',
+      );
 
       // Load role names
       if (config['role_names'] != null) {
@@ -99,7 +106,9 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
         'message_cooldown': int.parse(_controllers['message_cooldown']!.text),
         'fuzzy_matching_threshold':
             double.parse(_controllers['fuzzy_matching_threshold']!.text),
-        'pink_color': _pinkColor.value,
+        'pink_color':
+            _pinkColor.value & 0xFFFFFF, // Remove alpha channel (RGB only)
+        'embed_footer_text': _controllers['embed_footer_text']!.text,
         'role_names': _roleNames,
       };
 
@@ -647,6 +656,80 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
                                   style: TextStyle(
                                     fontSize: isMobile ? 11 : 12,
                                     color: Colors.purple[700],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(height: isMobile ? 12 : 16),
+
+                // Embed Footer Text Card
+                Card(
+                  child: Padding(
+                    padding: EdgeInsets.all(cardPadding),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.text_fields,
+                                color: Colors.teal, size: isMobile ? 20 : 24),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Embed Footer Text',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.copyWith(
+                                      fontSize: isMobile ? 18 : null,
+                                    ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: isMobile ? 12 : 16),
+                        TextFormField(
+                          controller: _controllers['embed_footer_text'],
+                          decoration: InputDecoration(
+                            labelText: 'Footer Text',
+                            hintText: 'Powered by Haze World 💖',
+                            prefixIcon: const Icon(Icons.notes),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Footer text cannot be empty';
+                            }
+                            return null;
+                          },
+                        ),
+                        SizedBox(height: isMobile ? 8 : 12),
+                        Container(
+                          padding: EdgeInsets.all(isMobile ? 10 : 12),
+                          decoration: BoxDecoration(
+                            color: Colors.teal.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: Colors.teal.withValues(alpha: 0.3),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.info_outline,
+                                  size: isMobile ? 18 : 20,
+                                  color: Colors.teal[700]),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'This text appears in the footer of all bot embeds.',
+                                  style: TextStyle(
+                                    fontSize: isMobile ? 11 : 12,
+                                    color: Colors.teal[700],
                                   ),
                                 ),
                               ),

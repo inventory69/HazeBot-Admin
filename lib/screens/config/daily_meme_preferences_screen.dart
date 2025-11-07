@@ -95,7 +95,8 @@ class _DailyMemePreferencesScreenState
     if (_selectedSubreddits.isEmpty && _selectedLemmy.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('At least one source (Reddit or Lemmy) must be selected'),
+          content:
+              Text('At least one source (Reddit or Lemmy) must be selected'),
           backgroundColor: Colors.orange,
         ),
       );
@@ -485,7 +486,8 @@ class _DailyMemePreferencesScreenState
                                                     .add(subreddit);
                                               } else {
                                                 // Don't allow deselecting if it's the last source
-                                                if (_selectedSubreddits.length > 1 ||
+                                                if (_selectedSubreddits.length >
+                                                        1 ||
                                                     _selectedLemmy.isNotEmpty) {
                                                   _selectedSubreddits
                                                       .remove(subreddit);
@@ -603,7 +605,8 @@ class _DailyMemePreferencesScreenState
                                           } else {
                                             // Don't allow deselecting if it's the last source
                                             if (_selectedLemmy.length > 1 ||
-                                                _selectedSubreddits.isNotEmpty) {
+                                                _selectedSubreddits
+                                                    .isNotEmpty) {
                                               _selectedLemmy.remove(community);
                                             } else {
                                               ScaffoldMessenger.of(context)
@@ -611,7 +614,8 @@ class _DailyMemePreferencesScreenState
                                                 const SnackBar(
                                                   content: Text(
                                                       'At least one source must be selected'),
-                                                  duration: Duration(seconds: 2),
+                                                  duration:
+                                                      Duration(seconds: 2),
                                                 ),
                                               );
                                             }

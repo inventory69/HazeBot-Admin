@@ -38,21 +38,21 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
 
   Future<void> _initializeData() async {
     setState(() => _isLoading = true);
-    
+
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
-      
+
       // Load all data in parallel
       final results = await Future.wait([
         authService.apiService.getGuildChannels(),
         authService.apiService.getGuildRoles(),
         authService.apiService.getDailyMemeConfig(),
       ]);
-      
+
       final channels = results[0] as List<Map<String, dynamic>>;
       final roles = results[1] as List<Map<String, dynamic>>;
       final config = results[2] as Map<String, dynamic>;
-      
+
       final configChannelId = config['channel_id']?.toString();
       final configRoleId = config['role_id']?.toString();
 
@@ -67,7 +67,8 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
 
           // Load meme sources
           _subreddits = List<String>.from(config['available_subreddits'] ?? []);
-          _lemmyCommunities = List<String>.from(config['available_lemmy'] ?? []);
+          _lemmyCommunities =
+              List<String>.from(config['available_lemmy'] ?? []);
 
           // Only set selected IDs if they exist in the loaded lists
           if (configChannelId != null &&
@@ -78,7 +79,7 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
               _roles.any((r) => r['id'] == configRoleId)) {
             _selectedRoleId = configRoleId;
           }
-          
+
           _isLoading = false;
         });
       }

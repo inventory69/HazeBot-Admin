@@ -50,6 +50,10 @@ class _TextsConfigScreenState extends State<TextsConfigScreen> {
       // Load Welcome Config
       final welcomeConfig = await authService.apiService.getWelcomeConfig();
 
+      // Load Welcome Texts Config
+      final welcomeTextsConfig =
+          await authService.apiService.getWelcomeTextsConfig();
+
       // Load Rocket League Texts Config
       final rlTextsConfig =
           await authService.apiService.getRocketLeagueTextsConfig();
@@ -60,8 +64,8 @@ class _TextsConfigScreenState extends State<TextsConfigScreen> {
           _rulesTextController.text = welcomeConfig['rules_text'] ?? '';
           _welcomeMessages =
               List<String>.from(welcomeConfig['welcome_messages'] ?? []);
-          _welcomeButtonReplies =
-              List<String>.from(welcomeConfig['welcome_button_replies'] ?? []);
+          _welcomeButtonReplies = List<String>.from(
+              welcomeTextsConfig['welcome_button_replies'] ?? []);
 
           // Rocket League
           final promotionConfig = rlTextsConfig['promotion_config'] ?? {};
@@ -93,13 +97,18 @@ class _TextsConfigScreenState extends State<TextsConfigScreen> {
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
 
-      final config = {
+      // Save welcome config (rules + messages)
+      final welcomeConfig = {
         'rules_text': _rulesTextController.text,
         'welcome_messages': _welcomeMessages,
+      };
+      await authService.apiService.updateWelcomeConfig(welcomeConfig);
+
+      // Save welcome texts (button replies)
+      final welcomeTextsConfig = {
         'welcome_button_replies': _welcomeButtonReplies,
       };
-
-      await authService.apiService.updateWelcomeConfig(config);
+      await authService.apiService.updateWelcomeTextsConfig(welcomeTextsConfig);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
