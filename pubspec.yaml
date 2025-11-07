@@ -38,6 +38,9 @@ dependencies:
   
   # Color Picker
   flex_color_picker: ^3.4.1
+  
+  # URL Launcher
+  url_launcher: ^6.2.0
 
 dev_dependencies:
   flutter_test:
