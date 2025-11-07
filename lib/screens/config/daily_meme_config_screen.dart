@@ -37,9 +37,59 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
   }
 
   Future<void> _initializeData() async {
-    // Load guild data first, then config (so dropdown values can be validated)
-    await _loadGuildData();
-    await _loadConfig();
+    setState(() => _isLoading = true);
+    
+    try {
+      final authService = Provider.of<AuthService>(context, listen: false);
+      
+      // Load all data in parallel
+      final results = await Future.wait([
+        authService.apiService.getGuildChannels(),
+        authService.apiService.getGuildRoles(),
+        authService.apiService.getDailyMemeConfig(),
+      ]);
+      
+      final channels = results[0] as List<Map<String, dynamic>>;
+      final roles = results[1] as List<Map<String, dynamic>>;
+      final config = results[2] as Map<String, dynamic>;
+      
+      final configChannelId = config['channel_id']?.toString();
+      final configRoleId = config['role_id']?.toString();
+
+      if (mounted) {
+        setState(() {
+          _channels = channels;
+          _roles = roles;
+          _enabled = config['enabled'] ?? true;
+          _hourController.text = (config['hour'] ?? 12).toString();
+          _minuteController.text = (config['minute'] ?? 0).toString();
+          _allowNsfw = config['allow_nsfw'] ?? true;
+
+          // Load meme sources
+          _subreddits = List<String>.from(config['available_subreddits'] ?? []);
+          _lemmyCommunities = List<String>.from(config['available_lemmy'] ?? []);
+
+          // Only set selected IDs if they exist in the loaded lists
+          if (configChannelId != null &&
+              _channels.any((ch) => ch['id'] == configChannelId)) {
+            _selectedChannelId = configChannelId;
+          }
+          if (configRoleId != null &&
+              _roles.any((r) => r['id'] == configRoleId)) {
+            _selectedRoleId = configRoleId;
+          }
+          
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading configuration: $e')),
+        );
+      }
+    }
   }
 
   @override
@@ -47,66 +97,6 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
     _hourController.dispose();
     _minuteController.dispose();
     super.dispose();
-  }
-
-  Future<void> _loadGuildData() async {
-    try {
-      final authService = Provider.of<AuthService>(context, listen: false);
-      final channels = await authService.apiService.getGuildChannels();
-      final roles = await authService.apiService.getGuildRoles();
-
-      setState(() {
-        _channels = channels;
-        _roles = roles;
-      });
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading guild data: $e')),
-        );
-      }
-    }
-  }
-
-  Future<void> _loadConfig() async {
-    setState(() => _isLoading = true);
-
-    try {
-      final authService = Provider.of<AuthService>(context, listen: false);
-      final config = await authService.apiService.getDailyMemeConfig();
-
-      final configChannelId = config['channel_id']?.toString();
-      final configRoleId = config['ping_role_id']?.toString();
-
-      setState(() {
-        _enabled = config['enabled'] ?? true;
-        _hourController.text = (config['hour'] ?? 12).toString();
-        _minuteController.text = (config['minute'] ?? 0).toString();
-        _allowNsfw = config['allow_nsfw'] ?? true;
-
-        // Load meme sources
-        _subreddits = List<String>.from(config['available_subreddits'] ?? []);
-        _lemmyCommunities = List<String>.from(config['available_lemmy'] ?? []);
-
-        // Only set selected IDs if they exist in the loaded lists
-        if (configChannelId != null &&
-            _channels.any((ch) => ch['id'] == configChannelId)) {
-          _selectedChannelId = configChannelId;
-        }
-        if (configRoleId != null &&
-            _roles.any((r) => r['id'] == configRoleId)) {
-          _selectedRoleId = configRoleId;
-        }
-      });
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading configuration: $e')),
-        );
-      }
-    } finally {
-      setState(() => _isLoading = false);
-    }
   }
 
   Future<void> _saveConfig() async {
@@ -123,7 +113,7 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
         'minute': int.parse(_minuteController.text),
         'channel_id':
             _selectedChannelId != null ? int.parse(_selectedChannelId!) : null,
-        'ping_role_id':
+        'role_id': // Changed from ping_role_id to match backend
             _selectedRoleId != null ? int.parse(_selectedRoleId!) : null,
         'allow_nsfw': _allowNsfw,
         'subreddits': _subreddits,
@@ -184,7 +174,7 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
       await authService.apiService.resetDailyMemeConfig();
-      await _loadConfig();
+      await _initializeData();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -406,6 +396,36 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                                         ),
                                   ),
                                 ],
+                              ),
+                              SizedBox(height: isMobile ? 8 : 12),
+                              // Info box about scheduling
+                              Container(
+                                padding: EdgeInsets.all(isMobile ? 10 : 12),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.withValues(alpha: 0.1),
+                                  border: Border.all(
+                                    color: Colors.blue.withValues(alpha: 0.3),
+                                  ),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Icon(Icons.info_outline,
+                                        size: isMobile ? 18 : 20,
+                                        color: Colors.blue),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        'The daily meme will run once per day at the specified time. If you change the time to earlier than the current time, it will run tomorrow at that time.',
+                                        style: TextStyle(
+                                          fontSize: isMobile ? 12 : 13,
+                                          color: Colors.blue.shade900,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                               SizedBox(height: isMobile ? 12 : 16),
                               Row(

@@ -64,17 +64,18 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Card(
               child: Padding(
                 padding: const EdgeInsets.all(32.0),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Icon(
-                        Icons.admin_panel_settings,
-                        size: 80,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
+                child: AutofillGroup(
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Icon(
+                          Icons.admin_panel_settings,
+                          size: 80,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
                       const SizedBox(height: 16),
                       Text(
                         'HazeBot Admin',
@@ -182,6 +183,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             : const Text('Login'),
                       ),
                     ],
+                  ),
                   ),
                 ),
               ),

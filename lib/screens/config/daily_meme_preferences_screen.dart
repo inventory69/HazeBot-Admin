@@ -57,15 +57,25 @@ class _DailyMemePreferencesScreenState
             List<String>.from(config['available_subreddits'] ?? []);
         _availableLemmy = List<String>.from(config['available_lemmy'] ?? []);
 
-        // Load selected sources (empty = all selected)
-        final useSubreddits = List<String>.from(config['use_subreddits'] ?? []);
-        final useLemmy = List<String>.from(config['use_lemmy'] ?? []);
+        // Load selected sources
+        // Note: Empty list means none selected, not all selected
+        final useSubreddits = config['use_subreddits'];
+        final useLemmy = config['use_lemmy'];
 
-        _selectedSubreddits = useSubreddits.isEmpty
-            ? List.from(_availableSubreddits)
-            : useSubreddits;
-        _selectedLemmy =
-            useLemmy.isEmpty ? List.from(_availableLemmy) : useLemmy;
+        // If use_subreddits is null or not present, default to all
+        // If it's an empty list [], keep it empty
+        // If it has items, use those items
+        if (useSubreddits == null) {
+          _selectedSubreddits = List.from(_availableSubreddits);
+        } else {
+          _selectedSubreddits = List<String>.from(useSubreddits);
+        }
+
+        if (useLemmy == null) {
+          _selectedLemmy = List.from(_availableLemmy);
+        } else {
+          _selectedLemmy = List<String>.from(useLemmy);
+        }
       });
     } catch (e) {
       if (mounted) {
@@ -81,6 +91,17 @@ class _DailyMemePreferencesScreenState
   Future<void> _savePreferences() async {
     if (!_formKey.currentState!.validate()) return;
 
+    // Validation: At least one source must be selected
+    if (_selectedSubreddits.isEmpty && _selectedLemmy.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('At least one source (Reddit or Lemmy) must be selected'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
 
     try {
@@ -90,14 +111,9 @@ class _DailyMemePreferencesScreenState
         'min_score': _minScore.toInt(),
         'max_sources': int.parse(_maxSourcesController.text),
         'pool_size': int.parse(_poolSizeController.text),
-        // If all selected, send empty array (= use all)
-        'use_subreddits':
-            _selectedSubreddits.length == _availableSubreddits.length
-                ? []
-                : _selectedSubreddits,
-        'use_lemmy': _selectedLemmy.length == _availableLemmy.length
-            ? []
-            : _selectedLemmy,
+        // Send the selected lists (empty list = none, full list = all, partial = those selected)
+        'use_subreddits': _selectedSubreddits,
+        'use_lemmy': _selectedLemmy,
       };
 
       await authService.apiService.updateDailyMemeConfig(config);
@@ -468,8 +484,22 @@ class _DailyMemePreferencesScreenState
                                                 _selectedSubreddits
                                                     .add(subreddit);
                                               } else {
-                                                _selectedSubreddits
-                                                    .remove(subreddit);
+                                                // Don't allow deselecting if it's the last source
+                                                if (_selectedSubreddits.length > 1 ||
+                                                    _selectedLemmy.isNotEmpty) {
+                                                  _selectedSubreddits
+                                                      .remove(subreddit);
+                                                } else {
+                                                  ScaffoldMessenger.of(context)
+                                                      .showSnackBar(
+                                                    const SnackBar(
+                                                      content: Text(
+                                                          'At least one source must be selected'),
+                                                      duration:
+                                                          Duration(seconds: 2),
+                                                    ),
+                                                  );
+                                                }
                                               }
                                             });
                                           },
@@ -571,7 +601,20 @@ class _DailyMemePreferencesScreenState
                                           if (checked == true) {
                                             _selectedLemmy.add(community);
                                           } else {
-                                            _selectedLemmy.remove(community);
+                                            // Don't allow deselecting if it's the last source
+                                            if (_selectedLemmy.length > 1 ||
+                                                _selectedSubreddits.isNotEmpty) {
+                                              _selectedLemmy.remove(community);
+                                            } else {
+                                              ScaffoldMessenger.of(context)
+                                                  .showSnackBar(
+                                                const SnackBar(
+                                                  content: Text(
+                                                      'At least one source must be selected'),
+                                                  duration: Duration(seconds: 2),
+                                                ),
+                                              );
+                                            }
                                           }
                                         });
                                       },

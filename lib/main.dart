@@ -64,6 +64,7 @@ class HazeBotAdminApp extends StatelessWidget {
                   ),
                   cardTheme: CardThemeData(
                     elevation: 2,
+                    color: lightColorScheme.surfaceContainerHighest,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -73,6 +74,7 @@ class HazeBotAdminApp extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     filled: true,
+                    fillColor: lightColorScheme.surfaceContainerHighest,
                   ),
                   elevatedButtonTheme: ElevatedButtonThemeData(
                     style: ElevatedButton.styleFrom(
@@ -95,6 +97,7 @@ class HazeBotAdminApp extends StatelessWidget {
                   ),
                   cardTheme: CardThemeData(
                     elevation: 2,
+                    color: darkColorScheme.surfaceContainerHighest,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -104,6 +107,7 @@ class HazeBotAdminApp extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     filled: true,
+                    fillColor: darkColorScheme.surfaceContainerHighest,
                   ),
                   elevatedButtonTheme: ElevatedButtonThemeData(
                     style: ElevatedButton.styleFrom(

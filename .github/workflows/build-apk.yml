@@ -112,51 +112,49 @@ jobs:
           path: ${{ env.apk_path }}
           retention-days: 30
       
-      - name: Get commit SHA
+      - name: Get commit info
         if: github.ref == 'refs/heads/main'
-        run: echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+        run: |
+          echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          echo "COMMIT_MSG=$(git log -1 --pretty=%B)" >> $GITHUB_ENV
+          echo "COMMIT_DATE=$(git log -1 --format=%cd --date=iso-strict)" >> $GITHUB_ENV
       
-      - name: Create Versioned Release
+      - name: Create Tag and Release
         if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ env.VERSION_TAG }}
-          name: Test Build ${{ env.VERSION_TAG }}
+          name: ${{ env.VERSION_TAG }}
           files: ${{ env.apk_path }}
           draft: false
           prerelease: false
           generate_release_notes: false
           body: |
-            ## 🔥 Test Build
+            ## Build ${{ env.BUILD_NUMBER }}
             
             **Version:** ${{ env.VERSION_NAME }}+${{ env.BUILD_NUMBER }}
-            **Build Date:** ${{ github.event.head_commit.timestamp }}
+            **Build Date:** ${{ env.COMMIT_DATE }}
             **Commit:** ${{ env.SHORT_SHA }}
-            **Commit Message:** ${{ github.event.head_commit.message }}
+            
+            ### Changes
+            ${{ env.COMMIT_MSG }}
             
             ---
             
-            ⚠️ **This is a TEST build** configured with test API URL.
-            
             ### 📦 Download
             
-            👉 **Download:** `hazebot-admin-test-release.apk` below
+            Download `hazebot-admin-test-release.apk` below
             
             ### 📱 Installation
             
             1. Download the APK from the assets below
             2. Enable "Install from unknown sources" on your Android device
             3. Install the APK
-            4. Login with provided credentials
-            
-            ### ⚙️ Configuration
-            
-            - **Environment:** TEST
-            - API configured for test server
+            4. Login with your credentials
             
             ---
             
-            **Note:** Each push to main creates a new versioned release for easy tracking.
+            ⚠️ **Test build** configured with test API URL
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       

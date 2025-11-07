@@ -207,14 +207,18 @@ class ApiService {
   }
 
   Future<void> updateDailyMemeConfig(Map<String, dynamic> config) async {
+    debugPrint('Sending daily meme config: ${jsonEncode(config)}');
     final response = await http.post(
       Uri.parse('$baseUrl/daily-meme/config'),
       headers: _headers,
       body: jsonEncode(config),
     );
 
+    debugPrint('Daily meme config response status: ${response.statusCode}');
+    debugPrint('Daily meme config response body: ${response.body}');
+
     if (response.statusCode != 200) {
-      throw Exception('Failed to update daily meme configuration');
+      throw Exception('Failed to update daily meme configuration: ${response.body}');
     }
   }
 

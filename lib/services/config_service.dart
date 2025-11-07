@@ -10,10 +10,12 @@ class ConfigService extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  Future<void> loadConfig(ApiService apiService) async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
+  Future<void> loadConfig(ApiService apiService, {bool silent = false}) async {
+    if (!silent) {
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+    }
 
     try {
       _config = await apiService.getConfig();
@@ -25,10 +27,14 @@ class ConfigService extends ChangeNotifier {
     } catch (e, stackTrace) {
       debugPrint('Error loading config: $e');
       debugPrint('Stack trace: $stackTrace');
-      _error = e.toString();
+      if (!silent) {
+        _error = e.toString();
+      }
       _config = null;
     } finally {
-      _isLoading = false;
+      if (!silent) {
+        _isLoading = false;
+      }
       notifyListeners();
     }
   }

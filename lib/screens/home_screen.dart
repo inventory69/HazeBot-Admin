@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
@@ -210,8 +211,61 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  Timer? _refreshTimer;
+  bool _autoReload = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Load config on init
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadConfig();
+    });
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
+  }
+
+  void _toggleAutoReload() {
+    setState(() {
+      _autoReload = !_autoReload;
+      if (_autoReload) {
+        // Start auto-refresh timer (every 5 seconds)
+        _refreshTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+          if (mounted) {
+            _loadConfigSilently();
+          }
+        });
+      } else {
+        // Stop timer
+        _refreshTimer?.cancel();
+        _refreshTimer = null;
+      }
+    });
+  }
+
+  Future<void> _loadConfig() async {
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final configService = Provider.of<ConfigService>(context, listen: false);
+    await configService.loadConfig(authService.apiService);
+  }
+
+  Future<void> _loadConfigSilently() async {
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final configService = Provider.of<ConfigService>(context, listen: false);
+    await configService.loadConfig(authService.apiService, silent: true);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -288,6 +342,36 @@ class DashboardScreen extends StatelessWidget {
                   Text(
                     'Dashboard',
                     style: Theme.of(context).textTheme.headlineLarge,
+                  ),
+                  const Spacer(),
+                  // Auto-reload toggle
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.autorenew,
+                        size: 20,
+                        color: _autoReload
+                            ? Theme.of(context).colorScheme.primary
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Auto-reload',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: _autoReload
+                                  ? Theme.of(context).colorScheme.primary
+                                  : Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
+                            ),
+                      ),
+                      const SizedBox(width: 8),
+                      Switch(
+                        value: _autoReload,
+                        onChanged: (_) => _toggleAutoReload(),
+                      ),
+                    ],
                   ),
                 ],
               ),
