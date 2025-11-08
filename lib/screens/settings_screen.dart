@@ -106,7 +106,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             subtitle: const Text('github.com/inventory69/HazeBot-Admin'),
             trailing: const Icon(Icons.open_in_new),
             onTap: () async {
-              final url = Uri.parse('https://github.com/inventory69/HazeBot-Admin');
+              final url =
+                  Uri.parse('https://github.com/inventory69/HazeBot-Admin');
               if (await canLaunchUrl(url)) {
                 await launchUrl(url, mode: LaunchMode.externalApplication);
               }

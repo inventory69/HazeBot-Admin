@@ -13,9 +13,82 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
   bool _isLoadingRandomMeme = false;
   bool _isLoadingDailyMeme = false;
   bool _isSendingMeme = false;
+  bool _isLoadingSources = false;
+  bool _isLoadingSourceMeme = false;
   Map<String, dynamic>? _randomMemeData;
+  Map<String, dynamic>? _sourceMemeData;
   String? _dailyMemeResult;
   String? _errorMessage;
+  List<String> _subreddits = [];
+  List<String> _lemmyCommunities = [];
+  String? _selectedSource;
+  final TextEditingController _sourceController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMemeSources();
+  }
+
+  @override
+  void dispose() {
+    _sourceController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadMemeSources() async {
+    setState(() {
+      _isLoadingSources = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final result = await authService.apiService.getMemeSources();
+
+      setState(() {
+        _subreddits = List<String>.from(result['sources']['subreddits'] ?? []);
+        _lemmyCommunities = List<String>.from(result['sources']['lemmy'] ?? []);
+        _isLoadingSources = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Error loading meme sources: $e';
+        _isLoadingSources = false;
+      });
+    }
+  }
+
+  Future<void> _getMemeFromSource() async {
+    final source = _sourceController.text.trim();
+    if (source.isEmpty) {
+      setState(() {
+        _errorMessage = 'Please enter a source (subreddit or Lemmy community)';
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoadingSourceMeme = true;
+      _errorMessage = null;
+      _sourceMemeData = null;
+    });
+
+    try {
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final result = await authService.apiService.getMemeFromSource(source);
+
+      setState(() {
+        _sourceMemeData = result['meme'];
+        _isLoadingSourceMeme = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Error getting meme from source: $e';
+        _isLoadingSourceMeme = false;
+      });
+    }
+  }
 
   Future<void> _getRandomMeme() async {
     setState(() {
@@ -40,9 +113,7 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
     }
   }
 
-  Future<void> _sendMemeToDiscord() async {
-    if (_randomMemeData == null) return;
-
+  Future<void> _sendMemeToDiscord(Map<String, dynamic> memeData) async {
     setState(() {
       _isSendingMeme = true;
       _errorMessage = null;
@@ -50,8 +121,7 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
 
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
-      final result =
-          await authService.apiService.sendMemeToDiscord(_randomMemeData!);
+      final result = await authService.apiService.sendMemeToDiscord(memeData);
 
       setState(() {
         _isSendingMeme = false;
@@ -423,7 +493,8 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                                           child: FilledButton.icon(
                                             onPressed: _isSendingMeme
                                                 ? null
-                                                : _sendMemeToDiscord,
+                                                : () => _sendMemeToDiscord(
+                                                    _randomMemeData!),
                                             icon: _isSendingMeme
                                                 ? const SizedBox(
                                                     width: 20,
@@ -448,6 +519,324 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                                         const SizedBox(width: 12),
                                         FilledButton.tonalIcon(
                                           onPressed: _getRandomMeme,
+                                          icon: const Icon(Icons.refresh),
+                                          label: const Text('New Meme'),
+                                          style: FilledButton.styleFrom(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 20, vertical: 14),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+              SizedBox(height: isMobile ? 16 : 24),
+
+              // Meme from Source Card
+              Card(
+                elevation: 2,
+                child: Padding(
+                  padding: EdgeInsets.all(isMobile ? 16.0 : 24.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: EdgeInsets.all(isMobile ? 10 : 12),
+                            decoration: BoxDecoration(
+                              color: Colors.teal.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(
+                              Icons.explore,
+                              color: Colors.teal,
+                              size: isMobile ? 24 : 28,
+                            ),
+                          ),
+                          SizedBox(width: isMobile ? 12 : 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Meme from Source',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleLarge
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: isMobile ? 18 : null,
+                                      ),
+                                ),
+                                SizedBox(height: isMobile ? 2 : 4),
+                                Text(
+                                  'Fetch a meme from a specific subreddit or Lemmy community',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurfaceVariant,
+                                        fontSize: isMobile ? 12 : null,
+                                      ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        'Available Sources',
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                      ),
+                      const SizedBox(height: 12),
+                      if (_isLoadingSources)
+                        const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(20.0),
+                            child: CircularProgressIndicator(),
+                          ),
+                        )
+                      else ...[
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            ..._subreddits.map((sub) => ActionChip(
+                                  avatar: const Icon(Icons.reddit, size: 16),
+                                  label: Text('r/$sub'),
+                                  onPressed: () {
+                                    setState(() {
+                                      _sourceController.text = sub;
+                                    });
+                                  },
+                                )),
+                            ..._lemmyCommunities.map((comm) => ActionChip(
+                                  avatar: const Icon(Icons.public, size: 16),
+                                  label: Text(comm),
+                                  onPressed: () {
+                                    setState(() {
+                                      _sourceController.text = comm;
+                                    });
+                                  },
+                                )),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        TextField(
+                          controller: _sourceController,
+                          decoration: InputDecoration(
+                            labelText: 'Source',
+                            hintText: 'e.g., memes or lemmy.world@memes',
+                            prefixIcon: const Icon(Icons.source),
+                            border: const OutlineInputBorder(),
+                            helperText:
+                                'Enter a subreddit name or Lemmy community (instance@community)',
+                          ),
+                          onSubmitted: (_) => _getMemeFromSource(),
+                        ),
+                        const SizedBox(height: 16),
+                        FilledButton.icon(
+                          onPressed:
+                              _isLoadingSourceMeme ? null : _getMemeFromSource,
+                          icon: _isLoadingSourceMeme
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Icon(Icons.download),
+                          label: Text(_isLoadingSourceMeme
+                              ? 'Fetching...'
+                              : 'Fetch Meme'),
+                          style: FilledButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 24, vertical: 16),
+                          ),
+                        ),
+                      ],
+                      if (_sourceMemeData != null) ...[
+                        const SizedBox(height: 24),
+                        const Divider(),
+                        const SizedBox(height: 24),
+                        Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .outline
+                                  .withOpacity(0.2),
+                            ),
+                          ),
+                          clipBehavior: Clip.antiAlias,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Image.network(
+                                _sourceMemeData!['url'],
+                                width: double.infinity,
+                                fit: BoxFit.contain,
+                                loadingBuilder:
+                                    (context, child, loadingProgress) {
+                                  if (loadingProgress == null) return child;
+                                  return Container(
+                                    height: 200,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .surfaceContainerHighest,
+                                    child: Center(
+                                      child: CircularProgressIndicator(
+                                        value: loadingProgress
+                                                    .expectedTotalBytes !=
+                                                null
+                                            ? loadingProgress
+                                                    .cumulativeBytesLoaded /
+                                                loadingProgress
+                                                    .expectedTotalBytes!
+                                            : null,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    height: 200,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .errorContainer,
+                                    child: Center(
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Icon(Icons.broken_image,
+                                              size: 48,
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .error),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            'Failed to load image',
+                                            style: TextStyle(
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .onErrorContainer,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(20),
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .surfaceContainerHighest,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      _sourceMemeData!['title'] ?? 'Untitled',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleLarge
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                      maxLines: 3,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Wrap(
+                                      spacing: 8,
+                                      runSpacing: 8,
+                                      children: [
+                                        _buildInfoChip(
+                                          context,
+                                          icon: Icons.forum,
+                                          label:
+                                              _sourceMemeData!['subreddit'] ??
+                                                  'Unknown',
+                                          color: Colors.deepOrange,
+                                        ),
+                                        _buildInfoChip(
+                                          context,
+                                          icon: Icons.person,
+                                          label:
+                                              'u/${_sourceMemeData!['author'] ?? 'Unknown'}',
+                                          color: Colors.blue,
+                                        ),
+                                        _buildInfoChip(
+                                          context,
+                                          icon: Icons.arrow_upward,
+                                          label:
+                                              '${_sourceMemeData!['score'] ?? 0} upvotes',
+                                          color: Colors.green,
+                                        ),
+                                        if (_sourceMemeData!['nsfw'] == true)
+                                          _buildInfoChip(
+                                            context,
+                                            icon: Icons.warning,
+                                            label: 'NSFW',
+                                            color: Colors.red,
+                                          ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 20),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: FilledButton.icon(
+                                            onPressed: _isSendingMeme
+                                                ? null
+                                                : () => _sendMemeToDiscord(
+                                                    _sourceMemeData!),
+                                            icon: _isSendingMeme
+                                                ? const SizedBox(
+                                                    width: 20,
+                                                    height: 20,
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                      strokeWidth: 2,
+                                                      color: Colors.white,
+                                                    ),
+                                                  )
+                                                : const Icon(Icons.send),
+                                            label: Text(_isSendingMeme
+                                                ? 'Sending...'
+                                                : 'Send to Discord'),
+                                            style: FilledButton.styleFrom(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      vertical: 14),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        FilledButton.tonalIcon(
+                                          onPressed: _getMemeFromSource,
                                           icon: const Icon(Icons.refresh),
                                           label: const Text('New Meme'),
                                           style: FilledButton.styleFrom(
@@ -705,6 +1094,13 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                         ],
                       ),
                       const SizedBox(height: 16),
+                      _buildInfoRow(
+                        context,
+                        icon: Icons.explore,
+                        text:
+                            'Meme from Source lets you test fetching from a specific subreddit or Lemmy community',
+                      ),
+                      const SizedBox(height: 12),
                       _buildInfoRow(
                         context,
                         icon: Icons.shuffle,

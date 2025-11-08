@@ -9,6 +9,7 @@ import 'config/roles_config_screen.dart';
 import 'config/meme_config_screen.dart';
 import 'config/daily_meme_config_screen.dart';
 import 'config/daily_meme_preferences_screen.dart';
+import 'config/meme_generator_screen.dart';
 import 'config/rocket_league_config_screen.dart';
 import 'config/texts_config_screen.dart';
 import 'logs_screen.dart';
@@ -95,6 +96,7 @@ class _HomeScreenState extends State<HomeScreen> {
       DailyMemeConfigScreen(key: ValueKey('daily_meme_$_reloadCounter')),
       DailyMemePreferencesScreen(
           key: ValueKey('daily_meme_prefs_$_reloadCounter')),
+      MemeGeneratorScreen(key: ValueKey('meme_generator_$_reloadCounter')),
       RocketLeagueConfigScreen(key: ValueKey('rocket_league_$_reloadCounter')),
       TextsConfigScreen(key: ValueKey('texts_$_reloadCounter')),
       LogsScreen(key: ValueKey('logs_$_reloadCounter')),
@@ -183,6 +185,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         NavigationRailDestination(
                           icon: const Icon(Icons.tune),
                           label: Text('Meme\nPrefs',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(fontSize: 11)),
+                        ),
+                        NavigationRailDestination(
+                          icon: const Icon(Icons.auto_awesome),
+                          label: Text('Meme\nGen',
                               textAlign: TextAlign.center,
                               style: const TextStyle(fontSize: 11)),
                         ),

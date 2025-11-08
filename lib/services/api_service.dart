@@ -463,6 +463,98 @@ class ApiService {
   }
 
   // Test functions
+  Future<Map<String, dynamic>> getMemeSources() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/meme-sources'),
+      headers: _headers,
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to get meme sources: ${response.body}');
+    }
+  }
+
+  Future<Map<String, dynamic>> getMemeFromSource(String source) async {
+    final response = await http.get(
+      Uri.parse(
+          '$baseUrl/test/meme-from-source?source=${Uri.encodeComponent(source)}'),
+      headers: _headers,
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to get meme from source: ${response.body}');
+    }
+  }
+
+  // ===== MEME GENERATOR ENDPOINTS =====
+
+  Future<Map<String, dynamic>> getMemeTemplates() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/meme-generator/templates'),
+      headers: _headers,
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to get meme templates: ${response.body}');
+    }
+  }
+
+  Future<Map<String, dynamic>> refreshMemeTemplates() async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/meme-generator/templates/refresh'),
+      headers: _headers,
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to refresh meme templates: ${response.body}');
+    }
+  }
+
+  Future<Map<String, dynamic>> generateMeme(
+      String templateId, List<String> texts) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/meme-generator/generate'),
+      headers: _headers,
+      body: jsonEncode({
+        'template_id': templateId,
+        'texts': texts,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to generate meme: ${response.body}');
+    }
+  }
+
+  Future<Map<String, dynamic>> postGeneratedMemeToDiscord(
+      String memeUrl, String templateName, List<String> texts) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/meme-generator/post-to-discord'),
+      headers: _headers,
+      body: jsonEncode({
+        'meme_url': memeUrl,
+        'template_name': templateName,
+        'texts': texts,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to post meme to Discord: ${response.body}');
+    }
+  }
+
   Future<Map<String, dynamic>> getRandomMeme() async {
     final response = await http.get(
       Uri.parse('$baseUrl/test/random-meme'),
