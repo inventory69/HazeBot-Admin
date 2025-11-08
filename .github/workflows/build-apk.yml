@@ -116,10 +116,14 @@ jobs:
         if: github.ref == 'refs/heads/main'
         run: |
           echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-          # Escape multiline commit message and replace newlines with <br>
-          COMMIT_MSG=$(git log -1 --pretty=%B | tr '\n' ' ' | sed 's/  */ /g')
-          echo "COMMIT_MSG=$COMMIT_MSG" >> $GITHUB_ENV
           echo "COMMIT_DATE=$(git log -1 --format=%cd --date=iso-strict)" >> $GITHUB_ENV
+          
+          # Get full commit message preserving newlines
+          {
+            echo 'COMMIT_MSG<<EOF'
+            git log -1 --pretty=%B
+            echo 'EOF'
+          } >> $GITHUB_ENV
       
       - name: Create Tag and Release
         if: github.ref == 'refs/heads/main'

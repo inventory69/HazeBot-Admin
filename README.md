@@ -1,357 +1,321 @@
 # HazeBot Admin
 
-Flutter-based admin interface for the HazeBot Discord bot. Available as web and Android app.
+A modern, cross-platform admin interface for the HazeBot Discord bot built with Flutter. Manage your bot's configuration with an intuitive Material Design 3 interface.
 
-## 📥 Quick Download
+## 📥 Quick Start
 
-**Want the APK?** → [Download Guide](APK_DOWNLOAD.md)
+### Download the App
 
-**Latest Release:** [Download APK](https://github.com/inventory69/HazeBot-Admin/releases/latest)
+**Android APK:** [Download Latest Release](https://github.com/inventory69/HazeBot-Admin/releases/latest)
 
-💡 **Tip:** Use [Obtainium](https://github.com/ImranR98/Obtainium) for automatic updates!
+**Installation Guides:**
+- [Android APK Download & Installation](APK_DOWNLOAD.md)
+- [GitHub Actions Setup](GITHUB_ACTIONS.md)
+- [Setup Checklist](SETUP_CHECKLIST.md)
 
-## Features
+💡 **Pro Tip:** Use [Obtainium](https://github.com/ImranR98/Obtainium) to automatically receive updates!
+
+## ✨ Features
 
 - 🔐 **Secure Authentication** - JWT-based login system
-- ⚙️ **Configuration Management** - Manage bot settings, subreddits, and channels
-- 📊 **Test Functions** - Test bot features like daily memes, Rocket League stats, and Warframe data
-- 📱 **Cross-Platform** - Works on Web, Linux Desktop, and Android
-- 🎨 **Material Design 3** - Modern UI with light/dark theme support
-- 🔄 **Auto-Updates** - New versioned releases for every build (Obtainium compatible)
+- ⚙️ **Configuration Management** - Manage bot settings, channels, roles, and more
+- 📊 **Test Functions** - Test bot features like daily memes, Rocket League stats, and game data
+- 📱 **Cross-Platform** - Web, Linux, Windows, macOS, and Android support
+- 🎨 **Material Design 3** - Modern UI with dynamic colors and theme support
+- 🔄 **Auto-Updates** - Versioned releases for every build (Obtainium compatible)
+- 📋 **Log Viewer** - Real-time bot log monitoring with filters
 
-## Setup
+## 🚀 Installation & Setup
 
 ### Prerequisites
 
-- Flutter SDK (3.0.0 or higher)
-- Dart SDK (3.0.0 or higher)
-- For Android builds: Android SDK with Java 21
+- **Flutter SDK:** 3.0.0 or higher ([Installation Guide](https://docs.flutter.dev/get-started/install))
+- **Dart SDK:** Included with Flutter
+- **For Android builds:** Android SDK with Java 21
+- **HazeBot API Server:** Must be running and accessible
 
-- Running HazeBot API server
-
-### Installation
-
-## Installation
-
-1. Clone the repository:
-
-```bash### 1. Install Flutter
-
-git clone <your-repo-url>
-
-cd HazeBot-AdminFollow the official Flutter installation guide:
-
-```- https://docs.flutter.dev/get-started/install
-
-
-
-2. Copy the environment example file:### 2. Install Dependencies
+### 1. Clone the Repository
 
 ```bash
+git clone https://github.com/inventory69/HazeBot-Admin.git
+cd HazeBot-Admin
+```
 
-cp .env.example .env```bash
+### 2. Install Dependencies
 
-```cd hazebot_admin
-
+```bash
 flutter pub get
+```
 
-3. Edit `.env` and set your API URL:```
+### 3. Configure API Connection
+
+Copy the example environment file:
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` and set your API URL:
 
 ```env
-
-API_BASE_URL=https://your-api-url.com/api### 3. Configuration
-
+API_BASE_URL=https://your-api-url.com/api
 ```
 
-Update the API base URL in `lib/services/api_service.dart`:
+**API URL Guidelines:**
+- **Web (local development):** `http://localhost:5000/api`
+- **Android Emulator:** `http://10.0.2.2:5000/api`
+- **Android Device (local network):** `http://YOUR_COMPUTER_IP:5000/api`
+- **Production:** `https://your-domain.com/api`
 
-4. Install dependencies:
+⚠️ **Important:** Never commit the `.env` file to version control!
 
-```bash```dart
+## 🏃 Running the Application
 
-flutter pub getstatic const String baseUrl = 'http://your-api-server:5000/api';
+### Development Mode
 
-``````
+**Web:**
+```bash
+flutter run -d chrome
+```
 
+**Android:**
+```bash
+flutter run -d android
+```
 
-
-### Running the AppFor local development, use:
-
-- Web: `http://localhost:5000/api`
-
-#### Desktop (Linux/Windows/macOS)- Android emulator: `http://10.0.2.2:5000/api`
-
-```bash- Android device: `http://YOUR_COMPUTER_IP:5000/api`
-
+**Desktop:**
+```bash
 flutter run -d linux    # Linux
-
-flutter run -d windows  # Windows## Running the Application
-
+flutter run -d windows  # Windows
 flutter run -d macos    # macOS
-
-```### Web
-
-
-
-#### Web```bash
-
-```bashflutter run -d chrome
-
-flutter run -d chrome```
-
 ```
-
-Or build for production:
-
-#### Android
-
-```bash```bash
-
-flutter run -d androidflutter build web
-
-``````
-
-
-
-### Building for ProductionThe built files will be in `build/web/` directory.
-
-
-
-#### Android APK### Android
-
-```bash
-
-flutter build apk --release```bash
-
-```# Run in debug mode
-
-The APK will be in `build/app/outputs/flutter-apk/app-release.apk`flutter run
-
-
-
-#### Web# Build APK
-
-```bashflutter build apk
-
-flutter build web
-
-```# Build App Bundle for Play Store
-
-flutter build appbundle
-
-#### Linux```
-
-```bash
-
-flutter build linux## Project Structure
-
-```
-
-```
-
-## Configurationhazebot_admin/
-
-├── lib/
-
-The app uses environment variables for configuration. Create a `.env` file in the root directory:│   ├── main.dart                 # App entry point
-
-│   ├── models/                   # Data models
-
-```env│   ├── services/                 # API and business logic
-
-# API Base URL (without trailing slash)│   │   ├── api_service.dart      # REST API client
-
-API_BASE_URL=https://your-api-url.com/api│   │   ├── auth_service.dart     # Authentication
-
-```│   │   └── config_service.dart   # Configuration management
-
-│   ├── screens/                  # UI screens
-
-**Important:** Never commit the `.env` file to version control! It's included in `.gitignore`.│   │   ├── login_screen.dart     # Login page
-
-│   │   ├── home_screen.dart      # Main dashboard
-
-## Project Structure│   │   └── config/               # Configuration screens
-
-│   │       ├── general_config_screen.dart
-
-```│   │       ├── channels_config_screen.dart
-
-lib/│   │       ├── roles_config_screen.dart
-
-├── main.dart              # App entry point│   │       ├── meme_config_screen.dart
-
-├── screens/               # UI screens│   │       ├── rocket_league_config_screen.dart
-
-│   ├── login_screen.dart│   │       └── welcome_config_screen.dart
-
-│   ├── home_screen.dart│   └── widgets/                  # Reusable UI components
-
-│   ├── config_screen.dart├── pubspec.yaml                  # Dependencies
-
-│   └── test_screen.dart└── README.md                     # This file
-
-└── services/              # Business logic```
-
-    ├── api_service.dart   # API communication
-
-    ├── auth_service.dart  # Authentication## Features Overview
-
-    └── config_service.dart # Configuration state
-
-```### Dashboard
-
-- Overview of bot configuration
-
-## Development- Quick status indicators
-
-- Configuration categories
-
-### Code Style
-
-### General Configuration
-
-This project uses Flutter's recommended linting rules. Run the analyzer:- Bot name and command prefix
-
-```bash- Presence update interval
-
-flutter analyze- Message cooldown settings
-
-```- Fuzzy matching threshold
-
-
-
-### Testing### Channels Configuration
-
-```bash- Configure Discord channel IDs
-
-flutter test- Log channel, changelog channel
-
-```- Meme channel, welcome channels
-
-- Ticket system channels
-
-## Related Projects
-
-### Roles Configuration
-
-- [HazeBot](https://github.com/yourusername/HazeBot) - The main Discord bot- Admin, moderator, and member roles
-
-- Interest roles
-
-## License- Special feature roles
-
-
-
-See [LICENSE](LICENSE) file for details.### Meme Configuration
-
-- Reddit subreddits
-- Lemmy communities
-- Meme sources (Reddit/Lemmy)
-- Template cache duration
-
-### Rocket League Configuration
-- Rank check interval
-- Cache TTL settings
-
-### Welcome Configuration
-- Server rules text
-- Welcome messages
-- Button reply messages
-
-## Development
 
 ### Hot Reload
 
-Flutter supports hot reload during development:
-- Press `r` in the terminal to hot reload
-- Press `R` to hot restart
-- Press `q` to quit
+During development, use these keyboard shortcuts:
+- `r` - Hot reload (fast refresh)
+- `R` - Hot restart (full restart)
+- `q` - Quit
+
+## 🔨 Building for Production
+
+### Android APK
+
+```bash
+# Standard release APK
+flutter build apk --release
+
+# Split APKs by CPU architecture (smaller file sizes)
+flutter build apk --split-per-abi --release
+```
+
+Output: `build/app/outputs/flutter-apk/app-release.apk`
+
+### Android App Bundle (for Play Store)
+
+```bash
+flutter build appbundle --release
+```
+
+Output: `build/app/outputs/bundle/release/app-release.aab`
+
+### Web
+
+```bash
+flutter build web --release
+```
+
+Output: `build/web/` directory
+
+### Desktop
+
+```bash
+flutter build linux --release    # Linux
+flutter build windows --release  # Windows
+flutter build macos --release    # macOS
+```
+
+## 📁 Project Structure
+
+```
+HazeBot-Admin/
+├── lib/
+│   ├── main.dart                      # Application entry point
+│   ├── models/                        # Data models
+│   ├── services/                      # Business logic & API
+│   │   ├── api_service.dart          # REST API client
+│   │   ├── auth_service.dart         # Authentication
+│   │   ├── config_service.dart       # Configuration state
+│   │   └── theme_service.dart        # Theme management
+│   ├── screens/                       # UI screens
+│   │   ├── login_screen.dart         # Login page
+│   │   ├── home_screen.dart          # Main dashboard
+│   │   ├── settings_screen.dart      # Settings page
+│   │   ├── logs_screen.dart          # Log viewer
+│   │   └── config/                   # Configuration screens
+│   │       ├── general_config_screen.dart
+│   │       ├── channels_config_screen.dart
+│   │       ├── roles_config_screen.dart
+│   │       ├── daily_meme_config_screen.dart
+│   │       └── rocket_league_config_screen.dart
+│   └── widgets/                       # Reusable UI components
+├── android/                           # Android platform code
+├── web/                              # Web platform code
+├── linux/                            # Linux platform code
+├── windows/                          # Windows platform code
+├── macos/                            # macOS platform code
+├── test/                             # Unit tests
+├── pubspec.yaml                      # Dependencies
+├── .env.example                      # Environment template
+└── README.md                         # This file
+```
+
+## 🎯 Configuration Features
+
+### General Settings
+- Bot name and command prefix
+- Presence update interval
+- Message cooldown and fuzzy matching
+- Basic bot behavior
+
+### Channel Configuration
+- Log and changelog channels
+- Meme and welcome channels
+- Ticket system channels
+- All Discord channel mappings
+
+### Role Management
+- Admin, moderator, and member roles
+- Interest-based roles
+- Special feature roles
+
+### Daily Meme Configuration
+- Reddit subreddit sources
+- Lemmy community sources
+- Source selection (Reddit/Lemmy)
+- Template caching settings
+- Meme preferences and scheduling
+
+### Rocket League Integration
+- Rank check intervals
+- Cache duration settings
+- Player stat tracking
+
+### Welcome System
+- Server rules configuration
+- Welcome message templates
+- Button interaction responses
+
+## 🧪 Development
+
+### Code Analysis
+
+Run Flutter's built-in analyzer:
+
+```bash
+flutter analyze
+```
+
+### Testing
+
+```bash
+flutter test
+```
 
 ### Debugging
 
 ```bash
+# Run with debug logging
 flutter run --debug
+
+# View logs
 flutter logs
 ```
 
-### Building for Production
-
-#### Web
-```bash
-flutter build web --release
-```
-
-#### Android
-```bash
-# Release APK
-flutter build apk --release
-
-# Split APKs by architecture
-flutter build apk --split-per-abi --release
-```
-
-## Deployment
+## 🌐 Deployment
 
 ### Web Deployment
 
-The web build can be deployed to any static hosting service:
+Deploy the `build/web/` directory to any static hosting service:
 
-```bash
-flutter build web --release
-# Deploy the build/web directory
-```
-
-Supported platforms:
-- Firebase Hosting
-- GitHub Pages
-- Netlify
-- Vercel
-- AWS S3
-- Any static web server
+- **GitHub Pages:** Free hosting for public repos
+- **Firebase Hosting:** Fast and reliable
+- **Netlify:** Easy deployment with CI/CD
+- **Vercel:** Serverless platform
+- **AWS S3 + CloudFront:** Scalable solution
 
 ### Android Deployment
 
-1. Sign your app (required for Play Store):
-   - Create a keystore
-   - Configure signing in `android/app/build.gradle`
-   - Build signed APK or App Bundle
+**For Play Store:**
+1. Create a keystore for app signing
+2. Configure signing in `android/app/build.gradle`
+3. Build App Bundle: `flutter build appbundle --release`
+4. Upload to Google Play Console
 
-2. Deploy to:
-   - Google Play Store (recommended)
-   - Direct APK distribution
-   - Internal testing channels
+**For Direct Distribution:**
+1. Build APK: `flutter build apk --release`
+2. Distribute via GitHub Releases, website, or direct download
+3. Users must enable "Install from Unknown Sources"
 
-## Security Notes
+## 🔒 Security Best Practices
 
-- Change default API credentials
-- Use HTTPS in production
-- Implement proper API authentication
-- Store sensitive data securely
-- Enable ProGuard for Android release builds
+- ✅ Use HTTPS for API connections in production
+- ✅ Never commit `.env` or sensitive credentials
+- ✅ Implement proper API authentication
+- ✅ Store sensitive data using secure storage
+- ✅ Enable ProGuard for Android release builds
+- ✅ Regularly update dependencies
 
-## Troubleshooting
+## 🐛 Troubleshooting
 
 ### CORS Issues (Web)
-If you encounter CORS errors, ensure the Flask API has CORS properly configured.
+Ensure your Flask API has CORS properly configured:
+```python
+from flask_cors import CORS
+CORS(app)
+```
 
 ### Android Network Issues
-- Check AndroidManifest.xml for internet permission
-- For HTTP (non-HTTPS) connections, configure network security
+- Check `AndroidManifest.xml` for internet permission
+- For HTTP connections, configure network security in `android/app/src/main/res/xml/network_security_config.xml`
 
 ### Connection Refused
 - Verify API server is running
 - Check firewall settings
-- Use correct IP address for device testing
+- Ensure correct IP address (especially for Android device testing)
+- Use `http://10.0.2.2:5000/api` for Android emulator
 
-## Contributing
+### Build Issues
+- Run `flutter clean` and `flutter pub get`
+- Verify Flutter SDK version: `flutter --version`
+- Check for dependency conflicts in `pubspec.yaml`
+
+## 🤝 Contributing
+
+Contributions are welcome! Please follow these steps:
 
 1. Fork the repository
-2. Create a feature branch
+2. Create a feature branch: `git checkout -b feature/your-feature`
 3. Make your changes
-4. Test thoroughly (web and Android)
-5. Submit a pull request
+4. Test thoroughly on Web and Android
+5. Commit your changes: `git commit -m 'Add some feature'`
+6. Push to the branch: `git push origin feature/your-feature`
+7. Submit a pull request
 
-## License
+## 👨‍💻 Developer
 
-Same as HazeBot main project (MIT License)
+**Created by:** [inventory69](https://github.com/inventory69)
+
+**Repository:** [github.com/inventory69/HazeBot-Admin](https://github.com/inventory69/HazeBot-Admin)
+
+## 📄 License
+
+MIT License - See [LICENSE](LICENSE) file for details
+
+## 🔗 Related Projects
+
+- **HazeBot Discord Bot:** The main bot that this admin interface manages
+
+---
+
+**Need help?** Open an issue on [GitHub](https://github.com/inventory69/HazeBot-Admin/issues)

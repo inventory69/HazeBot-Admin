@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
 import 'dart:async';
@@ -66,7 +67,10 @@ class _LogsScreenState extends State<LogsScreen> {
       );
 
       setState(() {
-        _logs = List<Map<String, dynamic>>.from(response['logs'] ?? []);
+        // Reverse the list so newest logs are at the top
+        _logs = List<Map<String, dynamic>>.from(response['logs'] ?? [])
+            .reversed
+            .toList();
       });
     } catch (e) {
       if (mounted) {
@@ -103,20 +107,117 @@ class _LogsScreenState extends State<LogsScreen> {
     _loadLogs();
   }
 
-  Color _getLevelColor(String level) {
+  // Extract cog name from message (matching Config.py COG_PREFIXES)
+  String? _extractCogName(String message) {
+    // Check for cog prefixes in the message (from Config.py)
+    final cogPrefixes = {
+      '[CogManager]': 'CogManager',
+      '[Changelog]': 'Changelog',
+      '[DailyMeme]': 'DailyMeme',
+      '[DiscordLogging]': 'DiscordLogging',
+      '[Leaderboard]': 'Leaderboard',
+      '[MemeGenerator]': 'MemeGenerator',
+      '[ModPerks]': 'ModPerks',
+      '[Preferences]': 'Preferences',
+      '[Presence]': 'Presence',
+      '[Profile]': 'Profile',
+      '[RocketLeague]': 'RocketLeague',
+      '[RoleInfo]': 'RoleInfo',
+      '[ServerGuide]': 'ServerGuide',
+      '[SupportButtons]': 'SupportButtons',
+      '[TicketSystem]': 'TicketSystem',
+      '[TodoList]': 'TodoList',
+      '[Utility]': 'Utility',
+      '[Warframe]': 'Warframe',
+      '[Welcome]': 'Welcome',
+    };
+
+    for (final entry in cogPrefixes.entries) {
+      if (message.contains(entry.key)) {
+        return entry.value;
+      }
+    }
+    return null;
+  }
+
+  // Get color for specific cog (matching Logger.py ThemeDict)
+  Color? _getCogColor(String? cogName) {
+    if (cogName == null) return null;
+
+    switch (cogName) {
+      case 'RocketLeague':
+        return const Color(0xFFFFA500); // Orange (Rocket Boost color!)
+      case 'DailyMeme':
+        return const Color(0xFFFF69B4); // Hot Pink
+      case 'TicketSystem':
+      case 'SupportButtons':
+        return const Color(0xFF99FF99); // Light green
+      case 'DiscordLogging':
+        return const Color(0xFFE0BBFF); // Purple
+      case 'Welcome':
+        return Colors.cyan.shade400; // Cyan
+      case 'CogManager':
+      case 'Utility':
+        return Colors.blueGrey.shade400; // Blue-grey for utilities
+      case 'Leaderboard':
+        return Colors.yellow.shade700; // Gold for leaderboard
+      case 'Profile':
+        return Colors.lightBlue.shade400; // Light blue
+      case 'Warframe':
+        return Colors.teal.shade400; // Teal for Warframe
+      default:
+        return null;
+    }
+  }
+
+  Color _getLevelBadgeColor(String level) {
     switch (level.toUpperCase()) {
       case 'DEBUG':
-        return Colors.grey;
+        return Colors.grey.shade600;
       case 'INFO':
-        return Colors.blue;
+        return Colors.pink.shade700;
       case 'WARNING':
-        return Colors.orange;
+        return Colors.orange.shade700;
       case 'ERROR':
-        return Colors.red;
+        return Colors.red.shade700;
       case 'CRITICAL':
-        return Colors.purple;
+        return Colors.red.shade900;
       default:
-        return Colors.grey;
+        return Colors.grey.shade600;
+    }
+  }
+
+  Color _getLevelTextColor(String level) {
+    switch (level.toUpperCase()) {
+      case 'DEBUG':
+        return Colors.grey.shade600;
+      case 'INFO':
+        return Colors.pink.shade700;
+      case 'WARNING':
+        return Colors.orange.shade700;
+      case 'ERROR':
+        return Colors.red.shade700;
+      case 'CRITICAL':
+        return Colors.red.shade900;
+      default:
+        return Colors.grey.shade600;
+    }
+  }
+
+  String _getLevelEmoji(String level) {
+    switch (level.toUpperCase()) {
+      case 'DEBUG':
+        return '🚨';
+      case 'INFO':
+        return '💖';
+      case 'WARNING':
+        return '🌸';
+      case 'ERROR':
+        return '🩷';
+      case 'CRITICAL':
+        return '🚨';
+      default:
+        return '📝';
     }
   }
 
@@ -316,31 +417,146 @@ class _LogsScreenState extends State<LogsScreen> {
                           final level = log['level'] ?? 'INFO';
                           final timestamp = log['timestamp'] ?? '';
                           final message = log['message'] ?? '';
+                          final fullLogText = '[$timestamp] $level | $message';
 
-                          return Card(
-                            margin: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
-                            ),
-                            child: ListTile(
-                              dense: true,
-                              leading: Icon(
-                                _getLevelIcon(level),
-                                color: _getLevelColor(level),
-                                size: 20,
-                              ),
-                              title: Text(
-                                message,
-                                style: const TextStyle(
-                                  fontFamily: 'monospace',
-                                  fontSize: 12,
+                          // Extract cog name and get color
+                          final cogName = _extractCogName(message);
+                          final cogColor = _getCogColor(cogName);
+
+                          return InkWell(
+                            onLongPress: () {
+                              Clipboard.setData(
+                                  ClipboardData(text: fullLogText));
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: const Text('Log entry copied'),
+                                  duration: const Duration(seconds: 1),
+                                  behavior: SnackBarBehavior.floating,
+                                  width: 200,
                                 ),
+                              );
+                            },
+                            child: Card(
+                              margin: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
                               ),
-                              subtitle: Text(
-                                '$timestamp - $level',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: _getLevelColor(level),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // Emoji + Icon
+                                    Container(
+                                      padding: const EdgeInsets.only(right: 8),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            _getLevelEmoji(level),
+                                            style:
+                                                const TextStyle(fontSize: 16),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Icon(
+                                            _getLevelIcon(level),
+                                            color: _getLevelTextColor(level),
+                                            size: 16,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    // Content
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          // Level badge + Timestamp
+                                          Wrap(
+                                            spacing: 8,
+                                            crossAxisAlignment:
+                                                WrapCrossAlignment.center,
+                                            children: [
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                  horizontal: 6,
+                                                  vertical: 2,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: _getLevelBadgeColor(
+                                                      level),
+                                                  borderRadius:
+                                                      BorderRadius.circular(3),
+                                                ),
+                                                child: Text(
+                                                  level.toUpperCase(),
+                                                  style: const TextStyle(
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.white,
+                                                    fontFamily: 'monospace',
+                                                  ),
+                                                ),
+                                              ),
+                                              Text(
+                                                timestamp,
+                                                style: const TextStyle(
+                                                  fontSize: 10,
+                                                  color: Colors.grey,
+                                                  fontFamily: 'monospace',
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 4),
+                                          // Message (use cog color if available, otherwise normal)
+                                          SelectableText(
+                                            message,
+                                            style: TextStyle(
+                                              fontFamily: 'monospace',
+                                              fontSize: 12,
+                                              color: cogColor ??
+                                                  Theme.of(context)
+                                                      .textTheme
+                                                      .bodyMedium
+                                                      ?.color,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    // Copy button
+                                    IconButton(
+                                      icon: const Icon(Icons.copy, size: 16),
+                                      color: Colors.grey,
+                                      onPressed: () {
+                                        Clipboard.setData(
+                                            ClipboardData(text: fullLogText));
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          SnackBar(
+                                            content:
+                                                const Text('Log entry copied'),
+                                            duration:
+                                                const Duration(seconds: 1),
+                                            behavior: SnackBarBehavior.floating,
+                                            width: 200,
+                                          ),
+                                        );
+                                      },
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(
+                                        minWidth: 32,
+                                        minHeight: 32,
+                                      ),
+                                      tooltip: 'Copy log entry',
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),

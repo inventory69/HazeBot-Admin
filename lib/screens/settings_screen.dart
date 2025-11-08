@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../services/theme_service.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -93,6 +94,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
             leading: Icon(Icons.badge),
             title: Text('Package ID'),
             subtitle: Text('xyz.hzwd.hazebot.admin'),
+          ),
+          const ListTile(
+            leading: Icon(Icons.person),
+            title: Text('Developer'),
+            subtitle: Text('inventory69'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.code),
+            title: const Text('GitHub Repository'),
+            subtitle: const Text('github.com/inventory69/HazeBot-Admin'),
+            trailing: const Icon(Icons.open_in_new),
+            onTap: () async {
+              final url = Uri.parse('https://github.com/inventory69/HazeBot-Admin');
+              if (await canLaunchUrl(url)) {
+                await launchUrl(url, mode: LaunchMode.externalApplication);
+              }
+            },
           ),
         ],
       ),
