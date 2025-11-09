@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
 import '../services/discord_auth_service.dart';
 import '../services/permission_service.dart';
-import 'dart:html' as html;
+import '../utils/web_utils.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -36,8 +36,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _checkForTokenInUrl() async {
     try {
-      // Use html.window.location for more reliable URL access
-      final currentUrl = html.window.location.href;
+      // Get current URL using platform-specific implementation
+      final currentUrl = WebUtils.getCurrentUrl();
+      if (currentUrl.isEmpty) return; // Non-web platform
+      
       final uri = Uri.parse(currentUrl);
       
       print('DEBUG: Full URL: $currentUrl');
@@ -70,12 +72,8 @@ class _LoginScreenState extends State<LoginScreen> {
             );
             print('DEBUG: Permissions updated');
 
-            // Clean URL
-            html.window.history.replaceState(
-              null,
-              '',
-              uri.replace(queryParameters: {}).toString(),
-            );
+            // Clean URL (remove token from URL bar)
+            WebUtils.replaceUrl(uri.replace(queryParameters: {}).toString());
             print('DEBUG: URL cleaned');
 
             if (mounted) {
@@ -196,8 +194,16 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
 
-      // Open in same tab/window instead of external application
-      html.window.location.href = authUrl;
+      // Open in same tab/window on web, or launch browser on mobile
+      if (kIsWeb) {
+        WebUtils.navigateToUrl(authUrl);
+      } else {
+        // On mobile, use the standard OAuth flow with external browser
+        await discordAuthService.initiateDiscordLogin();
+        setState(() {
+          _isDiscordLoading = false;
+        });
+      }
       
     } catch (e) {
       if (mounted) {
