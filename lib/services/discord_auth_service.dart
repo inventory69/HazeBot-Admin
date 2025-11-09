@@ -139,24 +139,28 @@ class DiscordAuthService extends ChangeNotifier {
   /// Set token from deep link (Android OAuth callback)
   Future<bool> setTokenFromDeepLink(String token) async {
     try {
-      debugPrint('DEBUG: Handling token from deep link/URL');
+      debugPrint('🔐 setTokenFromDeepLink START');
+      debugPrint('🔐 Token length: ${token.length}');
+      debugPrint('🔐 Token preview: ${token.substring(0, 20)}...');
+      
       _token = token;
       
       // Save token
+      debugPrint('🔐 Saving token to SharedPreferences...');
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('auth_token', token);
-      debugPrint('DEBUG: Token saved to SharedPreferences');
+      debugPrint('✅ Token saved to SharedPreferences');
 
       // CRITICAL: Set token in singleton ApiService
       final apiInstance = ApiService();
-      debugPrint('DEBUG: ApiService instance hashCode: ${apiInstance.hashCode}');
+      debugPrint('🔐 ApiService instance hashCode: ${apiInstance.hashCode}');
       apiInstance.setToken(token);
-      debugPrint('DEBUG: Token set in ApiService');
+      debugPrint('✅ Token set in ApiService');
 
       // Get user info from the token
-      debugPrint('DEBUG: Calling getCurrentUser...');
+      debugPrint('🔐 Calling getCurrentUser API...');
       final userData = await apiInstance.getCurrentUser();
-      debugPrint('DEBUG: Got user data: $userData');
+      debugPrint('✅ Got user data: $userData');
       
       _userInfo = {
         'user': userData['user'],
@@ -167,17 +171,20 @@ class DiscordAuthService extends ChangeNotifier {
         'auth_type': userData['auth_type'],
       };
       
+      debugPrint('🔐 Setting _isAuthenticated = true');
       _isAuthenticated = true;
+      
+      debugPrint('🔐 Calling notifyListeners()...');
       notifyListeners();
       
       // Small delay to ensure state propagates before navigation
       await Future.delayed(const Duration(milliseconds: 100));
       
-      debugPrint('DEBUG: Token login successful');
+      debugPrint('✅ Token login successful - user authenticated!');
       return true;
-    } catch (e) {
-      debugPrint('Failed to handle token from deep link: $e');
-      debugPrint('ERROR Stack trace: ${StackTrace.current}');
+    } catch (e, stackTrace) {
+      debugPrint('❌ Failed to handle token from deep link: $e');
+      debugPrint('❌ Stack trace: $stackTrace');
       return false;
     }
   }

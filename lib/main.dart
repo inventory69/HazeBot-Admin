@@ -38,18 +38,34 @@ class _HazeBotAdminAppState extends State<HazeBotAdminApp> {
 
   Future<void> _initDeepLinks() async {
     await _deepLinkService.init(onDeepLink: (uri) {
-      debugPrint('Handling deep link: $uri');
+      debugPrint('🔗 DEEP LINK RECEIVED: $uri');
+      debugPrint('🔗 Scheme: ${uri.scheme}, Host: ${uri.host}');
+      debugPrint('🔗 Query params: ${uri.queryParameters}');
       
       // Handle OAuth callback: hazebot://oauth?token=...
       if (uri.scheme == 'hazebot' && uri.host == 'oauth') {
+        debugPrint('✅ Deep link matches OAuth pattern');
         final token = uri.queryParameters['token'];
+        
         if (token != null) {
-          // Get DiscordAuthService and set token directly
-          final discordAuthService = 
-              // ignore: use_build_context_synchronously
-              Provider.of<DiscordAuthService>(context, listen: false);
-          discordAuthService.setTokenFromDeepLink(token);
+          debugPrint('✅ Token found in deep link: ${token.substring(0, 20)}...');
+          
+          // Wait for next frame to ensure Provider tree is ready
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            try {
+              final discordAuthService = 
+                  Provider.of<DiscordAuthService>(context, listen: false);
+              debugPrint('✅ Got DiscordAuthService, calling setTokenFromDeepLink...');
+              discordAuthService.setTokenFromDeepLink(token);
+            } catch (e) {
+              debugPrint('❌ Error getting DiscordAuthService: $e');
+            }
+          });
+        } else {
+          debugPrint('❌ No token in deep link query parameters');
         }
+      } else {
+        debugPrint('❌ Deep link does not match OAuth pattern (expected hazebot://oauth)');
       }
     });
   }
