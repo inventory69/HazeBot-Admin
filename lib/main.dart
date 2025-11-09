@@ -29,6 +29,7 @@ class HazeBotAdminApp extends StatefulWidget {
 
 class _HazeBotAdminAppState extends State<HazeBotAdminApp> {
   final DeepLinkService _deepLinkService = DeepLinkService();
+  String? _pendingToken; // Store token until Provider is ready
 
   @override
   void initState() {
@@ -50,17 +51,11 @@ class _HazeBotAdminAppState extends State<HazeBotAdminApp> {
         if (token != null) {
           debugPrint('✅ Token found in deep link: ${token.substring(0, 20)}...');
           
-          // Wait for next frame to ensure Provider tree is ready
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            try {
-              final discordAuthService = 
-                  Provider.of<DiscordAuthService>(context, listen: false);
-              debugPrint('✅ Got DiscordAuthService, calling setTokenFromDeepLink...');
-              discordAuthService.setTokenFromDeepLink(token);
-            } catch (e) {
-              debugPrint('❌ Error getting DiscordAuthService: $e');
-            }
+          // Store token to be processed after build
+          setState(() {
+            _pendingToken = token;
           });
+          debugPrint('✅ Token stored, will be processed after build');
         } else {
           debugPrint('❌ No token in deep link query parameters');
         }
@@ -184,6 +179,18 @@ class _HazeBotAdminAppState extends State<HazeBotAdminApp> {
                 themeMode: ThemeMode.system, // Follow system theme
                 home: Consumer2<AuthService, DiscordAuthService>(
                   builder: (context, authService, discordAuthService, _) {
+                    // Process pending token from deep link
+                    if (_pendingToken != null) {
+                      final token = _pendingToken!;
+                      _pendingToken = null; // Clear it immediately
+                      
+                      debugPrint('🔐 Processing pending token from deep link...');
+                      // Process token after this frame
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        discordAuthService.setTokenFromDeepLink(token);
+                      });
+                    }
+                    
                     // Update permission service when auth changes
                     if (discordAuthService.isAuthenticated &&
                         discordAuthService.userInfo != null) {
