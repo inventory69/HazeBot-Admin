@@ -4,6 +4,11 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ApiService {
+  // Singleton pattern
+  static final ApiService _instance = ApiService._internal();
+  factory ApiService() => _instance;
+  ApiService._internal();
+
   static String get baseUrl =>
       dotenv.env['API_BASE_URL'] ?? 'http://localhost:5070/api';
 
@@ -11,10 +16,12 @@ class ApiService {
 
   void setToken(String token) {
     _token = token;
+    debugPrint('DEBUG: ApiService token set: ${token.substring(0, 20)}...');
   }
 
   void clearToken() {
     _token = null;
+    debugPrint('DEBUG: ApiService token cleared');
   }
 
   Map<String, String> get _headers {
@@ -24,6 +31,9 @@ class ApiService {
 
     if (_token != null) {
       headers['Authorization'] = 'Bearer $_token';
+      debugPrint('DEBUG: ApiService adding Authorization header');
+    } else {
+      debugPrint('DEBUG: ApiService NO token available');
     }
 
     return headers;
@@ -43,6 +53,50 @@ class ApiService {
       return jsonDecode(response.body);
     } else {
       throw Exception('Login failed: ${response.body}');
+    }
+  }
+
+  // Discord OAuth2 Methods
+  Future<Map<String, dynamic>> getDiscordAuthUrl() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/discord/auth'),
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to get Discord auth URL: ${response.body}');
+    }
+  }
+
+  Future<Map<String, dynamic>> exchangeDiscordCode(String code) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/discord/callback?code=$code'),
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to exchange Discord code: ${response.body}');
+    }
+  }
+
+  Future<Map<String, dynamic>> getCurrentUser() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/auth/me'),
+      headers: _headers,
+    );
+
+    if (response.statusCode == 401) {
+      throw TokenExpiredException('Token has expired or is invalid');
+    }
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to get current user: ${response.body}');
     }
   }
 
@@ -706,4 +760,16 @@ class TokenExpiredException implements Exception {
 
   @override
   String toString() => message;
+}
+
+// Helper function to proxy external images through backend to bypass CORS
+String getProxiedImageUrl(String imageUrl) {
+  // If URL is already proxied, return as-is
+  if (imageUrl.contains('/api/proxy/image')) {
+    return imageUrl;
+  }
+  
+  final apiBaseUrl = ApiService.baseUrl.replaceFirst('/api', '');
+  final encodedUrl = Uri.encodeComponent(imageUrl);
+  return '$apiBaseUrl/api/proxy/image?url=$encodedUrl';
 }

@@ -2,7 +2,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
+import '../services/discord_auth_service.dart';
+import '../services/permission_service.dart';
 import '../services/config_service.dart';
+import '../services/api_service.dart';
 import 'config/general_config_screen.dart';
 import 'config/channels_config_screen.dart';
 import 'config/roles_config_screen.dart';
@@ -15,6 +18,18 @@ import 'config/texts_config_screen.dart';
 import 'logs_screen.dart';
 import 'settings_screen.dart';
 import 'test_screen.dart';
+
+class NavigationItem {
+  final IconData icon;
+  final String label;
+  final Widget screen;
+
+  NavigationItem({
+    required this.icon,
+    required this.label,
+    required this.screen,
+  });
+}
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -40,7 +55,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _loadConfig() async {
     final authService = Provider.of<AuthService>(context, listen: false);
     final configService = Provider.of<ConfigService>(context, listen: false);
-    await configService.loadConfig(authService.apiService);
+    // Use singleton ApiService directly instead of authService.apiService
+    await configService.loadConfig(ApiService());
 
     // Check if token expired
     if (configService.error == 'token_expired') {
@@ -83,9 +99,114 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  List<NavigationItem> _getAvailableNavigationItems(
+      PermissionService permissionService) {
+    final items = <NavigationItem>[];
+
+    // Dashboard - available to all
+    if (permissionService.hasPermission('all') ||
+        permissionService.hasPermission('meme_generator')) {
+      items.add(NavigationItem(
+        icon: Icons.dashboard,
+        label: 'Dashboard',
+        screen: DashboardScreen(key: ValueKey('dashboard_$_reloadCounter')),
+      ));
+    }
+
+    // Admin/Mod only sections
+    if (permissionService.hasPermission('all')) {
+      items.addAll([
+        NavigationItem(
+          icon: Icons.tune_outlined,
+          label: 'General',
+          screen: GeneralConfigScreen(key: ValueKey('general_$_reloadCounter')),
+        ),
+        NavigationItem(
+          icon: Icons.tag,
+          label: 'Channels',
+          screen:
+              ChannelsConfigScreen(key: ValueKey('channels_$_reloadCounter')),
+        ),
+        NavigationItem(
+          icon: Icons.people,
+          label: 'Roles',
+          screen: RolesConfigScreen(key: ValueKey('roles_$_reloadCounter')),
+        ),
+        NavigationItem(
+          icon: Icons.image,
+          label: 'Memes',
+          screen: MemeConfigScreen(key: ValueKey('meme_$_reloadCounter')),
+        ),
+        NavigationItem(
+          icon: Icons.schedule,
+          label: 'Daily\nMeme',
+          screen: DailyMemeConfigScreen(
+              key: ValueKey('daily_meme_$_reloadCounter')),
+        ),
+        NavigationItem(
+          icon: Icons.tune,
+          label: 'Meme\nPrefs',
+          screen: DailyMemePreferencesScreen(
+              key: ValueKey('daily_meme_prefs_$_reloadCounter')),
+        ),
+      ]);
+    }
+
+    // Meme Generator - available to all users
+    items.add(NavigationItem(
+      icon: Icons.auto_awesome,
+      label: 'Meme\nGen',
+      screen:
+          MemeGeneratorScreen(key: ValueKey('meme_generator_$_reloadCounter')),
+    ));
+
+    // Admin/Mod only sections
+    if (permissionService.hasPermission('all')) {
+      items.addAll([
+        NavigationItem(
+          icon: Icons.sports_esports,
+          label: 'Rocket\nLeague',
+          screen: RocketLeagueConfigScreen(
+              key: ValueKey('rocket_league_$_reloadCounter')),
+        ),
+        NavigationItem(
+          icon: Icons.text_fields,
+          label: 'Texts',
+          screen: TextsConfigScreen(key: ValueKey('texts_$_reloadCounter')),
+        ),
+        NavigationItem(
+          icon: Icons.description,
+          label: 'Logs',
+          screen: LogsScreen(key: ValueKey('logs_$_reloadCounter')),
+        ),
+        NavigationItem(
+          icon: Icons.settings,
+          label: 'Settings',
+          screen: SettingsScreen(key: ValueKey('settings_$_reloadCounter')),
+        ),
+        NavigationItem(
+          icon: Icons.science,
+          label: 'Test',
+          screen: TestScreen(key: ValueKey('test_$_reloadCounter')),
+        ),
+      ]);
+    }
+
+    return items;
+  }
+
   @override
   Widget build(BuildContext context) {
     final authService = Provider.of<AuthService>(context);
+    final discordAuthService = Provider.of<DiscordAuthService>(context);
+    final permissionService = Provider.of<PermissionService>(context);
+
+    final navigationItems = _getAvailableNavigationItems(permissionService);
+
+    // Ensure selected index is within bounds
+    if (_selectedIndex >= navigationItems.length) {
+      _selectedIndex = 0;
+    }
 
     final screens = [
       DashboardScreen(key: ValueKey('dashboard_$_reloadCounter')),
@@ -115,7 +236,27 @@ class _HomeScreenState extends State<HomeScreen> {
             });
           },
         ),
-        title: const Text('HazeBot Admin'),
+        title: Row(
+          children: [
+            const Text('HazeBot Admin'),
+            const SizedBox(width: 16),
+            if (discordAuthService.isAuthenticated &&
+                discordAuthService.userInfo != null &&
+                discordAuthService.userInfo!['discord_id'] != null)
+              Chip(
+                avatar: Icon(
+                  Icons.discord,
+                  size: 16,
+                  color: const Color(0xFF5865F2),
+                ),
+                label: Text(
+                  '${discordAuthService.userInfo!['user']} (${permissionService.role})',
+                  style: TextStyle(fontSize: 12),
+                ),
+                visualDensity: VisualDensity.compact,
+              ),
+          ],
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -127,6 +268,8 @@ class _HomeScreenState extends State<HomeScreen> {
             tooltip: 'Logout',
             onPressed: () {
               authService.logout();
+              discordAuthService.logout();
+              permissionService.clear();
             },
           ),
         ],
@@ -155,68 +298,18 @@ class _HomeScreenState extends State<HomeScreen> {
                       },
                       extended: false,
                       labelType: NavigationRailLabelType.all,
-                      destinations: [
-                        NavigationRailDestination(
-                          icon: const Icon(Icons.dashboard),
-                          label: Text('Dashboard', textAlign: TextAlign.center),
-                        ),
-                        NavigationRailDestination(
-                          icon: const Icon(Icons.tune_outlined),
-                          label: Text('General', textAlign: TextAlign.center),
-                        ),
-                        NavigationRailDestination(
-                          icon: const Icon(Icons.tag),
-                          label: Text('Channels', textAlign: TextAlign.center),
-                        ),
-                        NavigationRailDestination(
-                          icon: const Icon(Icons.people),
-                          label: Text('Roles', textAlign: TextAlign.center),
-                        ),
-                        NavigationRailDestination(
-                          icon: const Icon(Icons.image),
-                          label: Text('Memes', textAlign: TextAlign.center),
-                        ),
-                        NavigationRailDestination(
-                          icon: const Icon(Icons.schedule),
-                          label: Text('Daily\nMeme',
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(fontSize: 11)),
-                        ),
-                        NavigationRailDestination(
-                          icon: const Icon(Icons.tune),
-                          label: Text('Meme\nPrefs',
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(fontSize: 11)),
-                        ),
-                        NavigationRailDestination(
-                          icon: const Icon(Icons.auto_awesome),
-                          label: Text('Meme\nGen',
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(fontSize: 11)),
-                        ),
-                        NavigationRailDestination(
-                          icon: const Icon(Icons.sports_esports),
-                          label: Text('Rocket\nLeague',
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(fontSize: 11)),
-                        ),
-                        NavigationRailDestination(
-                          icon: const Icon(Icons.text_fields),
-                          label: Text('Texts', textAlign: TextAlign.center),
-                        ),
-                        NavigationRailDestination(
-                          icon: const Icon(Icons.description),
-                          label: Text('Logs', textAlign: TextAlign.center),
-                        ),
-                        NavigationRailDestination(
-                          icon: const Icon(Icons.settings),
-                          label: Text('Settings', textAlign: TextAlign.center),
-                        ),
-                        NavigationRailDestination(
-                          icon: const Icon(Icons.science),
-                          label: Text('Test', textAlign: TextAlign.center),
-                        ),
-                      ],
+                      destinations: navigationItems
+                          .map((item) => NavigationRailDestination(
+                                icon: Icon(item.icon),
+                                label: Text(
+                                  item.label,
+                                  textAlign: TextAlign.center,
+                                  style: item.label.contains('\n')
+                                      ? const TextStyle(fontSize: 11)
+                                      : null,
+                                ),
+                              ))
+                          .toList(),
                     ),
                   ),
                 ),
@@ -224,7 +317,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           if (_isDrawerVisible) const VerticalDivider(thickness: 1, width: 1),
           Expanded(
-            child: screens[_selectedIndex],
+            child: navigationItems[_selectedIndex].screen,
           ),
         ],
       ),
@@ -279,13 +372,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _loadConfig() async {
     final authService = Provider.of<AuthService>(context, listen: false);
     final configService = Provider.of<ConfigService>(context, listen: false);
-    await configService.loadConfig(authService.apiService);
+    // Use singleton ApiService directly
+    await configService.loadConfig(ApiService());
   }
 
   Future<void> _loadConfigSilently() async {
     final authService = Provider.of<AuthService>(context, listen: false);
     final configService = Provider.of<ConfigService>(context, listen: false);
-    await configService.loadConfig(authService.apiService, silent: true);
+    // Use singleton ApiService directly
+    await configService.loadConfig(ApiService(), silent: true);
   }
 
   @override
@@ -325,9 +420,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   const SizedBox(height: 24),
                   FilledButton.icon(
                     onPressed: () {
-                      final authService =
-                          Provider.of<AuthService>(context, listen: false);
-                      configService.loadConfig(authService.apiService);
+                      // Use singleton ApiService directly
+                      configService.loadConfig(ApiService());
                     },
                     icon: const Icon(Icons.refresh),
                     label: const Text('Retry'),

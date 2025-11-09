@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
+import '../../services/api_service.dart';
 
 class ChannelsConfigScreen extends StatefulWidget {
   const ChannelsConfigScreen({super.key});
@@ -42,8 +43,10 @@ class _ChannelsConfigScreenState extends State<ChannelsConfigScreen> {
 
   Future<void> _loadGuildData() async {
     try {
-      final authService = Provider.of<AuthService>(context, listen: false);
-      final channels = await authService.apiService.getGuildChannels();
+      debugPrint('DEBUG: Loading guild channels data...');
+      final apiService = ApiService();
+      final channels = await apiService.getGuildChannels();
+      debugPrint('DEBUG: Received ${channels.length} channels');
 
       if (mounted) {
         setState(() {
@@ -51,9 +54,11 @@ class _ChannelsConfigScreenState extends State<ChannelsConfigScreen> {
           _channels = channels.where((ch) => ch['type'] == 'text').toList();
           _categories =
               channels.where((ch) => ch['type'] == 'category').toList();
+          debugPrint('DEBUG: Text channels: ${_channels.length}, Categories: ${_categories.length}');
         });
       }
     } catch (e) {
+      debugPrint('DEBUG: Error loading guild data: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading guild data: $e')),
@@ -68,8 +73,10 @@ class _ChannelsConfigScreenState extends State<ChannelsConfigScreen> {
     }
 
     try {
-      final authService = Provider.of<AuthService>(context, listen: false);
-      final config = await authService.apiService.getChannelsConfig();
+      debugPrint('DEBUG: Loading channels config...');
+      final apiService = ApiService();
+      final config = await apiService.getChannelsConfig();
+      debugPrint('DEBUG: Channels config loaded: $config');
 
       if (mounted) {
         setState(() {
@@ -108,7 +115,7 @@ class _ChannelsConfigScreenState extends State<ChannelsConfigScreen> {
     }
 
     try {
-      final authService = Provider.of<AuthService>(context, listen: false);
+      final apiService = ApiService();
 
       final config = {
         'log_channel_id':
@@ -137,7 +144,7 @@ class _ChannelsConfigScreenState extends State<ChannelsConfigScreen> {
             _ticketsCategoryId != null ? int.parse(_ticketsCategoryId!) : null,
       };
 
-      await authService.apiService.updateChannelsConfig(config);
+      await apiService.updateChannelsConfig(config);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -187,8 +194,8 @@ class _ChannelsConfigScreenState extends State<ChannelsConfigScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final authService = Provider.of<AuthService>(context, listen: false);
-      await authService.apiService.resetChannelsConfig();
+      final apiService = ApiService();
+      await apiService.resetChannelsConfig();
       await _loadConfig();
 
       if (mounted) {

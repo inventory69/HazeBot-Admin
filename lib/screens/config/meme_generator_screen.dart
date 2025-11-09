@@ -1,6 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
+import '../../services/api_service.dart';
+
+/// Helper function to proxy external images through our backend to bypass CORS
+String getProxiedImageUrl(String originalUrl) {
+  // Proxy external images (Reddit, Imgur, Imgflip)
+  if (originalUrl.contains('i.redd.it') ||
+      originalUrl.contains('i.imgur.com') ||
+      originalUrl.contains('preview.redd.it') ||
+      originalUrl.contains('external-preview.redd.it') ||
+      originalUrl.contains('imgflip.com')) {
+    // Use our backend proxy
+    final encodedUrl = Uri.encodeComponent(originalUrl);
+    return 'https://test-hazebot-admin.hzwd.xyz/api/proxy/image?url=$encodedUrl';
+  }
+  // For other URLs, return as-is
+  return originalUrl;
+}
 
 class MemeGeneratorScreen extends StatefulWidget {
   const MemeGeneratorScreen({super.key});
@@ -521,7 +538,7 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                                               const BorderRadius.vertical(
                                                   top: Radius.circular(11)),
                                           child: Image.network(
-                                            template['url'],
+                                            getProxiedImageUrl(template['url']),
                                             width: double.infinity,
                                             fit: BoxFit.cover,
                                             loadingBuilder: (context, child,
@@ -676,8 +693,8 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                                       borderRadius: const BorderRadius.vertical(
                                           top: Radius.circular(12)),
                                       child: Image.network(
-                                        _generatedMemeUrl ??
-                                            _selectedTemplate!['url'],
+                                        getProxiedImageUrl(_generatedMemeUrl ??
+                                            _selectedTemplate!['url']),
                                         width: double.infinity,
                                         fit: BoxFit.contain,
                                         loadingBuilder:
@@ -877,7 +894,7 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                         borderRadius: const BorderRadius.vertical(
                             top: Radius.circular(12)),
                         child: Image.network(
-                          _generatedMemeUrl!,
+                          getProxiedImageUrl(_generatedMemeUrl!),
                           width: double.infinity,
                           fit: BoxFit.contain,
                         ),

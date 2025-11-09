@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
+import '../../services/api_service.dart';
 
 class RolesConfigScreen extends StatefulWidget {
   const RolesConfigScreen({super.key});
@@ -37,8 +38,10 @@ class _RolesConfigScreenState extends State<RolesConfigScreen> {
 
   Future<void> _loadGuildData() async {
     try {
-      final authService = Provider.of<AuthService>(context, listen: false);
-      final roles = await authService.apiService.getGuildRoles();
+      debugPrint('DEBUG: Loading guild roles data...');
+      final apiService = ApiService();
+      final roles = await apiService.getGuildRoles();
+      debugPrint('DEBUG: Received ${roles.length} roles');
 
       if (mounted) {
         setState(() {
@@ -60,8 +63,8 @@ class _RolesConfigScreenState extends State<RolesConfigScreen> {
     }
 
     try {
-      final authService = Provider.of<AuthService>(context, listen: false);
-      final config = await authService.apiService.getRolesConfig();
+      final apiService = ApiService();
+      final config = await apiService.getRolesConfig();
 
       if (mounted) {
         setState(() {
@@ -94,7 +97,7 @@ class _RolesConfigScreenState extends State<RolesConfigScreen> {
     }
 
     try {
-      final authService = Provider.of<AuthService>(context, listen: false);
+      final apiService = ApiService();
 
       final config = {
         'admin_role_id': _adminRoleId != null ? int.parse(_adminRoleId!) : null,
@@ -109,7 +112,7 @@ class _RolesConfigScreenState extends State<RolesConfigScreen> {
         'meme_role_id': _memeRoleId != null ? int.parse(_memeRoleId!) : null,
       };
 
-      await authService.apiService.updateRolesConfig(config);
+      await apiService.updateRolesConfig(config);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -159,8 +162,8 @@ class _RolesConfigScreenState extends State<RolesConfigScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final authService = Provider.of<AuthService>(context, listen: false);
-      await authService.apiService.resetRolesConfig();
+      final apiService = ApiService();
+      await apiService.resetRolesConfig();
       await _loadConfig();
 
       if (mounted) {

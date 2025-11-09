@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
+import '../services/discord_auth_service.dart';
+import '../services/permission_service.dart';
+import 'dart:html' as html;
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -14,8 +18,118 @@ class _LoginScreenState extends State<LoginScreen> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _isDiscordLoading = false;
   bool _obscurePassword = true;
   String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    // Check for token in URL (after OAuth redirect)
+    if (kIsWeb) {
+      // Use WidgetsBinding to ensure we're checking after the frame is built
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _checkForTokenInUrl();
+      });
+    }
+  }
+
+  Future<void> _checkForTokenInUrl() async {
+    try {
+      // Use html.window.location for more reliable URL access
+      final currentUrl = html.window.location.href;
+      final uri = Uri.parse(currentUrl);
+      
+      print('DEBUG: Full URL: $currentUrl');
+      print('DEBUG: Uri.base: ${Uri.base}');
+      print('DEBUG: Parsed URI: ${uri.toString()}');
+      print('DEBUG: Query params: ${uri.queryParameters}');
+      
+      // Check for token (from backend redirect after OAuth)
+      final token = uri.queryParameters['token'];
+      if (token != null && token.isNotEmpty) {
+        print('DEBUG: Found token in URL: ${token.substring(0, 20)}...');
+        
+        final discordAuthService =
+            Provider.of<DiscordAuthService>(context, listen: false);
+        final permissionService =
+            Provider.of<PermissionService>(context, listen: false);
+
+        try {
+          print('DEBUG: Calling handleTokenFromUrl with token...');
+          final success = await discordAuthService.handleTokenFromUrl(token);
+          print('DEBUG: handleTokenFromUrl returned: $success');
+
+          if (success && discordAuthService.userInfo != null) {
+            print('DEBUG: Token handled successfully, userInfo: ${discordAuthService.userInfo}');
+            
+            // Update permission service
+            permissionService.updatePermissions(
+              discordAuthService.role,
+              discordAuthService.permissions,
+            );
+            print('DEBUG: Permissions updated');
+
+            // Clean URL
+            html.window.history.replaceState(
+              null,
+              '',
+              uri.replace(queryParameters: {}).toString(),
+            );
+            print('DEBUG: URL cleaned');
+
+            if (mounted) {
+              // Show success message
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Discord login successful! Welcome ${discordAuthService.userInfo?['username']}'),
+                  backgroundColor: Colors.green,
+                  duration: Duration(seconds: 3),
+                ),
+              );
+              
+              // Force navigation check (main.dart should redirect to home)
+              print('DEBUG: Login complete, should navigate to home now');
+            }
+          } else {
+            if (mounted) {
+              setState(() {
+                _errorMessage = 'Discord login failed. Please try again.';
+              });
+            }
+          }
+        } catch (e) {
+          if (mounted) {
+            setState(() {
+              _errorMessage = 'Discord login error: $e';
+            });
+          }
+        }
+        return;
+      }
+      
+      // Check for OAuth code (from Discord redirect - fallback)
+      final code = uri.queryParameters['code'];
+      print('DEBUG: Code from URL: $code');
+      if (code != null && code.isNotEmpty) {
+        print('DEBUG: Found OAuth code in URL: $code');
+        // This shouldn't happen anymore since backend redirects with token
+        if (mounted) {
+          setState(() {
+            _errorMessage = 'Unexpected OAuth flow. Please try again.';
+          });
+        }
+        return;
+      }
+    } catch (e) {
+      debugPrint('Error checking for token in URL: $e');
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Error processing login: $e';
+        });
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -35,6 +149,9 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     final authService = Provider.of<AuthService>(context, listen: false);
+    final permissionService =
+        Provider.of<PermissionService>(context, listen: false);
+
     final success = await authService.login(
       _usernameController.text,
       _passwordController.text,
@@ -46,10 +163,49 @@ class _LoginScreenState extends State<LoginScreen> {
       _isLoading = false;
     });
 
-    if (!success) {
+    if (success) {
+      // Legacy login has full permissions
+      permissionService.updatePermissions('admin', ['all']);
+    } else {
       setState(() {
         _errorMessage = 'Invalid username or password';
       });
+    }
+  }
+
+  Future<void> _loginWithDiscord() async {
+    setState(() {
+      _isDiscordLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final discordAuthService =
+          Provider.of<DiscordAuthService>(context, listen: false);
+
+      // Get the auth URL
+      final authUrl = await discordAuthService.getDiscordAuthUrl();
+      
+      if (authUrl == null) {
+        if (mounted) {
+          setState(() {
+            _errorMessage = 'Failed to get Discord auth URL';
+            _isDiscordLoading = false;
+          });
+        }
+        return;
+      }
+
+      // Open in same tab/window instead of external application
+      html.window.location.href = authUrl;
+      
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Error: $e';
+          _isDiscordLoading = false;
+        });
+      }
     }
   }
 
@@ -183,6 +339,64 @@ class _LoginScreenState extends State<LoginScreen> {
                                       CircularProgressIndicator(strokeWidth: 2),
                                 )
                               : const Text('Login'),
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(child: Divider()),
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 16),
+                              child: Text(
+                                'OR',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(
+                                      color: Colors.grey,
+                                    ),
+                              ),
+                            ),
+                            Expanded(child: Divider()),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        OutlinedButton.icon(
+                          onPressed: _isDiscordLoading ? null : _loginWithDiscord,
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            side: BorderSide(
+                              color: const Color(0xFF5865F2),
+                              width: 2,
+                            ),
+                          ),
+                          icon: _isDiscordLoading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child:
+                                      CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : Icon(
+                                  Icons.chat_bubble,
+                                  color: const Color(0xFF5865F2),
+                                ),
+                          label: Text(
+                            'Login with Discord',
+                            style: TextStyle(
+                              color: const Color(0xFF5865F2),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Discord login grants role-based access',
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Colors.grey,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                          textAlign: TextAlign.center,
                         ),
                       ],
                     ),

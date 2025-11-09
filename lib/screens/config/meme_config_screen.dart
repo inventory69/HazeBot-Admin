@@ -2,6 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
 
+/// Helper function to proxy external images through our backend to bypass CORS
+String getProxiedImageUrl(String originalUrl) {
+  // Proxy external images (Reddit, Imgur, Imgflip)
+  if (originalUrl.contains('i.redd.it') ||
+      originalUrl.contains('i.imgur.com') ||
+      originalUrl.contains('preview.redd.it') ||
+      originalUrl.contains('external-preview.redd.it') ||
+      originalUrl.contains('imgflip.com')) {
+    // Use our backend proxy
+    final encodedUrl = Uri.encodeComponent(originalUrl);
+    return 'https://test-hazebot-admin.hzwd.xyz/api/proxy/image?url=$encodedUrl';
+  }
+  // For other URLs, return as-is
+  return originalUrl;
+}
+
 class MemeConfigScreen extends StatefulWidget {
   const MemeConfigScreen({super.key});
 
@@ -373,7 +389,7 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                             children: [
                               // Meme Image
                               Image.network(
-                                _randomMemeData!['url'],
+                                getProxiedImageUrl(_randomMemeData!['url']),
                                 width: double.infinity,
                                 fit: BoxFit.contain,
                                 loadingBuilder:
@@ -692,7 +708,7 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Image.network(
-                                _sourceMemeData!['url'],
+                                getProxiedImageUrl(_sourceMemeData!['url']),
                                 width: double.infinity,
                                 fit: BoxFit.contain,
                                 loadingBuilder:
