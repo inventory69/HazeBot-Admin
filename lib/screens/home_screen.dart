@@ -1276,7 +1276,7 @@ class _UserDashboardState extends State<_UserDashboard> {
               // Profile Information Card
               Card(
                 child: Padding(
-                  padding: EdgeInsets.all(isMobile ? 16 : 24),
+                  padding: EdgeInsets.all(isMobile ? 12 : 16),
                   child: Row(
                     children: [
                       // Avatar
@@ -1285,20 +1285,20 @@ class _UserDashboardState extends State<_UserDashboard> {
                           borderRadius: BorderRadius.circular(8),
                           child: Image.network(
                             _avatarUrl!,
-                            width: isMobile ? 56 : 64,
-                            height: isMobile ? 56 : 64,
+                            width: isMobile ? 48 : 56,
+                            height: isMobile ? 48 : 56,
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) {
                               return Container(
-                                width: isMobile ? 56 : 64,
-                                height: isMobile ? 56 : 64,
+                                width: isMobile ? 48 : 56,
+                                height: isMobile ? 48 : 56,
                                 decoration: BoxDecoration(
                                   color: _getRoleColor().withOpacity(0.2),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Icon(
                                   _getRoleIcon(),
-                                  size: isMobile ? 28 : 32,
+                                  size: isMobile ? 24 : 28,
                                   color: _getRoleColor(),
                                 ),
                               );
@@ -1307,15 +1307,15 @@ class _UserDashboardState extends State<_UserDashboard> {
                         )
                       else
                         Container(
-                          width: isMobile ? 56 : 64,
-                          height: isMobile ? 56 : 64,
+                          width: isMobile ? 48 : 56,
+                          height: isMobile ? 48 : 56,
                           decoration: BoxDecoration(
                             color: _getRoleColor().withOpacity(0.2),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Icon(
                             _getRoleIcon(),
-                            size: isMobile ? 28 : 32,
+                            size: isMobile ? 24 : 28,
                             color: _getRoleColor(),
                           ),
                         ),
@@ -1331,7 +1331,7 @@ class _UserDashboardState extends State<_UserDashboard> {
                                   .titleLarge
                                   ?.copyWith(
                                     fontWeight: FontWeight.bold,
-                                    fontSize: isMobile ? 18 : 22,
+                                    fontSize: isMobile ? 16 : 20,
                                   ),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -1379,7 +1379,7 @@ class _UserDashboardState extends State<_UserDashboard> {
               if (_rlRank != null) ...[
                 Card(
                   child: Padding(
-                    padding: EdgeInsets.all(isMobile ? 16 : 24),
+                    padding: EdgeInsets.all(isMobile ? 12 : 16),
                     child: Row(
                       children: [
                         // Rank Icon
@@ -1388,13 +1388,13 @@ class _UserDashboardState extends State<_UserDashboard> {
                             borderRadius: BorderRadius.circular(8),
                             child: Image.network(
                               _rlRank!['icon_url'],
-                              width: isMobile ? 48 : 56,
-                              height: isMobile ? 48 : 56,
+                              width: isMobile ? 40 : 48,
+                              height: isMobile ? 40 : 48,
                               fit: BoxFit.contain,
                               errorBuilder: (context, error, stackTrace) {
                                 return Container(
-                                  width: isMobile ? 48 : 56,
-                                  height: isMobile ? 48 : 56,
+                                  width: isMobile ? 40 : 48,
+                                  height: isMobile ? 40 : 48,
                                   decoration: BoxDecoration(
                                     color: Theme.of(context)
                                         .colorScheme
@@ -1403,7 +1403,7 @@ class _UserDashboardState extends State<_UserDashboard> {
                                   ),
                                   child: Icon(
                                     Icons.sports_esports,
-                                    size: isMobile ? 24 : 28,
+                                    size: isMobile ? 20 : 24,
                                     color: Theme.of(context)
                                         .colorScheme
                                         .onPrimaryContainer,
@@ -1414,8 +1414,8 @@ class _UserDashboardState extends State<_UserDashboard> {
                           )
                         else
                           Container(
-                            width: isMobile ? 48 : 56,
-                            height: isMobile ? 48 : 56,
+                            width: isMobile ? 40 : 48,
+                            height: isMobile ? 40 : 48,
                             decoration: BoxDecoration(
                               color: Theme.of(context)
                                   .colorScheme
@@ -1424,7 +1424,7 @@ class _UserDashboardState extends State<_UserDashboard> {
                             ),
                             child: Icon(
                               Icons.sports_esports,
-                              size: isMobile ? 24 : 28,
+                              size: isMobile ? 20 : 24,
                               color: Theme.of(context)
                                   .colorScheme
                                   .onPrimaryContainer,
@@ -1449,34 +1449,16 @@ class _UserDashboardState extends State<_UserDashboard> {
                                     ),
                               ),
                               const SizedBox(height: 2),
-                              Row(
-                                children: [
-                                  if (_rlRank!['emoji'] != null &&
-                                      _rlRank!['emoji']
-                                          .toString()
-                                          .isNotEmpty) ...[
-                                    Text(
-                                      _rlRank!['emoji'],
-                                      style: TextStyle(
-                                        fontSize: isMobile ? 16 : 18,
-                                      ),
+                              Text(
+                                _rlRank!['rank'] ?? 'Unknown',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleMedium
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: isMobile ? 14 : 16,
                                     ),
-                                    const SizedBox(width: 6),
-                                  ],
-                                  Flexible(
-                                    child: Text(
-                                      _rlRank!['rank'] ?? 'Unknown',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleMedium
-                                          ?.copyWith(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: isMobile ? 15 : 18,
-                                          ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
+                                overflow: TextOverflow.ellipsis,
                               ),
                               if (_rlRank!['username'] != null) ...[
                                 const SizedBox(height: 2),
@@ -1697,16 +1679,16 @@ class _UserDashboardState extends State<_UserDashboard> {
     return Card(
       elevation: 1,
       child: Padding(
-        padding: EdgeInsets.all(isMobile ? 10 : 12),
+        padding: EdgeInsets.all(isMobile ? 8 : 12),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: color, size: isMobile ? 28 : 32),
-            SizedBox(height: isMobile ? 6 : 8),
+            Icon(icon, color: color, size: isMobile ? 24 : 28),
+            SizedBox(height: isMobile ? 4 : 6),
             Text(
               value,
               style: TextStyle(
-                fontSize: isMobile ? 16 : 18,
+                fontSize: isMobile ? 15 : 17,
                 fontWeight: FontWeight.bold,
               ),
               textAlign: TextAlign.center,
@@ -1715,7 +1697,7 @@ class _UserDashboardState extends State<_UserDashboard> {
             Text(
               label,
               style: TextStyle(
-                fontSize: isMobile ? 11 : 12,
+                fontSize: isMobile ? 10 : 11,
                 color: Colors.grey[600],
               ),
               textAlign: TextAlign.center,

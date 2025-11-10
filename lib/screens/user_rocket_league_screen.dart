@@ -300,7 +300,8 @@ class _UserRocketLeagueScreenState extends State<UserRocketLeagueScreen> {
     final account = _linkedAccount!;
     final platform = account['platform'] as String;
     final username = account['username'] as String;
-    final ranks = account['ranks'] as Map<String, dynamic>? ?? {};
+    final rankDisplay = account['rank_display'] as Map<String, dynamic>? ?? {};
+    final tierNames = account['ranks'] as Map<String, dynamic>? ?? {};
     final iconUrls = account['icon_urls'] as Map<String, dynamic>? ?? {};
 
     return Card(
@@ -319,7 +320,7 @@ class _UserRocketLeagueScreenState extends State<UserRocketLeagueScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Your Rocket League Account',
+                    'Your Ranks',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontSize: isMobile ? 18 : null,
                         ),
@@ -382,7 +383,7 @@ class _UserRocketLeagueScreenState extends State<UserRocketLeagueScreen> {
                 ],
               ),
             ),
-            if (ranks.isNotEmpty) ...[
+            if (rankDisplay.isNotEmpty) ...[
               SizedBox(height: isMobile ? 12 : 16),
               Text(
                 'Current Ranks',
@@ -394,15 +395,17 @@ class _UserRocketLeagueScreenState extends State<UserRocketLeagueScreen> {
               Wrap(
                 spacing: isMobile ? 8 : 12,
                 runSpacing: isMobile ? 8 : 12,
-                children: ranks.entries.map((entry) {
+                children: rankDisplay.entries.map((entry) {
                   final playlist = entry.key;
                   final rank = entry.value as String;
+                  final tierName = tierNames[playlist] as String? ??
+                      _getTierNameFromRank(rank);
                   final iconUrl = iconUrls[playlist] as String?;
 
                   return _buildRankCard(
                     _formatPlaylistName(playlist),
                     rank,
-                    _getTierNameFromRank(rank),
+                    tierName,
                     iconUrl,
                     isMobile,
                   );
@@ -659,6 +662,7 @@ class _UserRocketLeagueScreenState extends State<UserRocketLeagueScreen> {
     final hasRanks = _testStats!['rank_1v1'] != null ||
         _testStats!['rank_2v2'] != null ||
         _testStats!['rank_3v3'] != null ||
+        _testStats!['rank_4v4'] != null ||
         _testStats!['rank_hoops'] != null ||
         _testStats!['rank_rumble'] != null ||
         _testStats!['rank_dropshot'] != null ||
@@ -791,6 +795,14 @@ class _UserRocketLeagueScreenState extends State<UserRocketLeagueScreen> {
                 _testStats!['icon_urls']?['3v3'],
                 isMobile,
               ),
+            if (_testStats!['rank_4v4'] != null)
+              _buildRankCard(
+                '4v4',
+                _testStats!['rank_4v4'],
+                _testStats!['tier_names']?['4v4'],
+                _testStats!['icon_urls']?['4v4'],
+                isMobile,
+              ),
             if (_testStats!['rank_hoops'] != null)
               _buildRankCard(
                 'Hoops',
@@ -837,6 +849,8 @@ class _UserRocketLeagueScreenState extends State<UserRocketLeagueScreen> {
         return 'Doubles 2v2';
       case '3v3':
         return 'Standard 3v3';
+      case '4v4':
+        return '4v4';
       case 'hoops':
         return 'Hoops';
       case 'rumble':
@@ -889,12 +903,23 @@ class _UserRocketLeagueScreenState extends State<UserRocketLeagueScreen> {
     }
   }
 
+  String _extractDivision(String rank) {
+    // Extract Division from rank string (e.g., "Diamond I Div III" -> "Div III")
+    final divMatch = RegExp(r'Div(?:ision)?\s+([IVX]+|\d+)').firstMatch(rank);
+    if (divMatch != null) {
+      return 'Div ${divMatch.group(1)}';
+    }
+    return '';
+  }
+
   String _cleanRankText(String rank) {
+    // Remove Discord emojis (e.g., "<:diamond:123456789>") and Division text
     return rank
-        .replaceAll('Div I', '')
-        .replaceAll('Div II', '')
-        .replaceAll('Div III', '')
-        .replaceAll('Div IV', '')
+        .replaceAll(RegExp(r'<:[^:]+:\d+>\s*'), '') // Remove Discord emojis
+        .replaceAll(RegExp(r'\s*Div(?:ision)?\s+[IVX]+\s*'), ' ')
+        .replaceAll(RegExp(r'\s*Division\s+\d+\s*'), ' ')
+        .replaceAll(RegExp(r'\s*Div\s+\d+\s*'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
   }
 
@@ -902,11 +927,13 @@ class _UserRocketLeagueScreenState extends State<UserRocketLeagueScreen> {
       String? iconUrl, bool isMobile) {
     final cleanRank =
         rankDisplay != null ? _cleanRankText(rankDisplay) : 'Unranked';
+    final division = rankDisplay != null ? _extractDivision(rankDisplay) : '';
     final color = _getRankColor(tierName);
 
     final iconSize = isMobile ? 40.0 : 50.0;
     final modeFontSize = isMobile ? 10.0 : 11.0;
     final rankFontSize = isMobile ? 12.0 : 14.0;
+    final divisionFontSize = isMobile ? 10.0 : 12.0;
     final cardPadding = isMobile ? 10.0 : 14.0;
 
     return Container(
@@ -993,15 +1020,33 @@ class _UserRocketLeagueScreenState extends State<UserRocketLeagueScreen> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 SizedBox(height: isMobile ? 2 : 4),
-                Text(
-                  cleanRank,
-                  style: TextStyle(
-                    fontSize: rankFontSize,
-                    fontWeight: FontWeight.bold,
-                    color: color,
-                    letterSpacing: 0.3,
-                  ),
-                  overflow: TextOverflow.ellipsis,
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        cleanRank,
+                        style: TextStyle(
+                          fontSize: rankFontSize,
+                          fontWeight: FontWeight.bold,
+                          color: color,
+                          letterSpacing: 0.3,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (division.isNotEmpty) ...[
+                      const SizedBox(width: 4),
+                      Text(
+                        division,
+                        style: TextStyle(
+                          fontSize: divisionFontSize,
+                          fontWeight: FontWeight.w500,
+                          color: color.withValues(alpha: 0.8),
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ],
             ),
