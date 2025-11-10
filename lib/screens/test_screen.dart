@@ -34,8 +34,10 @@ class TestScreen extends StatelessWidget {
           ),
           const SizedBox(height: 32),
           Card(
-            color:
-                Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+            color: Theme.of(context)
+                .colorScheme
+                .surfaceContainerHighest
+                .withValues(alpha: 0.5),
             child: Padding(
               padding: const EdgeInsets.all(24.0),
               child: Column(

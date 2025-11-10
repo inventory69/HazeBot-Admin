@@ -15,6 +15,7 @@ import 'config/daily_meme_preferences_screen.dart';
 import 'config/meme_generator_screen.dart';
 import 'config/rocket_league_config_screen.dart';
 import 'config/texts_config_screen.dart';
+import 'admin/live_users_screen.dart';
 import 'logs_screen.dart';
 import 'settings_screen.dart';
 import 'test_screen.dart';
@@ -173,6 +174,11 @@ class _HomeScreenState extends State<HomeScreen> {
           icon: Icons.text_fields,
           label: 'Texts',
           screen: TextsConfigScreen(key: ValueKey('texts_$_reloadCounter')),
+        ),
+        NavigationItem(
+          icon: Icons.people_outline,
+          label: 'Live\nUsers',
+          screen: LiveUsersScreen(key: ValueKey('live_users_$_reloadCounter')),
         ),
         NavigationItem(
           icon: Icons.description,
@@ -817,7 +823,8 @@ class _InfoCard extends StatelessWidget {
               Text(
                 subtitle!,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant.withOpacity(0.8),
+                      color:
+                          colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
                     ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,

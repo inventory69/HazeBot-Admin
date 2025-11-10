@@ -751,6 +751,25 @@ class ApiService {
       throw Exception('Failed to load available cogs');
     }
   }
+
+  // Get active API sessions (Admin/Mod only)
+  Future<Map<String, dynamic>> getActiveSessions() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/admin/active-sessions'),
+      headers: _headers,
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else if (response.statusCode == 401) {
+      throw Exception('Unauthorized: Invalid or expired token');
+    } else if (response.statusCode == 403) {
+      throw Exception('Forbidden: Insufficient permissions');
+    } else {
+      throw Exception(
+          'Failed to fetch active sessions: ${response.statusCode}');
+    }
+  }
 }
 
 // Custom exception for token expiration
@@ -768,7 +787,7 @@ String getProxiedImageUrl(String imageUrl) {
   if (imageUrl.contains('/api/proxy/image')) {
     return imageUrl;
   }
-  
+
   final apiBaseUrl = ApiService.baseUrl.replaceFirst('/api', '');
   final encodedUrl = Uri.encodeComponent(imageUrl);
   return '$apiBaseUrl/api/proxy/image?url=$encodedUrl';

@@ -9,7 +9,7 @@ class DeepLinkService {
   /// Initialize deep link listener
   Future<void> init({required Function(Uri) onDeepLink}) async {
     debugPrint('🚀 DeepLinkService initializing...');
-    
+
     // Handle deep links while app is running
     _linkSubscription = _appLinks.uriLinkStream.listen((uri) {
       debugPrint('📱 Deep link received (app running): $uri');
@@ -32,7 +32,7 @@ class DeepLinkService {
     } catch (e) {
       debugPrint('❌ Failed to get initial deep link: $e');
     }
-    
+
     debugPrint('✅ DeepLinkService initialization complete');
   }
 

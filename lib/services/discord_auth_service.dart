@@ -33,15 +33,17 @@ class DiscordAuthService extends ChangeNotifier {
         final userData = await _apiService.getCurrentUser();
         debugPrint('DEBUG: DiscordAuthService got user data: $userData');
         debugPrint('DEBUG: Auth type: ${userData['auth_type']}');
-        
+
         // Only authenticate with Discord if auth_type is "discord" AND has discord_id
-        if (userData['auth_type'] == 'discord' && userData['discord_id'] != null) {
+        if (userData['auth_type'] == 'discord' &&
+            userData['discord_id'] != null) {
           debugPrint('DEBUG: Setting Discord auth as authenticated');
           _isAuthenticated = true;
           _userInfo = userData;
           notifyListeners();
         } else {
-          debugPrint('DEBUG: Legacy auth detected (auth_type: ${userData['auth_type']}), NOT setting Discord auth');
+          debugPrint(
+              'DEBUG: Legacy auth detected (auth_type: ${userData['auth_type']}), NOT setting Discord auth');
           // Clear any stale data
           _isAuthenticated = false;
           _userInfo = null;
@@ -57,20 +59,21 @@ class DiscordAuthService extends ChangeNotifier {
     try {
       final response = await _apiService.getDiscordAuthUrl();
       String authUrl = response['auth_url'];
-      
+
       // Add platform=mobile parameter for mobile apps (Android/iOS)
       if (!kIsWeb) {
         final uri = Uri.parse(authUrl);
         final newUri = uri.replace(
           queryParameters: {
             ...uri.queryParameters,
-            'state': 'mobile', // Use state parameter to identify mobile platform
+            'state':
+                'mobile', // Use state parameter to identify mobile platform
           },
         );
         authUrl = newUri.toString();
         debugPrint('DEBUG: Modified auth URL for mobile: $authUrl');
       }
-      
+
       return authUrl;
     } catch (e) {
       debugPrint('Failed to get Discord auth URL: $e');
@@ -105,7 +108,7 @@ class DiscordAuthService extends ChangeNotifier {
       debugPrint('DEBUG: Exchanging code: $code');
       final response = await _apiService.exchangeDiscordCode(code);
       debugPrint('DEBUG: Exchange response: $response');
-      
+
       _token = response['token'];
       _userInfo = {
         'username': response['user'],
@@ -142,9 +145,9 @@ class DiscordAuthService extends ChangeNotifier {
       debugPrint('🔐 setTokenFromDeepLink START');
       debugPrint('🔐 Token length: ${token.length}');
       debugPrint('🔐 Token preview: ${token.substring(0, 20)}...');
-      
+
       _token = token;
-      
+
       // Save token
       debugPrint('🔐 Saving token to SharedPreferences...');
       final prefs = await SharedPreferences.getInstance();
@@ -161,7 +164,7 @@ class DiscordAuthService extends ChangeNotifier {
       debugPrint('🔐 Calling getCurrentUser API...');
       final userData = await apiInstance.getCurrentUser();
       debugPrint('✅ Got user data: $userData');
-      
+
       _userInfo = {
         'user': userData['user'],
         'username': userData['user'],
@@ -170,16 +173,16 @@ class DiscordAuthService extends ChangeNotifier {
         'permissions': userData['permissions'],
         'auth_type': userData['auth_type'],
       };
-      
+
       debugPrint('🔐 Setting _isAuthenticated = true');
       _isAuthenticated = true;
-      
+
       debugPrint('🔐 Calling notifyListeners()...');
       notifyListeners();
-      
+
       // Small delay to ensure state propagates before navigation
       await Future.delayed(const Duration(milliseconds: 100));
-      
+
       debugPrint('✅ Token login successful - user authenticated!');
       return true;
     } catch (e, stackTrace) {

@@ -44,6 +44,9 @@ dependencies:
   
   # Deep Links / App Links
   app_links: ^6.3.2
+  
+  # Time Ago Formatting
+  timeago: ^3.6.1
 
 dev_dependencies:
   flutter_test:

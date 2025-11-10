@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../../services/auth_service.dart';
 import '../../services/api_service.dart';
 
 class RolesConfigScreen extends StatefulWidget {
@@ -195,7 +193,7 @@ class _RolesConfigScreenState extends State<RolesConfigScreen> {
     bool isMobile = false,
   }) {
     return DropdownButtonFormField<String>(
-      value: value,
+      initialValue: value,
       decoration: InputDecoration(
         labelText: label,
         labelStyle: TextStyle(fontSize: isMobile ? 14 : null),

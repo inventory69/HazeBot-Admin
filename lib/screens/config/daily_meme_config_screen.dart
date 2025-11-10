@@ -518,7 +518,7 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                               ),
                               SizedBox(height: isMobile ? 12 : 16),
                               DropdownButtonFormField<String>(
-                                value: _selectedChannelId,
+                                initialValue: _selectedChannelId,
                                 decoration: const InputDecoration(
                                   labelText: 'Meme Channel',
                                   border: OutlineInputBorder(),
@@ -547,7 +547,7 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                               ),
                               const SizedBox(height: 16),
                               DropdownButtonFormField<String>(
-                                value: _selectedRoleId,
+                                initialValue: _selectedRoleId,
                                 decoration: const InputDecoration(
                                   labelText: 'Ping Role (Optional)',
                                   hintText: 'Select role to mention',
@@ -564,7 +564,7 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                                       value: role['id'],
                                       child: Text('@${role['name']}'),
                                     );
-                                  }).toList(),
+                                  }),
                                 ],
                                 onChanged: (value) {
                                   setState(() {

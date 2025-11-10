@@ -39,19 +39,19 @@ class _LoginScreenState extends State<LoginScreen> {
       // Get current URL using platform-specific implementation
       final currentUrl = WebUtils.getCurrentUrl();
       if (currentUrl.isEmpty) return; // Non-web platform
-      
+
       final uri = Uri.parse(currentUrl);
-      
+
       print('DEBUG: Full URL: $currentUrl');
       print('DEBUG: Uri.base: ${Uri.base}');
       print('DEBUG: Parsed URI: ${uri.toString()}');
       print('DEBUG: Query params: ${uri.queryParameters}');
-      
+
       // Check for token (from backend redirect after OAuth)
       final token = uri.queryParameters['token'];
       if (token != null && token.isNotEmpty) {
         print('DEBUG: Found token in URL: ${token.substring(0, 20)}...');
-        
+
         final discordAuthService =
             Provider.of<DiscordAuthService>(context, listen: false);
         final permissionService =
@@ -63,8 +63,9 @@ class _LoginScreenState extends State<LoginScreen> {
           print('DEBUG: handleTokenFromUrl returned: $success');
 
           if (success && discordAuthService.userInfo != null) {
-            print('DEBUG: Token handled successfully, userInfo: ${discordAuthService.userInfo}');
-            
+            print(
+                'DEBUG: Token handled successfully, userInfo: ${discordAuthService.userInfo}');
+
             // Update permission service
             permissionService.updatePermissions(
               discordAuthService.role,
@@ -80,12 +81,13 @@ class _LoginScreenState extends State<LoginScreen> {
               // Show success message
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('Discord login successful! Welcome ${discordAuthService.userInfo?['username']}'),
+                  content: Text(
+                      'Discord login successful! Welcome ${discordAuthService.userInfo?['username']}'),
                   backgroundColor: Colors.green,
                   duration: Duration(seconds: 3),
                 ),
               );
-              
+
               // Force navigation check (main.dart should redirect to home)
               print('DEBUG: Login complete, should navigate to home now');
             }
@@ -105,7 +107,7 @@ class _LoginScreenState extends State<LoginScreen> {
         }
         return;
       }
-      
+
       // Check for OAuth code (from Discord redirect - fallback)
       final code = uri.queryParameters['code'];
       print('DEBUG: Code from URL: $code');
@@ -183,7 +185,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       // Get the auth URL
       final authUrl = await discordAuthService.getDiscordAuthUrl();
-      
+
       if (authUrl == null) {
         if (mounted) {
           setState(() {
@@ -204,7 +206,6 @@ class _LoginScreenState extends State<LoginScreen> {
           _isDiscordLoading = false;
         });
       }
-      
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -368,7 +369,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(height: 16),
                         OutlinedButton.icon(
-                          onPressed: _isDiscordLoading ? null : _loginWithDiscord,
+                          onPressed:
+                              _isDiscordLoading ? null : _loginWithDiscord,
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             side: BorderSide(

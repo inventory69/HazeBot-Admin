@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
-import '../../services/api_service.dart';
 
 /// Helper function to proxy external images through our backend to bypass CORS
 String getProxiedImageUrl(String originalUrl) {
@@ -517,7 +516,7 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                                           : Theme.of(context)
                                               .colorScheme
                                               .outline
-                                              .withOpacity(0.2),
+                                              .withValues(alpha: 0.2),
                                       width: isSelected ? 3 : 1,
                                     ),
                                     borderRadius: BorderRadius.circular(12),
@@ -525,7 +524,7 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                                         ? Theme.of(context)
                                             .colorScheme
                                             .primaryContainer
-                                            .withOpacity(0.3)
+                                            .withValues(alpha: 0.3)
                                         : null,
                                   ),
                                   child: Column(
@@ -633,7 +632,7 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                                 style: IconButton.styleFrom(
                                   disabledBackgroundColor: Theme.of(context)
                                       .colorScheme
-                                      .surfaceVariant,
+                                      .surfaceContainerHighest,
                                 ),
                               ),
                               Padding(
@@ -656,7 +655,7 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                                 style: IconButton.styleFrom(
                                   disabledBackgroundColor: Theme.of(context)
                                       .colorScheme
-                                      .surfaceVariant,
+                                      .surfaceContainerHighest,
                                 ),
                               ),
                             ],
@@ -816,12 +815,12 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                                               padding: const EdgeInsets.all(12),
                                               decoration: BoxDecoration(
                                                 color: Colors.green
-                                                    .withOpacity(0.1),
+                                                    .withValues(alpha: 0.1),
                                                 borderRadius:
                                                     BorderRadius.circular(8),
                                                 border: Border.all(
                                                   color: Colors.green
-                                                      .withOpacity(0.3),
+                                                      .withValues(alpha: 0.3),
                                                 ),
                                               ),
                                               child: Row(
@@ -932,10 +931,10 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: Colors.green.withOpacity(0.1),
+                                color: Colors.green.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
-                                  color: Colors.green.withOpacity(0.3),
+                                  color: Colors.green.withValues(alpha: 0.3),
                                 ),
                               ),
                               child: Row(
@@ -1007,8 +1006,8 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
               Card(
                 color: Theme.of(context)
                     .colorScheme
-                    .surfaceVariant
-                    .withOpacity(0.5),
+                    .surfaceContainerHighest
+                    .withValues(alpha: 0.5),
                 child: Padding(
                   padding: const EdgeInsets.all(20.0),
                   child: Column(

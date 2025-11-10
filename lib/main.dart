@@ -13,7 +13,7 @@ import 'services/deep_link_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Load environment variables
   await dotenv.load(fileName: ".env");
 
@@ -42,15 +42,16 @@ class _HazeBotAdminAppState extends State<HazeBotAdminApp> {
       debugPrint('🔗 DEEP LINK RECEIVED: $uri');
       debugPrint('🔗 Scheme: ${uri.scheme}, Host: ${uri.host}');
       debugPrint('🔗 Query params: ${uri.queryParameters}');
-      
+
       // Handle OAuth callback: hazebot://oauth?token=...
       if (uri.scheme == 'hazebot' && uri.host == 'oauth') {
         debugPrint('✅ Deep link matches OAuth pattern');
         final token = uri.queryParameters['token'];
-        
+
         if (token != null) {
-          debugPrint('✅ Token found in deep link: ${token.substring(0, 20)}...');
-          
+          debugPrint(
+              '✅ Token found in deep link: ${token.substring(0, 20)}...');
+
           // Store token to be processed after build
           setState(() {
             _pendingToken = token;
@@ -60,7 +61,8 @@ class _HazeBotAdminAppState extends State<HazeBotAdminApp> {
           debugPrint('❌ No token in deep link query parameters');
         }
       } else {
-        debugPrint('❌ Deep link does not match OAuth pattern (expected hazebot://oauth)');
+        debugPrint(
+            '❌ Deep link does not match OAuth pattern (expected hazebot://oauth)');
       }
     });
   }
@@ -183,14 +185,15 @@ class _HazeBotAdminAppState extends State<HazeBotAdminApp> {
                     if (_pendingToken != null) {
                       final token = _pendingToken!;
                       _pendingToken = null; // Clear it immediately
-                      
-                      debugPrint('🔐 Processing pending token from deep link...');
+
+                      debugPrint(
+                          '🔐 Processing pending token from deep link...');
                       // Process token after this frame
                       WidgetsBinding.instance.addPostFrameCallback((_) {
                         discordAuthService.setTokenFromDeepLink(token);
                       });
                     }
-                    
+
                     // Update permission service when auth changes
                     if (discordAuthService.isAuthenticated &&
                         discordAuthService.userInfo != null) {

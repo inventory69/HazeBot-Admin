@@ -273,7 +273,7 @@ class _LogsScreenState extends State<LogsScreen> {
                       SizedBox(
                         width: 200,
                         child: DropdownButtonFormField<String>(
-                          value: _selectedCog,
+                          initialValue: _selectedCog,
                           decoration: const InputDecoration(
                             labelText: 'Cog',
                             border: OutlineInputBorder(),
@@ -302,7 +302,7 @@ class _LogsScreenState extends State<LogsScreen> {
                       SizedBox(
                         width: 150,
                         child: DropdownButtonFormField<String>(
-                          value: _selectedLevel,
+                          initialValue: _selectedLevel,
                           decoration: const InputDecoration(
                             labelText: 'Level',
                             border: OutlineInputBorder(),
@@ -341,7 +341,7 @@ class _LogsScreenState extends State<LogsScreen> {
                       SizedBox(
                         width: 120,
                         child: DropdownButtonFormField<int>(
-                          value: _limit,
+                          initialValue: _limit,
                           decoration: const InputDecoration(
                             labelText: 'Limit',
                             border: OutlineInputBorder(),

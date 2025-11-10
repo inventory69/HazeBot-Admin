@@ -380,7 +380,7 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                               color: Theme.of(context)
                                   .colorScheme
                                   .outline
-                                  .withOpacity(0.2),
+                                  .withValues(alpha: 0.2),
                             ),
                           ),
                           clipBehavior: Clip.antiAlias,
@@ -700,7 +700,7 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                               color: Theme.of(context)
                                   .colorScheme
                                   .outline
-                                  .withOpacity(0.2),
+                                  .withValues(alpha: 0.2),
                             ),
                           ),
                           clipBehavior: Clip.antiAlias,
@@ -983,10 +983,10 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                           width: double.infinity,
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: Colors.green.withOpacity(0.1),
+                            color: Colors.green.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: Colors.green.withOpacity(0.3),
+                              color: Colors.green.withValues(alpha: 0.3),
                             ),
                           ),
                           child: Row(
@@ -1083,8 +1083,8 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
               Card(
                 color: Theme.of(context)
                     .colorScheme
-                    .surfaceVariant
-                    .withOpacity(0.5),
+                    .surfaceContainerHighest
+                    .withValues(alpha: 0.5),
                 child: Padding(
                   padding: const EdgeInsets.all(20.0),
                   child: Column(
@@ -1141,10 +1141,10 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.amber.withOpacity(0.1),
+                          color: Colors.amber.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color: Colors.amber.withOpacity(0.3),
+                            color: Colors.amber.withValues(alpha: 0.3),
                           ),
                         ),
                         child: Row(
@@ -1186,9 +1186,9 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
