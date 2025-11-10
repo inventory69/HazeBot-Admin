@@ -11,7 +11,8 @@ class LiveUsersScreen extends StatefulWidget {
   State<LiveUsersScreen> createState() => _LiveUsersScreenState();
 }
 
-class _LiveUsersScreenState extends State<LiveUsersScreen> {
+class _LiveUsersScreenState extends State<LiveUsersScreen>
+    with WidgetsBindingObserver {
   Map<String, dynamic>? _sessionData;
   bool _isLoading = true;
   String? _errorMessage;
@@ -20,6 +21,7 @@ class _LiveUsersScreenState extends State<LiveUsersScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadActiveSessions();
     // Auto-refresh every 5 seconds
     _refreshTimer = Timer.periodic(const Duration(seconds: 5), (_) {
@@ -31,11 +33,21 @@ class _LiveUsersScreenState extends State<LiveUsersScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _refreshTimer?.cancel();
     super.dispose();
   }
 
-  Future<void> _loadActiveSessions({bool silent = false}) async {
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // Reload data when app comes back to foreground
+    if (state == AppLifecycleState.resumed && mounted) {
+      _loadActiveSessions(silent: true);
+    }
+  }
+
+  Future<void> _loadActiveSessions({bool silent = false, int retryCount = 0}) async {
     if (!silent) {
       setState(() {
         _isLoading = true;
@@ -51,9 +63,25 @@ class _LiveUsersScreenState extends State<LiveUsersScreen> {
         setState(() {
           _sessionData = response;
           _isLoading = false;
+          _errorMessage = null; // Clear any previous errors on success
         });
       }
     } catch (e) {
+      // Check if it's a network/DNS error that might be temporary
+      final errorStr = e.toString().toLowerCase();
+      final isNetworkError = errorStr.contains('socketexception') ||
+          errorStr.contains('failed host lookup') ||
+          errorStr.contains('network') ||
+          errorStr.contains('connection');
+
+      if (isNetworkError && retryCount < 2 && mounted) {
+        // Automatic retry for network errors (max 2 retries)
+        await Future.delayed(Duration(seconds: 1 + retryCount));
+        if (mounted) {
+          return _loadActiveSessions(silent: silent, retryCount: retryCount + 1);
+        }
+      }
+
       if (mounted) {
         setState(() {
           _errorMessage = 'Failed to load active sessions: $e';
@@ -90,13 +118,23 @@ class _LiveUsersScreenState extends State<LiveUsersScreen> {
   }
 
   String _getDeviceType(String userAgent) {
-    if (userAgent.toLowerCase().contains('mobile') ||
-        userAgent.toLowerCase().contains('android') ||
-        userAgent.toLowerCase().contains('iphone')) {
+    final ua = userAgent.toLowerCase();
+    
+    // Check for mobile patterns (including Flutter/Dart on mobile)
+    if (ua.contains('mobile') ||
+        ua.contains('android') ||
+        ua.contains('iphone') ||
+        ua.contains('ios') ||
+        // Flutter on Android typically has "Dart" in user agent
+        (ua.contains('dart') && (ua.contains('android') || ua.contains('linux'))) ||
+        // Check for Flutter specific patterns
+        (ua.contains('flutter') && !ua.contains('web'))) {
       return 'Mobile';
-    } else if (userAgent.toLowerCase().contains('tablet') ||
-        userAgent.toLowerCase().contains('ipad')) {
+    } else if (ua.contains('tablet') || ua.contains('ipad')) {
       return 'Tablet';
+    } else if (ua.contains('dart') || ua.contains('flutter')) {
+      // If it's Dart/Flutter but not detected as mobile, check for web
+      return 'Web';
     } else {
       return 'Desktop';
     }
@@ -109,6 +147,8 @@ class _LiveUsersScreenState extends State<LiveUsersScreen> {
         return Icons.phone_android;
       case 'Tablet':
         return Icons.tablet;
+      case 'Web':
+        return Icons.web;
       default:
         return Icons.computer;
     }
@@ -121,20 +161,64 @@ class _LiveUsersScreenState extends State<LiveUsersScreen> {
     }
 
     if (_errorMessage != null) {
+      // Determine if it's a network error
+      final errorStr = _errorMessage!.toLowerCase();
+      final isNetworkError = errorStr.contains('socketexception') ||
+          errorStr.contains('failed host lookup') ||
+          errorStr.contains('network') ||
+          errorStr.contains('connection');
+
       return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, size: 64, color: Colors.red),
-            const SizedBox(height: 16),
-            Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: _loadActiveSessions,
-              icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
-            ),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                isNetworkError ? Icons.wifi_off : Icons.error_outline,
+                size: 64,
+                color: Colors.red,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                isNetworkError ? 'Connection Issue' : 'Error',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      color: Colors.red,
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                isNetworkError
+                    ? 'Could not connect to the server. This usually happens when the app was in the background.'
+                    : 'Failed to load active sessions.',
+                style: Theme.of(context).textTheme.bodyMedium,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                _errorMessage!,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                textAlign: TextAlign.center,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: () => _loadActiveSessions(),
+                icon: const Icon(Icons.refresh),
+                label: const Text('Retry Connection'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -152,10 +236,16 @@ class _LiveUsersScreenState extends State<LiveUsersScreen> {
           onRefresh: () => _loadActiveSessions(),
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: EdgeInsets.all(padding),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: constraints.maxHeight,
+              ),
+              child: Padding(
+                padding: EdgeInsets.all(padding),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                 // Header
                 Row(
                   children: [
@@ -495,6 +585,8 @@ class _LiveUsersScreenState extends State<LiveUsersScreen> {
                     },
                   ),
               ],
+                ),
+              ),
             ),
           ),
         );

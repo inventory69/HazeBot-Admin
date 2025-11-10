@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -24,9 +25,34 @@ class ApiService {
     debugPrint('DEBUG: ApiService token cleared');
   }
 
+  String get _userAgent {
+    // Detect platform and create appropriate user agent
+    if (kIsWeb) {
+      return 'HazeBotAdmin/1.0 (Web; Flutter)';
+    } else {
+      try {
+        if (Platform.isAndroid) {
+          return 'HazeBotAdmin/1.0 (Android; Flutter)';
+        } else if (Platform.isIOS) {
+          return 'HazeBotAdmin/1.0 (iOS; Flutter)';
+        } else if (Platform.isWindows) {
+          return 'HazeBotAdmin/1.0 (Windows; Flutter)';
+        } else if (Platform.isMacOS) {
+          return 'HazeBotAdmin/1.0 (macOS; Flutter)';
+        } else if (Platform.isLinux) {
+          return 'HazeBotAdmin/1.0 (Linux; Flutter)';
+        }
+      } catch (e) {
+        // Fallback if Platform is not available
+      }
+    }
+    return 'HazeBotAdmin/1.0 (Unknown; Flutter)';
+  }
+
   Map<String, String> get _headers {
     final headers = {
       'Content-Type': 'application/json',
+      'User-Agent': _userAgent,
     };
 
     if (_token != null) {
@@ -373,6 +399,64 @@ class ApiService {
       return jsonDecode(response.body);
     } else {
       throw Exception('Failed to get Rocket League stats: ${response.body}');
+    }
+  }
+
+  Future<Map<String, dynamic>> getUserRLAccount() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/user/rocket-league/account'),
+      headers: _headers,
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to get user RL account: ${response.body}');
+    }
+  }
+
+  Future<Map<String, dynamic>> linkUserRLAccount(
+      String platform, String username) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/user/rocket-league/link'),
+      headers: _headers,
+      body: jsonEncode({'platform': platform, 'username': username}),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      final error = jsonDecode(response.body);
+      throw Exception(error['error'] ?? 'Failed to link RL account');
+    }
+  }
+
+  Future<Map<String, dynamic>> unlinkUserRLAccount() async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/user/rocket-league/unlink'),
+      headers: _headers,
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to unlink RL account: ${response.body}');
+    }
+  }
+
+  Future<Map<String, dynamic>> updateUserPreferences(
+      Map<String, dynamic> preferences) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/user/preferences'),
+      headers: _headers,
+      body: jsonEncode(preferences),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      final error = jsonDecode(response.body);
+      throw Exception(error['error'] ?? 'Failed to update preferences');
     }
   }
 
