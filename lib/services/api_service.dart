@@ -770,6 +770,38 @@ class ApiService {
           'Failed to fetch active sessions: ${response.statusCode}');
     }
   }
+
+  // Ping endpoint to track session (no special permissions required)
+  Future<Map<String, dynamic>> ping() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/ping'),
+      headers: _headers,
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else if (response.statusCode == 401) {
+      throw TokenExpiredException('Token has expired or is invalid');
+    } else {
+      throw Exception('Ping failed: ${response.statusCode}');
+    }
+  }
+
+  // Get current user's profile data
+  Future<Map<String, dynamic>> getUserProfile() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/user/profile'),
+      headers: _headers,
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else if (response.statusCode == 401) {
+      throw TokenExpiredException('Token has expired or is invalid');
+    } else {
+      throw Exception('Failed to get user profile: ${response.statusCode}');
+    }
+  }
 }
 
 // Custom exception for token expiration

@@ -27,13 +27,11 @@ class MemeConfigScreen extends StatefulWidget {
 
 class _MemeConfigScreenState extends State<MemeConfigScreen> {
   bool _isLoadingRandomMeme = false;
-  bool _isLoadingDailyMeme = false;
   bool _isSendingMeme = false;
   bool _isLoadingSources = false;
   bool _isLoadingSourceMeme = false;
   Map<String, dynamic>? _randomMemeData;
   Map<String, dynamic>? _sourceMemeData;
-  String? _dailyMemeResult;
   String? _errorMessage;
   List<String> _subreddits = [];
   List<String> _lemmyCommunities = [];
@@ -168,49 +166,6 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
       setState(() {
         _errorMessage = 'Error sending meme to Discord: $e';
         _isSendingMeme = false;
-      });
-    }
-  }
-
-  Future<void> _testDailyMeme() async {
-    setState(() {
-      _isLoadingDailyMeme = true;
-      _errorMessage = null;
-      _dailyMemeResult = null;
-    });
-
-    try {
-      final authService = Provider.of<AuthService>(context, listen: false);
-      final result = await authService.apiService.testDailyMeme();
-
-      setState(() {
-        _dailyMemeResult = result['message'] ?? result.toString();
-        _isLoadingDailyMeme = false;
-      });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.check_circle, color: Colors.white),
-                const SizedBox(width: 12),
-                const Text('Daily meme posted successfully!'),
-              ],
-            ),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 3),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-        );
-      }
-    } catch (e) {
-      setState(() {
-        _errorMessage = 'Error testing daily meme: $e';
-        _isLoadingDailyMeme = false;
       });
     }
   }
@@ -874,149 +829,6 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                 ),
               ),
               SizedBox(height: isMobile ? 16 : 24),
-
-              // Daily Meme Test Card
-              Card(
-                elevation: 2,
-                child: Padding(
-                  padding: EdgeInsets.all(isMobile ? 16.0 : 24.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: EdgeInsets.all(isMobile ? 10 : 12),
-                            decoration: BoxDecoration(
-                              color: Colors.green.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Icon(
-                              Icons.schedule_send,
-                              color: Colors.green,
-                              size: isMobile ? 24 : 28,
-                            ),
-                          ),
-                          SizedBox(width: isMobile ? 12 : 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Daily Meme Test',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleLarge
-                                      ?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: isMobile ? 18 : null,
-                                      ),
-                                ),
-                                SizedBox(height: isMobile ? 2 : 4),
-                                Text(
-                                  'Test the daily meme posting function immediately',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodyMedium
-                                      ?.copyWith(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurfaceVariant,
-                                        fontSize: isMobile ? 12 : null,
-                                      ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: isMobile ? 16 : 24),
-                      Container(
-                        padding: EdgeInsets.all(isMobile ? 10 : 12),
-                        decoration: BoxDecoration(
-                          color: Colors.orange.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: Colors.orange.withValues(alpha: 0.3),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(Icons.warning_amber_rounded,
-                                size: isMobile ? 18 : 20,
-                                color: Colors.orange[700]),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                'This bypasses the schedule and posts a meme immediately to Discord.',
-                                style: TextStyle(
-                                  fontSize: isMobile ? 11 : 12,
-                                  color: Colors.orange[700],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      SizedBox(height: isMobile ? 16 : 24),
-                      FilledButton.tonalIcon(
-                        onPressed: _isLoadingDailyMeme ? null : _testDailyMeme,
-                        icon: _isLoadingDailyMeme
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child:
-                                    CircularProgressIndicator(strokeWidth: 2),
-                              )
-                            : const Icon(Icons.rocket_launch),
-                        label: Text(_isLoadingDailyMeme
-                            ? 'Posting Meme...'
-                            : 'Post Daily Meme Now'),
-                        style: FilledButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 24, vertical: 16),
-                        ),
-                      ),
-                      if (_dailyMemeResult != null) ...[
-                        const SizedBox(height: 16),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.green.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: Colors.green.withValues(alpha: 0.3),
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.check_circle,
-                                color: Colors.green,
-                                size: 24,
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  _dailyMemeResult!,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodyMedium
-                                      ?.copyWith(
-                                        color: Colors.green[800],
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
 
               // Error Display
               if (_errorMessage != null) ...[

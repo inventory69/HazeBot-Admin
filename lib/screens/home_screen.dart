@@ -49,8 +49,20 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     // Load config after the first frame is built
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _pingServer();
       _loadConfig();
     });
+  }
+
+  Future<void> _pingServer() async {
+    // Ping server to register session (works for all users)
+    try {
+      await ApiService().ping();
+      debugPrint('Session ping successful');
+    } catch (e) {
+      debugPrint('Session ping failed: $e');
+      // Don't show error to user - this is just for session tracking
+    }
   }
 
   Future<void> _loadConfig() async {
@@ -100,58 +112,16 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  List<NavigationItem> _getAvailableNavigationItems(
-      PermissionService permissionService) {
+  // User features (available to all)
+  List<NavigationItem> _getUserNavigationItems() {
     final items = <NavigationItem>[];
 
     // Dashboard - available to all
-    if (permissionService.hasPermission('all') ||
-        permissionService.hasPermission('meme_generator')) {
-      items.add(NavigationItem(
-        icon: Icons.dashboard,
-        label: 'Dashboard',
-        screen: DashboardScreen(key: ValueKey('dashboard_$_reloadCounter')),
-      ));
-    }
-
-    // Admin/Mod only sections
-    if (permissionService.hasPermission('all')) {
-      items.addAll([
-        NavigationItem(
-          icon: Icons.tune_outlined,
-          label: 'General',
-          screen: GeneralConfigScreen(key: ValueKey('general_$_reloadCounter')),
-        ),
-        NavigationItem(
-          icon: Icons.tag,
-          label: 'Channels',
-          screen:
-              ChannelsConfigScreen(key: ValueKey('channels_$_reloadCounter')),
-        ),
-        NavigationItem(
-          icon: Icons.people,
-          label: 'Roles',
-          screen: RolesConfigScreen(key: ValueKey('roles_$_reloadCounter')),
-        ),
-        NavigationItem(
-          icon: Icons.image,
-          label: 'Memes',
-          screen: MemeConfigScreen(key: ValueKey('meme_$_reloadCounter')),
-        ),
-        NavigationItem(
-          icon: Icons.schedule,
-          label: 'Daily\nMeme',
-          screen: DailyMemeConfigScreen(
-              key: ValueKey('daily_meme_$_reloadCounter')),
-        ),
-        NavigationItem(
-          icon: Icons.tune,
-          label: 'Meme\nPrefs',
-          screen: DailyMemePreferencesScreen(
-              key: ValueKey('daily_meme_prefs_$_reloadCounter')),
-        ),
-      ]);
-    }
+    items.add(NavigationItem(
+      icon: Icons.dashboard,
+      label: 'Dashboard',
+      screen: DashboardScreen(key: ValueKey('dashboard_$_reloadCounter')),
+    ));
 
     // Meme Generator - available to all users
     items.add(NavigationItem(
@@ -161,41 +131,97 @@ class _HomeScreenState extends State<HomeScreen> {
           MemeGeneratorScreen(key: ValueKey('meme_generator_$_reloadCounter')),
     ));
 
-    // Admin/Mod only sections
+    // Meme Testing - available to all users (Daily Meme Test removed, now admin-only in Daily Meme Config)
+    items.add(NavigationItem(
+      icon: Icons.image,
+      label: 'Memes',
+      screen: MemeConfigScreen(key: ValueKey('meme_$_reloadCounter')),
+    ));
+
+    // Settings - available to all users
+    items.add(NavigationItem(
+      icon: Icons.settings,
+      label: 'Settings',
+      screen: SettingsScreen(key: ValueKey('settings_$_reloadCounter')),
+    ));
+
+    return items;
+  }
+
+  // Admin features (admin/mod only)
+  List<NavigationItem> _getAdminNavigationItems() {
+    final items = <NavigationItem>[];
+
+    items.addAll([
+      NavigationItem(
+        icon: Icons.tune_outlined,
+        label: 'General',
+        screen: GeneralConfigScreen(key: ValueKey('general_$_reloadCounter')),
+      ),
+      NavigationItem(
+        icon: Icons.tag,
+        label: 'Channels',
+        screen:
+            ChannelsConfigScreen(key: ValueKey('channels_$_reloadCounter')),
+      ),
+      NavigationItem(
+        icon: Icons.people,
+        label: 'Roles',
+        screen: RolesConfigScreen(key: ValueKey('roles_$_reloadCounter')),
+      ),
+      NavigationItem(
+        icon: Icons.schedule,
+        label: 'Daily\nMeme',
+        screen: DailyMemeConfigScreen(
+            key: ValueKey('daily_meme_$_reloadCounter')),
+      ),
+      NavigationItem(
+        icon: Icons.tune,
+        label: 'Meme\nPrefs',
+        screen: DailyMemePreferencesScreen(
+            key: ValueKey('daily_meme_prefs_$_reloadCounter')),
+      ),
+      NavigationItem(
+        icon: Icons.sports_esports,
+        label: 'Rocket\nLeague',
+        screen: RocketLeagueConfigScreen(
+            key: ValueKey('rocket_league_$_reloadCounter')),
+      ),
+      NavigationItem(
+        icon: Icons.text_fields,
+        label: 'Texts',
+        screen: TextsConfigScreen(key: ValueKey('texts_$_reloadCounter')),
+      ),
+      NavigationItem(
+        icon: Icons.people_outline,
+        label: 'Live\nUsers',
+        screen: LiveUsersScreen(key: ValueKey('live_users_$_reloadCounter')),
+      ),
+      NavigationItem(
+        icon: Icons.description,
+        label: 'Logs',
+        screen: LogsScreen(key: ValueKey('logs_$_reloadCounter')),
+      ),
+      NavigationItem(
+        icon: Icons.science,
+        label: 'Test',
+        screen: TestScreen(key: ValueKey('test_$_reloadCounter')),
+      ),
+    ]);
+
+    return items;
+  }
+
+  List<NavigationItem> _getAllNavigationItems(
+      PermissionService permissionService) {
+    final items = <NavigationItem>[];
+    
+    // Always add user features
+    items.addAll(_getUserNavigationItems());
+    
+    // Add admin features if user has permissions
     if (permissionService.hasPermission('all')) {
-      items.addAll([
-        NavigationItem(
-          icon: Icons.sports_esports,
-          label: 'Rocket\nLeague',
-          screen: RocketLeagueConfigScreen(
-              key: ValueKey('rocket_league_$_reloadCounter')),
-        ),
-        NavigationItem(
-          icon: Icons.text_fields,
-          label: 'Texts',
-          screen: TextsConfigScreen(key: ValueKey('texts_$_reloadCounter')),
-        ),
-        NavigationItem(
-          icon: Icons.people_outline,
-          label: 'Live\nUsers',
-          screen: LiveUsersScreen(key: ValueKey('live_users_$_reloadCounter')),
-        ),
-        NavigationItem(
-          icon: Icons.description,
-          label: 'Logs',
-          screen: LogsScreen(key: ValueKey('logs_$_reloadCounter')),
-        ),
-        NavigationItem(
-          icon: Icons.settings,
-          label: 'Settings',
-          screen: SettingsScreen(key: ValueKey('settings_$_reloadCounter')),
-        ),
-        NavigationItem(
-          icon: Icons.science,
-          label: 'Test',
-          screen: TestScreen(key: ValueKey('test_$_reloadCounter')),
-        ),
-      ]);
+      items.addAll(_getAdminNavigationItems());
     }
 
     return items;
@@ -207,29 +233,14 @@ class _HomeScreenState extends State<HomeScreen> {
     final discordAuthService = Provider.of<DiscordAuthService>(context);
     final permissionService = Provider.of<PermissionService>(context);
 
-    final navigationItems = _getAvailableNavigationItems(permissionService);
+    final userItems = _getUserNavigationItems();
+    final adminItems = _getAdminNavigationItems();
+    final allItems = _getAllNavigationItems(permissionService);
 
     // Ensure selected index is within bounds
-    if (_selectedIndex >= navigationItems.length) {
+    if (_selectedIndex >= allItems.length) {
       _selectedIndex = 0;
     }
-
-    final screens = [
-      DashboardScreen(key: ValueKey('dashboard_$_reloadCounter')),
-      GeneralConfigScreen(key: ValueKey('general_$_reloadCounter')),
-      ChannelsConfigScreen(key: ValueKey('channels_$_reloadCounter')),
-      RolesConfigScreen(key: ValueKey('roles_$_reloadCounter')),
-      MemeConfigScreen(key: ValueKey('meme_$_reloadCounter')),
-      DailyMemeConfigScreen(key: ValueKey('daily_meme_$_reloadCounter')),
-      DailyMemePreferencesScreen(
-          key: ValueKey('daily_meme_prefs_$_reloadCounter')),
-      MemeGeneratorScreen(key: ValueKey('meme_generator_$_reloadCounter')),
-      RocketLeagueConfigScreen(key: ValueKey('rocket_league_$_reloadCounter')),
-      TextsConfigScreen(key: ValueKey('texts_$_reloadCounter')),
-      LogsScreen(key: ValueKey('logs_$_reloadCounter')),
-      SettingsScreen(key: ValueKey('settings_$_reloadCounter')),
-      TestScreen(key: ValueKey('test_$_reloadCounter')),
-    ];
 
     return Scaffold(
       appBar: AppBar(
@@ -296,7 +307,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   child: IntrinsicHeight(
                     child: NavigationRail(
-                      selectedIndex: _selectedIndex,
+                      selectedIndex: _selectedIndex < userItems.length 
+                          ? _selectedIndex 
+                          : null,
                       onDestinationSelected: (index) {
                         setState(() {
                           _selectedIndex = index;
@@ -304,7 +317,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       },
                       extended: false,
                       labelType: NavigationRailLabelType.all,
-                      destinations: navigationItems
+                      // User features (always visible)
+                      destinations: userItems
                           .map((item) => NavigationRailDestination(
                                 icon: Icon(item.icon),
                                 label: Text(
@@ -316,6 +330,112 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                               ))
                           .toList(),
+                      // Admin features (grouped below with divider)
+                      trailing: permissionService.hasPermission('all')
+                          ? Expanded(
+                              child: Column(
+                                children: [
+                                  const Divider(thickness: 1, height: 32),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.admin_panel_settings,
+                                          size: 16,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .primary,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          'ADMIN',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .labelSmall
+                                              ?.copyWith(
+                                                fontWeight: FontWeight.bold,
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .primary,
+                                              ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: ListView.builder(
+                                      padding: EdgeInsets.zero,
+                                      itemCount: adminItems.length,
+                                      itemBuilder: (context, index) {
+                                        final adminIndex = userItems.length + index;
+                                        final item = adminItems[index];
+                                        final isSelected = _selectedIndex == adminIndex;
+                                        
+                                        return InkWell(
+                                          onTap: () {
+                                            setState(() {
+                                              _selectedIndex = adminIndex;
+                                            });
+                                          },
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 12,
+                                              horizontal: 8,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: isSelected
+                                                  ? Theme.of(context)
+                                                      .colorScheme
+                                                      .primaryContainer
+                                                  : null,
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
+                                            child: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(
+                                                  item.icon,
+                                                  color: isSelected
+                                                      ? Theme.of(context)
+                                                          .colorScheme
+                                                          .onPrimaryContainer
+                                                      : Theme.of(context)
+                                                          .colorScheme
+                                                          .onSurfaceVariant,
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  item.label,
+                                                  textAlign: TextAlign.center,
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .labelSmall
+                                                      ?.copyWith(
+                                                        fontSize: item.label.contains('\n')
+                                                            ? 10
+                                                            : 11,
+                                                        color: isSelected
+                                                            ? Theme.of(context)
+                                                                .colorScheme
+                                                                .onPrimaryContainer
+                                                            : Theme.of(context)
+                                                                .colorScheme
+                                                                .onSurfaceVariant,
+                                                      ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : null,
                     ),
                   ),
                 ),
@@ -323,7 +443,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           if (_isDrawerVisible) const VerticalDivider(thickness: 1, width: 1),
           Expanded(
-            child: navigationItems[_selectedIndex].screen,
+            child: allItems[_selectedIndex].screen,
           ),
         ],
       ),
@@ -391,6 +511,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final permissionService = Provider.of<PermissionService>(context);
+    final discordAuthService = Provider.of<DiscordAuthService>(context);
+    final isAdmin = permissionService.hasPermission('all');
+
+    // Show user dashboard for non-admin users
+    if (!isAdmin) {
+      return _UserDashboard(
+        username: discordAuthService.userInfo?['user'] ?? 'User',
+        discordId: discordAuthService.userInfo?['discord_id'] ?? 'N/A',
+        role: permissionService.role,
+      );
+    }
+
+    // Show admin dashboard for admins
     return Consumer<ConfigService>(
       builder: (context, configService, _) {
         if (configService.isLoading) {
@@ -455,13 +589,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // User Profile Section (for admins to see their own profile)
+              _UserDashboard(
+                username: discordAuthService.userInfo?['username'] ?? 'N/A',
+                discordId: discordAuthService.userInfo?['discord_id'] ?? 'N/A',
+                role: permissionService.role,
+              ),
+              const SizedBox(height: 32),
+              
+              // Divider
+              Divider(
+                color: Theme.of(context).colorScheme.outlineVariant,
+                thickness: 1,
+              ),
+              const SizedBox(height: 32),
+
               Row(
                 children: [
-                  Icon(Icons.dashboard,
+                  Icon(Icons.settings,
                       size: 32, color: Theme.of(context).colorScheme.primary),
                   const SizedBox(width: 12),
                   Text(
-                    'Dashboard',
+                    'Bot Configuration',
                     style: Theme.of(context).textTheme.headlineLarge,
                   ),
                   const Spacer(),
@@ -832,6 +981,1041 @@ class _InfoCard extends StatelessWidget {
             ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+// User Dashboard (for non-admin users)
+class _UserDashboard extends StatefulWidget {
+  final String username;
+  final String discordId;
+  final String role;
+
+  const _UserDashboard({
+    required this.username,
+    required this.discordId,
+    required this.role,
+  });
+
+  @override
+  State<_UserDashboard> createState() => _UserDashboardState();
+}
+
+class _UserDashboardState extends State<_UserDashboard> {
+  bool _isLoading = false;
+  List<Map<String, dynamic>> _optInRoles = [];
+  Map<String, dynamic>? _rlRank;
+  String? _errorMessage;
+  String? _displayName;
+  String? _avatarUrl;
+  Map<String, dynamic>? _notifications;
+  Map<String, dynamic>? _customStats;
+  Map<String, dynamic>? _activity;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfileData();
+  }
+
+  Future<void> _loadProfileData() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final response = await ApiService().getUserProfile();
+      
+      if (response['success'] == true && response['profile'] != null) {
+        final profile = response['profile'];
+        setState(() {
+          _optInRoles = List<Map<String, dynamic>>.from(
+            profile['opt_in_roles'] ?? []
+          );
+          _rlRank = profile['rl_rank'];
+          _displayName = profile['display_name'];
+          _avatarUrl = profile['avatar_url'];
+          _notifications = profile['notifications'];
+          _customStats = profile['custom_stats'];
+          _activity = profile['activity'];
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _errorMessage = 'Failed to load profile data';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Error: ${e.toString()}';
+        _isLoading = false;
+      });
+    }
+  }
+
+  Color _getRoleColor() {
+    switch (widget.role.toLowerCase()) {
+      case 'admin':
+        return Colors.red;
+      case 'mod':
+        return Colors.orange;
+      case 'lootling':
+        return Colors.green;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  IconData _getRoleIcon() {
+    switch (widget.role.toLowerCase()) {
+      case 'admin':
+        return Icons.admin_panel_settings;
+      case 'mod':
+        return Icons.shield;
+      case 'lootling':
+        return Icons.backpack;
+      default:
+        return Icons.person;
+    }
+  }
+
+  String _getRoleDisplayName() {
+    switch (widget.role.toLowerCase()) {
+      case 'admin':
+        return '🧊 Inventory Master';
+      case 'mod':
+        return '📦 Slot Keeper';
+      case 'lootling':
+        return '🎒 Lootling';
+      default:
+        return widget.role;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isMobile = constraints.maxWidth < 600;
+        final padding = isMobile ? 12.0 : 24.0;
+
+        return SingleChildScrollView(
+          padding: EdgeInsets.all(padding),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Row(
+                children: [
+                  Icon(Icons.person,
+                      size: isMobile ? 28 : 32,
+                      color: Theme.of(context).colorScheme.primary),
+                  SizedBox(width: isMobile ? 8 : 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'My Profile',
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineLarge
+                              ?.copyWith(
+                                fontSize: isMobile ? 24 : null,
+                              ),
+                        ),
+                        Text(
+                          'Your HazeBot profile information',
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                    fontSize: isMobile ? 13 : null,
+                                  ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: isMobile ? 20 : 32),
+
+              // Profile Card
+              Card(
+                elevation: 2,
+                child: Padding(
+                  padding: EdgeInsets.all(isMobile ? 20.0 : 32.0),
+                  child: Column(
+                    children: [
+                      // Avatar & Name
+                      Row(
+                        children: [
+                          // Avatar or Icon
+                          _isLoading
+                              ? Container(
+                                  width: isMobile ? 72 : 88,
+                                  height: isMobile ? 72 : 88,
+                                  padding: EdgeInsets.all(isMobile ? 16 : 20),
+                                  decoration: BoxDecoration(
+                                    color: _getRoleColor().withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: const CircularProgressIndicator(),
+                                )
+                              : _avatarUrl != null
+                                  ? ClipRRect(
+                                      borderRadius: BorderRadius.circular(16),
+                                      child: Image.network(
+                                        _avatarUrl!,
+                                        width: isMobile ? 72 : 88,
+                                        height: isMobile ? 72 : 88,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) {
+                                          return Container(
+                                            width: isMobile ? 72 : 88,
+                                            height: isMobile ? 72 : 88,
+                                            padding: EdgeInsets.all(isMobile ? 16 : 20),
+                                            decoration: BoxDecoration(
+                                              color: _getRoleColor().withValues(alpha: 0.2),
+                                              borderRadius: BorderRadius.circular(16),
+                                            ),
+                                            child: Icon(
+                                              _getRoleIcon(),
+                                              size: isMobile ? 40 : 48,
+                                              color: _getRoleColor(),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    )
+                                  : Container(
+                                      padding: EdgeInsets.all(isMobile ? 16 : 20),
+                                      decoration: BoxDecoration(
+                                        color: _getRoleColor().withValues(alpha: 0.2),
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                      child: Icon(
+                                        _getRoleIcon(),
+                                        size: isMobile ? 40 : 48,
+                                        color: _getRoleColor(),
+                                      ),
+                                    ),
+                          SizedBox(width: isMobile ? 16 : 24),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _displayName ?? widget.username,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineSmall
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: isMobile ? 20 : null,
+                                      ),
+                                ),
+                                SizedBox(height: isMobile ? 4 : 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color:
+                                        _getRoleColor().withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    _getRoleDisplayName(),
+                                    style: TextStyle(
+                                      fontSize: isMobile ? 12 : 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: _getRoleColor(),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: isMobile ? 24 : 32),
+
+                      // Discord Info
+                      _ProfileInfoRow(
+                        icon: Icons.discord,
+                        label: 'Discord ID',
+                        value: widget.discordId,
+                        color: const Color(0xFF5865F2),
+                        isMobile: isMobile,
+                      ),
+                      SizedBox(height: isMobile ? 12 : 16),
+                      _ProfileInfoRow(
+                        icon: Icons.badge,
+                        label: 'Role',
+                        value: _getRoleDisplayName(),
+                        color: _getRoleColor(),
+                        isMobile: isMobile,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              SizedBox(height: isMobile ? 16 : 24),
+
+              // Opt-In Roles Section
+              if (_isLoading)
+                Card(
+                  child: Padding(
+                    padding: EdgeInsets.all(isMobile ? 20.0 : 32.0),
+                    child: const Center(child: CircularProgressIndicator()),
+                  ),
+                )
+              else if (_errorMessage != null)
+                Card(
+                  color: Theme.of(context).colorScheme.errorContainer,
+                  child: Padding(
+                    padding: EdgeInsets.all(isMobile ? 16.0 : 20.0),
+                    child: Row(
+                      children: [
+                        Icon(Icons.error_outline,
+                            color: Theme.of(context).colorScheme.onErrorContainer),
+                        SizedBox(width: isMobile ? 12 : 16),
+                        Expanded(
+                          child: Text(
+                            _errorMessage!,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onErrorContainer,
+                              fontSize: isMobile ? 12 : 14,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else ...[
+                // Opt-In Roles Card
+                if (_optInRoles.isNotEmpty)
+                  Card(
+                    elevation: 2,
+                    child: Padding(
+                      padding: EdgeInsets.all(isMobile ? 20.0 : 32.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.interests,
+                                color: Theme.of(context).colorScheme.primary,
+                                size: isMobile ? 24 : 28,
+                              ),
+                              SizedBox(width: isMobile ? 8 : 12),
+                              Text(
+                                'Your Opt-In Roles',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: isMobile ? 18 : null,
+                                    ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: isMobile ? 12 : 16),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: _optInRoles.map((role) {
+                              final roleName = role['name'] ?? 'Unknown';
+                              final roleColor = Color(role['color'] ?? 0xFF808080);
+                              
+                              return Chip(
+                                label: Text(
+                                  roleName,
+                                  style: TextStyle(
+                                    color: roleColor.computeLuminance() > 0.5
+                                        ? Colors.black
+                                        : Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: isMobile ? 12 : 14,
+                                  ),
+                                ),
+                                backgroundColor: roleColor.withValues(alpha: 0.2),
+                                side: BorderSide(color: roleColor, width: 1.5),
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: isMobile ? 8 : 12,
+                                  vertical: isMobile ? 4 : 6,
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                
+                if (_optInRoles.isNotEmpty && _rlRank != null)
+                  SizedBox(height: isMobile ? 16 : 24),
+
+                // Rocket League Rank Card
+                if (_rlRank != null)
+                  Card(
+                    elevation: 2,
+                    child: Padding(
+                      padding: EdgeInsets.all(isMobile ? 20.0 : 32.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.sports_esports,
+                                color: Theme.of(context).colorScheme.primary,
+                                size: isMobile ? 24 : 28,
+                              ),
+                              SizedBox(width: isMobile ? 8 : 12),
+                              Text(
+                                'Rocket League',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: isMobile ? 18 : null,
+                                    ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: isMobile ? 12 : 16),
+                          Container(
+                            padding: EdgeInsets.all(isMobile ? 16 : 20),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerHighest,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              children: [
+                                // Rank Icon
+                                if (_rlRank!['icon_url'] != null)
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Image.network(
+                                      _rlRank!['icon_url'],
+                                      width: isMobile ? 48 : 64,
+                                      height: isMobile ? 48 : 64,
+                                      fit: BoxFit.contain,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return Container(
+                                          width: isMobile ? 48 : 64,
+                                          height: isMobile ? 48 : 64,
+                                          decoration: BoxDecoration(
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .primaryContainer,
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: Icon(
+                                            Icons.sports_esports,
+                                            size: isMobile ? 24 : 32,
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onPrimaryContainer,
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                SizedBox(width: isMobile ? 12 : 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Highest Rank',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurfaceVariant,
+                                              fontSize: isMobile ? 11 : 12,
+                                            ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Row(
+                                        children: [
+                                          if (_rlRank!['emoji'] != null &&
+                                              _rlRank!['emoji'].toString().isNotEmpty)
+                                            Text(
+                                              _rlRank!['emoji'],
+                                              style: TextStyle(
+                                                fontSize: isMobile ? 18 : 20,
+                                              ),
+                                            ),
+                                          if (_rlRank!['emoji'] != null &&
+                                              _rlRank!['emoji'].toString().isNotEmpty)
+                                            const SizedBox(width: 8),
+                                          Text(
+                                            _rlRank!['rank'] ?? 'Unknown',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .titleMedium
+                                                ?.copyWith(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: isMobile ? 16 : 18,
+                                                ),
+                                          ),
+                                        ],
+                                      ),
+                                      if (_rlRank!['username'] != null) ...[
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          '${_rlRank!['platform']}: ${_rlRank!['username']}',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodySmall
+                                              ?.copyWith(
+                                                fontSize: isMobile ? 11 : 12,
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .onSurfaceVariant,
+                                              ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                if (_optInRoles.isEmpty && _rlRank == null && _customStats == null && _notifications == null && _activity == null)
+                  SizedBox(height: isMobile ? 16 : 24),
+              ],
+
+              SizedBox(height: isMobile ? 16 : 24),
+
+              // Custom Stats Section (Warnings, Resolved Tickets)
+              if (_customStats != null) ...[
+                Card(
+                  elevation: 2,
+                  child: Padding(
+                    padding: EdgeInsets.all(isMobile ? 20.0 : 32.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.bar_chart,
+                              color: Theme.of(context).colorScheme.primary,
+                              size: isMobile ? 24 : 28,
+                            ),
+                            SizedBox(width: isMobile ? 8 : 12),
+                            Text(
+                              'Custom Stats',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleLarge
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: isMobile ? 18 : null,
+                                  ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: isMobile ? 12 : 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Container(
+                                padding: EdgeInsets.all(isMobile ? 16 : 20),
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .surfaceContainerHighest,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Column(
+                                  children: [
+                                    Icon(
+                                      Icons.warning,
+                                      color: _customStats!['warnings'] > 0
+                                          ? Colors.orange
+                                          : Colors.green,
+                                      size: isMobile ? 32 : 40,
+                                    ),
+                                    SizedBox(height: isMobile ? 8 : 12),
+                                    Text(
+                                      '${_customStats!['warnings'] ?? 0}',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .headlineMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: isMobile ? 24 : null,
+                                          ),
+                                    ),
+                                    SizedBox(height: isMobile ? 4 : 6),
+                                    Text(
+                                      'Warnings',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onSurfaceVariant,
+                                            fontSize: isMobile ? 11 : 12,
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            if (_customStats!['resolved_tickets'] != null) ...[
+                              SizedBox(width: isMobile ? 12 : 16),
+                              Expanded(
+                                child: Container(
+                                  padding: EdgeInsets.all(isMobile ? 16 : 20),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .surfaceContainerHighest,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      Icon(
+                                        Icons.check_circle,
+                                        color: Colors.blue,
+                                        size: isMobile ? 32 : 40,
+                                      ),
+                                      SizedBox(height: isMobile ? 8 : 12),
+                                      Text(
+                                        '${_customStats!['resolved_tickets'] ?? 0}',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .headlineMedium
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: isMobile ? 24 : null,
+                                            ),
+                                      ),
+                                      SizedBox(height: isMobile ? 4 : 6),
+                                      Text(
+                                        'Resolved Tickets',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurfaceVariant,
+                                              fontSize: isMobile ? 11 : 12,
+                                            ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(height: isMobile ? 16 : 24),
+              ],
+
+              // Notifications Section
+              if (_notifications != null) ...[
+                Card(
+                  elevation: 2,
+                  child: Padding(
+                    padding: EdgeInsets.all(isMobile ? 20.0 : 32.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.notifications,
+                              color: Theme.of(context).colorScheme.primary,
+                              size: isMobile ? 24 : 28,
+                            ),
+                            SizedBox(width: isMobile ? 8 : 12),
+                            Text(
+                              'Notifications',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleLarge
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: isMobile ? 18 : null,
+                                  ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: isMobile ? 12 : 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Container(
+                                padding: EdgeInsets.all(isMobile ? 16 : 20),
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .surfaceContainerHighest,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      _notifications!['changelog_opt_in'] == true
+                                          ? Icons.check_circle
+                                          : Icons.cancel,
+                                      color: _notifications!['changelog_opt_in'] == true
+                                          ? Colors.green
+                                          : Colors.grey,
+                                      size: isMobile ? 24 : 28,
+                                    ),
+                                    SizedBox(width: isMobile ? 12 : 16),
+                                    Expanded(
+                                      child: Text(
+                                        'Changelog Opt-in',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium
+                                            ?.copyWith(
+                                              fontSize: isMobile ? 13 : 15,
+                                            ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: isMobile ? 12 : 16),
+                            Expanded(
+                              child: Container(
+                                padding: EdgeInsets.all(isMobile ? 16 : 20),
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .surfaceContainerHighest,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      _notifications!['meme_opt_in'] == true
+                                          ? Icons.check_circle
+                                          : Icons.cancel,
+                                      color: _notifications!['meme_opt_in'] == true
+                                          ? Colors.green
+                                          : Colors.grey,
+                                      size: isMobile ? 24 : 28,
+                                    ),
+                                    SizedBox(width: isMobile ? 12 : 16),
+                                    Expanded(
+                                      child: Text(
+                                        'Meme Opt-in',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium
+                                            ?.copyWith(
+                                              fontSize: isMobile ? 13 : 15,
+                                            ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(height: isMobile ? 16 : 24),
+              ],
+
+              // Activity Section
+              if (_activity != null) ...[
+                Card(
+                  elevation: 2,
+                  child: Padding(
+                    padding: EdgeInsets.all(isMobile ? 20.0 : 32.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.trending_up,
+                              color: Theme.of(context).colorScheme.primary,
+                              size: isMobile ? 24 : 28,
+                            ),
+                            SizedBox(width: isMobile ? 8 : 12),
+                            Text(
+                              'Activity',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleLarge
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: isMobile ? 18 : null,
+                                  ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: isMobile ? 12 : 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _ActivityStatCard(
+                                icon: Icons.message,
+                                label: 'Messages',
+                                value: '${_activity!['messages'] ?? 0}',
+                                color: Colors.blue,
+                                isMobile: isMobile,
+                              ),
+                            ),
+                            SizedBox(width: isMobile ? 8 : 12),
+                            Expanded(
+                              child: _ActivityStatCard(
+                                icon: Icons.image,
+                                label: 'Images',
+                                value: '${_activity!['images'] ?? 0}',
+                                color: Colors.green,
+                                isMobile: isMobile,
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: isMobile ? 8 : 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _ActivityStatCard(
+                                icon: Icons.emoji_emotions,
+                                label: 'Memes Requested',
+                                value: '${_activity!['memes_requested'] ?? 0}',
+                                color: Colors.orange,
+                                isMobile: isMobile,
+                              ),
+                            ),
+                            SizedBox(width: isMobile ? 8 : 12),
+                            Expanded(
+                              child: _ActivityStatCard(
+                                icon: Icons.brush,
+                                label: 'Memes Generated',
+                                value: '${_activity!['memes_generated'] ?? 0}',
+                                color: Colors.purple,
+                                isMobile: isMobile,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(height: isMobile ? 16 : 24),
+              ],
+
+              // Quick Info Card
+              Card(
+                color: Theme.of(context).colorScheme.primaryContainer,
+                child: Padding(
+                  padding: EdgeInsets.all(isMobile ? 16.0 : 20.0),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline,
+                          color:
+                              Theme.of(context).colorScheme.onPrimaryContainer,
+                          size: isMobile ? 24 : 28),
+                      SizedBox(width: isMobile ? 12 : 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Welcome to HazeBot Admin!',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleMedium
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onPrimaryContainer,
+                                    fontSize: isMobile ? 14 : null,
+                                  ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Use the navigation menu to access meme generation and testing features. For more info, use /profile in Discord!',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onPrimaryContainer,
+                                    fontSize: isMobile ? 12 : null,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+// Activity Stat Card Widget
+class _ActivityStatCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+  final bool isMobile;
+
+  const _ActivityStatCard({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+    required this.isMobile,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(isMobile ? 12 : 16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            icon,
+            color: color,
+            size: isMobile ? 24 : 32,
+          ),
+          SizedBox(height: isMobile ? 6 : 8),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  fontSize: isMobile ? 18 : 22,
+                ),
+          ),
+          SizedBox(height: isMobile ? 2 : 4),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: isMobile ? 10 : 11,
+                ),
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Profile Info Row Widget
+class _ProfileInfoRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+  final bool isMobile;
+
+  const _ProfileInfoRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+    required this.isMobile,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(isMobile ? 12 : 16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(isMobile ? 8 : 10),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              icon,
+              color: color,
+              size: isMobile ? 20 : 24,
+            ),
+          ),
+          SizedBox(width: isMobile ? 12 : 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontSize: isMobile ? 11 : 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        fontSize: isMobile ? 14 : 16,
+                      ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
