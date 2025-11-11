@@ -21,6 +21,8 @@ import 'settings_screen.dart';
 import 'test_screen.dart';
 import 'user_rocket_league_screen.dart';
 import 'preferences_screen.dart';
+import 'gaming_hub_screen.dart';
+import 'gaming_hub_screen.dart';
 
 class NavigationItem {
   final IconData icon;
@@ -41,19 +43,35 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
   int _selectedIndex = 0;
-  bool _isDrawerVisible = true; // Track drawer visibility
-  int _reloadCounter = 0; // Counter to force screen rebuild
+  int _selectedUserTab = 0;
+  bool _isDrawerVisible = true;
+  int _reloadCounter = 0;
+  late TabController _tabController;
 
-  @override
+    @override
   void initState() {
     super.initState();
-    // Load config after the first frame is built
+    final userItems = _getUserNavigationItems();
+    _tabController = TabController(length: userItems.length, vsync: this);
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) {
+        setState(() {
+          _selectedUserTab = _tabController.index;
+        });
+      }
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _pingServer();
       _loadConfig();
     });
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   Future<void> _pingServer() async {
@@ -130,6 +148,13 @@ class _HomeScreenState extends State<HomeScreen> {
       icon: Icons.tune,
       label: 'Prefs',
       screen: PreferencesScreen(key: ValueKey('preferences_$_reloadCounter')),
+    ));
+
+    // Gaming Hub - available to all users
+    items.add(NavigationItem(
+      icon: Icons.videogame_asset,
+      label: 'Gaming\nHub',
+      screen: GamingHubScreen(key: ValueKey('gaming_hub_$_reloadCounter')),
     ));
 
     // Rocket League - available to all users
@@ -421,7 +446,8 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Row(
         children: [
-          if (_isDrawerVisible)
+          // Admin Navigation Rail (only show if has admin permissions)
+          if (_isDrawerVisible && permissionService.hasPermission('all'))
             AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               width: 72,
@@ -434,150 +460,181 @@ class _HomeScreenState extends State<HomeScreen> {
                         MediaQuery.of(context).padding.bottom,
                   ),
                   child: IntrinsicHeight(
-                    child: NavigationRail(
-                      selectedIndex: _selectedIndex < userItems.length
-                          ? _selectedIndex
-                          : null,
-                      onDestinationSelected: (index) {
-                        setState(() {
-                          _selectedIndex = index;
-                        });
-                      },
-                      extended: false,
-                      labelType: NavigationRailLabelType.all,
-                      // User features (always visible)
-                      destinations: userItems
-                          .map((item) => NavigationRailDestination(
-                                icon: Icon(item.icon),
-                                label: Text(
-                                  item.label,
-                                  textAlign: TextAlign.center,
-                                  style: item.label.contains('\n')
-                                      ? const TextStyle(fontSize: 11)
-                                      : null,
+                    child: Column(
+                      children: [
+                        // Home button to go back to user features
+                        InkWell(
+                          onTap: () {
+                            setState(() {
+                              _selectedIndex = adminItems.length; // Out of range = show user tabs
+                            });
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            child: Column(
+                              children: [
+                                Icon(
+                                  Icons.home,
+                                  size: 24,
+                                  color: _selectedIndex >= adminItems.length
+                                      ? Theme.of(context).colorScheme.primary
+                                      : Theme.of(context).colorScheme.onSurfaceVariant,
                                 ),
-                              ))
-                          .toList(),
-                      // Admin features (grouped below with divider)
-                      trailing: permissionService.hasPermission('all')
-                          ? Expanded(
-                              child: Column(
-                                children: [
-                                  const Divider(thickness: 1, height: 32),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 8.0),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.admin_panel_settings,
-                                          size: 16,
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .primary,
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          'ADMIN',
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .labelSmall
-                                              ?.copyWith(
-                                                fontWeight: FontWeight.bold,
-                                                color: Theme.of(context)
-                                                    .colorScheme
-                                                    .primary,
-                                              ),
-                                        ),
-                                      ],
-                                    ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Home',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: _selectedIndex >= adminItems.length
+                                        ? Theme.of(context).colorScheme.primary
+                                        : Theme.of(context).colorScheme.onSurfaceVariant,
                                   ),
-                                  Expanded(
-                                    child: ListView.builder(
-                                      padding: EdgeInsets.zero,
-                                      itemCount: adminItems.length,
-                                      itemBuilder: (context, index) {
-                                        final adminIndex =
-                                            userItems.length + index;
-                                        final item = adminItems[index];
-                                        final isSelected =
-                                            _selectedIndex == adminIndex;
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const Divider(thickness: 1, height: 1),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.admin_panel_settings,
+                                size: 16,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Divider(thickness: 1, height: 1),
+                        Expanded(
+                          child: ListView.builder(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            itemCount: adminItems.length,
+                            itemBuilder: (context, index) {
+                              final item = adminItems[index];
+                              final isSelected = _selectedIndex == index;
 
-                                        return InkWell(
-                                          onTap: () {
-                                            setState(() {
-                                              _selectedIndex = adminIndex;
-                                            });
-                                          },
-                                          child: Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              vertical: 12,
-                                              horizontal: 8,
-                                            ),
-                                            decoration: BoxDecoration(
+                              return InkWell(
+                                onTap: () {
+                                  setState(() {
+                                    _selectedIndex = index;
+                                  });
+                                },
+                                child: Container(
+                                  margin: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                    horizontal: 8,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? Theme.of(context)
+                                            .colorScheme
+                                            .primaryContainer
+                                        : null,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        item.icon,
+                                        size: 24,
+                                        color: isSelected
+                                            ? Theme.of(context)
+                                                .colorScheme
+                                                .onPrimaryContainer
+                                            : Theme.of(context)
+                                                .colorScheme
+                                                .onSurfaceVariant,
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        item.label,
+                                        textAlign: TextAlign.center,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .labelSmall
+                                            ?.copyWith(
+                                              fontSize:
+                                                  item.label.contains('\n')
+                                                      ? 10
+                                                      : 11,
                                               color: isSelected
                                                   ? Theme.of(context)
                                                       .colorScheme
-                                                      .primaryContainer
-                                                  : null,
-                                              borderRadius:
-                                                  BorderRadius.circular(12),
+                                                      .onPrimaryContainer
+                                                  : Theme.of(context)
+                                                      .colorScheme
+                                                      .onSurfaceVariant,
                                             ),
-                                            child: Column(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                Icon(
-                                                  item.icon,
-                                                  color: isSelected
-                                                      ? Theme.of(context)
-                                                          .colorScheme
-                                                          .onPrimaryContainer
-                                                      : Theme.of(context)
-                                                          .colorScheme
-                                                          .onSurfaceVariant,
-                                                ),
-                                                const SizedBox(height: 4),
-                                                Text(
-                                                  item.label,
-                                                  textAlign: TextAlign.center,
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .labelSmall
-                                                      ?.copyWith(
-                                                        fontSize: item.label
-                                                                .contains('\n')
-                                                            ? 10
-                                                            : 11,
-                                                        color: isSelected
-                                                            ? Theme.of(context)
-                                                                .colorScheme
-                                                                .onPrimaryContainer
-                                                            : Theme.of(context)
-                                                                .colorScheme
-                                                                .onSurfaceVariant,
-                                                      ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    ),
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
-                            )
-                          : null,
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ),
             ),
-          if (_isDrawerVisible) const VerticalDivider(thickness: 1, width: 1),
+          if (_isDrawerVisible && permissionService.hasPermission('all'))
+            const VerticalDivider(thickness: 1, width: 1),
+          // Main content area
           Expanded(
-            child: allItems[_selectedIndex].screen,
+            child: permissionService.hasPermission('all') && _selectedIndex < adminItems.length
+                ? // Admin selected: show admin screen directly
+                  adminItems[_selectedIndex].screen
+                : // User features: show tabs
+                  Column(
+                    children: [
+                      // Tab bar for user features
+                      Material(
+                        color: Theme.of(context).colorScheme.surface,
+                        elevation: 1,
+                        child: TabBar(
+                          controller: _tabController,
+                          isScrollable: true,
+                          tabs: userItems
+                              .map((item) => Tab(
+                                    icon: Icon(item.icon, size: 20),
+                                    text: item.label.replaceAll('\n', ' '),
+                                  ))
+                              .toList(),
+                          labelColor: Theme.of(context).colorScheme.primary,
+                          unselectedLabelColor:
+                              Theme.of(context).colorScheme.onSurfaceVariant,
+                          indicatorColor: Theme.of(context).colorScheme.primary,
+                          labelStyle: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          unselectedLabelStyle: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.normal,
+                          ),
+                        ),
+                      ),
+                      // Tab content
+                      Expanded(
+                        child: TabBarView(
+                          controller: _tabController,
+                          children:
+                              userItems.map((item) => item.screen).toList(),
+                        ),
+                      ),
+                    ],
+                  ),
           ),
         ],
       ),
@@ -1610,7 +1667,7 @@ class _UserDashboardState extends State<_UserDashboard> {
         if (_optInRoles.isNotEmpty)
           Card(
             child: Padding(
-              padding: EdgeInsets.all(isMobile ? 16 : 24),
+              padding: EdgeInsets.all(isMobile ? 8 : 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -1772,7 +1829,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
               SizedBox(height: isMobile ? 12 : 16),
               Card(
                 child: Padding(
-                  padding: EdgeInsets.all(isMobile ? 16 : 24),
+                  padding: EdgeInsets.all(isMobile ? 8 : 12),
                   child: const Center(
                     child: Text('Admin statistics and controls coming soon'),
                   ),

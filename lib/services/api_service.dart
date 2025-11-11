@@ -490,6 +490,44 @@ class ApiService {
     }
   }
 
+  // Gaming Hub Methods
+  Future<Map<String, dynamic>> getGamingMembers() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/gaming/members'),
+      headers: _headers,
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      final error = jsonDecode(response.body);
+      throw Exception(error['error'] ?? 'Failed to load gaming members');
+    }
+  }
+
+  Future<Map<String, dynamic>> postGameRequest(
+    String targetUserId,
+    String gameName,
+    String message,
+  ) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/gaming/request'),
+      headers: _headers,
+      body: jsonEncode({
+        'target_user_id': targetUserId,
+        'game_name': gameName,
+        'message': message,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      final error = jsonDecode(response.body);
+      throw Exception(error['error'] ?? 'Failed to post game request');
+    }
+  }
+
   Future<Map<String, dynamic>> getWelcomeConfig() async {
     final response = await http.get(
       Uri.parse('$baseUrl/config/welcome'),

@@ -17,6 +17,7 @@ class _ChannelsConfigScreenState extends State<ChannelsConfigScreen> {
   String? _changelogChannelId;
   String? _todoChannelId;
   String? _rlChannelId;
+  String? _gamingChannelId;
   String? _memeChannelId;
   String? _serverGuideChannelId;
   String? _welcomeRulesChannelId;
@@ -83,6 +84,7 @@ class _ChannelsConfigScreenState extends State<ChannelsConfigScreen> {
           _changelogChannelId = config['changelog_channel_id']?.toString();
           _todoChannelId = config['todo_channel_id']?.toString();
           _rlChannelId = config['rl_channel_id']?.toString();
+          _gamingChannelId = config['gaming_channel_id']?.toString();
           _memeChannelId = config['meme_channel_id']?.toString();
           _serverGuideChannelId = config['server_guide_channel_id']?.toString();
           _welcomeRulesChannelId =
@@ -125,6 +127,8 @@ class _ChannelsConfigScreenState extends State<ChannelsConfigScreen> {
         'todo_channel_id':
             _todoChannelId != null ? int.parse(_todoChannelId!) : null,
         'rl_channel_id': _rlChannelId != null ? int.parse(_rlChannelId!) : null,
+        'gaming_channel_id':
+            _gamingChannelId != null ? int.parse(_gamingChannelId!) : null,
         'meme_channel_id':
             _memeChannelId != null ? int.parse(_memeChannelId!) : null,
         'server_guide_channel_id': _serverGuideChannelId != null
@@ -460,6 +464,16 @@ class _ChannelsConfigScreenState extends State<ChannelsConfigScreen> {
                               setState(() => _rlChannelId = value),
                           hint: 'Rocket League rank updates',
                           icon: Icons.sports_esports,
+                          isMobile: isMobile,
+                        ),
+                        SizedBox(height: isMobile ? 12 : 16),
+                        _buildChannelDropdown(
+                          label: 'Gaming Channel',
+                          value: _gamingChannelId,
+                          onChanged: (value) =>
+                              setState(() => _gamingChannelId = value),
+                          hint: 'Gaming requests and community gaming',
+                          icon: Icons.videogame_asset,
                           isMobile: isMobile,
                         ),
                         SizedBox(height: isMobile ? 12 : 16),
