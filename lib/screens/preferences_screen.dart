@@ -144,197 +144,214 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (_errorMessage != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, size: 64, color: Colors.red),
-            const SizedBox(height: 16),
-            Text(_errorMessage!, style: const TextStyle(fontSize: 16)),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: _loadPreferences,
-              icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isMobile = constraints.maxWidth < 600;
-        final padding = isMobile ? 12.0 : 16.0;
-        final cardPadding = isMobile ? 12.0 : 16.0;
-
-        return Align(
-          alignment: Alignment.topCenter,
-          child: SingleChildScrollView(
-            padding: EdgeInsets.all(padding),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Preferences',
-                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                        fontSize: isMobile ? 24 : null,
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Preferences'),
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _errorMessage != null
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.error_outline,
+                          size: 64, color: Colors.red),
+                      const SizedBox(height: 16),
+                      Text(_errorMessage!,
+                          style: const TextStyle(fontSize: 16)),
+                      const SizedBox(height: 16),
+                      ElevatedButton.icon(
+                        onPressed: _loadPreferences,
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Retry'),
                       ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Customize your notification preferences',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.grey[600],
-                        fontSize: isMobile ? 13 : null,
-                      ),
-                ),
-                SizedBox(height: isMobile ? 16 : 24),
+                    ],
+                  ),
+                )
+              : LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isMobile = constraints.maxWidth < 600;
+                    final padding = isMobile ? 12.0 : 16.0;
+                    final cardPadding = isMobile ? 12.0 : 16.0;
 
-                // Changelog Notifications
-                Card(
-                  child: Padding(
-                    padding: EdgeInsets.all(cardPadding),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
+                    return Align(
+                      alignment: Alignment.topCenter,
+                      child: SingleChildScrollView(
+                        padding: EdgeInsets.all(padding),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(
-                              Icons.update,
-                              color: Colors.blue,
-                              size: isMobile ? 20 : 24,
+                            Text(
+                              'Preferences',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .headlineLarge
+                                  ?.copyWith(
+                                    fontSize: isMobile ? 24 : null,
+                                  ),
                             ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                'Changelog Notifications',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleLarge
-                                    ?.copyWith(
-                                      fontSize: isMobile ? 18 : null,
+                            const SizedBox(height: 8),
+                            Text(
+                              'Customize your notification preferences',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    color: Colors.grey[600],
+                                    fontSize: isMobile ? 13 : null,
+                                  ),
+                            ),
+                            SizedBox(height: isMobile ? 16 : 24),
+
+                            // Changelog Notifications
+                            Card(
+                              child: Padding(
+                                padding: EdgeInsets.all(cardPadding),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.update,
+                                          color: Colors.blue,
+                                          size: isMobile ? 20 : 24,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            'Changelog Notifications',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .titleLarge
+                                                ?.copyWith(
+                                                  fontSize:
+                                                      isMobile ? 18 : null,
+                                                ),
+                                          ),
+                                        ),
+                                        Switch(
+                                          value: _changelogOptIn,
+                                          onChanged: _toggleChangelog,
+                                        ),
+                                      ],
                                     ),
+                                    SizedBox(height: isMobile ? 8 : 12),
+                                    Container(
+                                      padding:
+                                          EdgeInsets.all(isMobile ? 10 : 12),
+                                      decoration: BoxDecoration(
+                                        color:
+                                            Colors.blue.withValues(alpha: 0.1),
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                          color: Colors.blue
+                                              .withValues(alpha: 0.3),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Icon(Icons.info_outline,
+                                              size: isMobile ? 18 : 20,
+                                              color: Colors.blue[700]),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(
+                                              _changelogOptIn
+                                                  ? '✅ You will be notified about bot updates and new features.'
+                                                  : '❌ You will not receive changelog notifications.',
+                                              style: TextStyle(
+                                                fontSize: isMobile ? 11 : 12,
+                                                color: Colors.blue[700],
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                            Switch(
-                              value: _changelogOptIn,
-                              onChanged: _toggleChangelog,
+                            SizedBox(height: isMobile ? 12 : 16),
+
+                            // Daily Meme Notifications
+                            Card(
+                              child: Padding(
+                                padding: EdgeInsets.all(cardPadding),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.image,
+                                          color: Colors.purple,
+                                          size: isMobile ? 20 : 24,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            'Daily Meme Notifications',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .titleLarge
+                                                ?.copyWith(
+                                                  fontSize:
+                                                      isMobile ? 18 : null,
+                                                ),
+                                          ),
+                                        ),
+                                        Switch(
+                                          value: _memeOptIn,
+                                          onChanged: _toggleMeme,
+                                        ),
+                                      ],
+                                    ),
+                                    SizedBox(height: isMobile ? 8 : 12),
+                                    Container(
+                                      padding:
+                                          EdgeInsets.all(isMobile ? 10 : 12),
+                                      decoration: BoxDecoration(
+                                        color: Colors.purple
+                                            .withValues(alpha: 0.1),
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                          color: Colors.purple
+                                              .withValues(alpha: 0.3),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Icon(Icons.info_outline,
+                                              size: isMobile ? 18 : 20,
+                                              color: Colors.purple[700]),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(
+                                              _memeOptIn
+                                                  ? '✅ You will be pinged when the daily meme is posted at 12:00 PM.'
+                                                  : '❌ You will not receive daily meme notifications.',
+                                              style: TextStyle(
+                                                fontSize: isMobile ? 11 : 12,
+                                                color: Colors.purple[700],
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                           ],
                         ),
-                        SizedBox(height: isMobile ? 8 : 12),
-                        Container(
-                          padding: EdgeInsets.all(isMobile ? 10 : 12),
-                          decoration: BoxDecoration(
-                            color: Colors.blue.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: Colors.blue.withValues(alpha: 0.3),
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(Icons.info_outline,
-                                  size: isMobile ? 18 : 20,
-                                  color: Colors.blue[700]),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  _changelogOptIn
-                                      ? '✅ You will be notified about bot updates and new features.'
-                                      : '❌ You will not receive changelog notifications.',
-                                  style: TextStyle(
-                                    fontSize: isMobile ? 11 : 12,
-                                    color: Colors.blue[700],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                      ),
+                    );
+                  },
                 ),
-                SizedBox(height: isMobile ? 12 : 16),
-
-                // Daily Meme Notifications
-                Card(
-                  child: Padding(
-                    padding: EdgeInsets.all(cardPadding),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.image,
-                              color: Colors.purple,
-                              size: isMobile ? 20 : 24,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                'Daily Meme Notifications',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleLarge
-                                    ?.copyWith(
-                                      fontSize: isMobile ? 18 : null,
-                                    ),
-                              ),
-                            ),
-                            Switch(
-                              value: _memeOptIn,
-                              onChanged: _toggleMeme,
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: isMobile ? 8 : 12),
-                        Container(
-                          padding: EdgeInsets.all(isMobile ? 10 : 12),
-                          decoration: BoxDecoration(
-                            color: Colors.purple.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: Colors.purple.withValues(alpha: 0.3),
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(Icons.info_outline,
-                                  size: isMobile ? 18 : 20,
-                                  color: Colors.purple[700]),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  _memeOptIn
-                                      ? '✅ You will be pinged when the daily meme is posted at 12:00 PM.'
-                                      : '❌ You will not receive daily meme notifications.',
-                                  style: TextStyle(
-                                    fontSize: isMobile ? 11 : 12,
-                                    color: Colors.purple[700],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
     );
   }
 }

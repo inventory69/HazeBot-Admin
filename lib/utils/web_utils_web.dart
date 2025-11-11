@@ -13,4 +13,8 @@ class WebUtils {
   static void navigateToUrl(String url) {
     html.window.location.href = url;
   }
+
+  static void openInNewTab(String url) {
+    html.window.open(url, '_blank');
+  }
 }

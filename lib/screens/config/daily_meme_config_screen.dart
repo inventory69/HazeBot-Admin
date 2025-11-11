@@ -838,8 +838,8 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                                   _isTestingDailyMeme
                                       ? 'Posting...'
                                       : 'Post Test Meme',
-                                  style: TextStyle(
-                                      fontSize: isMobile ? 13 : 14),
+                                  style:
+                                      TextStyle(fontSize: isMobile ? 13 : 14),
                                 ),
                                 style: FilledButton.styleFrom(
                                   backgroundColor: Colors.green,

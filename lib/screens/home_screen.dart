@@ -1,11 +1,14 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
 import '../services/discord_auth_service.dart';
 import '../services/permission_service.dart';
 import '../services/config_service.dart';
 import '../services/api_service.dart';
+import '../utils/web_utils.dart';
+import 'meme_detail_screen.dart';
 import 'config/general_config_screen.dart';
 import 'config/channels_config_screen.dart';
 import 'config/roles_config_screen.dart';
@@ -21,7 +24,6 @@ import 'settings_screen.dart';
 import 'test_screen.dart';
 import 'user_rocket_league_screen.dart';
 import 'preferences_screen.dart';
-import 'gaming_hub_screen.dart';
 import 'gaming_hub_screen.dart';
 
 class NavigationItem {
@@ -43,14 +45,17 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
-  int _selectedIndex = 0;
+class _HomeScreenState extends State<HomeScreen>
+    with SingleTickerProviderStateMixin {
+  int _selectedIndex = -1; // -1 = show user tabs, 0+ = admin item
   int _selectedUserTab = 0;
-  bool _isDrawerVisible = true;
+  bool _isDrawerVisible = false; // Start with admin rail hidden
   int _reloadCounter = 0;
   late TabController _tabController;
+  bool _autoReload = false;
+  Timer? _refreshTimer;
 
-    @override
+  @override
   void initState() {
     super.initState();
     final userItems = _getUserNavigationItems();
@@ -71,7 +76,26 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   @override
   void dispose() {
     _tabController.dispose();
+    _refreshTimer?.cancel();
     super.dispose();
+  }
+
+  void _toggleAutoReload() {
+    setState(() {
+      _autoReload = !_autoReload;
+      if (_autoReload) {
+        // Start auto-refresh timer (every 5 seconds)
+        _refreshTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+          if (mounted) {
+            _loadConfig();
+          }
+        });
+      } else {
+        // Stop timer
+        _refreshTimer?.cancel();
+        _refreshTimer = null;
+      }
+    });
   }
 
   Future<void> _pingServer() async {
@@ -143,13 +167,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       screen: DashboardScreen(key: ValueKey('dashboard_$_reloadCounter')),
     ));
 
-    // Preferences - available to all users
-    items.add(NavigationItem(
-      icon: Icons.tune,
-      label: 'Prefs',
-      screen: PreferencesScreen(key: ValueKey('preferences_$_reloadCounter')),
-    ));
-
     // Gaming Hub - available to all users
     items.add(NavigationItem(
       icon: Icons.videogame_asset,
@@ -178,13 +195,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       icon: Icons.image,
       label: 'Memes',
       screen: MemeConfigScreen(key: ValueKey('meme_$_reloadCounter')),
-    ));
-
-    // Settings - available to all users
-    items.add(NavigationItem(
-      icon: Icons.settings,
-      label: 'Settings',
-      screen: SettingsScreen(key: ValueKey('settings_$_reloadCounter')),
     ));
 
     return items;
@@ -285,15 +295,20 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: Icon(_isDrawerVisible ? Icons.menu_open : Icons.menu),
-          tooltip: _isDrawerVisible ? 'Hide Menu' : 'Show Menu',
-          onPressed: () {
-            setState(() {
-              _isDrawerVisible = !_isDrawerVisible;
-            });
-          },
-        ),
+        leading: permissionService.hasPermission('all')
+            ? IconButton(
+                icon: Icon(_isDrawerVisible
+                    ? Icons.admin_panel_settings
+                    : Icons.admin_panel_settings_outlined),
+                tooltip:
+                    _isDrawerVisible ? 'Hide Admin Panel' : 'Show Admin Panel',
+                onPressed: () {
+                  setState(() {
+                    _isDrawerVisible = !_isDrawerVisible;
+                  });
+                },
+              )
+            : null,
         title: LayoutBuilder(
           builder: (context, constraints) {
             final isMobile = MediaQuery.of(context).size.width < 600;
@@ -331,115 +346,242 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           },
         ),
         actions: [
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final isMobile = MediaQuery.of(context).size.width < 600;
+          // Profile picture with bottom sheet menu (all screen sizes)
+          Builder(
+            builder: (context) {
+              final avatarUrl =
+                  discordAuthService.userInfo?['avatar_url'] as String?;
 
-              if (isMobile) {
-                // Mobile: Show dropdown menu
-                return PopupMenuButton<String>(
-                  icon: const Icon(Icons.more_vert),
-                  tooltip: 'Menu',
-                  onSelected: (value) {
-                    switch (value) {
-                      case 'reload':
-                        _loadConfig();
-                        break;
-                      case 'logout':
-                        authService.logout();
-                        discordAuthService.logout();
-                        permissionService.clear();
-                        break;
-                    }
-                  },
-                  itemBuilder: (context) => [
-                    if (discordAuthService.isAuthenticated &&
-                        discordAuthService.userInfo != null &&
-                        discordAuthService.userInfo!['discord_id'] != null)
-                      PopupMenuItem<String>(
-                        enabled: false,
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.discord,
-                              size: 16,
-                              color: const Color(0xFF5865F2),
+              return GestureDetector(
+                onTap: () {
+                  showModalBottomSheet(
+                    context: context,
+                    backgroundColor: Theme.of(context).colorScheme.surface,
+                    shape: const RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.vertical(top: Radius.circular(20)),
+                    ),
+                    builder: (context) => SafeArea(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Handle bar
+                          Container(
+                            margin: const EdgeInsets.only(top: 12, bottom: 8),
+                            width: 40,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[300],
+                              borderRadius: BorderRadius.circular(2),
                             ),
-                            const SizedBox(width: 8),
-                            Flexible(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
+                          ),
+
+                          // User info
+                          if (discordAuthService.isAuthenticated &&
+                              discordAuthService.userInfo != null &&
+                              discordAuthService.userInfo!['discord_id'] !=
+                                  null)
+                            Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Row(
                                 children: [
-                                  Text(
-                                    discordAuthService.userInfo!['user'],
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 13,
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF5865F2)
+                                          .withOpacity(0.1),
+                                      shape: BoxShape.circle,
                                     ),
-                                    overflow: TextOverflow.ellipsis,
+                                    child: const Icon(
+                                      Icons.discord,
+                                      size: 24,
+                                      color: Color(0xFF5865F2),
+                                    ),
                                   ),
-                                  Text(
-                                    permissionService.role,
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.grey[600],
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          discordAuthService.userInfo!['user'],
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        Text(
+                                          permissionService.role,
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onSurfaceVariant,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                          ],
+
+                          const Divider(height: 1),
+
+                          // Menu items
+                          ListTile(
+                            leading: const Icon(Icons.tune),
+                            title: const Text('Preferences'),
+                            onTap: () {
+                              Navigator.pop(context);
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => PreferencesScreen(
+                                    key:
+                                        ValueKey('preferences_$_reloadCounter'),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+
+                          ListTile(
+                            leading: const Icon(Icons.settings),
+                            title: const Text('Settings'),
+                            onTap: () {
+                              Navigator.pop(context);
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => SettingsScreen(
+                                    key: ValueKey('settings_$_reloadCounter'),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+
+                          const Divider(height: 1),
+
+                          ListTile(
+                            leading: const Icon(Icons.refresh),
+                            title: const Text('Reload Config'),
+                            onTap: () {
+                              Navigator.pop(context);
+                              _loadConfig();
+                            },
+                          ),
+
+                          ListTile(
+                            leading: Icon(
+                              Icons.autorenew,
+                              color: _autoReload
+                                  ? Theme.of(context).colorScheme.primary
+                                  : null,
+                            ),
+                            title: Text(
+                              'Auto-Reload',
+                              style: TextStyle(
+                                color: _autoReload
+                                    ? Theme.of(context).colorScheme.primary
+                                    : null,
+                                fontWeight: _autoReload
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                              ),
+                            ),
+                            trailing: Switch(
+                              value: _autoReload,
+                              onChanged: (_) {
+                                _toggleAutoReload();
+                                Navigator.pop(context);
+                              },
+                            ),
+                            onTap: () {
+                              _toggleAutoReload();
+                              Navigator.pop(context);
+                            },
+                          ),
+
+                          const Divider(height: 1),
+
+                          ListTile(
+                            leading: Icon(
+                              Icons.logout,
+                              color: Theme.of(context).colorScheme.error,
+                            ),
+                            title: Text(
+                              'Logout',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.error,
+                              ),
+                            ),
+                            onTap: () {
+                              Navigator.pop(context);
+                              authService.logout();
+                              discordAuthService.logout();
+                              permissionService.clear();
+                            },
+                          ),
+
+                          const SizedBox(height: 8),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: avatarUrl != null
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(18),
+                          child: Image.network(
+                            avatarUrl,
+                            width: 36,
+                            height: 36,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                width: 36,
+                                height: 36,
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .primaryContainer,
+                                  borderRadius: BorderRadius.circular(18),
+                                ),
+                                child: Icon(
+                                  Icons.person,
+                                  size: 20,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onPrimaryContainer,
+                                ),
+                              );
+                            },
+                          ),
+                        )
+                      : Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color:
+                                Theme.of(context).colorScheme.primaryContainer,
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                          child: Icon(
+                            Icons.person,
+                            size: 20,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onPrimaryContainer,
+                          ),
                         ),
-                      ),
-                    if (discordAuthService.isAuthenticated &&
-                        discordAuthService.userInfo != null &&
-                        discordAuthService.userInfo!['discord_id'] != null)
-                      const PopupMenuDivider(),
-                    const PopupMenuItem<String>(
-                      value: 'reload',
-                      child: Row(
-                        children: [
-                          Icon(Icons.refresh, size: 20),
-                          SizedBox(width: 12),
-                          Text('Reload Config'),
-                        ],
-                      ),
-                    ),
-                    const PopupMenuItem<String>(
-                      value: 'logout',
-                      child: Row(
-                        children: [
-                          Icon(Icons.logout, size: 20),
-                          SizedBox(width: 12),
-                          Text('Logout'),
-                        ],
-                      ),
-                    ),
-                  ],
-                );
-              } else {
-                // Desktop/Tablet: Show regular buttons
-                return Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.refresh),
-                      tooltip: 'Reload Configuration',
-                      onPressed: _loadConfig,
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.logout),
-                      tooltip: 'Logout',
-                      onPressed: () {
-                        authService.logout();
-                        discordAuthService.logout();
-                        permissionService.clear();
-                      },
-                    ),
-                  ],
-                );
-              }
+                ),
+              );
             },
           ),
         ],
@@ -466,7 +608,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                         InkWell(
                           onTap: () {
                             setState(() {
-                              _selectedIndex = adminItems.length; // Out of range = show user tabs
+                              _selectedIndex = -1; // -1 = show user tabs
                             });
                           },
                           child: Container(
@@ -476,18 +618,22 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                 Icon(
                                   Icons.home,
                                   size: 24,
-                                  color: _selectedIndex >= adminItems.length
+                                  color: _selectedIndex == -1
                                       ? Theme.of(context).colorScheme.primary
-                                      : Theme.of(context).colorScheme.onSurfaceVariant,
+                                      : Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   'Home',
                                   style: TextStyle(
                                     fontSize: 11,
-                                    color: _selectedIndex >= adminItems.length
+                                    color: _selectedIndex == -1
                                         ? Theme.of(context).colorScheme.primary
-                                        : Theme.of(context).colorScheme.onSurfaceVariant,
+                                        : Theme.of(context)
+                                            .colorScheme
+                                            .onSurfaceVariant,
                                   ),
                                 ),
                               ],
@@ -592,45 +738,55 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             const VerticalDivider(thickness: 1, width: 1),
           // Main content area
           Expanded(
-            child: permissionService.hasPermission('all') && _selectedIndex < adminItems.length
+            child: _selectedIndex >= 0 &&
+                    _selectedIndex < adminItems.length &&
+                    permissionService.hasPermission('all')
                 ? // Admin selected: show admin screen directly
-                  adminItems[_selectedIndex].screen
-                : // User features: show tabs
-                  Column(
+                adminItems[_selectedIndex].screen
+                : // User features: show tabs at bottom
+                Column(
                     children: [
-                      // Tab bar for user features
-                      Material(
-                        color: Theme.of(context).colorScheme.surface,
-                        elevation: 1,
-                        child: TabBar(
-                          controller: _tabController,
-                          isScrollable: true,
-                          tabs: userItems
-                              .map((item) => Tab(
-                                    icon: Icon(item.icon, size: 20),
-                                    text: item.label.replaceAll('\n', ' '),
-                                  ))
-                              .toList(),
-                          labelColor: Theme.of(context).colorScheme.primary,
-                          unselectedLabelColor:
-                              Theme.of(context).colorScheme.onSurfaceVariant,
-                          indicatorColor: Theme.of(context).colorScheme.primary,
-                          labelStyle: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          unselectedLabelStyle: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.normal,
-                          ),
-                        ),
-                      ),
                       // Tab content
                       Expanded(
                         child: TabBarView(
                           controller: _tabController,
                           children:
                               userItems.map((item) => item.screen).toList(),
+                        ),
+                      ),
+                      // Tab bar for user features (at bottom)
+                      Material(
+                        color: Theme.of(context).colorScheme.surface,
+                        elevation: 4,
+                        child: SafeArea(
+                          child: TabBar(
+                            controller: _tabController,
+                            isScrollable: true,
+                            padding: EdgeInsets.zero,
+                            labelPadding:
+                                const EdgeInsets.symmetric(horizontal: 10),
+                            tabAlignment: TabAlignment.center,
+                            tabs: userItems
+                                .map((item) => Tab(
+                                      icon: Icon(item.icon, size: 20),
+                                      text: item.label.replaceAll('\n', ' '),
+                                    ))
+                                .toList(),
+                            labelColor: Theme.of(context).colorScheme.primary,
+                            unselectedLabelColor:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
+                            indicatorColor:
+                                Theme.of(context).colorScheme.primary,
+                            indicatorSize: TabBarIndicatorSize.label,
+                            labelStyle: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            unselectedLabelStyle: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.normal,
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -650,526 +806,515 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  Timer? _refreshTimer;
-  bool _autoReload = false;
+  bool _isLoadingMemes = true;
+  bool _isLoadingRankups = true;
+  List<Map<String, dynamic>> _memes = [];
+  List<Map<String, dynamic>> _rankups = [];
+  String? _memesError;
+  String? _rankupsError;
 
   @override
   void initState() {
     super.initState();
-    // Load config on init
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadConfig();
-    });
+    _loadData();
   }
 
-  @override
-  void dispose() {
-    _refreshTimer?.cancel();
-    super.dispose();
+  Future<void> _loadData() async {
+    await Future.wait([
+      _loadLatestMemes(),
+      _loadLatestRankups(),
+    ]);
   }
 
-  void _toggleAutoReload() {
+  Future<void> _loadLatestMemes() async {
     setState(() {
-      _autoReload = !_autoReload;
-      if (_autoReload) {
-        // Start auto-refresh timer (every 5 seconds)
-        _refreshTimer = Timer.periodic(const Duration(seconds: 5), (_) {
-          if (mounted) {
-            _loadConfigSilently();
-          }
+      _isLoadingMemes = true;
+      _memesError = null;
+    });
+
+    try {
+      final response = await ApiService().getLatestMemes(limit: 5);
+      if (response['success'] == true) {
+        setState(() {
+          _memes = List<Map<String, dynamic>>.from(response['memes'] ?? []);
+          _isLoadingMemes = false;
         });
       } else {
-        // Stop timer
-        _refreshTimer?.cancel();
-        _refreshTimer = null;
+        setState(() {
+          _memesError = 'Failed to load memes';
+          _isLoadingMemes = false;
+        });
       }
+    } catch (e) {
+      setState(() {
+        _memesError = e.toString();
+        _isLoadingMemes = false;
+      });
+    }
+  }
+
+  Future<void> _loadLatestRankups() async {
+    setState(() {
+      _isLoadingRankups = true;
+      _rankupsError = null;
     });
-  }
 
-  Future<void> _loadConfig() async {
-    final authService = Provider.of<AuthService>(context, listen: false);
-    final configService = Provider.of<ConfigService>(context, listen: false);
-    // Use singleton ApiService directly
-    await configService.loadConfig(ApiService());
-  }
-
-  Future<void> _loadConfigSilently() async {
-    final authService = Provider.of<AuthService>(context, listen: false);
-    final configService = Provider.of<ConfigService>(context, listen: false);
-    // Use singleton ApiService directly
-    await configService.loadConfig(ApiService(), silent: true);
+    try {
+      final response = await ApiService().getLatestRankups(limit: 5);
+      if (response['success'] == true) {
+        setState(() {
+          _rankups = List<Map<String, dynamic>>.from(response['rankups'] ?? []);
+          _isLoadingRankups = false;
+        });
+      } else {
+        setState(() {
+          _rankupsError = 'Failed to load rank-ups';
+          _isLoadingRankups = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _rankupsError = e.toString();
+        _isLoadingRankups = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final permissionService = Provider.of<PermissionService>(context);
-    final discordAuthService = Provider.of<DiscordAuthService>(context);
-    final isAdmin = permissionService.hasPermission('all');
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isMobile = constraints.maxWidth < 600;
+        final padding = isMobile ? 12.0 : 16.0;
 
-    // Show user dashboard for non-admin users
-    if (!isAdmin) {
-      return _UserDashboard(
-        username: discordAuthService.userInfo?['user'] ?? 'User',
-        discordId: discordAuthService.userInfo?['discord_id'] ?? 'N/A',
-        role: permissionService.role,
-      );
-    }
-
-    // Show admin dashboard for admins
-    return Consumer<ConfigService>(
-      builder: (context, configService, _) {
-        if (configService.isLoading) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        final config = configService.config;
-        if (config == null) {
-          return Center(
+        return RefreshIndicator(
+          onRefresh: _loadData,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: EdgeInsets.all(padding),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(
-                  Icons.error_outline,
-                  size: 64,
-                  color: Theme.of(context).colorScheme.error,
-                ),
-                const SizedBox(height: 16),
+                // Header
                 Text(
-                  'Failed to load configuration',
-                  style: Theme.of(context).textTheme.headlineSmall,
+                  '🌟 HazeHub',
+                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                        fontSize: isMobile ? 24 : null,
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  configService.error == 'token_expired'
-                      ? 'Session expired. Redirecting to login...'
-                      : 'Please check your connection and try again.',
+                  'Latest news from the community',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontSize: isMobile ? 13 : null,
                       ),
                 ),
-                if (configService.error != 'token_expired') ...[
-                  const SizedBox(height: 24),
-                  FilledButton.icon(
-                    onPressed: () {
-                      // Use singleton ApiService directly
-                      configService.loadConfig(ApiService());
-                    },
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Retry'),
-                  ),
-                ],
+                SizedBox(height: isMobile ? 16 : 24),
+
+                // Latest Memes Section
+                _buildMemesSection(context, isMobile),
+
+                SizedBox(height: isMobile ? 12 : 16),
+
+                // Latest Rank-Ups Section
+                _buildRankupsSection(context, isMobile),
               ],
             ),
-          );
-        }
-
-        // Calculate meme sources count
-        final subredditCount =
-            (config['meme']?['subreddits'] as List?)?.length ?? 0;
-        final lemmyCount =
-            (config['meme']?['lemmy_communities'] as List?)?.length ?? 0;
-        final totalMemeSources = subredditCount + lemmyCount;
-
-        // Get daily meme info
-        final dailyMemeEnabled = config['daily_meme']?['enabled'] ?? false;
-        final dailyMemeHour = config['daily_meme']?['hour'] ?? 12;
-        final dailyMemeMinute = config['daily_meme']?['minute'] ?? 0;
-
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // User Profile Section (for admins to see their own profile)
-              _UserDashboard(
-                username: discordAuthService.userInfo?['username'] ?? 'N/A',
-                discordId: discordAuthService.userInfo?['discord_id'] ?? 'N/A',
-                role: permissionService.role,
-              ),
-              const SizedBox(height: 32),
-
-              // Divider
-              Divider(
-                color: Theme.of(context).colorScheme.outlineVariant,
-                thickness: 1,
-              ),
-              const SizedBox(height: 32),
-
-              Row(
-                children: [
-                  Icon(Icons.settings,
-                      size: 32, color: Theme.of(context).colorScheme.primary),
-                  const SizedBox(width: 12),
-                  Text(
-                    'Bot Configuration',
-                    style: Theme.of(context).textTheme.headlineLarge,
-                  ),
-                  const Spacer(),
-                  // Auto-reload toggle
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.autorenew,
-                        size: 20,
-                        color: _autoReload
-                            ? Theme.of(context).colorScheme.primary
-                            : Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Auto-reload',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: _autoReload
-                                  ? Theme.of(context).colorScheme.primary
-                                  : Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant,
-                            ),
-                      ),
-                      const SizedBox(width: 8),
-                      Switch(
-                        value: _autoReload,
-                        onChanged: (_) => _toggleAutoReload(),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-
-              // Bot Status Section
-              _DashboardSection(
-                title: 'Bot Status',
-                icon: Icons.smart_toy,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _InfoCard(
-                          title: 'Bot Name',
-                          value: config['general']?['bot_name'] ?? 'N/A',
-                          icon: Icons.label,
-                          color: Colors.blue,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _InfoCard(
-                          title: 'Mode',
-                          value: config['general']?['prod_mode'] == true
-                              ? 'Production'
-                              : 'Test',
-                          icon: Icons.flag,
-                          color: config['general']?['prod_mode'] == true
-                              ? Colors.green
-                              : Colors.orange,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _InfoCard(
-                          title: 'Prefix',
-                          value: config['general']?['command_prefix'] ?? 'N/A',
-                          icon: Icons.terminal,
-                          color: Colors.purple,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  _InfoCard(
-                    title: 'Discord Server',
-                    value: config['discord_ids']?['guild_name']?.toString() ??
-                        config['discord_ids']?['guild_id']?.toString() ??
-                        'N/A',
-                    icon: Icons.discord,
-                    color: Colors.blueAccent,
-                    subtitle:
-                        'ID: ${config['discord_ids']?['guild_id'] ?? 'N/A'}',
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-
-              // Meme Configuration Section
-              _DashboardSection(
-                title: 'Meme Configuration',
-                icon: Icons.image,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _InfoCard(
-                          title: 'Subreddits',
-                          value: '$subredditCount',
-                          icon: Icons.reddit,
-                          color: Colors.deepOrange,
-                          subtitle: 'Reddit sources',
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _InfoCard(
-                          title: 'Lemmy Communities',
-                          value: '$lemmyCount',
-                          icon: Icons.forum,
-                          color: Colors.teal,
-                          subtitle: 'Lemmy sources',
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _InfoCard(
-                          title: 'Total Sources',
-                          value: '$totalMemeSources',
-                          icon: Icons.source,
-                          color: Colors.pink,
-                          subtitle: 'Combined',
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _InfoCard(
-                          title: 'Daily Memes',
-                          value: dailyMemeEnabled ? 'Enabled' : 'Disabled',
-                          icon: dailyMemeEnabled
-                              ? Icons.check_circle
-                              : Icons.cancel,
-                          color: dailyMemeEnabled ? Colors.green : Colors.grey,
-                          subtitle: dailyMemeEnabled
-                              ? 'Posted at ${dailyMemeHour.toString().padLeft(2, '0')}:${dailyMemeMinute.toString().padLeft(2, '0')}'
-                              : 'Not scheduled',
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _InfoCard(
-                          title: 'NSFW Content',
-                          value: config['daily_meme']?['allow_nsfw'] == true
-                              ? 'Allowed'
-                              : 'Blocked',
-                          icon: config['daily_meme']?['allow_nsfw'] == true
-                              ? Icons.visibility
-                              : Icons.visibility_off,
-                          color: config['daily_meme']?['allow_nsfw'] == true
-                              ? Colors.amber
-                              : Colors.grey,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-
-              // Other Features Section
-              _DashboardSection(
-                title: 'Other Features',
-                icon: Icons.settings,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _InfoCard(
-                          title: 'RL Check Interval',
-                          value:
-                              '${config['rocket_league']?['rank_check_interval_hours'] ?? 'N/A'}h',
-                          icon: Icons.sports_esports,
-                          color: Colors.indigo,
-                          subtitle: 'Rank checking',
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _InfoCard(
-                          title: 'Message Cooldown',
-                          value:
-                              '${config['general']?['message_cooldown'] ?? 'N/A'}s',
-                          icon: Icons.timer,
-                          color: Colors.deepPurple,
-                          subtitle: 'Anti-spam',
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _InfoCard(
-                          title: 'Fuzzy Matching',
-                          value:
-                              '${((config['general']?['fuzzy_matching_threshold'] ?? 0) * 100).toInt()}%',
-                          icon: Icons.find_in_page,
-                          color: Colors.cyan,
-                          subtitle: 'Similarity threshold',
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-
-              // Quick Tips
-              Card(
-                color: Theme.of(context).colorScheme.primaryContainer,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    children: [
-                      Icon(Icons.lightbulb_outline,
-                          color:
-                              Theme.of(context).colorScheme.onPrimaryContainer,
-                          size: 28),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Quick Tip',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleMedium
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onPrimaryContainer,
-                                  ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Use the navigation menu to configure bot settings. Changes are saved in real-time!',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
-                                  ?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onPrimaryContainer,
-                                  ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
           ),
         );
       },
     );
   }
-}
 
-// Dashboard Section Widget
-class _DashboardSection extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  final List<Widget> children;
-
-  const _DashboardSection({
-    required this.title,
-    required this.icon,
-    required this.children,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(icon, size: 24, color: Theme.of(context).colorScheme.primary),
-            const SizedBox(width: 8),
-            Text(
-              title,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        ...children,
-      ],
-    );
-  }
-}
-
-// Compact Info Card Widget
-class _InfoCard extends StatelessWidget {
-  final String title;
-  final String value;
-  final String? subtitle;
-  final IconData icon;
-  final Color color;
-
-  const _InfoCard({
-    required this.title,
-    required this.value,
-    this.subtitle,
-    required this.icon,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
+  Widget _buildMemesSection(BuildContext context, bool isMobile) {
     return Card(
-      elevation: 1,
-      // Uses theme default (surfaceContainer) for better contrast
       child: Padding(
-        padding: const EdgeInsets.all(12.0),
+        padding: EdgeInsets.all(isMobile ? 12 : 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Icon(icon, size: 20, color: color),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                          fontWeight: FontWeight.w500,
+                Row(
+                  children: [
+                    Icon(Icons.image, size: isMobile ? 20 : 24),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Latest Memes',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontSize: isMobile ? 18 : null,
+                          ),
+                    ),
+                  ],
+                ),
+                if (_memes.isNotEmpty)
+                  TextButton.icon(
+                    onPressed: () {
+                      // TODO: Navigate to full memes view
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text('Full memes view coming soon')),
+                      );
+                    },
+                    icon: const Icon(Icons.arrow_forward, size: 16),
+                    label: const Text('View More'),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            if (_isLoadingMemes)
+              const Center(child: CircularProgressIndicator())
+            else if (_memesError != null)
+              Center(
+                child: Column(
+                  children: [
+                    Icon(Icons.error_outline, size: 48, color: Colors.red[300]),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Failed to load memes',
+                      style: TextStyle(color: Colors.grey[600]),
+                    ),
+                  ],
+                ),
+              )
+            else if (_memes.isEmpty)
+              Center(
+                child: Column(
+                  children: [
+                    Icon(Icons.image_not_supported,
+                        size: 48, color: Colors.grey[400]),
+                    const SizedBox(height: 8),
+                    Text(
+                      'No memes yet',
+                      style: TextStyle(color: Colors.grey[600]),
+                    ),
+                  ],
+                ),
+              )
+            else
+              Column(
+                children: _memes
+                    .map((meme) => _buildMemeCard(context, meme, isMobile))
+                    .toList(),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMemeCard(
+      BuildContext context, Map<String, dynamic> meme, bool isMobile) {
+    final imageUrl = meme['image_url'] as String?;
+    final title = meme['title'] as String? ?? 'Untitled';
+    final author = meme['author'] as String? ?? 'Unknown';
+    final score = meme['score'] as int? ?? 0;
+    final isCustom = meme['is_custom'] as bool? ?? false;
+
+    return Card(
+      margin: EdgeInsets.only(bottom: isMobile ? 8 : 12),
+      child: InkWell(
+        onTap: () {
+          // Navigate to meme detail screen
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => MemeDetailScreen(meme: meme),
+            ),
+          );
+        },
+        child: Padding(
+          padding: EdgeInsets.all(isMobile ? 8 : 12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Thumbnail with Hero animation
+              if (imageUrl != null)
+                Hero(
+                  tag: 'meme_${meme['message_id']}',
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      imageUrl,
+                      width: isMobile ? 80 : 100,
+                      height: isMobile ? 80 : 100,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          width: isMobile ? 80 : 100,
+                          height: isMobile ? 80 : 100,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300],
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(Icons.image,
+                              size: 32, color: Colors.grey[600]),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              SizedBox(width: isMobile ? 8 : 12),
+              // Info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontSize: isMobile ? 14 : 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(Icons.person,
+                            size: isMobile ? 14 : 16, color: Colors.grey[600]),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            author,
+                            style: TextStyle(
+                              fontSize: isMobile ? 12 : 13,
+                              color: Colors.grey[700],
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(
+                          isCustom ? Icons.auto_awesome : Icons.thumb_up,
+                          size: isMobile ? 14 : 16,
+                          color:
+                              isCustom ? Colors.purple[400] : Colors.grey[600],
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          isCustom ? 'Custom Meme' : '$score',
+                          style: TextStyle(
+                            fontSize: isMobile ? 12 : 13,
+                            color: isCustom
+                                ? Colors.purple[400]
+                                : Colors.grey[700],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRankupsSection(BuildContext context, bool isMobile) {
+    return Card(
+      child: Padding(
+        padding: EdgeInsets.all(isMobile ? 12 : 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.trending_up, size: isMobile ? 20 : 24),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Latest Rank-Ups',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontSize: isMobile ? 18 : null,
+                          ),
+                    ),
+                  ],
+                ),
+                if (_rankups.isNotEmpty)
+                  TextButton.icon(
+                    onPressed: () {
+                      // TODO: Navigate to full rank-ups view
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text('Full rank-ups view coming soon')),
+                      );
+                    },
+                    icon: const Icon(Icons.arrow_forward, size: 16),
+                    label: const Text('View More'),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            if (_isLoadingRankups)
+              const Center(child: CircularProgressIndicator())
+            else if (_rankupsError != null)
+              Center(
+                child: Column(
+                  children: [
+                    Icon(Icons.error_outline, size: 48, color: Colors.red[300]),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Failed to load rank-ups',
+                      style: TextStyle(color: Colors.grey[600]),
+                    ),
+                  ],
+                ),
+              )
+            else if (_rankups.isEmpty)
+              Center(
+                child: Column(
+                  children: [
+                    Icon(Icons.trending_up, size: 48, color: Colors.grey[400]),
+                    const SizedBox(height: 8),
+                    Text(
+                      'No rank-ups yet',
+                      style: TextStyle(color: Colors.grey[600]),
+                    ),
+                  ],
+                ),
+              )
+            else
+              Column(
+                children: _rankups
+                    .map(
+                        (rankup) => _buildRankupCard(context, rankup, isMobile))
+                    .toList(),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRankupCard(
+      BuildContext context, Map<String, dynamic> rankup, bool isMobile) {
+    final user = rankup['user'] as String? ?? 'Unknown Player';
+    final newRank = rankup['new_rank'] as String? ?? 'Unknown Rank';
+    final oldRank = rankup['old_rank'] as String?;
+    final division = rankup['division'] as String?;
+    final mode = rankup['mode'] as String?;
+    final thumbnail = rankup['thumbnail'] as String?;
+    final color = rankup['color'] as int?;
+
+    return Card(
+      margin: EdgeInsets.only(bottom: isMobile ? 8 : 12),
+      child: Padding(
+        padding: EdgeInsets.all(isMobile ? 8 : 12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Rank Icon/Thumbnail
+            if (thumbnail != null)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.network(
+                  thumbnail,
+                  width: isMobile ? 60 : 70,
+                  height: isMobile ? 60 : 70,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      width: isMobile ? 60 : 70,
+                      height: isMobile ? 60 : 70,
+                      decoration: BoxDecoration(
+                        color: color != null
+                            ? Color(color).withOpacity(0.2)
+                            : Colors.grey[300],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(Icons.emoji_events,
+                          size: 32,
+                          color:
+                              color != null ? Color(color) : Colors.grey[600]),
+                    );
+                  },
+                ),
+              )
+            else
+              Container(
+                width: isMobile ? 60 : 70,
+                height: isMobile ? 60 : 70,
+                decoration: BoxDecoration(
+                  color: color != null
+                      ? Color(color).withOpacity(0.2)
+                      : Colors.grey[300],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.emoji_events,
+                    size: 32,
+                    color: color != null ? Color(color) : Colors.grey[600]),
+              ),
+            SizedBox(width: isMobile ? 8 : 12),
+            // Info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    user,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontSize: isMobile ? 14 : 16,
+                          fontWeight: FontWeight.bold,
                         ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Text(
-              value,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.onSurface,
-                  ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            if (subtitle != null) ...[
-              const SizedBox(height: 2),
-              Text(
-                subtitle!,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color:
-                          colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+                  const SizedBox(height: 4),
+                  if (oldRank != null) ...[
+                    Text(
+                      '$oldRank → $newRank',
+                      style: TextStyle(
+                        fontSize: isMobile ? 13 : 14,
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+                  ] else ...[
+                    Text(
+                      newRank,
+                      style: TextStyle(
+                        fontSize: isMobile ? 13 : 14,
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                  if (division != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      division,
+                      style: TextStyle(
+                        fontSize: isMobile ? 11 : 12,
+                        color: Colors.grey[700],
+                      ),
+                    ),
+                  ],
+                  if (mode != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      mode,
+                      style: TextStyle(
+                        fontSize: isMobile ? 11 : 12,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ],
               ),
-            ],
+            ),
           ],
         ),
       ),
@@ -1177,6 +1322,7 @@ class _InfoCard extends StatelessWidget {
   }
 }
 
+// User Dashboard widget remains for now (can be extracted to separate screen later)
 // User Dashboard (for non-admin users)
 class _UserDashboard extends StatefulWidget {
   final String username;
@@ -1316,7 +1462,12 @@ class _UserDashboardState extends State<_UserDashboard> {
         }
 
         return SingleChildScrollView(
-          padding: EdgeInsets.all(isMobile ? 16 : 24),
+          padding: EdgeInsets.fromLTRB(
+            isMobile ? 12 : 16, // left
+            isMobile ? 16 : 24, // top
+            isMobile ? 12 : 16, // right
+            isMobile ? 16 : 24, // bottom
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1815,7 +1966,12 @@ class _AdminDashboardState extends State<_AdminDashboard> {
         }
 
         return SingleChildScrollView(
-          padding: EdgeInsets.all(isMobile ? 16 : 24),
+          padding: EdgeInsets.fromLTRB(
+            isMobile ? 12 : 16, // left
+            isMobile ? 16 : 24, // top
+            isMobile ? 12 : 16, // right
+            isMobile ? 16 : 24, // bottom
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

@@ -1003,7 +1003,7 @@ class _UserRocketLeagueScreenState extends State<UserRocketLeagueScreen> {
   Color _getRankColor(String? tierName) {
     if (tierName == null) return Colors.grey;
     final lowerName = tierName.toLowerCase();
-    
+
     // Check if tierName starts with a rank (handles "Grand Champion I", "Diamond III", etc.)
     if (lowerName.startsWith('supersonic legend')) {
       return const Color(0xFFFF00FF);

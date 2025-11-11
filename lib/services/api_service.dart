@@ -954,6 +954,38 @@ class ApiService {
       throw Exception('Failed to get user profile: ${response.statusCode}');
     }
   }
+
+  // ===== HAZEHUB ENDPOINTS =====
+
+  Future<Map<String, dynamic>> getLatestMemes({int limit = 10}) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/hazehub/latest-memes?limit=$limit'),
+      headers: _headers,
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else if (response.statusCode == 401) {
+      throw TokenExpiredException('Token has expired or is invalid');
+    } else {
+      throw Exception('Failed to get latest memes: ${response.statusCode}');
+    }
+  }
+
+  Future<Map<String, dynamic>> getLatestRankups({int limit = 10}) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/hazehub/latest-rankups?limit=$limit'),
+      headers: _headers,
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else if (response.statusCode == 401) {
+      throw TokenExpiredException('Token has expired or is invalid');
+    } else {
+      throw Exception('Failed to get latest rank-ups: ${response.statusCode}');
+    }
+  }
 }
 
 // Custom exception for token expiration
