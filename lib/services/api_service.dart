@@ -986,6 +986,38 @@ class ApiService {
       throw Exception('Failed to get latest rank-ups: ${response.statusCode}');
     }
   }
+
+  // ===== MEME REACTIONS ENDPOINTS =====
+
+  Future<Map<String, dynamic>> upvoteMeme(String messageId) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/memes/$messageId/upvote'),
+      headers: _headers,
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else if (response.statusCode == 401) {
+      throw TokenExpiredException('Token has expired or is invalid');
+    } else {
+      throw Exception('Failed to upvote meme: ${response.statusCode}');
+    }
+  }
+
+  Future<Map<String, dynamic>> getMemeReactions(String messageId) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/memes/$messageId/reactions'),
+      headers: _headers,
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else if (response.statusCode == 401) {
+      throw TokenExpiredException('Token has expired or is invalid');
+    } else {
+      throw Exception('Failed to get meme reactions: ${response.statusCode}');
+    }
+  }
 }
 
 // Custom exception for token expiration

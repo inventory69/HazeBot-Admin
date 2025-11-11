@@ -9,6 +9,7 @@ import '../services/config_service.dart';
 import '../services/api_service.dart';
 import '../utils/web_utils.dart';
 import 'meme_detail_screen.dart';
+import 'profile_screen.dart';
 import 'config/general_config_screen.dart';
 import 'config/channels_config_screen.dart';
 import 'config/roles_config_screen.dart';
@@ -385,43 +386,102 @@ class _HomeScreenState extends State<HomeScreen>
                               padding: const EdgeInsets.all(16.0),
                               child: Row(
                                 children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFF5865F2)
-                                          .withOpacity(0.1),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(
-                                      Icons.discord,
-                                      size: 24,
-                                      color: Color(0xFF5865F2),
-                                    ),
+                                  // Avatar or Discord icon (clickable to profile)
+                                  GestureDetector(
+                                    onTap: () {
+                                      Navigator.pop(context);
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const ProfileScreen(),
+                                        ),
+                                      );
+                                    },
+                                    child: avatarUrl != null
+                                      ? ClipRRect(
+                                          borderRadius:
+                                              BorderRadius.circular(24),
+                                          child: Image.network(
+                                            avatarUrl,
+                                            width: 48,
+                                            height: 48,
+                                            fit: BoxFit.cover,
+                                            errorBuilder:
+                                                (context, error, stackTrace) {
+                                              return Container(
+                                                width: 48,
+                                                height: 48,
+                                                padding:
+                                                    const EdgeInsets.all(8),
+                                                decoration: BoxDecoration(
+                                                  color: const Color(0xFF5865F2)
+                                                      .withValues(alpha: 0.1),
+                                                  shape: BoxShape.circle,
+                                                ),
+                                                child: const Icon(
+                                                  Icons.discord,
+                                                  size: 24,
+                                                  color: Color(0xFF5865F2),
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        )
+                                      : Container(
+                                          width: 48,
+                                          height: 48,
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFF5865F2)
+                                                .withValues(alpha: 0.1),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(
+                                            Icons.discord,
+                                            size: 24,
+                                            color: Color(0xFF5865F2),
+                                          ),
+                                        ),
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          discordAuthService.userInfo!['user'],
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16,
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        Navigator.pop(context);
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                const ProfileScreen(),
                                           ),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                        Text(
-                                          permissionService.role,
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .onSurfaceVariant,
+                                        );
+                                      },
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            discordAuthService.userInfo!['user'],
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 16,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
                                           ),
-                                        ),
-                                      ],
+                                          Text(
+                                            discordAuthService
+                                                    .userInfo!['role_name'] ??
+                                                permissionService.role,
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurfaceVariant,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -1017,14 +1077,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Card(
       margin: EdgeInsets.only(bottom: isMobile ? 8 : 12),
       child: InkWell(
-        onTap: () {
-          // Navigate to meme detail screen
-          Navigator.push(
+        onTap: () async {
+          // Navigate to meme detail screen and handle result
+          final result = await Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => MemeDetailScreen(meme: meme),
             ),
           );
+
+          // Update upvotes if changed
+          if (result != null && result is Map<String, dynamic>) {
+            final updatedUpvotes = result['upvotes'] as int?;
+            if (updatedUpvotes != null) {
+              setState(() {
+                // Find and update the meme in the list
+                final index = _memes.indexWhere(
+                    (m) => m['message_id'] == meme['message_id']);
+                if (index != -1) {
+                  _memes[index]['upvotes'] = updatedUpvotes;
+                }
+              });
+            }
+          }
         },
         child: Padding(
           padding: EdgeInsets.all(isMobile ? 8 : 12),
@@ -1093,20 +1168,53 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     const SizedBox(height: 4),
                     Row(
                       children: [
+                        // Score/Upvotes from original source
+                        if (!isCustom && score > 0) ...[
+                          Icon(
+                            Icons.trending_up,
+                            size: isMobile ? 14 : 16,
+                            color: Colors.grey[600],
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '$score',
+                            style: TextStyle(
+                              fontSize: isMobile ? 12 : 13,
+                              color: Colors.grey[700],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                        ],
+                        // Custom badge
+                        if (isCustom) ...[
+                          Icon(
+                            Icons.auto_awesome,
+                            size: isMobile ? 14 : 16,
+                            color: Colors.purple[400],
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Custom',
+                            style: TextStyle(
+                              fontSize: isMobile ? 12 : 13,
+                              color: Colors.purple[400],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                        ],
+                        // Discord upvotes
                         Icon(
-                          isCustom ? Icons.auto_awesome : Icons.thumb_up,
+                          Icons.thumb_up,
                           size: isMobile ? 14 : 16,
-                          color:
-                              isCustom ? Colors.purple[400] : Colors.grey[600],
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          isCustom ? 'Custom Meme' : '$score',
+                          '${meme['upvotes'] ?? 0}',
                           style: TextStyle(
                             fontSize: isMobile ? 12 : 13,
-                            color: isCustom
-                                ? Colors.purple[400]
-                                : Colors.grey[700],
+                            color: Theme.of(context).colorScheme.primary,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ],

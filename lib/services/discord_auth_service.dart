@@ -33,6 +33,7 @@ class DiscordAuthService extends ChangeNotifier {
         final userData = await _apiService.getCurrentUser();
         debugPrint('DEBUG: DiscordAuthService got user data: $userData');
         debugPrint('DEBUG: Auth type: ${userData['auth_type']}');
+        debugPrint('DEBUG: Avatar URL from /auth/me: ${userData['avatar_url']}');
 
         // Only authenticate with Discord if auth_type is "discord" AND has discord_id
         if (userData['auth_type'] == 'discord' &&
@@ -110,11 +111,18 @@ class DiscordAuthService extends ChangeNotifier {
       debugPrint('DEBUG: Exchange response: $response');
 
       _token = response['token'];
+
+      // Set token and get current user to get avatar_url
+      _apiService.setToken(response['token']);
+      final userData = await _apiService.getCurrentUser();
+
       _userInfo = {
         'username': response['user'],
         'role': response['role'],
         'permissions': response['permissions'],
         'discord_user': response['discord_user'],
+        'discord_id': userData['discord_id'],
+        'avatar_url': userData['avatar_url'],
       };
 
       if (_token != null) {
@@ -164,6 +172,7 @@ class DiscordAuthService extends ChangeNotifier {
       debugPrint('🔐 Calling getCurrentUser API...');
       final userData = await apiInstance.getCurrentUser();
       debugPrint('✅ Got user data: $userData');
+      debugPrint('🔐 Avatar URL: ${userData['avatar_url']}');
 
       _userInfo = {
         'user': userData['user'],
@@ -172,6 +181,7 @@ class DiscordAuthService extends ChangeNotifier {
         'role': userData['role'],
         'permissions': userData['permissions'],
         'auth_type': userData['auth_type'],
+        'avatar_url': userData['avatar_url'],
       };
 
       debugPrint('🔐 Setting _isAuthenticated = true');

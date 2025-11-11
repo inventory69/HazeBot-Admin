@@ -1,21 +1,103 @@
 import 'package:flutter/material.dart';
-import '../utils/web_utils.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../services/api_service.dart';
 
-class MemeDetailScreen extends StatelessWidget {
+class MemeDetailScreen extends StatefulWidget {
   final Map<String, dynamic> meme;
 
   const MemeDetailScreen({super.key, required this.meme});
 
   @override
+  State<MemeDetailScreen> createState() => _MemeDetailScreenState();
+}
+
+class _MemeDetailScreenState extends State<MemeDetailScreen> {
+  int _upvotes = 0;
+  bool _hasUpvoted = false;
+  bool _isUpvoting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _upvotes = widget.meme['upvotes'] as int? ?? 0;
+    _loadReactions();
+  }
+
+  Future<void> _loadReactions() async {
+    final messageId = widget.meme['message_id'] as String?;
+    if (messageId == null) return;
+
+    try {
+      final response = await ApiService().getMemeReactions(messageId);
+      print('Reactions response: $response'); // Debug
+      if (response['success'] == true) {
+        setState(() {
+          _upvotes = response['upvotes'] as int? ?? 0;
+          _hasUpvoted = response['has_upvoted'] as bool? ?? false;
+          print('Set _hasUpvoted to: $_hasUpvoted'); // Debug
+        });
+      }
+    } catch (e) {
+      print('Error loading reactions: $e'); // Debug
+      // Silently fail - not critical
+    }
+  }
+
+  Future<void> _toggleUpvote() async {
+    final messageId = widget.meme['message_id'] as String?;
+    if (messageId == null || _isUpvoting) return;
+
+    setState(() {
+      _isUpvoting = true;
+    });
+
+    try {
+      final response = await ApiService().upvoteMeme(messageId);
+      if (response['success'] == true) {
+        // Update state from response
+        setState(() {
+          _hasUpvoted = response['has_upvoted'] as bool? ?? false;
+          _upvotes = response['upvotes'] as int? ?? 0;
+        });
+
+        final action = response['action'] as String?;
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(action == 'added' ? 'Upvoted! 👍' : 'Upvote removed'),
+              duration: const Duration(seconds: 1),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to toggle upvote: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUpvoting = false;
+        });
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final imageUrl = meme['image_url'] as String?;
-    final title = meme['title'] as String? ?? 'Untitled Meme';
-    final author = meme['author'] as String? ?? 'Unknown';
-    final score = meme['score'] as int? ?? 0;
-    final source = meme['source'] as String? ?? 'Unknown';
-    final url = meme['url'] as String?;
-    final timestamp = meme['timestamp'] as String?;
-    final isCustom = meme['is_custom'] as bool? ?? false;
+    final imageUrl = widget.meme['image_url'] as String?;
+    final title = widget.meme['title'] as String? ?? 'Untitled Meme';
+    final author = widget.meme['author'] as String? ?? 'Unknown';
+    final score = widget.meme['score'] as int? ?? 0;
+    final source = widget.meme['source'] as String? ?? 'Unknown';
+    final url = widget.meme['url'] as String?;
+    final timestamp = widget.meme['timestamp'] as String?;
+    final isCustom = widget.meme['is_custom'] as bool? ?? false;
 
     DateTime? postedDate;
     if (timestamp != null) {
@@ -27,27 +109,35 @@ class MemeDetailScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Meme Details'),
-        actions: [
-          if (url != null && url.isNotEmpty)
-            IconButton(
-              icon: const Icon(Icons.open_in_new),
-              tooltip: 'Open Original',
-              onPressed: () {
-                WebUtils.openInNewTab(url);
-              },
-            ),
-        ],
-      ),
-      body: SingleChildScrollView(
+        appBar: AppBar(
+          title: const Text('Meme Details'),
+          leading: BackButton(
+            onPressed: () {
+              Navigator.of(context).pop({'upvotes': _upvotes});
+            },
+          ),
+          actions: [
+            if (url != null && url.isNotEmpty)
+              IconButton(
+                icon: const Icon(Icons.open_in_new),
+                tooltip: 'Open Original',
+                onPressed: () async {
+                  final uri = Uri.parse(url);
+                  if (await canLaunchUrl(uri)) {
+                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  }
+                },
+              ),
+          ],
+        ),
+        body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Meme Image
             if (imageUrl != null)
               Hero(
-                tag: 'meme_${meme['message_id']}',
+                tag: 'meme_${widget.meme['message_id']}',
                 child: Image.network(
                   imageUrl,
                   fit: BoxFit.contain,
@@ -130,20 +220,57 @@ class MemeDetailScreen extends StatelessWidget {
                   const SizedBox(height: 16),
 
                   // Action Buttons
-                  if (url != null && url.isNotEmpty)
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          WebUtils.openInNewTab(url);
-                        },
-                        icon: const Icon(Icons.open_in_new),
-                        label: const Text('View Original'),
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
+                  Row(
+                    children: [
+                      // Upvote Button
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: _isUpvoting ? null : _toggleUpvote,
+                          icon: _isUpvoting
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 2),
+                                )
+                              : Icon(
+                                  _hasUpvoted
+                                      ? Icons.thumb_up
+                                      : Icons.thumb_up_outlined,
+                                ),
+                          label: Text('$_upvotes'),
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            backgroundColor: _hasUpvoted
+                                ? Theme.of(context).colorScheme.primaryContainer
+                                : null,
+                            foregroundColor: _hasUpvoted
+                                ? Theme.of(context).colorScheme.onPrimaryContainer
+                                : null,
+                          ),
                         ),
                       ),
-                    ),
+                      if (url != null && url.isNotEmpty) ...[
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () async {
+                              final uri = Uri.parse(url);
+                              if (await canLaunchUrl(uri)) {
+                                await launchUrl(uri,
+                                    mode: LaunchMode.externalApplication);
+                              }
+                            },
+                            icon: const Icon(Icons.open_in_new),
+                            label: const Text('Original'),
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                 ],
               ),
             ),
