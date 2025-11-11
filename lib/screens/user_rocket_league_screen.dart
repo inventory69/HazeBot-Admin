@@ -1002,27 +1002,27 @@ class _UserRocketLeagueScreenState extends State<UserRocketLeagueScreen> {
 
   Color _getRankColor(String? tierName) {
     if (tierName == null) return Colors.grey;
-    switch (tierName.toLowerCase()) {
-      case 'supersonic_legend':
-      case 'supersonic legend':
-        return const Color(0xFFFF00FF);
-      case 'grand_champion':
-      case 'grand champion':
-        return const Color(0xFFFF0000);
-      case 'champion':
-        return const Color(0xFFAA00FF);
-      case 'diamond':
-        return const Color(0xFF0080FF);
-      case 'platinum':
-        return const Color(0xFF00BFFF);
-      case 'gold':
-        return const Color(0xFFFFD700);
-      case 'silver':
-        return const Color(0xFFC0C0C0);
-      case 'bronze':
-        return const Color(0xFFCD7F32);
-      default:
-        return Colors.grey;
+    final lowerName = tierName.toLowerCase();
+    
+    // Check if tierName starts with a rank (handles "Grand Champion I", "Diamond III", etc.)
+    if (lowerName.startsWith('supersonic legend')) {
+      return const Color(0xFFFF00FF);
+    } else if (lowerName.startsWith('grand champion')) {
+      return const Color(0xFFFF0000);
+    } else if (lowerName.startsWith('champion')) {
+      return const Color(0xFFAA00FF);
+    } else if (lowerName.startsWith('diamond')) {
+      return const Color(0xFF0080FF);
+    } else if (lowerName.startsWith('platinum')) {
+      return const Color(0xFF00BFFF);
+    } else if (lowerName.startsWith('gold')) {
+      return const Color(0xFFFFD700);
+    } else if (lowerName.startsWith('silver')) {
+      return const Color(0xFFC0C0C0);
+    } else if (lowerName.startsWith('bronze')) {
+      return const Color(0xFFCD7F32);
+    } else {
+      return Colors.grey;
     }
   }
 
