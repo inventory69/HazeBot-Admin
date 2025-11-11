@@ -92,35 +92,71 @@ class _UserRocketLeagueScreenState extends State<UserRocketLeagueScreen> {
   Future<void> _linkAccount() async {
     if (!_linkFormKey.currentState!.validate()) return;
 
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Link RL Account?'),
-        content: Text(
-          'This will connect your Rocket League account '
-          '"${_usernameController.text}" on ${_platformNames[_selectedPlatform]} '
-          'to your Discord profile.\n\n'
-          'The bot will verify the account exists and track your ranks.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Link'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed != true || !mounted) return;
-
     setState(() => _isLinking = true);
 
     try {
+      // First, fetch stats to verify account exists (like bot does)
       final authService = Provider.of<AuthService>(context, listen: false);
+      final stats = await authService.apiService.getRLStats(
+        _selectedPlatform,
+        _usernameController.text,
+      );
+
+      if (!mounted) return;
+
+      // Show confirmation dialog with stats (like bot does)
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('🔗 Confirm Account Linking'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Player found: ${stats['stats']['username']}',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 4),
+                Text('Platform: ${_platformNames[_selectedPlatform]}'),
+                const SizedBox(height: 12),
+                const Text(
+                  'Current Ranks:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 4),
+                Text('1v1: ${stats['stats']['rank_1v1']}'),
+                Text('2v2: ${stats['stats']['rank_2v2']}'),
+                Text('3v3: ${stats['stats']['rank_3v3']}'),
+                Text('4v4: ${stats['stats']['rank_4v4']}'),
+                const SizedBox(height: 12),
+                const Text(
+                  'Do you want to link this account?',
+                  style: TextStyle(fontSize: 13),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.green,
+              ),
+              child: const Text('Confirm Link'),
+            ),
+          ],
+        ),
+      );
+
+      if (confirmed != true || !mounted) return;
+
+      // Now actually link the account
       await authService.apiService.linkUserRLAccount(
         _selectedPlatform,
         _usernameController.text,
@@ -129,7 +165,7 @@ class _UserRocketLeagueScreenState extends State<UserRocketLeagueScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Account linked successfully!'),
+            content: Text('✅ Account linked successfully!'),
             backgroundColor: Colors.green,
           ),
         );
@@ -148,6 +184,79 @@ class _UserRocketLeagueScreenState extends State<UserRocketLeagueScreen> {
     } finally {
       if (mounted) {
         setState(() => _isLinking = false);
+      }
+    }
+  }
+
+  Future<void> _postToChannel() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Post Stats to Channel?'),
+        content: const Text(
+          'This will post your Rocket League stats to the configured Rocket League channel in Discord.\n\n'
+          'Everyone in the server will be able to see your stats.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.green,
+            ),
+            child: const Text('Post Stats'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    // Show loading indicator
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Row(
+            children: [
+              SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              ),
+              SizedBox(width: 12),
+              Text('Posting stats to channel...'),
+            ],
+          ),
+          duration: Duration(seconds: 30),
+        ),
+      );
+    }
+
+    try {
+      final authService = Provider.of<AuthService>(context, listen: false);
+      await authService.apiService.postUserRLStats();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✅ Stats posted to Rocket League channel!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to post stats: $e')),
+        );
       }
     }
   }
@@ -326,6 +435,19 @@ class _UserRocketLeagueScreenState extends State<UserRocketLeagueScreen> {
                         ),
                   ),
                 ),
+                FilledButton.icon(
+                  onPressed: _postToChannel,
+                  icon: const Icon(Icons.send, size: 18),
+                  label: const Text('Post'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isMobile ? 12 : 16,
+                      vertical: isMobile ? 8 : 12,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
                 FilledButton.icon(
                   onPressed: _unlinkAccount,
                   icon: const Icon(Icons.link_off, size: 18),
@@ -866,6 +988,7 @@ class _UserRocketLeagueScreenState extends State<UserRocketLeagueScreen> {
 
   String _getTierNameFromRank(String rank) {
     final lowerRank = rank.toLowerCase();
+    if (lowerRank.contains('supersonic legend')) return 'supersonic_legend';
     if (lowerRank.contains('grand champion')) return 'grand_champion';
     if (lowerRank.contains('champion')) return 'champion';
     if (lowerRank.contains('diamond')) return 'diamond';
@@ -873,7 +996,7 @@ class _UserRocketLeagueScreenState extends State<UserRocketLeagueScreen> {
     if (lowerRank.contains('gold')) return 'gold';
     if (lowerRank.contains('silver')) return 'silver';
     if (lowerRank.contains('bronze')) return 'bronze';
-    if (lowerRank.contains('supersonic legend')) return 'supersonic_legend';
+    if (lowerRank.contains('unranked')) return 'unranked';
     return 'unranked';
   }
 

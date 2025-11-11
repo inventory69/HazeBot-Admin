@@ -1271,34 +1271,34 @@ class _UserDashboardState extends State<_UserDashboard> {
                       fontSize: isMobile ? 22 : null,
                     ),
               ),
-              SizedBox(height: isMobile ? 16 : 24),
+              SizedBox(height: isMobile ? 12 : 16),
 
               // Profile Information Card
               Card(
                 child: Padding(
-                  padding: EdgeInsets.all(isMobile ? 12 : 16),
+                  padding: EdgeInsets.all(isMobile ? 6 : 10),
                   child: Row(
                     children: [
                       // Avatar
                       if (_avatarUrl != null)
                         ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(5),
                           child: Image.network(
                             _avatarUrl!,
-                            width: isMobile ? 48 : 56,
-                            height: isMobile ? 48 : 56,
+                            width: isMobile ? 36 : 44,
+                            height: isMobile ? 36 : 44,
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) {
                               return Container(
-                                width: isMobile ? 48 : 56,
-                                height: isMobile ? 48 : 56,
+                                width: isMobile ? 36 : 44,
+                                height: isMobile ? 36 : 44,
                                 decoration: BoxDecoration(
                                   color: _getRoleColor().withOpacity(0.2),
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Icon(
                                   _getRoleIcon(),
-                                  size: isMobile ? 24 : 28,
+                                  size: isMobile ? 20 : 24,
                                   color: _getRoleColor(),
                                 ),
                               );
@@ -1307,19 +1307,19 @@ class _UserDashboardState extends State<_UserDashboard> {
                         )
                       else
                         Container(
-                          width: isMobile ? 48 : 56,
-                          height: isMobile ? 48 : 56,
+                          width: isMobile ? 40 : 48,
+                          height: isMobile ? 40 : 48,
                           decoration: BoxDecoration(
                             color: _getRoleColor().withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(6),
                           ),
                           child: Icon(
                             _getRoleIcon(),
-                            size: isMobile ? 24 : 28,
+                            size: isMobile ? 20 : 24,
                             color: _getRoleColor(),
                           ),
                         ),
-                      SizedBox(width: isMobile ? 12 : 16),
+                      SizedBox(width: isMobile ? 10 : 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1373,37 +1373,37 @@ class _UserDashboardState extends State<_UserDashboard> {
                   ),
                 ),
               ),
-              SizedBox(height: isMobile ? 16 : 24),
+              SizedBox(height: isMobile ? 12 : 16),
 
               // Rocket League Rank Card (if available)
               if (_rlRank != null) ...[
                 Card(
                   child: Padding(
-                    padding: EdgeInsets.all(isMobile ? 12 : 16),
+                    padding: EdgeInsets.all(isMobile ? 6 : 10),
                     child: Row(
                       children: [
                         // Rank Icon
                         if (_rlRank!['icon_url'] != null)
                           ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(5),
                             child: Image.network(
                               _rlRank!['icon_url'],
-                              width: isMobile ? 40 : 48,
-                              height: isMobile ? 40 : 48,
+                              width: isMobile ? 28 : 36,
+                              height: isMobile ? 28 : 36,
                               fit: BoxFit.contain,
                               errorBuilder: (context, error, stackTrace) {
                                 return Container(
-                                  width: isMobile ? 40 : 48,
-                                  height: isMobile ? 40 : 48,
+                                  width: isMobile ? 28 : 36,
+                                  height: isMobile ? 28 : 36,
                                   decoration: BoxDecoration(
                                     color: Theme.of(context)
                                         .colorScheme
                                         .primaryContainer,
-                                    borderRadius: BorderRadius.circular(8),
+                                    borderRadius: BorderRadius.circular(5),
                                   ),
                                   child: Icon(
                                     Icons.sports_esports,
-                                    size: isMobile ? 20 : 24,
+                                    size: isMobile ? 16 : 18,
                                     color: Theme.of(context)
                                         .colorScheme
                                         .onPrimaryContainer,
@@ -1414,23 +1414,23 @@ class _UserDashboardState extends State<_UserDashboard> {
                           )
                         else
                           Container(
-                            width: isMobile ? 40 : 48,
-                            height: isMobile ? 40 : 48,
+                            width: isMobile ? 32 : 40,
+                            height: isMobile ? 32 : 40,
                             decoration: BoxDecoration(
                               color: Theme.of(context)
                                   .colorScheme
                                   .primaryContainer,
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(6),
                             ),
                             child: Icon(
                               Icons.sports_esports,
-                              size: isMobile ? 20 : 24,
+                              size: isMobile ? 18 : 20,
                               color: Theme.of(context)
                                   .colorScheme
                                   .onPrimaryContainer,
                             ),
                           ),
-                        SizedBox(width: isMobile ? 12 : 16),
+                        SizedBox(width: isMobile ? 10 : 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1483,7 +1483,7 @@ class _UserDashboardState extends State<_UserDashboard> {
                     ),
                   ),
                 ),
-                SizedBox(height: isMobile ? 16 : 24),
+                SizedBox(height: isMobile ? 12 : 16),
               ],
 
               // Stats Grid
@@ -1597,14 +1597,14 @@ class _UserDashboardState extends State<_UserDashboard> {
             crossAxisCount: isMobile ? 2 : (isTablet ? 3 : 4),
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            crossAxisSpacing: isMobile ? 8 : 12,
-            mainAxisSpacing: isMobile ? 8 : 12,
-            childAspectRatio: isMobile ? 1.4 : 1.6,
+            crossAxisSpacing: isMobile ? 6 : 8,
+            mainAxisSpacing: isMobile ? 6 : 8,
+            childAspectRatio: isMobile ? 1.5 : 1.7,
             children: statCards,
           ),
 
         if (statCards.isNotEmpty && _optInRoles.isNotEmpty)
-          SizedBox(height: isMobile ? 16 : 24),
+          SizedBox(height: isMobile ? 12 : 16),
 
         // Opt-In Roles Card
         if (_optInRoles.isNotEmpty)
@@ -1679,25 +1679,25 @@ class _UserDashboardState extends State<_UserDashboard> {
     return Card(
       elevation: 1,
       child: Padding(
-        padding: EdgeInsets.all(isMobile ? 8 : 12),
+        padding: EdgeInsets.all(isMobile ? 4 : 6),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: color, size: isMobile ? 24 : 28),
-            SizedBox(height: isMobile ? 4 : 6),
+            Icon(icon, color: color, size: isMobile ? 18 : 22),
+            SizedBox(height: isMobile ? 2 : 3),
             Text(
               value,
               style: TextStyle(
-                fontSize: isMobile ? 15 : 17,
+                fontSize: isMobile ? 12 : 14,
                 fontWeight: FontWeight.bold,
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 1),
             Text(
               label,
               style: TextStyle(
-                fontSize: isMobile ? 10 : 11,
+                fontSize: isMobile ? 8 : 9,
                 color: Colors.grey[600],
               ),
               textAlign: TextAlign.center,
@@ -1769,7 +1769,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
                       fontSize: isMobile ? 22 : null,
                     ),
               ),
-              SizedBox(height: isMobile ? 16 : 24),
+              SizedBox(height: isMobile ? 12 : 16),
               Card(
                 child: Padding(
                   padding: EdgeInsets.all(isMobile ? 16 : 24),

@@ -415,6 +415,21 @@ class ApiService {
     }
   }
 
+  Future<Map<String, dynamic>> getRLStats(
+      String platform, String username) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/rocket-league/stats/$platform/$username'),
+      headers: _headers,
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      final error = jsonDecode(response.body);
+      throw Exception(error['error'] ?? 'Failed to fetch RL stats');
+    }
+  }
+
   Future<Map<String, dynamic>> linkUserRLAccount(
       String platform, String username) async {
     final response = await http.post(
@@ -441,6 +456,21 @@ class ApiService {
       return jsonDecode(response.body);
     } else {
       throw Exception('Failed to unlink RL account: ${response.body}');
+    }
+  }
+
+  Future<Map<String, dynamic>> postUserRLStats() async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/user/rocket-league/post-stats'),
+      headers: _headers,
+      body: jsonEncode({}), // No body needed, user is from token
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      final error = jsonDecode(response.body);
+      throw Exception(error['message'] ?? 'Failed to post stats');
     }
   }
 
