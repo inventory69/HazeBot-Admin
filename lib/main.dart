@@ -10,6 +10,7 @@ import 'services/permission_service.dart';
 import 'services/config_service.dart';
 import 'services/theme_service.dart';
 import 'services/deep_link_service.dart';
+import 'utils/app_config.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -110,7 +111,7 @@ class _HazeBotAdminAppState extends State<HazeBotAdminApp> {
               }
 
               return MaterialApp(
-                title: 'HazeBot Admin',
+                title: AppConfig.appName,
                 debugShowCheckedModeBanner: false,
                 theme: ThemeData(
                   colorScheme: lightColorScheme,

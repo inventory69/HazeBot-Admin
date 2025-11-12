@@ -27,26 +27,31 @@ class ApiService {
 
   String get _userAgent {
     // Detect platform and create appropriate user agent
+    // Use environment-based app name (Chillventory for prod, Testventory for dev)
+    final appName = dotenv.env['PROD_MODE']?.toLowerCase() == 'true' 
+        ? 'Chillventory' 
+        : 'Testventory';
+    
     if (kIsWeb) {
-      return 'HazeBotAdmin/1.0 (Web; Flutter)';
+      return '$appName/1.0 (Web; Flutter)';
     } else {
       try {
         if (Platform.isAndroid) {
-          return 'HazeBotAdmin/1.0 (Android; Flutter)';
+          return '$appName/1.0 (Android; Flutter)';
         } else if (Platform.isIOS) {
-          return 'HazeBotAdmin/1.0 (iOS; Flutter)';
+          return '$appName/1.0 (iOS; Flutter)';
         } else if (Platform.isWindows) {
-          return 'HazeBotAdmin/1.0 (Windows; Flutter)';
+          return '$appName/1.0 (Windows; Flutter)';
         } else if (Platform.isMacOS) {
-          return 'HazeBotAdmin/1.0 (macOS; Flutter)';
+          return '$appName/1.0 (macOS; Flutter)';
         } else if (Platform.isLinux) {
-          return 'HazeBotAdmin/1.0 (Linux; Flutter)';
+          return '$appName/1.0 (Linux; Flutter)';
         }
       } catch (e) {
         // Fallback if Platform is not available
       }
     }
-    return 'HazeBotAdmin/1.0 (Unknown; Flutter)';
+    return '$appName/1.0 (Unknown; Flutter)';
   }
 
   Map<String, String> get _headers {

@@ -5,6 +5,7 @@ import '../services/auth_service.dart';
 import '../services/discord_auth_service.dart';
 import '../services/permission_service.dart';
 import '../utils/web_utils.dart';
+import '../utils/app_config.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -241,7 +242,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          'HazeBot Admin',
+                          AppConfig.appName,
                           style: Theme.of(context)
                               .textTheme
                               .headlineMedium

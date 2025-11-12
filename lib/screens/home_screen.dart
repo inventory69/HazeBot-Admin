@@ -8,6 +8,7 @@ import '../services/permission_service.dart';
 import '../services/config_service.dart';
 import '../services/api_service.dart';
 import '../utils/web_utils.dart';
+import '../utils/app_config.dart';
 import 'meme_detail_screen.dart';
 import 'profile_screen.dart';
 import 'config/general_config_screen.dart';
@@ -318,9 +319,9 @@ class _HomeScreenState extends State<HomeScreen>
             return Row(
               children: [
                 if (!isMobile)
-                  const Text('HazeBot Admin')
+                  Text(AppConfig.appName)
                 else
-                  const Text('HazeBot', style: TextStyle(fontSize: 18)),
+                  Text(AppConfig.appName, style: const TextStyle(fontSize: 18)),
                 if (!isMobile &&
                     discordAuthService.isAuthenticated &&
                     discordAuthService.userInfo != null &&

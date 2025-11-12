@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
+import '../utils/app_config.dart';
 
 class GamingHubScreen extends StatefulWidget {
   const GamingHubScreen({super.key});
@@ -83,11 +84,11 @@ class _GamingHubScreenState extends State<GamingHubScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Row(
+        title: const Row(
           children: [
-            const Icon(Icons.videogame_asset, color: Colors.green),
-            const SizedBox(width: 8),
-            const Expanded(child: Text('Send Game Request')),
+            Icon(Icons.videogame_asset, color: Colors.green),
+            SizedBox(width: 8),
+            Expanded(child: Text('Send Game Request')),
           ],
         ),
         content: SingleChildScrollView(
@@ -277,6 +278,7 @@ class _GamingHubScreenState extends State<GamingHubScreen> {
     final status = member['status'] as String? ?? 'offline';
     final activity = member['activity'] as Map<String, dynamic>?;
     final isOnline = status != 'offline';
+    final usingApp = member['using_app'] as bool? ?? false;
 
     Color statusColor;
     switch (status) {
@@ -347,14 +349,60 @@ class _GamingHubScreenState extends State<GamingHubScreen> {
                         fontWeight: FontWeight.bold,
                         fontSize: isMobile ? 15 : 16,
                       ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
-                    Text(
-                      '@${member['username'] ?? 'unknown'}',
-                      style: TextStyle(
-                        color: Colors.grey[400],
-                        fontSize: isMobile ? 11 : 12,
-                      ),
+                    Row(
+                      children: [
+                        Text(
+                          '@${member['username'] ?? 'unknown'}',
+                          style: TextStyle(
+                            color: Colors.grey[400],
+                            fontSize: isMobile ? 11 : 12,
+                          ),
+                        ),
+                        // App badge
+                        if (usingApp) ...[
+                          const SizedBox(width: 6),
+                          Tooltip(
+                            message: 'Using ${AppConfig.appName}',
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 5,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.purple.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(3),
+                                border: Border.all(
+                                  color: Colors.purple.withValues(alpha: 0.4),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.phone_android,
+                                    size: isMobile ? 9 : 10,
+                                    color: Colors.purple[300],
+                                  ),
+                                  const SizedBox(width: 3),
+                                  Text(
+                                    'APP',
+                                    style: TextStyle(
+                                      color: Colors.purple[300],
+                                      fontSize: isMobile ? 8 : 9,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                     if (activity != null) ...[
                       const SizedBox(height: 6),

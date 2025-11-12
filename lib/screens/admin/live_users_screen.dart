@@ -380,6 +380,21 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                     ),
                     SizedBox(height: isMobile ? 16 : 24),
 
+                    // Recent Activity Section
+                    _buildRecentActivity(isMobile),
+
+                    SizedBox(height: isMobile ? 16 : 24),
+
+                    // Sessions List Header
+                    Text(
+                      'Active Sessions',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontSize: isMobile ? 18 : null,
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    SizedBox(height: isMobile ? 8 : 12),
+
                     // Sessions List
                     if (sessions.isEmpty)
                       Center(
@@ -601,6 +616,137 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
         );
       },
     );
+  }
+
+  Widget _buildRecentActivity(bool isMobile) {
+    final recentActivity =
+        _sessionData?['recent_activity'] as List<dynamic>? ?? [];
+
+    if (recentActivity.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Recent Activity',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontSize: isMobile ? 18 : null,
+                fontWeight: FontWeight.bold,
+              ),
+        ),
+        SizedBox(height: isMobile ? 8 : 12),
+        Card(
+          child: ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: recentActivity.length > 20 ? 20 : recentActivity.length,
+            separatorBuilder: (context, index) => const Divider(height: 1),
+            itemBuilder: (context, index) {
+              final activity = recentActivity[index];
+              final username = activity['username'] ?? 'Unknown';
+              final displayName = activity['display_name'] ?? username;
+              final avatarUrl = activity['avatar_url'] as String?;
+              final action = activity['action'] ?? 'GET';
+              final endpoint = activity['endpoint'] ?? 'unknown';
+              final timestamp = activity['timestamp'] as String?;
+
+              return ListTile(
+                dense: isMobile,
+                leading: CircleAvatar(
+                  radius: isMobile ? 16 : 20,
+                  backgroundImage:
+                      avatarUrl != null ? NetworkImage(avatarUrl) : null,
+                  child: avatarUrl == null
+                      ? Icon(Icons.person, size: isMobile ? 16 : 20)
+                      : null,
+                ),
+                title: Text(
+                  displayName,
+                  style: TextStyle(
+                    fontSize: isMobile ? 13 : 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                subtitle: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: _getActionColor(action).withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        action,
+                        style: TextStyle(
+                          fontSize: isMobile ? 9 : 10,
+                          fontWeight: FontWeight.bold,
+                          color: _getActionColor(action),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        _formatEndpoint(endpoint),
+                        style: TextStyle(
+                          fontSize: isMobile ? 11 : 12,
+                          color:
+                              Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                trailing: timestamp != null
+                    ? Text(
+                        timeago.format(DateTime.parse(timestamp)),
+                        style: TextStyle(
+                          fontSize: isMobile ? 10 : 11,
+                          color:
+                              Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      )
+                    : null,
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Color _getActionColor(String action) {
+    switch (action.toUpperCase()) {
+      case 'GET':
+        return Colors.blue;
+      case 'POST':
+        return Colors.green;
+      case 'PUT':
+      case 'PATCH':
+        return Colors.orange;
+      case 'DELETE':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  String _formatEndpoint(String endpoint) {
+    // Remove common prefixes and make more readable
+    return endpoint
+        .replaceAll('_', ' ')
+        .replaceAll('get ', '')
+        .replaceAll('post ', '')
+        .replaceAll('update ', '')
+        .split(' ')
+        .map((word) => word.isEmpty
+            ? ''
+            : word[0].toUpperCase() + word.substring(1).toLowerCase())
+        .join(' ');
   }
 
   Widget _buildDetailRow(

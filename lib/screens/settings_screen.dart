@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/theme_service.dart';
+import '../utils/app_config.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -87,8 +88,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           ListTile(
             leading: const Icon(Icons.info),
-            title: const Text('Version'),
-            subtitle: Text('$_version+$_buildNumber'),
+            title: Text(AppConfig.appName),
+            subtitle: Text('Version $_version+$_buildNumber'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.cloud),
+            title: const Text('Environment'),
+            subtitle: Text(AppConfig.environmentName),
+            trailing: Icon(
+              AppConfig.isProduction ? Icons.verified : Icons.science,
+              color: AppConfig.isProduction ? Colors.green : Colors.orange,
+            ),
           ),
           const ListTile(
             leading: Icon(Icons.badge),
