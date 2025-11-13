@@ -54,8 +54,6 @@ class _HomeScreenState extends State<HomeScreen>
   bool _isDrawerVisible = false; // Start with admin rail hidden
   int _reloadCounter = 0;
   late TabController _tabController;
-  bool _autoReload = false;
-  Timer? _refreshTimer;
 
   @override
   void initState() {
@@ -78,26 +76,7 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void dispose() {
     _tabController.dispose();
-    _refreshTimer?.cancel();
     super.dispose();
-  }
-
-  void _toggleAutoReload() {
-    setState(() {
-      _autoReload = !_autoReload;
-      if (_autoReload) {
-        // Start auto-refresh timer (every 5 seconds)
-        _refreshTimer = Timer.periodic(const Duration(seconds: 5), (_) {
-          if (mounted) {
-            _loadConfig();
-          }
-        });
-      } else {
-        // Stop timer
-        _refreshTimer?.cancel();
-        _refreshTimer = null;
-      }
-    });
   }
 
   Future<void> _pingServer() async {
@@ -119,22 +98,34 @@ class _HomeScreenState extends State<HomeScreen>
 
     // Check if token expired
     if (configService.error == 'token_expired') {
+      debugPrint('⚠️ Config load failed with token_expired - Token refresh should have handled this');
+      // DON'T logout immediately - token refresh should have been attempted
+      // Only logout if refresh truly failed (indicated by clearToken being called)
+      // The TokenExpiredException is thrown AFTER refresh attempts
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Row(
+          SnackBar(
+            content: const Row(
               children: [
-                Icon(Icons.error, color: Colors.white),
+                Icon(Icons.warning, color: Colors.white),
                 SizedBox(width: 12),
-                Text('Session expired. Please login again.'),
+                Text('Session issue detected, attempting recovery...'),
               ],
             ),
-            backgroundColor: Colors.red,
-            duration: Duration(seconds: 3),
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 2),
+            action: SnackBarAction(
+              label: 'Retry',
+              textColor: Colors.white,
+              onPressed: () {
+                _loadConfig();
+              },
+            ),
           ),
         );
-        // Logout and return to login screen
-        authService.logout();
+        // Give token refresh a chance - retry after a short delay
+        await Future.delayed(const Duration(seconds: 1));
+        await _loadConfig(); // Retry loading config
       }
     } else if (mounted) {
       // Increment counter to force screen rebuild
@@ -538,39 +529,6 @@ class _HomeScreenState extends State<HomeScreen>
 
                           ListTile(
                             leading: Icon(
-                              Icons.autorenew,
-                              color: _autoReload
-                                  ? Theme.of(context).colorScheme.primary
-                                  : null,
-                            ),
-                            title: Text(
-                              'Auto-Reload',
-                              style: TextStyle(
-                                color: _autoReload
-                                    ? Theme.of(context).colorScheme.primary
-                                    : null,
-                                fontWeight: _autoReload
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
-                              ),
-                            ),
-                            trailing: Switch(
-                              value: _autoReload,
-                              onChanged: (_) {
-                                _toggleAutoReload();
-                                Navigator.pop(context);
-                              },
-                            ),
-                            onTap: () {
-                              _toggleAutoReload();
-                              Navigator.pop(context);
-                            },
-                          ),
-
-                          const Divider(height: 1),
-
-                          ListTile(
-                            leading: Icon(
                               Icons.logout,
                               color: Theme.of(context).colorScheme.error,
                             ),
@@ -873,6 +831,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   List<Map<String, dynamic>> _rankups = [];
   String? _memesError;
   String? _rankupsError;
+  
+  // Debouncing: prevent multiple parallel requests to same endpoint
+  bool _memesRequestInProgress = false;
+  bool _rankupsRequestInProgress = false;
 
   @override
   void initState() {
@@ -888,6 +850,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _loadLatestMemes() async {
+    // Debounce: Skip if request already in progress
+    if (_memesRequestInProgress) {
+      return;
+    }
+    
+    _memesRequestInProgress = true;
     setState(() {
       _isLoadingMemes = true;
       _memesError = null;
@@ -911,10 +879,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _memesError = e.toString();
         _isLoadingMemes = false;
       });
+    } finally {
+      _memesRequestInProgress = false;
     }
   }
 
   Future<void> _loadLatestRankups() async {
+    // Debounce: Skip if request already in progress
+    if (_rankupsRequestInProgress) {
+      return;
+    }
+    
+    _rankupsRequestInProgress = true;
     setState(() {
       _isLoadingRankups = true;
       _rankupsError = null;
@@ -938,6 +914,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _rankupsError = e.toString();
         _isLoadingRankups = false;
       });
+    } finally {
+      _rankupsRequestInProgress = false;
     }
   }
 

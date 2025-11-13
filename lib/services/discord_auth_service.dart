@@ -27,7 +27,7 @@ class DiscordAuthService extends ChangeNotifier {
 
     if (_token != null) {
       debugPrint('DEBUG: DiscordAuthService loading token from storage');
-      _apiService.setToken(_token!);
+      await _apiService.setToken(_token!);
 
       try {
         final userData = await _apiService.getCurrentUser();
@@ -113,7 +113,7 @@ class DiscordAuthService extends ChangeNotifier {
       _token = response['token'];
 
       // Set token and get current user to get avatar_url
-      _apiService.setToken(response['token']);
+      await _apiService.setToken(response['token']);
       final userData = await _apiService.getCurrentUser();
 
       _userInfo = {
@@ -126,10 +126,7 @@ class DiscordAuthService extends ChangeNotifier {
       };
 
       if (_token != null) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('auth_token', _token!);
-
-        _apiService.setToken(_token!);
+        // Token is already saved by setToken(), no need to save again
         _isAuthenticated = true;
         notifyListeners();
         debugPrint('DEBUG: OAuth login successful');
@@ -156,17 +153,11 @@ class DiscordAuthService extends ChangeNotifier {
 
       _token = token;
 
-      // Save token
-      debugPrint('🔐 Saving token to SharedPreferences...');
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('auth_token', token);
-      debugPrint('✅ Token saved to SharedPreferences');
-
-      // CRITICAL: Set token in singleton ApiService
+      // CRITICAL: Set token in singleton ApiService (also saves to SharedPreferences)
       final apiInstance = ApiService();
       debugPrint('🔐 ApiService instance hashCode: ${apiInstance.hashCode}');
-      apiInstance.setToken(token);
-      debugPrint('✅ Token set in ApiService');
+      await apiInstance.setToken(token);
+      debugPrint('✅ Token set and saved in ApiService');
 
       // Get user info from the token
       debugPrint('🔐 Calling getCurrentUser API...');
@@ -214,10 +205,7 @@ class DiscordAuthService extends ChangeNotifier {
     _userInfo = null;
     _isAuthenticated = false;
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('auth_token');
-
-    _apiService.setToken('');
+    await _apiService.clearToken(); // Removes from memory AND SharedPreferences
     notifyListeners();
   }
 }

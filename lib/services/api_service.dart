@@ -1,8 +1,11 @@
 import 'dart:convert';
 import 'dart:io' show Platform;
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:jwt_decode/jwt_decode.dart';
 
 class ApiService {
   // Singleton pattern
@@ -14,15 +17,285 @@ class ApiService {
       dotenv.env['API_BASE_URL'] ?? 'http://localhost:5070/api';
 
   String? _token;
+  bool _isRefreshing = false;
+  Completer<bool>? _refreshCompleter; // For parallel refresh requests - signals completion
 
-  void setToken(String token) {
+  Future<void> setToken(String token) async {
+    // Validate JWT structure before saving
+    if (token.split('.').length != 3) {
+      debugPrint('⚠️ Attempting to save invalid JWT token (dots: ${token.split('.').length})');
+      throw Exception('Invalid JWT token structure');
+    }
+    
     _token = token;
-    debugPrint('DEBUG: ApiService token set: ${token.substring(0, 20)}...');
+    // CRITICAL: Always save token to SharedPreferences
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('auth_token', token);
+    debugPrint('✅ Token saved to SharedPreferences (length: ${token.length})');
   }
 
-  void clearToken() {
+  Future<void> clearToken() async {
     _token = null;
-    debugPrint('DEBUG: ApiService token cleared');
+    // CRITICAL: Also remove from SharedPreferences
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('auth_token');
+  }
+  
+  /// Load token from SharedPreferences on app start
+  Future<void> loadToken() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final storedToken = prefs.getString('auth_token');
+      
+      if (storedToken != null && storedToken.isNotEmpty) {
+        // Validate JWT structure before using it
+        if (storedToken.split('.').length == 3) {
+          _token = storedToken;
+          debugPrint('✅ Loaded valid JWT token from SharedPreferences (length: ${storedToken.length})');
+        } else {
+          debugPrint('⚠️ Invalid token structure in SharedPreferences, clearing...');
+          await prefs.remove('auth_token');
+          _token = null;
+        }
+      } else {
+        _token = null;
+        debugPrint('ℹ️ No token found in SharedPreferences');
+      }
+    } catch (e) {
+      debugPrint('❌ Error loading token: $e');
+      _token = null;
+    }
+  }
+  
+  /// Check if the current token is expired or will expire soon (within 5 minutes)
+  bool _isTokenExpired() {
+    if (_token == null || _token!.isEmpty) {
+      return true;
+    }
+    
+    try {
+      // Decode the JWT to check expiration
+      final jwt = Jwt.parseJwt(_token!);
+      final exp = jwt['exp'];
+      
+      if (exp == null) {
+        debugPrint('⚠️ Token has no expiration claim');
+        return false; // No expiration, assume valid
+      }
+      
+      // Convert exp (Unix timestamp in seconds) to DateTime
+      final expiryDate = DateTime.fromMillisecondsSinceEpoch(exp * 1000);
+      final now = DateTime.now();
+      
+      // Check if token is expired or will expire in next 1 hour
+      // (More conservative buffer - tokens are valid for 7 days)
+      final bufferTime = const Duration(hours: 1);
+      final isExpired = now.isAfter(expiryDate.subtract(bufferTime));
+      
+      if (isExpired) {
+        final timeUntilExpiry = expiryDate.difference(now);
+        debugPrint('⚠️ Token expires in ${timeUntilExpiry.inHours} hours');
+      }
+      
+      return isExpired;
+    } catch (e) {
+      debugPrint('❌ Error checking token expiration: $e');
+      return true; // If we can't decode it, assume expired
+    }
+  }
+  
+  /// Refresh the JWT token with a new expiry date
+  /// Uses Completer to ensure only ONE refresh happens at a time, even with parallel requests
+  Future<Map<String, dynamic>?> refreshToken() async {
+    // If already refreshing, wait for that refresh to complete
+    if (_isRefreshing && _refreshCompleter != null) {
+      debugPrint('⏳ Token refresh in progress, waiting for completion...');
+      try {
+        await _refreshCompleter!.future; // Just wait, don't use result
+        debugPrint('✅ Token refresh completed, using new token from singleton');
+        // Return success data with current token (which is now the new one)
+        return {
+          'token': _token,
+          'success': true,
+        };
+      } catch (e) {
+        debugPrint('❌ Error waiting for token refresh: $e');
+        return null;
+      }
+    }
+
+    if (_token == null || _token!.isEmpty) {
+      debugPrint('❌ Cannot refresh token: No token available');
+      return null;
+    }
+
+    _isRefreshing = true;
+    _refreshCompleter = Completer<bool>(); // Changed to bool for success signal
+    
+    try {
+      debugPrint('🔄 Starting token refresh...');
+      debugPrint('🔍 Current token length: ${_token?.length ?? 0}');
+      debugPrint('🔍 Token preview: ${_token?.substring(0, 20) ?? "NULL"}...');
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/refresh'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_token',
+        },
+      ).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw TimeoutException('Token refresh timed out');
+        },
+      );
+      
+      debugPrint('🔍 Refresh response status: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final newToken = data['token'];
+        
+        if (newToken != null && newToken.isNotEmpty) {
+          // Validate JWT structure before saving
+          if (newToken.split('.').length != 3) {
+            debugPrint('❌ Refresh returned invalid JWT token (dots: ${newToken.split('.').length})');
+            _refreshCompleter!.complete(false);
+            return null;
+          }
+          
+          // CRITICAL: Save token FIRST, before completing the Completer
+          // This ensures parallel requests see the new token when they continue
+          await setToken(newToken);
+          
+          // Small delay to ensure token is REALLY saved everywhere
+          await Future.delayed(const Duration(milliseconds: 50));
+          
+          // NOW signal all waiting requests - they will use the new _token
+          _refreshCompleter!.complete(true);
+          
+          debugPrint('✅ Token refresh successful');
+          
+          // Return the data for the original request
+          return data;
+        } else {
+          debugPrint('❌ Refresh returned null or empty token');
+          _refreshCompleter!.complete(false);
+        }
+      } else {
+        debugPrint('❌ Token refresh failed with status: ${response.statusCode}');
+        _refreshCompleter!.complete(false);
+      }
+    } catch (e) {
+      if (!_refreshCompleter!.isCompleted) {
+        _refreshCompleter!.complete(false);
+      }
+    } finally {
+      // Wait a tiny bit to ensure all waiting futures have received the signal
+      await Future.delayed(const Duration(milliseconds: 100));
+      _isRefreshing = false;
+      _refreshCompleter = null;
+    }
+
+    return null;
+  }
+  
+  /// Make HTTP request with automatic token refresh on 401
+  Future<http.Response> _requestWithRetry(
+    Future<http.Response> Function() request, {
+    int maxRetries = 1,
+  }) async {
+    // PROACTIVE: Check if token is expired BEFORE making the request
+    // BUT: Only refresh if NOT already refreshing (prevents duplicate refreshes)
+    if (_token != null && _isTokenExpired() && !_isRefreshing) {
+      debugPrint('🔄 Token is expired/expiring, refreshing before request...');
+      await refreshToken();
+      // Small delay to ensure token is fully saved
+      await Future.delayed(const Duration(milliseconds: 50));
+    } else if (_isRefreshing) {
+      // Wait for ongoing refresh instead of starting a new one
+      debugPrint('⏳ Waiting for ongoing token refresh...');
+      await _refreshCompleter?.future;
+    }
+    
+    http.Response response = await request();
+
+    // REACTIVE: If 401 Unauthorized and we haven't retried yet, try refreshing token
+    if (response.statusCode == 401 && maxRetries > 0) {
+      debugPrint('⚠️ Got 401, attempting token refresh and retry...');
+      
+      final refreshResult = await refreshToken();
+      
+      if (refreshResult != null) {
+        // Token refreshed successfully, wait a bit to ensure it's fully saved
+        await Future.delayed(const Duration(milliseconds: 100));
+        
+        // Retry request with fresh token
+        debugPrint('✅ Token refreshed, retrying request...');
+        return await _requestWithRetry(request, maxRetries: maxRetries - 1);
+      } else {
+        debugPrint('❌ Token refresh failed, returning 401 response');
+      }
+    }
+
+    return response;
+  }
+  
+  /// HTTP GET with automatic token refresh
+  /// IMPORTANT: Headers are computed inside the lambda to get fresh token after refresh
+  Future<http.Response> _get(String url, {Map<String, String>? headers}) {
+    return _requestWithRetry(() {
+      // CRITICAL: Re-read _headers INSIDE the lambda to get the LATEST token after refresh!
+      // Do NOT capture _headers outside the lambda - it will use the old token!
+      final Map<String, String> freshHeaders = {
+        'Content-Type': 'application/json',
+        if (_token != null && _token!.isNotEmpty) 'Authorization': 'Bearer $_token',
+        ...?headers, // Override with custom headers if provided
+      };
+      return http.get(Uri.parse(url), headers: freshHeaders);
+    });
+  }
+  
+  /// HTTP POST with automatic token refresh
+  /// IMPORTANT: Headers are computed inside the lambda to get fresh token after refresh
+  Future<http.Response> _post(String url, {Map<String, String>? headers, Object? body}) {
+    return _requestWithRetry(() {
+      // CRITICAL: Re-read token INSIDE lambda to get LATEST token after refresh!
+      final Map<String, String> freshHeaders = {
+        'Content-Type': 'application/json',
+        if (_token != null && _token!.isNotEmpty) 'Authorization': 'Bearer $_token',
+        ...?headers,
+      };
+      return http.post(Uri.parse(url), headers: freshHeaders, body: body);
+    });
+  }
+  
+  /// HTTP PUT with automatic token refresh
+  /// IMPORTANT: Headers are computed inside the lambda to get fresh token after refresh
+  Future<http.Response> _put(String url, {Map<String, String>? headers, Object? body}) {
+    return _requestWithRetry(() {
+      // CRITICAL: Re-read token INSIDE lambda to get LATEST token after refresh!
+      final Map<String, String> freshHeaders = {
+        'Content-Type': 'application/json',
+        if (_token != null && _token!.isNotEmpty) 'Authorization': 'Bearer $_token',
+        ...?headers,
+      };
+      return http.put(Uri.parse(url), headers: freshHeaders, body: body);
+    });
+  }
+  
+  /// HTTP DELETE with automatic token refresh
+  /// IMPORTANT: Headers are computed inside the lambda to get fresh token after refresh
+  Future<http.Response> _delete(String url, {Map<String, String>? headers}) {
+    return _requestWithRetry(() {
+      // CRITICAL: Re-read token INSIDE lambda to get LATEST token after refresh!
+      final Map<String, String> freshHeaders = {
+        'Content-Type': 'application/json',
+        if (_token != null && _token!.isNotEmpty) 'Authorization': 'Bearer $_token',
+        ...?headers,
+      };
+      return http.delete(Uri.parse(url), headers: freshHeaders);
+    });
   }
 
   String get _userAgent {
@@ -60,11 +333,8 @@ class ApiService {
       'User-Agent': _userAgent,
     };
 
-    if (_token != null) {
+    if (_token != null && _token!.isNotEmpty) {
       headers['Authorization'] = 'Bearer $_token';
-      debugPrint('DEBUG: ApiService adding Authorization header');
-    } else {
-      debugPrint('DEBUG: ApiService NO token available');
     }
 
     return headers;
@@ -142,15 +412,12 @@ class ApiService {
 
   Future<Map<String, dynamic>> getConfig() async {
     try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/config'),
-        headers: _headers,
-      );
+      final response = await _get('$baseUrl/config');
 
       debugPrint('getConfig response status: ${response.statusCode}');
 
       if (response.statusCode == 401) {
-        // Token expired or invalid
+        // Token expired or invalid (should be handled by auto-refresh now)
         throw TokenExpiredException('Token has expired or is invalid');
       }
 
@@ -465,9 +732,8 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> postUserRLStats() async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/user/rocket-league/post-stats'),
-      headers: _headers,
+    final response = await _post(
+      '$baseUrl/user/rocket-league/post-stats',
       body: jsonEncode({}), // No body needed, user is from token
     );
 
@@ -481,9 +747,8 @@ class ApiService {
 
   Future<Map<String, dynamic>> updateUserPreferences(
       Map<String, dynamic> preferences) async {
-    final response = await http.put(
-      Uri.parse('$baseUrl/user/preferences'),
-      headers: _headers,
+    final response = await _put(
+      '$baseUrl/user/preferences',
       body: jsonEncode(preferences),
     );
 
@@ -497,10 +762,7 @@ class ApiService {
 
   // Gaming Hub Methods
   Future<Map<String, dynamic>> getGamingMembers() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/gaming/members'),
-      headers: _headers,
-    );
+    final response = await _get('$baseUrl/gaming/members');
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -515,9 +777,8 @@ class ApiService {
     String gameName,
     String message,
   ) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/gaming/request'),
-      headers: _headers,
+    final response = await _post(
+      '$baseUrl/gaming/request',
       body: jsonEncode({
         'target_user_id': targetUserId,
         'game_name': gameName,
@@ -930,10 +1191,7 @@ class ApiService {
 
   // Ping endpoint to track session (no special permissions required)
   Future<Map<String, dynamic>> ping() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/ping'),
-      headers: _headers,
-    );
+    final response = await _get('$baseUrl/ping');
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -946,10 +1204,7 @@ class ApiService {
 
   // Get current user's profile data
   Future<Map<String, dynamic>> getUserProfile() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/user/profile'),
-      headers: _headers,
-    );
+    final response = await _get('$baseUrl/user/profile');
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -963,10 +1218,7 @@ class ApiService {
   // ===== HAZEHUB ENDPOINTS =====
 
   Future<Map<String, dynamic>> getLatestMemes({int limit = 10}) async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/hazehub/latest-memes?limit=$limit'),
-      headers: _headers,
-    );
+    final response = await _get('$baseUrl/hazehub/latest-memes?limit=$limit');
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -978,10 +1230,7 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> getLatestRankups({int limit = 10}) async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/hazehub/latest-rankups?limit=$limit'),
-      headers: _headers,
-    );
+    final response = await _get('$baseUrl/hazehub/latest-rankups?limit=$limit');
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -995,10 +1244,7 @@ class ApiService {
   // ===== MEME REACTIONS ENDPOINTS =====
 
   Future<Map<String, dynamic>> upvoteMeme(String messageId) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/memes/$messageId/upvote'),
-      headers: _headers,
-    );
+    final response = await _post('$baseUrl/memes/$messageId/upvote');
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -1010,10 +1256,7 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> getMemeReactions(String messageId) async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/memes/$messageId/reactions'),
-      headers: _headers,
-    );
+    final response = await _get('$baseUrl/memes/$messageId/reactions');
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
