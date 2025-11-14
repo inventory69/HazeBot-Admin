@@ -19,11 +19,6 @@ Future<void> main() async {
   // Load environment variables
   await dotenv.load(fileName: ".env");
 
-  // CRITICAL: Load token from storage before starting app
-  final apiService = ApiService();
-  await apiService.loadToken();
-  debugPrint('✅ Token loaded in main()');
-
   runApp(const HazeBotAdminApp());
 }
 

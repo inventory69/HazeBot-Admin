@@ -19,7 +19,7 @@ class AuthService extends ChangeNotifier {
     _token = prefs.getString('auth_token');
 
     if (_token != null) {
-      await _apiService.setToken(_token!);
+      _apiService.setToken(_token!);
       _isAuthenticated = true;
       notifyListeners();
     }
@@ -31,7 +31,10 @@ class AuthService extends ChangeNotifier {
       _token = response['token'];
 
       if (_token != null) {
-        await _apiService.setToken(_token!); // Saves to SharedPreferences automatically
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('auth_token', _token!);
+
+        _apiService.setToken(_token!);
         _isAuthenticated = true;
         notifyListeners();
         return true;
@@ -45,9 +48,12 @@ class AuthService extends ChangeNotifier {
   }
 
   Future<void> logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('auth_token');
+
     _token = null;
     _isAuthenticated = false;
-    await _apiService.clearToken(); // Removes from memory AND SharedPreferences
+    _apiService.clearToken();
     notifyListeners();
   }
 
