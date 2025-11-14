@@ -7,6 +7,7 @@ import '../services/discord_auth_service.dart';
 import '../services/permission_service.dart';
 import '../services/config_service.dart';
 import '../services/api_service.dart';
+import '../providers/data_cache_provider.dart';
 import '../utils/web_utils.dart';
 import '../utils/app_config.dart';
 import 'meme_detail_screen.dart';
@@ -824,150 +825,123 @@ class DashboardScreen extends StatefulWidget {
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
-  bool _isLoadingMemes = true;
-  bool _isLoadingRankups = true;
-  List<Map<String, dynamic>> _memes = [];
-  List<Map<String, dynamic>> _rankups = [];
-  String? _memesError;
-  String? _rankupsError;
-  
-  // Debouncing: prevent multiple parallel requests to same endpoint
-  bool _memesRequestInProgress = false;
-  bool _rankupsRequestInProgress = false;
+class _DashboardScreenState extends State<DashboardScreen>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
     super.initState();
-    _loadData();
+    // Load data only if cache is empty (first time only)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final cacheProvider = Provider.of<DataCacheProvider>(context, listen: false);
+      // Only load if cache is empty - cache will prevent duplicate requests
+      if (cacheProvider.memes == null || cacheProvider.rankups == null) {
+        _loadData();
+      }
+    });
   }
 
-  Future<void> _loadData() async {
+  Future<void> _loadData({bool force = false}) async {
+    final cacheProvider = Provider.of<DataCacheProvider>(context, listen: false);
     await Future.wait([
-      _loadLatestMemes(),
-      _loadLatestRankups(),
+      cacheProvider.loadLatestMemes(force: force),
+      cacheProvider.loadLatestRankups(force: force),
     ]);
-  }
-
-  Future<void> _loadLatestMemes() async {
-    // Debounce: Skip if request already in progress
-    if (_memesRequestInProgress) {
-      return;
-    }
-    
-    _memesRequestInProgress = true;
-    setState(() {
-      _isLoadingMemes = true;
-      _memesError = null;
-    });
-
-    try {
-      final response = await ApiService().getLatestMemes(limit: 5);
-      if (response['success'] == true) {
-        setState(() {
-          _memes = List<Map<String, dynamic>>.from(response['memes'] ?? []);
-          _isLoadingMemes = false;
-        });
-      } else {
-        setState(() {
-          _memesError = 'Failed to load memes';
-          _isLoadingMemes = false;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _memesError = e.toString();
-        _isLoadingMemes = false;
-      });
-    } finally {
-      _memesRequestInProgress = false;
-    }
-  }
-
-  Future<void> _loadLatestRankups() async {
-    // Debounce: Skip if request already in progress
-    if (_rankupsRequestInProgress) {
-      return;
-    }
-    
-    _rankupsRequestInProgress = true;
-    setState(() {
-      _isLoadingRankups = true;
-      _rankupsError = null;
-    });
-
-    try {
-      final response = await ApiService().getLatestRankups(limit: 5);
-      if (response['success'] == true) {
-        setState(() {
-          _rankups = List<Map<String, dynamic>>.from(response['rankups'] ?? []);
-          _isLoadingRankups = false;
-        });
-      } else {
-        setState(() {
-          _rankupsError = 'Failed to load rank-ups';
-          _isLoadingRankups = false;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _rankupsError = e.toString();
-        _isLoadingRankups = false;
-      });
-    } finally {
-      _rankupsRequestInProgress = false;
-    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
+    return Consumer<DataCacheProvider>(
+      builder: (context, cacheProvider, child) {
+        final memes = cacheProvider.memes ?? [];
+        final rankups = cacheProvider.rankups ?? [];
+        final isLoadingMemes = cacheProvider.isLoadingMemes;
+        final isLoadingRankups = cacheProvider.isLoadingRankups;
+
+        return LayoutBuilder(
       builder: (context, constraints) {
         final isMobile = constraints.maxWidth < 600;
         final padding = isMobile ? 12.0 : 16.0;
 
         return RefreshIndicator(
-          onRefresh: _loadData,
+          onRefresh: () => _loadData(force: true),
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: EdgeInsets.all(padding),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header
-                Text(
-                  '🌟 HazeHub',
-                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                        fontSize: isMobile ? 24 : null,
-                        fontWeight: FontWeight.bold,
+                  // Header
+                  Text(
+                    '🌟 HazeHub',
+                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                          fontSize: isMobile ? 24 : null,
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Latest news from the community',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                fontSize: isMobile ? 13 : null,
+                              ),
+                        ),
                       ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Latest news from the community',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        fontSize: isMobile ? 13 : null,
-                      ),
-                ),
-                SizedBox(height: isMobile ? 16 : 24),
+                      if (cacheProvider.lastMemesLoad != null)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.primaryContainer,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.schedule,
+                                size: 14,
+                                color: Theme.of(context).colorScheme.onPrimaryContainer,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                cacheProvider.getCacheAge(),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                  SizedBox(height: isMobile ? 16 : 24),
 
                 // Latest Memes Section
-                _buildMemesSection(context, isMobile),
+                _buildMemesSection(context, isMobile, memes, isLoadingMemes),
 
                 SizedBox(height: isMobile ? 12 : 16),
 
                 // Latest Rank-Ups Section
-                _buildRankupsSection(context, isMobile),
+                _buildRankupsSection(context, isMobile, rankups, isLoadingRankups),
               ],
             ),
           ),
         );
       },
     );
+      },
+    );
   }
 
-  Widget _buildMemesSection(BuildContext context, bool isMobile) {
+  Widget _buildMemesSection(BuildContext context, bool isMobile, List<Map<String, dynamic>> memes, bool isLoadingMemes) {
     return Card(
       child: Padding(
         padding: EdgeInsets.all(isMobile ? 12 : 16),
@@ -989,7 +963,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ],
                 ),
-                if (_memes.isNotEmpty)
+                if (memes.isNotEmpty)
                   TextButton.icon(
                     onPressed: () {
                       // TODO: Navigate to full memes view
@@ -1004,22 +978,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ],
             ),
             const SizedBox(height: 16),
-            if (_isLoadingMemes)
+            if (isLoadingMemes)
               const Center(child: CircularProgressIndicator())
-            else if (_memesError != null)
-              Center(
-                child: Column(
-                  children: [
-                    Icon(Icons.error_outline, size: 48, color: Colors.red[300]),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Failed to load memes',
-                      style: TextStyle(color: Colors.grey[600]),
-                    ),
-                  ],
-                ),
-              )
-            else if (_memes.isEmpty)
+            else if (memes.isEmpty)
               Center(
                 child: Column(
                   children: [
@@ -1035,7 +996,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               )
             else
               Column(
-                children: _memes
+                children: memes
                     .map((meme) => _buildMemeCard(context, meme, isMobile))
                     .toList(),
               ),
@@ -1065,19 +1026,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           );
 
-          // Update upvotes if changed
+          // Refresh memes if changes were made
           if (result != null && result is Map<String, dynamic>) {
-            final updatedUpvotes = result['upvotes'] as int?;
-            if (updatedUpvotes != null) {
-              setState(() {
-                // Find and update the meme in the list
-                final index = _memes.indexWhere(
-                    (m) => m['message_id'] == meme['message_id']);
-                if (index != -1) {
-                  _memes[index]['upvotes'] = updatedUpvotes;
-                }
-              });
-            }
+            final cacheProvider = Provider.of<DataCacheProvider>(context, listen: false);
+            await cacheProvider.loadLatestMemes(force: true);
           }
         },
         child: Padding(
@@ -1208,7 +1160,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildRankupsSection(BuildContext context, bool isMobile) {
+  Widget _buildRankupsSection(BuildContext context, bool isMobile, List<Map<String, dynamic>> rankups, bool isLoadingRankups) {
     return Card(
       child: Padding(
         padding: EdgeInsets.all(isMobile ? 12 : 16),
@@ -1230,7 +1182,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ],
                 ),
-                if (_rankups.isNotEmpty)
+                if (rankups.isNotEmpty)
                   TextButton.icon(
                     onPressed: () {
                       // TODO: Navigate to full rank-ups view
@@ -1245,22 +1197,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ],
             ),
             const SizedBox(height: 16),
-            if (_isLoadingRankups)
+            if (isLoadingRankups)
               const Center(child: CircularProgressIndicator())
-            else if (_rankupsError != null)
-              Center(
-                child: Column(
-                  children: [
-                    Icon(Icons.error_outline, size: 48, color: Colors.red[300]),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Failed to load rank-ups',
-                      style: TextStyle(color: Colors.grey[600]),
-                    ),
-                  ],
-                ),
-              )
-            else if (_rankups.isEmpty)
+            else if (rankups.isEmpty)
               Center(
                 child: Column(
                   children: [
@@ -1275,7 +1214,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               )
             else
               Column(
-                children: _rankups
+                children: rankups
                     .map(
                         (rankup) => _buildRankupCard(context, rankup, isMobile))
                     .toList(),
@@ -1426,7 +1365,8 @@ class _UserDashboard extends StatefulWidget {
   State<_UserDashboard> createState() => _UserDashboardState();
 }
 
-class _UserDashboardState extends State<_UserDashboard> {
+class _UserDashboardState extends State<_UserDashboard>
+    with AutomaticKeepAliveClientMixin {
   bool _isLoading = false;
   List<Map<String, dynamic>> _optInRoles = [];
   Map<String, dynamic>? _rlRank;
@@ -1436,6 +1376,9 @@ class _UserDashboardState extends State<_UserDashboard> {
   Map<String, dynamic>? _notifications;
   Map<String, dynamic>? _customStats;
   Map<String, dynamic>? _activity;
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -1520,6 +1463,7 @@ class _UserDashboardState extends State<_UserDashboard> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
     return LayoutBuilder(
       builder: (context, constraints) {
         final isMobile = constraints.maxWidth < 600;
@@ -2014,9 +1958,13 @@ class _AdminDashboard extends StatefulWidget {
   State<_AdminDashboard> createState() => _AdminDashboardState();
 }
 
-class _AdminDashboardState extends State<_AdminDashboard> {
+class _AdminDashboardState extends State<_AdminDashboard>
+    with AutomaticKeepAliveClientMixin {
   bool _isLoading = true;
   Map<String, dynamic>? _dashboardData;
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -2044,6 +1992,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
     return LayoutBuilder(
       builder: (context, constraints) {
         final isMobile = constraints.maxWidth < 600;

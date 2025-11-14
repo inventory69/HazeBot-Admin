@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:jwt_decode/jwt_decode.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
   // Singleton pattern
@@ -27,37 +28,9 @@ class ApiService {
     _token = null;
   }
   
-  /// Check if the current token is expired or will expire soon (within 5 minutes)
-  bool _isTokenExpired() {
-    if (_token == null || _token!.isEmpty) {
-      return true;
-    }
-    
-    try {
-      // Decode the JWT to check expiration
-      final jwt = Jwt.parseJwt(_token!);
-      final exp = jwt['exp'];
-      
-      if (exp == null) {
-        debugPrint('⚠️ Token has no expiration claim');
-        return false; // No expiration, assume valid
-      }
-      
-      // Convert exp (Unix timestamp in seconds) to DateTime
-      final expiryDate = DateTime.fromMillisecondsSinceEpoch(exp * 1000);
-      final now = DateTime.now();
-      
-      // Refresh token when < 24 hours remaining (tokens are valid for 7 days)
-      // This means: refresh on day 6, not immediately after login
-      final bufferTime = const Duration(hours: 24);
-      final isExpired = now.isAfter(expiryDate.subtract(bufferTime));
-      
-      return isExpired;
-    } catch (e) {
-      debugPrint('❌ Error checking token expiration: $e');
-      return true; // If we can't decode it, assume expired
-    }
-  }
+  // REMOVED: No proactive token expiration check
+  // Token is only refreshed when backend returns 401
+  // This is simpler and more reliable
   
   /// Refresh the JWT token with a new expiry date
   /// Uses Completer to ensure only ONE refresh happens at a time, even with parallel requests
@@ -107,8 +80,17 @@ class ApiService {
             return null;
           }
           
-          // Save token before completing the Completer
+          // Save token in memory
           setToken(newToken);
+          
+          // Save to SharedPreferences
+          try {
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setString('auth_token', newToken);
+          } catch (e) {
+            debugPrint('⚠️ Failed to save token to SharedPreferences: $e');
+          }
+          
           _refreshCompleter!.complete(true);
           
           return data;
@@ -131,36 +113,35 @@ class ApiService {
   }
   
   /// Make HTTP request with automatic token refresh on 401
+  /// SIMPLE VERSION: Only refresh when backend says 401, no proactive checks
   Future<http.Response> _requestWithRetry(
     Future<http.Response> Function() request, {
     int maxRetries = 1,
   }) async {
-    // PROACTIVE: Check if token is expired BEFORE making the request
-    // BUT: Only refresh if NOT already refreshing (prevents duplicate refreshes)
-    if (_token != null && _isTokenExpired() && !_isRefreshing) {
-      debugPrint('🔄 Token is expired/expiring, refreshing before request...');
-      await refreshToken();
-    } else if (_isRefreshing) {
-      // Wait for ongoing refresh instead of starting a new one
-      debugPrint('⏳ Waiting for ongoing token refresh...');
-      await _refreshCompleter?.future;
-    }
-    
+    // Execute request
     http.Response response = await request();
 
-    // REACTIVE: If 401 Unauthorized and we haven't retried yet, try refreshing token
+    // If 401: refresh token and retry ONCE
     if (response.statusCode == 401 && maxRetries > 0) {
       debugPrint('⚠️ Got 401, attempting token refresh and retry...');
       
-      final refreshResult = await refreshToken();
-      
-      if (refreshResult != null) {
-        // Token refreshed successfully, retry request with fresh token
-        debugPrint('✅ Token refreshed, retrying request...');
-        return await _requestWithRetry(request, maxRetries: maxRetries - 1);
+      // If another request is already refreshing, wait for it
+      if (_isRefreshing && _refreshCompleter != null) {
+        debugPrint('⏳ Another request is refreshing, waiting...');
+        await _refreshCompleter!.future;
+        debugPrint('✅ Refresh completed by other request, retrying with fresh token...');
       } else {
-        debugPrint('❌ Token refresh failed, returning 401 response');
+        // Refresh token
+        await refreshToken();
+        debugPrint('✅ Token refreshed, retrying request...');
       }
+      
+      // CRITICAL: Always retry after refresh (whether we did it or waited for it)
+      final retryResponse = await _requestWithRetry(request, maxRetries: maxRetries - 1);
+      if (retryResponse.statusCode != 401) {
+        debugPrint('✅ Retry successful (${retryResponse.statusCode})');
+      }
+      return retryResponse;
     }
 
     return response;

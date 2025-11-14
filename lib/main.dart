@@ -11,6 +11,7 @@ import 'services/permission_service.dart';
 import 'services/config_service.dart';
 import 'services/theme_service.dart';
 import 'services/deep_link_service.dart';
+import 'providers/data_cache_provider.dart';
 import 'utils/app_config.dart';
 
 Future<void> main() async {
@@ -84,6 +85,7 @@ class _HazeBotAdminAppState extends State<HazeBotAdminApp> {
         ChangeNotifierProvider(create: (_) => PermissionService()),
         ChangeNotifierProvider(create: (_) => ConfigService()),
         ChangeNotifierProvider(create: (_) => ThemeService()),
+        ChangeNotifierProvider(create: (_) => DataCacheProvider()),
       ],
       child: Consumer<ThemeService>(
         builder: (context, themeService, _) {

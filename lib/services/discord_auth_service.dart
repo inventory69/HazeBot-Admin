@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:jwt_decode/jwt_decode.dart';
 import 'api_service.dart';
 
 class DiscordAuthService extends ChangeNotifier {
@@ -29,6 +30,7 @@ class DiscordAuthService extends ChangeNotifier {
       debugPrint('DEBUG: DiscordAuthService loading token from storage');
       _apiService.setToken(_token!);
 
+      // Token will be automatically checked and refreshed by ApiService before each request
       try {
         final userData = await _apiService.getCurrentUser();
         debugPrint('DEBUG: DiscordAuthService got user data: $userData');
@@ -119,6 +121,7 @@ class DiscordAuthService extends ChangeNotifier {
       _userInfo = {
         'username': response['user'],
         'role': response['role'],
+        'role_name': userData['role_name'],
         'permissions': response['permissions'],
         'discord_user': response['discord_user'],
         'discord_id': userData['discord_id'],
@@ -179,6 +182,7 @@ class DiscordAuthService extends ChangeNotifier {
         'username': userData['user'],
         'discord_id': userData['discord_id'],
         'role': userData['role'],
+        'role_name': userData['role_name'],
         'permissions': userData['permissions'],
         'auth_type': userData['auth_type'],
         'avatar_url': userData['avatar_url'],
