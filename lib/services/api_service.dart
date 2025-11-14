@@ -114,12 +114,13 @@ class ApiService {
   
   /// Make HTTP request with automatic token refresh on 401
   /// SIMPLE VERSION: Only refresh when backend says 401, no proactive checks
+  /// CRITICAL: Request builder is called FRESH each time to get latest token!
   Future<http.Response> _requestWithRetry(
-    Future<http.Response> Function() request, {
+    Future<http.Response> Function() requestBuilder, {
     int maxRetries = 1,
   }) async {
-    // Execute request
-    http.Response response = await request();
+    // Execute request - call builder to get fresh headers with current token
+    http.Response response = await requestBuilder();
 
     // If 401: refresh token and retry ONCE
     if (response.statusCode == 401 && maxRetries > 0) {
@@ -136,8 +137,9 @@ class ApiService {
         debugPrint('✅ Token refreshed, retrying request...');
       }
       
-      // CRITICAL: Always retry after refresh (whether we did it or waited for it)
-      final retryResponse = await _requestWithRetry(request, maxRetries: maxRetries - 1);
+      // CRITICAL: Call requestBuilder AGAIN to get FRESH headers with NEW token!
+      // This is why we pass a builder function instead of a Response directly
+      final retryResponse = await _requestWithRetry(requestBuilder, maxRetries: maxRetries - 1);
       if (retryResponse.statusCode != 401) {
         debugPrint('✅ Retry successful (${retryResponse.statusCode})');
       }
@@ -150,12 +152,16 @@ class ApiService {
   /// HTTP GET with automatic token refresh
   /// IMPORTANT: Headers are computed inside the lambda to get fresh token after refresh
   Future<http.Response> _get(String url, {Map<String, String>? headers}) {
+    // CRITICAL: Return a builder function that reads _token FRESH each time it's called!
+    // This ensures retry after refresh uses the NEW token, not the old one
     return _requestWithRetry(() {
-      // CRITICAL: Re-read _headers INSIDE the lambda to get the LATEST token after refresh!
-      // Compute headers inside lambda to get fresh token after refresh
+      // Read token FRESH from instance variable (not captured in closure)
+      final String currentToken = _token ?? '';
+      
+      // Build headers with CURRENT token
       final Map<String, String> freshHeaders = {
         'Content-Type': 'application/json',
-        if (_token != null && _token!.isNotEmpty) 'Authorization': 'Bearer $_token',
+        if (currentToken.isNotEmpty) 'Authorization': 'Bearer $currentToken',
         ...?headers,
       };
       
@@ -167,12 +173,15 @@ class ApiService {
   /// IMPORTANT: Headers are computed inside the lambda to get fresh token after refresh
   Future<http.Response> _post(String url, {Map<String, String>? headers, Object? body}) {
     return _requestWithRetry(() {
-      // CRITICAL: Re-read token INSIDE lambda to get LATEST token after refresh!
+      // Read token FRESH from instance variable
+      final String currentToken = _token ?? '';
+      
       final Map<String, String> freshHeaders = {
         'Content-Type': 'application/json',
-        if (_token != null && _token!.isNotEmpty) 'Authorization': 'Bearer $_token',
+        if (currentToken.isNotEmpty) 'Authorization': 'Bearer $currentToken',
         ...?headers,
       };
+      
       return http.post(Uri.parse(url), headers: freshHeaders, body: body);
     });
   }
@@ -181,12 +190,15 @@ class ApiService {
   /// IMPORTANT: Headers are computed inside the lambda to get fresh token after refresh
   Future<http.Response> _put(String url, {Map<String, String>? headers, Object? body}) {
     return _requestWithRetry(() {
-      // CRITICAL: Re-read token INSIDE lambda to get LATEST token after refresh!
+      // Read token FRESH from instance variable
+      final String currentToken = _token ?? '';
+      
       final Map<String, String> freshHeaders = {
         'Content-Type': 'application/json',
-        if (_token != null && _token!.isNotEmpty) 'Authorization': 'Bearer $_token',
+        if (currentToken.isNotEmpty) 'Authorization': 'Bearer $currentToken',
         ...?headers,
       };
+      
       return http.put(Uri.parse(url), headers: freshHeaders, body: body);
     });
   }
@@ -195,12 +207,15 @@ class ApiService {
   /// IMPORTANT: Headers are computed inside the lambda to get fresh token after refresh
   Future<http.Response> _delete(String url, {Map<String, String>? headers}) {
     return _requestWithRetry(() {
-      // CRITICAL: Re-read token INSIDE lambda to get LATEST token after refresh!
+      // Read token FRESH from instance variable
+      final String currentToken = _token ?? '';
+      
       final Map<String, String> freshHeaders = {
         'Content-Type': 'application/json',
-        if (_token != null && _token!.isNotEmpty) 'Authorization': 'Bearer $_token',
+        if (currentToken.isNotEmpty) 'Authorization': 'Bearer $currentToken',
         ...?headers,
       };
+      
       return http.delete(Uri.parse(url), headers: freshHeaders);
     });
   }
