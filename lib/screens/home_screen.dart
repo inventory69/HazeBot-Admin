@@ -346,7 +346,8 @@ class _HomeScreenState extends State<HomeScreen>
                 onTap: () {
                   showModalBottomSheet(
                     context: context,
-                    backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+                    backgroundColor:
+                        Theme.of(context).colorScheme.surfaceContainerHigh,
                     shape: const RoundedRectangleBorder(
                       borderRadius:
                           BorderRadius.vertical(top: Radius.circular(20)),
@@ -775,8 +776,9 @@ class _HomeScreenState extends State<HomeScreen>
                       ),
                       // Tab bar for user features (at bottom)
                       Material(
-                        color: Theme.of(context).colorScheme.surfaceContainer,
-                        elevation: 4,
+                        color:
+                            Theme.of(context).colorScheme.surfaceContainerLow,
+                        elevation: 0,
                         child: SafeArea(
                           child: TabBar(
                             controller: _tabController,
@@ -847,9 +849,9 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   Future<void> _loadData({bool force = false}) async {
     if (_isRefreshing) return; // Prevent multiple simultaneous refreshes
-    
+
     setState(() => _isRefreshing = true);
-    
+
     try {
       final cacheProvider =
           Provider.of<DataCacheProvider>(context, listen: false);
@@ -857,7 +859,7 @@ class _DashboardScreenState extends State<DashboardScreen>
         cacheProvider.loadLatestMemes(force: force),
         cacheProvider.loadLatestRankups(force: force),
       ]);
-      
+
       if (mounted && force) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -1058,9 +1060,9 @@ class _DashboardScreenState extends State<DashboardScreen>
 
     return Card(
       margin: EdgeInsets.only(bottom: isMobile ? 8 : 12),
-      // Inner card uses surfaceContainer for contrast with section card
-      color: Theme.of(context).colorScheme.surfaceContainer,
-      elevation: 1,
+      // Inner card uses surfaceContainerHigh for clear hierarchy (Android 16 Monet)
+      color: Theme.of(context).colorScheme.surfaceContainerHigh,
+      elevation: 0,
       child: InkWell(
         onTap: () async {
           // Navigate to meme detail screen and handle result
@@ -1308,9 +1310,9 @@ class _DashboardScreenState extends State<DashboardScreen>
 
     return Card(
       margin: EdgeInsets.only(bottom: isMobile ? 8 : 12),
-      // Inner card uses surfaceContainer for contrast with section card
-      color: Theme.of(context).colorScheme.surfaceContainer,
-      elevation: 1,
+      // Inner card uses surfaceContainerHigh for clear hierarchy (Android 16 Monet)
+      color: Theme.of(context).colorScheme.surfaceContainerHigh,
+      elevation: 0,
       child: Padding(
         padding: EdgeInsets.all(isMobile ? 8 : 12),
         child: Row(
@@ -2022,9 +2024,9 @@ class _UserDashboardState extends State<_UserDashboard>
   }) {
     return Builder(
       builder: (context) => Card(
-        elevation: 1,
-        // Use surfaceContainer for stat cards - proper contrast with background
-        color: Theme.of(context).colorScheme.surfaceContainer,
+        elevation: 0,
+        // Use surfaceContainerHigh for stat cards (Android 16 Monet hierarchy)
+        color: Theme.of(context).colorScheme.surfaceContainerHigh,
         child: Padding(
           padding: EdgeInsets.all(isMobile ? 4 : 6),
           child: Column(
@@ -2070,6 +2072,7 @@ class _AdminDashboard extends StatefulWidget {
 class _AdminDashboardState extends State<_AdminDashboard>
     with AutomaticKeepAliveClientMixin {
   bool _isLoading = true;
+  // ignore: unused_field
   Map<String, dynamic>? _dashboardData;
 
   @override

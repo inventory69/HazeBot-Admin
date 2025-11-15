@@ -31,7 +31,7 @@ class _UserRocketLeagueScreenState extends State<UserRocketLeagueScreen> {
   // Rate limit for posting stats
   DateTime? _lastPostTime;
   Timer? _cooldownTimer;
-  
+
   bool get _canPost {
     if (_lastPostTime == null) return true;
     final timeSinceLastPost = DateTime.now().difference(_lastPostTime!);

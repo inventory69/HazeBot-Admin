@@ -124,13 +124,14 @@ class _HazeBotAdminAppState extends State<HazeBotAdminApp> {
                     elevation: 2,
                   ),
                   cardTheme: CardThemeData(
-                    elevation: 2,
-                    // Use surfaceContainerLow for better contrast with background
+                    elevation: 0, // Flat design per Android 16
+                    // Use surfaceContainerLow for section cards
                     color: lightColorScheme.surfaceContainerLow,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
+                  scaffoldBackgroundColor: lightColorScheme.surface,
                   inputDecorationTheme: InputDecorationTheme(
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -158,13 +159,14 @@ class _HazeBotAdminAppState extends State<HazeBotAdminApp> {
                     elevation: 2,
                   ),
                   cardTheme: CardThemeData(
-                    elevation: 2,
-                    // Use surfaceContainerLow for better contrast with background
+                    elevation: 0, // Flat design per Android 16
+                    // Use surfaceContainerLow for section cards
                     color: darkColorScheme.surfaceContainerLow,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
+                  scaffoldBackgroundColor: darkColorScheme.surface,
                   inputDecorationTheme: InputDecorationTheme(
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),

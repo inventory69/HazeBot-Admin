@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
 import '../../providers/data_cache_provider.dart';
@@ -11,9 +12,11 @@ String getProxiedImageUrl(String originalUrl) {
       originalUrl.contains('preview.redd.it') ||
       originalUrl.contains('external-preview.redd.it') ||
       originalUrl.contains('imgflip.com')) {
-    // Use our backend proxy
+    // Use our backend proxy from environment
+    final proxyUrl = dotenv.env['IMAGE_PROXY_URL'] ??
+        '${dotenv.env['API_BASE_URL']}/proxy/image';
     final encodedUrl = Uri.encodeComponent(originalUrl);
-    return 'https://test-hazebot-admin.hzwd.xyz/api/proxy/image?url=$encodedUrl';
+    return '$proxyUrl?url=$encodedUrl';
   }
   // For other URLs, return as-is
   return originalUrl;
@@ -318,7 +321,8 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
         };
         debugPrint('🎨 Meme data: $memeData');
         cacheProvider.addMemeOptimistically(memeData);
-        debugPrint('🎨 Meme added to cache, notifyListeners should have been called');
+        debugPrint(
+            '🎨 Meme added to cache, notifyListeners should have been called');
       }
 
       if (mounted) {
@@ -801,10 +805,11 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                                               SizedBox(
                                                 width: double.infinity,
                                                 child: FilledButton.icon(
-                                                  onPressed: (_isSendingToDiscord ||
-                                                          _memeSentToDiscord)
-                                                      ? null
-                                                      : _sendMemeToDiscord,
+                                                  onPressed:
+                                                      (_isSendingToDiscord ||
+                                                              _memeSentToDiscord)
+                                                          ? null
+                                                          : _sendMemeToDiscord,
                                                   icon: _isSendingToDiscord
                                                       ? const SizedBox(
                                                           width: 20,
@@ -816,9 +821,10 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                                                           ),
                                                         )
                                                       : _memeSentToDiscord
-                                                          ? const Icon(
-                                                              Icons.check_circle)
-                                                          : const Icon(Icons.send),
+                                                          ? const Icon(Icons
+                                                              .check_circle)
+                                                          : const Icon(
+                                                              Icons.send),
                                                   label: Text(_isSendingToDiscord
                                                       ? 'Sending...'
                                                       : _memeSentToDiscord
@@ -928,10 +934,10 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                               SizedBox(
                                 width: double.infinity,
                                 child: FilledButton.icon(
-                                  onPressed:
-                                      (_isSendingToDiscord || _memeSentToDiscord)
-                                          ? null
-                                          : _sendMemeToDiscord,
+                                  onPressed: (_isSendingToDiscord ||
+                                          _memeSentToDiscord)
+                                      ? null
+                                      : _sendMemeToDiscord,
                                   icon: _isSendingToDiscord
                                       ? const SizedBox(
                                           width: 20,

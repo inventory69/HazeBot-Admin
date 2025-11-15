@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -116,8 +117,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             subtitle: const Text('github.com/inventory69/HazeBot-Admin'),
             trailing: const Icon(Icons.open_in_new),
             onTap: () async {
-              final url =
-                  Uri.parse('https://github.com/inventory69/HazeBot-Admin');
+              final githubUrl = dotenv.env['GITHUB_REPO_URL'] ??
+                  'https://github.com/inventory69/HazeBot-Admin';
+              final url = Uri.parse(githubUrl);
               if (await canLaunchUrl(url)) {
                 await launchUrl(url, mode: LaunchMode.externalApplication);
               }

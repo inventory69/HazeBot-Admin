@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
 import '../../providers/data_cache_provider.dart';
@@ -11,9 +12,11 @@ String getProxiedImageUrl(String originalUrl) {
       originalUrl.contains('preview.redd.it') ||
       originalUrl.contains('external-preview.redd.it') ||
       originalUrl.contains('imgflip.com')) {
-    // Use our backend proxy
+    // Use our backend proxy from environment
+    final proxyUrl = dotenv.env['IMAGE_PROXY_URL'] ??
+        '${dotenv.env['API_BASE_URL']}/proxy/image';
     final encodedUrl = Uri.encodeComponent(originalUrl);
-    return 'https://test-hazebot-admin.hzwd.xyz/api/proxy/image?url=$encodedUrl';
+    return '$proxyUrl?url=$encodedUrl';
   }
   // For other URLs, return as-is
   return originalUrl;
@@ -160,7 +163,8 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
         // Use the memeData that was sent (already contains all necessary info)
         // Note: Random memes use 'url' field for image, while cached memes use 'image_url'
         final optimisticData = {
-          'image_url': memeData['image_url'] ?? memeData['url'], // Try image_url first, fallback to url
+          'image_url': memeData['image_url'] ??
+              memeData['url'], // Try image_url first, fallback to url
           'title': memeData['title'] ?? 'Meme',
           'author': memeData['author'] ?? 'Unknown',
           'score': memeData['score'] ?? 0,
@@ -169,7 +173,8 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
         };
         debugPrint('🎨 Meme data: $optimisticData');
         cacheProvider.addMemeOptimistically(optimisticData);
-        debugPrint('🎨 Meme added to cache, notifyListeners should have been called');
+        debugPrint(
+            '🎨 Meme added to cache, notifyListeners should have been called');
       }
 
       if (mounted) {

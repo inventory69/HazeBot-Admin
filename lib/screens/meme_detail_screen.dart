@@ -15,6 +15,7 @@ class _MemeDetailScreenState extends State<MemeDetailScreen> {
   int _upvotes = 0;
   bool _hasUpvoted = false;
   bool _isUpvoting = false;
+  bool _isLoadingReactions = true; // Track loading state
 
   @override
   void initState() {
@@ -25,7 +26,12 @@ class _MemeDetailScreenState extends State<MemeDetailScreen> {
 
   Future<void> _loadReactions() async {
     final messageId = widget.meme['message_id'] as String?;
-    if (messageId == null) return;
+    if (messageId == null) {
+      setState(() {
+        _isLoadingReactions = false;
+      });
+      return;
+    }
 
     try {
       final response = await ApiService().getMemeReactions(messageId);
@@ -34,12 +40,16 @@ class _MemeDetailScreenState extends State<MemeDetailScreen> {
         setState(() {
           _upvotes = response['upvotes'] as int? ?? 0;
           _hasUpvoted = response['has_upvoted'] as bool? ?? false;
+          _isLoadingReactions = false;
           print('Set _hasUpvoted to: $_hasUpvoted'); // Debug
         });
       }
     } catch (e) {
       print('Error loading reactions: $e'); // Debug
       // Silently fail - not critical
+      setState(() {
+        _isLoadingReactions = false;
+      });
     }
   }
 
@@ -226,8 +236,10 @@ class _MemeDetailScreenState extends State<MemeDetailScreen> {
                       // Upvote Button
                       Expanded(
                         child: ElevatedButton.icon(
-                          onPressed: _isUpvoting ? null : _toggleUpvote,
-                          icon: _isUpvoting
+                          onPressed: (_isUpvoting || _isLoadingReactions)
+                              ? null
+                              : _toggleUpvote,
+                          icon: (_isUpvoting || _isLoadingReactions)
                               ? const SizedBox(
                                   width: 16,
                                   height: 16,
@@ -242,14 +254,17 @@ class _MemeDetailScreenState extends State<MemeDetailScreen> {
                           label: Text('$_upvotes'),
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 16),
-                            backgroundColor: _hasUpvoted
+                            // Only apply upvoted style after loading is complete
+                            backgroundColor: (!_isLoadingReactions &&
+                                    _hasUpvoted)
                                 ? Theme.of(context).colorScheme.primaryContainer
                                 : null,
-                            foregroundColor: _hasUpvoted
-                                ? Theme.of(context)
-                                    .colorScheme
-                                    .onPrimaryContainer
-                                : null,
+                            foregroundColor:
+                                (!_isLoadingReactions && _hasUpvoted)
+                                    ? Theme.of(context)
+                                        .colorScheme
+                                        .onPrimaryContainer
+                                    : null,
                           ),
                         ),
                       ),

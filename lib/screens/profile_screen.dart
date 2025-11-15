@@ -10,6 +10,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _isLoading = false;
+  // ignore: unused_field
   List<Map<String, dynamic>> _optInRoles = [];
   Map<String, dynamic>? _rlRank;
   String? _errorMessage;

@@ -558,7 +558,8 @@ class ApiService {
 
   Future<Map<String, dynamic>> getRocketLeagueStats(
       String platform, String username) async {
-    final response = await _get('$baseUrl/rocket-league/stats/$platform/$username');
+    final response =
+        await _get('$baseUrl/rocket-league/stats/$platform/$username');
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -579,7 +580,8 @@ class ApiService {
 
   Future<Map<String, dynamic>> getRLStats(
       String platform, String username) async {
-    final response = await _get('$baseUrl/rocket-league/stats/$platform/$username');
+    final response =
+        await _get('$baseUrl/rocket-league/stats/$platform/$username');
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
