@@ -30,6 +30,7 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
   bool _isRefreshing = false;
   bool _isGenerating = false;
   bool _isSendingToDiscord = false;
+  bool _memeSentToDiscord = false; // Track if current meme was sent
   List<Map<String, dynamic>> _templates = [];
   List<Map<String, dynamic>> _filteredTemplates = [];
   Map<String, dynamic>? _selectedTemplate;
@@ -237,6 +238,7 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
       _errorMessage = null;
       _generatedMemeUrl = null;
       _generatedMemeTexts = null;
+      _memeSentToDiscord = false; // Reset sent status for new meme
     });
 
     try {
@@ -297,6 +299,7 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
 
       setState(() {
         _isSendingToDiscord = false;
+        _memeSentToDiscord = true; // Mark as sent
       });
 
       if (mounted) {
@@ -779,7 +782,8 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                                               SizedBox(
                                                 width: double.infinity,
                                                 child: FilledButton.icon(
-                                                  onPressed: _isSendingToDiscord
+                                                  onPressed: (_isSendingToDiscord ||
+                                                          _memeSentToDiscord)
                                                       ? null
                                                       : _sendMemeToDiscord,
                                                   icon: _isSendingToDiscord
@@ -792,10 +796,14 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                                                             color: Colors.white,
                                                           ),
                                                         )
-                                                      : const Icon(Icons.send),
-                                                  label: Text(
-                                                      _isSendingToDiscord
-                                                          ? 'Sending...'
+                                                      : _memeSentToDiscord
+                                                          ? const Icon(
+                                                              Icons.check_circle)
+                                                          : const Icon(Icons.send),
+                                                  label: Text(_isSendingToDiscord
+                                                      ? 'Sending...'
+                                                      : _memeSentToDiscord
+                                                          ? 'Sent to Discord'
                                                           : 'Send to Discord'),
                                                   style: FilledButton.styleFrom(
                                                     padding: const EdgeInsets
@@ -901,9 +909,10 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                               SizedBox(
                                 width: double.infinity,
                                 child: FilledButton.icon(
-                                  onPressed: _isSendingToDiscord
-                                      ? null
-                                      : _sendMemeToDiscord,
+                                  onPressed:
+                                      (_isSendingToDiscord || _memeSentToDiscord)
+                                          ? null
+                                          : _sendMemeToDiscord,
                                   icon: _isSendingToDiscord
                                       ? const SizedBox(
                                           width: 20,
@@ -913,10 +922,14 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                                             color: Colors.white,
                                           ),
                                         )
-                                      : const Icon(Icons.send),
+                                      : _memeSentToDiscord
+                                          ? const Icon(Icons.check_circle)
+                                          : const Icon(Icons.send),
                                   label: Text(_isSendingToDiscord
                                       ? 'Sending...'
-                                      : 'Send to Discord'),
+                                      : _memeSentToDiscord
+                                          ? 'Sent to Discord'
+                                          : 'Send to Discord'),
                                   style: FilledButton.styleFrom(
                                     padding: const EdgeInsets.symmetric(
                                         vertical: 16),

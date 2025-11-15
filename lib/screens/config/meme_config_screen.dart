@@ -30,6 +30,8 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
   bool _isSendingMeme = false;
   bool _isLoadingSources = false;
   bool _isLoadingSourceMeme = false;
+  bool _randomMemeSent = false; // Track if random meme was sent
+  bool _sourceMemeSent = false; // Track if source meme was sent
   Map<String, dynamic>? _randomMemeData;
   Map<String, dynamic>? _sourceMemeData;
   String? _errorMessage;
@@ -85,6 +87,7 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
       _isLoadingSourceMeme = true;
       _errorMessage = null;
       _sourceMemeData = null;
+      _sourceMemeSent = false; // Reset sent status for new meme
     });
 
     try {
@@ -108,6 +111,7 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
       _isLoadingRandomMeme = true;
       _errorMessage = null;
       _randomMemeData = null;
+      _randomMemeSent = false; // Reset sent status for new meme
     });
 
     try {
@@ -126,7 +130,8 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
     }
   }
 
-  Future<void> _sendMemeToDiscord(Map<String, dynamic> memeData) async {
+  Future<void> _sendMemeToDiscord(Map<String, dynamic> memeData,
+      {bool isRandomMeme = false}) async {
     setState(() {
       _isSendingMeme = true;
       _errorMessage = null;
@@ -138,6 +143,12 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
 
       setState(() {
         _isSendingMeme = false;
+        // Mark the appropriate meme as sent
+        if (isRandomMeme) {
+          _randomMemeSent = true;
+        } else {
+          _sourceMemeSent = true;
+        }
       });
 
       if (mounted) {
@@ -437,10 +448,12 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                                         children: [
                                           Expanded(
                                             child: FilledButton.icon(
-                                              onPressed: _isSendingMeme
+                                              onPressed: (_isSendingMeme ||
+                                                      _randomMemeSent)
                                                   ? null
                                                   : () => _sendMemeToDiscord(
-                                                      _randomMemeData!),
+                                                      _randomMemeData!,
+                                                      isRandomMeme: true),
                                               icon: _isSendingMeme
                                                   ? const SizedBox(
                                                       width: 20,
@@ -451,10 +464,15 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                                                         color: Colors.white,
                                                       ),
                                                     )
-                                                  : const Icon(Icons.send),
+                                                  : _randomMemeSent
+                                                      ? const Icon(
+                                                          Icons.check_circle)
+                                                      : const Icon(Icons.send),
                                               label: Text(_isSendingMeme
                                                   ? 'Sending...'
-                                                  : 'Send to Discord'),
+                                                  : _randomMemeSent
+                                                      ? 'Sent to Discord'
+                                                      : 'Send to Discord'),
                                               style: FilledButton.styleFrom(
                                                 padding:
                                                     const EdgeInsets.symmetric(
@@ -759,10 +777,12 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                                         children: [
                                           Expanded(
                                             child: FilledButton.icon(
-                                              onPressed: _isSendingMeme
+                                              onPressed: (_isSendingMeme ||
+                                                      _sourceMemeSent)
                                                   ? null
                                                   : () => _sendMemeToDiscord(
-                                                      _sourceMemeData!),
+                                                      _sourceMemeData!,
+                                                      isRandomMeme: false),
                                               icon: _isSendingMeme
                                                   ? const SizedBox(
                                                       width: 20,
@@ -773,10 +793,15 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                                                         color: Colors.white,
                                                       ),
                                                     )
-                                                  : const Icon(Icons.send),
+                                                  : _sourceMemeSent
+                                                      ? const Icon(
+                                                          Icons.check_circle)
+                                                      : const Icon(Icons.send),
                                               label: Text(_isSendingMeme
                                                   ? 'Sending...'
-                                                  : 'Send to Discord'),
+                                                  : _sourceMemeSent
+                                                      ? 'Sent to Discord'
+                                                      : 'Send to Discord'),
                                               style: FilledButton.styleFrom(
                                                 padding:
                                                     const EdgeInsets.symmetric(
