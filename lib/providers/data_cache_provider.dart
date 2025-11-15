@@ -76,7 +76,38 @@ class DataCacheProvider extends ChangeNotifier {
       debugPrint('🔄 Loading latest memes from API...');
       final response = await _apiService.getLatestMemes(limit: limit);
       if (response['success'] == true) {
-        _cachedMemes = List<Map<String, dynamic>>.from(response['memes'] ?? []);
+        final newMemes = List<Map<String, dynamic>>.from(response['memes'] ?? []);
+        
+        // Preserve optimistically added memes (those with timestamp < 5 seconds old)
+        // These are memes we added locally that might not be in the API response yet
+        if (_cachedMemes != null && _cachedMemes!.isNotEmpty) {
+          final now = DateTime.now();
+          final optimisticMemes = _cachedMemes!.where((meme) {
+            try {
+              final timestamp = DateTime.parse(meme['timestamp']);
+              final age = now.difference(timestamp);
+              return age.inSeconds < 5; // Keep very recent optimistic adds
+            } catch (e) {
+              return false;
+            }
+          }).toList();
+          
+          if (optimisticMemes.isNotEmpty) {
+            debugPrint('🔄 Preserving ${optimisticMemes.length} optimistic meme(s)');
+            // Add optimistic memes that aren't in the API response yet
+            for (final optimisticMeme in optimisticMemes) {
+              final existsInApi = newMemes.any((apiMeme) =>
+                  apiMeme['image_url'] == optimisticMeme['image_url'] &&
+                  apiMeme['title'] == optimisticMeme['title']);
+              if (!existsInApi) {
+                newMemes.insert(0, optimisticMeme);
+                debugPrint('🔄 Kept optimistic meme: ${optimisticMeme['title']}');
+              }
+            }
+          }
+        }
+        
+        _cachedMemes = newMemes;
         _lastMemesLoad = DateTime.now();
         debugPrint('✅ Memes loaded and cached (${_cachedMemes!.length} items)');
       }
@@ -140,5 +171,39 @@ class DataCacheProvider extends ChangeNotifier {
     _lastMemesLoad = null;
     _lastRankupsLoad = null;
     notifyListeners();
+  }
+
+  /// Add a meme optimistically to the cache (for immediate UI update)
+  /// This is used when sending a meme to Discord to show it immediately
+  void addMemeOptimistically(Map<String, dynamic> memeData) {
+    debugPrint('✨ addMemeOptimistically called with: $memeData');
+    debugPrint('✨ Current cache: $_cachedMemes');
+    
+    if (_cachedMemes == null) {
+      _cachedMemes = [];
+      debugPrint('✨ Cache was null, initialized empty list');
+    }
+
+    // Add the new meme at the beginning of the list
+    _cachedMemes!.insert(0, memeData);
+    debugPrint('✨ Inserted meme at position 0, new length: ${_cachedMemes!.length}');
+
+    // Keep only the latest items (same as API limit)
+    if (_cachedMemes!.length > 10) {
+      _cachedMemes = _cachedMemes!.sublist(0, 10);
+      debugPrint('✨ Trimmed cache to 10 items');
+    }
+
+    _lastMemesLoad = DateTime.now();
+    debugPrint('✨ Updated lastMemesLoad to: $_lastMemesLoad');
+    debugPrint('✨ Calling notifyListeners() now...');
+    notifyListeners();
+    debugPrint('✨ notifyListeners() called! Cache now has ${_cachedMemes!.length} items');
+
+    // Schedule a background refresh after 3 seconds to sync with backend
+    Future.delayed(const Duration(seconds: 3), () {
+      debugPrint('✨ Background refresh triggered after 3s delay');
+      loadLatestMemes(force: true);
+    });
   }
 }

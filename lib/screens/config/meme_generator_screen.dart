@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
+import '../../providers/data_cache_provider.dart';
 
 /// Helper function to proxy external images through our backend to bypass CORS
 String getProxiedImageUrl(String originalUrl) {
@@ -301,6 +302,24 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
         _isSendingToDiscord = false;
         _memeSentToDiscord = true; // Mark as sent
       });
+
+      // Optimistically add meme to dashboard cache for immediate display
+      if (mounted) {
+        debugPrint('🎨 Adding generated meme to dashboard cache...');
+        final cacheProvider =
+            Provider.of<DataCacheProvider>(context, listen: false);
+        final memeData = {
+          'image_url': _generatedMemeUrl,
+          'title': 'Generated: ${_selectedTemplate!['name']}',
+          'author': 'Generated Meme',
+          'score': 0,
+          'is_custom': true,
+          'timestamp': DateTime.now().toIso8601String(),
+        };
+        debugPrint('🎨 Meme data: $memeData');
+        cacheProvider.addMemeOptimistically(memeData);
+        debugPrint('🎨 Meme added to cache, notifyListeners should have been called');
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

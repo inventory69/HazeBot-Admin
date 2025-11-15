@@ -829,6 +829,8 @@ class _DashboardScreenState extends State<DashboardScreen>
   @override
   bool get wantKeepAlive => true;
 
+  bool _isRefreshing = false;
+
   @override
   void initState() {
     super.initState();
@@ -844,12 +846,31 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   Future<void> _loadData({bool force = false}) async {
-    final cacheProvider =
-        Provider.of<DataCacheProvider>(context, listen: false);
-    await Future.wait([
-      cacheProvider.loadLatestMemes(force: force),
-      cacheProvider.loadLatestRankups(force: force),
-    ]);
+    if (_isRefreshing) return; // Prevent multiple simultaneous refreshes
+    
+    setState(() => _isRefreshing = true);
+    
+    try {
+      final cacheProvider =
+          Provider.of<DataCacheProvider>(context, listen: false);
+      await Future.wait([
+        cacheProvider.loadLatestMemes(force: force),
+        cacheProvider.loadLatestRankups(force: force),
+      ]);
+      
+      if (mounted && force) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Dashboard refreshed'),
+            duration: Duration(seconds: 1),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isRefreshing = false);
+      }
+    }
   }
 
   @override
@@ -909,11 +930,27 @@ class _DashboardScreenState extends State<DashboardScreen>
                   ],
                 ),
                 actions: [
-                  IconButton(
-                    icon: const Icon(Icons.refresh),
-                    onPressed: () => _loadData(force: true),
-                    tooltip: 'Refresh',
-                  ),
+                  _isRefreshing
+                      ? Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: Center(
+                            child: SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                        )
+                      : IconButton(
+                          icon: const Icon(Icons.refresh),
+                          onPressed: () => _loadData(force: true),
+                          tooltip: 'Refresh Dashboard',
+                        ),
                 ],
               ),
               body: RefreshIndicator(
@@ -1063,7 +1100,9 @@ class _DashboardScreenState extends State<DashboardScreen>
                           width: isMobile ? 80 : 100,
                           height: isMobile ? 80 : 100,
                           decoration: BoxDecoration(
-                            color: Colors.grey[200],
+                            color: Theme.of(context)
+                                .colorScheme
+                                .surfaceContainerHighest,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Center(
@@ -1073,6 +1112,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                                       loadingProgress.expectedTotalBytes!
                                   : null,
                               strokeWidth: 2,
+                              color: Theme.of(context).colorScheme.primary,
                             ),
                           ),
                         );
@@ -1293,7 +1333,9 @@ class _DashboardScreenState extends State<DashboardScreen>
                       decoration: BoxDecoration(
                         color: color != null
                             ? Color(color).withOpacity(0.1)
-                            : Colors.grey[200],
+                            : Theme.of(context)
+                                .colorScheme
+                                .surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Center(
@@ -1306,6 +1348,9 @@ class _DashboardScreenState extends State<DashboardScreen>
                                     loadingProgress.expectedTotalBytes!
                                 : null,
                             strokeWidth: 2,
+                            color: color != null
+                                ? Color(color)
+                                : Theme.of(context).colorScheme.primary,
                           ),
                         ),
                       ),
