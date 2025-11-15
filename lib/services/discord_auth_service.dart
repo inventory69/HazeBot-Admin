@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -19,7 +20,52 @@ class DiscordAuthService extends ChangeNotifier {
 
   DiscordAuthService() {
     debugPrint('DEBUG: DiscordAuthService CONSTRUCTOR called');
+    
+    // Register callback to update user info from token refresh response
+    // This avoids extra API calls - user data is already in the refresh response!
+    _apiService.onUserInfoUpdated = (data) {
+      _updateUserInfoFromResponse(data);
+    };
+    
     _loadToken();
+  }
+  
+  /// Update user info from API response (login or refresh)
+  /// This is called when we get user data without needing getCurrentUser()
+  void _updateUserInfoFromResponse(Map<String, dynamic> data) {
+    try {
+      debugPrint('🔄 Updating user info from refresh response: ${data.keys}');
+      
+      // Check if this is Discord auth
+      if (data['discord_id'] != null) {
+        // Update user info, but keep existing avatar_url
+        _userInfo = {
+          'user': data['user'],
+          'username': data['user'],
+          'discord_id': data['discord_id'],
+          'role': data['role'],
+          'role_name': data['role_name'],
+          'permissions': data['permissions'],
+          'auth_type': 'discord',
+          'avatar_url': _userInfo?['avatar_url'], // Keep existing avatar from initial login
+        };
+        
+        _isAuthenticated = true;
+        
+        // Save updated user info to cache ASYNC (don't block the callback)
+        SharedPreferences.getInstance().then((prefs) {
+          prefs.setString('user_info', jsonEncode(_userInfo));
+          debugPrint('✅ User info cached to SharedPreferences');
+        }).catchError((e) {
+          debugPrint('⚠️ Failed to cache user info: $e');
+        });
+        
+        debugPrint('✅ User info updated from refresh - calling notifyListeners()');
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('⚠️ Failed to update user info from response: $e');
+    }
   }
 
   Future<void> _loadToken() async {
@@ -30,10 +76,29 @@ class DiscordAuthService extends ChangeNotifier {
       debugPrint('DEBUG: DiscordAuthService loading token from storage');
       _apiService.setToken(_token!);
 
-      // Token will be automatically checked and refreshed by ApiService before each request
+      // Try to load cached user info first (avoids API call on page reload)
+      final cachedUserInfoJson = prefs.getString('user_info');
+      if (cachedUserInfoJson != null) {
+        try {
+          final cachedUserInfo = jsonDecode(cachedUserInfoJson) as Map<String, dynamic>;
+          debugPrint('DEBUG: Loaded cached user info: ${cachedUserInfo.keys}');
+          
+          if (cachedUserInfo['auth_type'] == 'discord' && cachedUserInfo['discord_id'] != null) {
+            _isAuthenticated = true;
+            _userInfo = cachedUserInfo;
+            notifyListeners();
+            debugPrint('✅ User authenticated from cache (no API call needed)');
+            return; // Skip API call - we have everything we need
+          }
+        } catch (e) {
+          debugPrint('⚠️ Failed to parse cached user info: $e');
+        }
+      }
+
+      // Fallback: Token will be automatically checked and refreshed by ApiService before each request
       try {
         final userData = await _apiService.getCurrentUser();
-        debugPrint('DEBUG: DiscordAuthService got user data: $userData');
+        debugPrint('DEBUG: DiscordAuthService got user data from API: $userData');
         debugPrint('DEBUG: Auth type: ${userData['auth_type']}');
         debugPrint('DEBUG: Avatar URL from /auth/me: ${userData['avatar_url']}');
 
@@ -43,6 +108,10 @@ class DiscordAuthService extends ChangeNotifier {
           debugPrint('DEBUG: Setting Discord auth as authenticated');
           _isAuthenticated = true;
           _userInfo = userData;
+          
+          // Save user info to cache for next page reload
+          await prefs.setString('user_info', jsonEncode(userData));
+          
           notifyListeners();
         } else {
           debugPrint(
@@ -220,6 +289,9 @@ class DiscordAuthService extends ChangeNotifier {
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('auth_token');
+    await prefs.remove('user_info'); // Clear cached user info
+    
+    debugPrint('✅ Logged out - cleared token and user info cache');
 
     _apiService.setToken('');
     notifyListeners();

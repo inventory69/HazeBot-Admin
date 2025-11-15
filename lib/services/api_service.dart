@@ -19,6 +19,9 @@ class ApiService {
   String? _token;
   bool _isRefreshing = false;
   Completer<bool>? _refreshCompleter; // For parallel refresh requests - signals completion
+  
+  // Callback to update user info after token refresh (without extra API call)
+  Function(Map<String, dynamic>)? onUserInfoUpdated;
 
   void setToken(String token) {
     _token = token;
@@ -80,10 +83,10 @@ class ApiService {
             return null;
           }
           
-          // Save token in memory
+          // CRITICAL: Save token in memory FIRST (synchronous)
           setToken(newToken);
           
-          // Save to SharedPreferences
+          // Save to SharedPreferences (async, but complete before signaling)
           try {
             final prefs = await SharedPreferences.getInstance();
             await prefs.setString('auth_token', newToken);
@@ -91,6 +94,13 @@ class ApiService {
             debugPrint('⚠️ Failed to save token to SharedPreferences: $e');
           }
           
+          // Update user info synchronously BEFORE completing (no race condition)
+          if (onUserInfoUpdated != null && data.containsKey('user')) {
+            debugPrint('🔔 Updating user info from refresh response (sync)');
+            onUserInfoUpdated!(data); // Call directly, not via microtask
+          }
+          
+          // NOW signal completion - token and user info are both updated
           _refreshCompleter!.complete(true);
           
           return data;
@@ -130,6 +140,8 @@ class ApiService {
       if (_isRefreshing && _refreshCompleter != null) {
         debugPrint('⏳ Another request is refreshing, waiting...');
         await _refreshCompleter!.future;
+        // CRITICAL: Small delay to ensure token is fully propagated in all closures
+        await Future.delayed(const Duration(milliseconds: 50));
         debugPrint('✅ Refresh completed by other request, retrying with fresh token...');
       } else {
         // Refresh token
