@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
@@ -26,6 +27,36 @@ class _UserRocketLeagueScreenState extends State<UserRocketLeagueScreen> {
   final _testUsernameController = TextEditingController();
   bool _isLoadingStats = false;
   Map<String, dynamic>? _testStats;
+
+  // Rate limit for posting stats
+  DateTime? _lastPostTime;
+  Timer? _cooldownTimer;
+  
+  bool get _canPost {
+    if (_lastPostTime == null) return true;
+    final timeSinceLastPost = DateTime.now().difference(_lastPostTime!);
+    return timeSinceLastPost.inSeconds >= 60; // 60 seconds cooldown
+  }
+
+  int get _remainingCooldown {
+    if (_lastPostTime == null) return 0;
+    final timeSinceLastPost = DateTime.now().difference(_lastPostTime!);
+    final remaining = 60 - timeSinceLastPost.inSeconds;
+    return remaining > 0 ? remaining : 0;
+  }
+
+  void _startCooldownTimer() {
+    _cooldownTimer?.cancel();
+    _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_canPost) {
+        timer.cancel();
+        _cooldownTimer = null;
+      }
+      if (mounted) {
+        setState(() {}); // Update UI every second
+      }
+    });
+  }
 
   final List<String> _platforms = [
     'steam',
@@ -59,6 +90,7 @@ class _UserRocketLeagueScreenState extends State<UserRocketLeagueScreen> {
 
   @override
   void dispose() {
+    _cooldownTimer?.cancel();
     _usernameController.dispose();
     _testUsernameController.dispose();
     super.dispose();
@@ -189,6 +221,19 @@ class _UserRocketLeagueScreenState extends State<UserRocketLeagueScreen> {
   }
 
   Future<void> _postToChannel() async {
+    // Check rate limit
+    if (!_canPost) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '⏰ Please wait $_remainingCooldown seconds before posting again',
+          ),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -243,6 +288,10 @@ class _UserRocketLeagueScreenState extends State<UserRocketLeagueScreen> {
       await authService.apiService.postUserRLStats();
 
       if (mounted) {
+        setState(() {
+          _lastPostTime = DateTime.now();
+        });
+        _startCooldownTimer();
         ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -432,11 +481,14 @@ class _UserRocketLeagueScreenState extends State<UserRocketLeagueScreen> {
                   ),
                 ),
                 FilledButton.icon(
-                  onPressed: _postToChannel,
-                  icon: const Icon(Icons.send, size: 18),
-                  label: const Text('Post'),
+                  onPressed: _canPost ? _postToChannel : null,
+                  icon: Icon(
+                    _canPost ? Icons.send : Icons.timer,
+                    size: 18,
+                  ),
+                  label: Text(_canPost ? 'Post' : '${_remainingCooldown}s'),
                   style: FilledButton.styleFrom(
-                    backgroundColor: Colors.green,
+                    backgroundColor: _canPost ? Colors.green : Colors.grey,
                     padding: EdgeInsets.symmetric(
                       horizontal: isMobile ? 12 : 16,
                       vertical: isMobile ? 8 : 12,

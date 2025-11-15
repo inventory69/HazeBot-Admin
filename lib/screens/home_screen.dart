@@ -947,6 +947,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   Widget _buildMemesSection(BuildContext context, bool isMobile,
       List<Map<String, dynamic>> memes, bool isLoadingMemes) {
     return Card(
+      // Main section card uses surfaceContainerLow (from CardTheme)
       child: Padding(
         padding: EdgeInsets.all(isMobile ? 12 : 16),
         child: Column(
@@ -1020,6 +1021,9 @@ class _DashboardScreenState extends State<DashboardScreen>
 
     return Card(
       margin: EdgeInsets.only(bottom: isMobile ? 8 : 12),
+      // Inner card uses surfaceContainerHighest for better contrast
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      elevation: 0,
       child: InkWell(
         onTap: () async {
           // Navigate to meme detail screen and handle result
@@ -1168,6 +1172,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   Widget _buildRankupsSection(BuildContext context, bool isMobile,
       List<Map<String, dynamic>> rankups, bool isLoadingRankups) {
     return Card(
+      // Main section card uses surfaceContainerLow (from CardTheme)
       child: Padding(
         padding: EdgeInsets.all(isMobile ? 12 : 16),
         child: Column(
@@ -1243,6 +1248,9 @@ class _DashboardScreenState extends State<DashboardScreen>
 
     return Card(
       margin: EdgeInsets.only(bottom: isMobile ? 8 : 12),
+      // Inner card uses surfaceContainerHighest for better contrast
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      elevation: 0,
       child: Padding(
         padding: EdgeInsets.all(isMobile ? 8 : 12),
         child: Row(
@@ -1921,35 +1929,39 @@ class _UserDashboardState extends State<_UserDashboard>
     required Color color,
     required bool isMobile,
   }) {
-    return Card(
-      elevation: 1,
-      child: Padding(
-        padding: EdgeInsets.all(isMobile ? 4 : 6),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: color, size: isMobile ? 18 : 22),
-            SizedBox(height: isMobile ? 2 : 3),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: isMobile ? 12 : 14,
-                fontWeight: FontWeight.bold,
+    return Builder(
+      builder: (context) => Card(
+        elevation: 0,
+        // Use surfaceContainerHighest for stat cards - better contrast
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        child: Padding(
+          padding: EdgeInsets.all(isMobile ? 4 : 6),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: color, size: isMobile ? 18 : 22),
+              SizedBox(height: isMobile ? 2 : 3),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: isMobile ? 12 : 14,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 1),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: isMobile ? 8 : 9,
-                color: Colors.grey[600],
+              const SizedBox(height: 1),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: isMobile ? 8 : 9,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
