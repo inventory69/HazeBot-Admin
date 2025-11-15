@@ -1021,8 +1021,8 @@ class _DashboardScreenState extends State<DashboardScreen>
 
     return Card(
       margin: EdgeInsets.only(bottom: isMobile ? 8 : 12),
-      // Inner card uses surfaceContainerHigh for better contrast in Dynamic Colors
-      color: Theme.of(context).colorScheme.surfaceContainerHigh,
+      // Inner card uses surfaceContainer for contrast with section card
+      color: Theme.of(context).colorScheme.surfaceContainer,
       elevation: 1,
       child: InkWell(
         onTap: () async {
@@ -1057,6 +1057,26 @@ class _DashboardScreenState extends State<DashboardScreen>
                       width: isMobile ? 80 : 100,
                       height: isMobile ? 80 : 100,
                       fit: BoxFit.cover,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(
+                          width: isMobile ? 80 : 100,
+                          height: isMobile ? 80 : 100,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              value: loadingProgress.expectedTotalBytes != null
+                                  ? loadingProgress.cumulativeBytesLoaded /
+                                      loadingProgress.expectedTotalBytes!
+                                  : null,
+                              strokeWidth: 2,
+                            ),
+                          ),
+                        );
+                      },
                       errorBuilder: (context, error, stackTrace) {
                         return Container(
                           width: isMobile ? 80 : 100,
@@ -1248,8 +1268,8 @@ class _DashboardScreenState extends State<DashboardScreen>
 
     return Card(
       margin: EdgeInsets.only(bottom: isMobile ? 8 : 12),
-      // Inner card uses surfaceContainerHigh for better contrast in Dynamic Colors
-      color: Theme.of(context).colorScheme.surfaceContainerHigh,
+      // Inner card uses surfaceContainer for contrast with section card
+      color: Theme.of(context).colorScheme.surfaceContainer,
       elevation: 1,
       child: Padding(
         padding: EdgeInsets.all(isMobile ? 8 : 12),
@@ -1265,6 +1285,32 @@ class _DashboardScreenState extends State<DashboardScreen>
                   width: isMobile ? 60 : 70,
                   height: isMobile ? 60 : 70,
                   fit: BoxFit.contain,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Container(
+                      width: isMobile ? 60 : 70,
+                      height: isMobile ? 60 : 70,
+                      decoration: BoxDecoration(
+                        color: color != null
+                            ? Color(color).withOpacity(0.1)
+                            : Colors.grey[200],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Center(
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            value: loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded /
+                                    loadingProgress.expectedTotalBytes!
+                                : null,
+                            strokeWidth: 2,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                   errorBuilder: (context, error, stackTrace) {
                     return Container(
                       width: isMobile ? 60 : 70,
@@ -1932,8 +1978,8 @@ class _UserDashboardState extends State<_UserDashboard>
     return Builder(
       builder: (context) => Card(
         elevation: 1,
-        // Use surfaceContainerHigh for stat cards - better contrast in Dynamic Colors
-        color: Theme.of(context).colorScheme.surfaceContainerHigh,
+        // Use surfaceContainer for stat cards - proper contrast with background
+        color: Theme.of(context).colorScheme.surfaceContainer,
         child: Padding(
           padding: EdgeInsets.all(isMobile ? 4 : 6),
           child: Column(

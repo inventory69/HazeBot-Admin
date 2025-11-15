@@ -75,7 +75,7 @@ def run_server(directory: str, port: int):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Serve a Flutter web build directory with SPA fallback")
-    parser.add_argument("--dir", default="build/web", help="Directory to serve (default: build/web)")
-    parser.add_argument("--port", type=int, default=8000, help="Port to listen on (default: 8000)")
+    parser.add_argument("--dir", default="", help="Directory to serve (default: build/web)")
+    parser.add_argument("--port", type=int, default=8080, help="Port to listen on (default: 8000)")
     args = parser.parse_args()
     exit(run_server(args.dir, args.port))

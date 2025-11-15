@@ -372,10 +372,7 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> getGeneralConfig() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/config/general'),
-      headers: _headers,
-    );
+    final response = await _get('$baseUrl/config/general');
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -385,9 +382,8 @@ class ApiService {
   }
 
   Future<void> updateGeneralConfig(Map<String, dynamic> config) async {
-    final response = await http.put(
-      Uri.parse('$baseUrl/config/general'),
-      headers: _headers,
+    final response = await _put(
+      '$baseUrl/config/general',
       body: jsonEncode(config),
     );
 
@@ -397,10 +393,7 @@ class ApiService {
   }
 
   Future<void> resetGeneralConfig() async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/config/general/reset'),
-      headers: _headers,
-    );
+    final response = await _post('$baseUrl/config/general/reset');
 
     if (response.statusCode != 200) {
       throw Exception('Failed to reset general configuration');
@@ -408,10 +401,7 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> getChannelsConfig() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/config/channels'),
-      headers: _headers,
-    );
+    final response = await _get('$baseUrl/config/channels');
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -421,9 +411,8 @@ class ApiService {
   }
 
   Future<void> updateChannelsConfig(Map<String, dynamic> config) async {
-    final response = await http.put(
-      Uri.parse('$baseUrl/config/channels'),
-      headers: _headers,
+    final response = await _put(
+      '$baseUrl/config/channels',
       body: jsonEncode(config),
     );
 
@@ -433,10 +422,7 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> getRolesConfig() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/config/roles'),
-      headers: _headers,
-    );
+    final response = await _get('$baseUrl/config/roles');
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -446,9 +432,8 @@ class ApiService {
   }
 
   Future<void> updateRolesConfig(Map<String, dynamic> config) async {
-    final response = await http.put(
-      Uri.parse('$baseUrl/config/roles'),
-      headers: _headers,
+    final response = await _put(
+      '$baseUrl/config/roles',
       body: jsonEncode(config),
     );
 
@@ -458,10 +443,7 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> getMemeConfig() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/config/meme'),
-      headers: _headers,
-    );
+    final response = await _get('$baseUrl/config/meme');
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -471,9 +453,8 @@ class ApiService {
   }
 
   Future<void> updateMemeConfig(Map<String, dynamic> config) async {
-    final response = await http.put(
-      Uri.parse('$baseUrl/config/meme'),
-      headers: _headers,
+    final response = await _put(
+      '$baseUrl/config/meme',
       body: jsonEncode(config),
     );
 
@@ -484,10 +465,7 @@ class ApiService {
 
   // Daily Meme Configuration
   Future<Map<String, dynamic>> getDailyMemeConfig() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/daily-meme/config'),
-      headers: _headers,
-    );
+    final response = await _get('$baseUrl/daily-meme/config');
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -498,9 +476,8 @@ class ApiService {
 
   Future<void> updateDailyMemeConfig(Map<String, dynamic> config) async {
     debugPrint('Sending daily meme config: ${jsonEncode(config)}');
-    final response = await http.post(
-      Uri.parse('$baseUrl/daily-meme/config'),
-      headers: _headers,
+    final response = await _post(
+      '$baseUrl/daily-meme/config',
       body: jsonEncode(config),
     );
 
@@ -514,10 +491,7 @@ class ApiService {
   }
 
   Future<void> resetDailyMemeConfig() async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/daily-meme/config/reset'),
-      headers: _headers,
-    );
+    final response = await _post('$baseUrl/daily-meme/config/reset');
 
     if (response.statusCode != 200) {
       throw Exception('Failed to reset daily meme configuration');
@@ -525,10 +499,7 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> getRocketLeagueConfig() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/config/rocket_league'),
-      headers: _headers,
-    );
+    final response = await _get('$baseUrl/config/rocket_league');
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -538,9 +509,8 @@ class ApiService {
   }
 
   Future<void> updateRocketLeagueConfig(Map<String, dynamic> config) async {
-    final response = await http.put(
-      Uri.parse('$baseUrl/config/rocket_league'),
-      headers: _headers,
+    final response = await _put(
+      '$baseUrl/config/rocket_league',
       body: jsonEncode(config),
     );
 
@@ -550,10 +520,7 @@ class ApiService {
   }
 
   Future<void> resetRocketLeagueConfig() async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/config/rocket_league/reset'),
-      headers: _headers,
-    );
+    final response = await _post('$baseUrl/config/rocket_league/reset');
 
     if (response.statusCode != 200) {
       throw Exception('Failed to reset Rocket League configuration');
@@ -562,10 +529,7 @@ class ApiService {
 
   // Rocket League Account Management
   Future<List<Map<String, dynamic>>> getRocketLeagueAccounts() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/rocket-league/accounts'),
-      headers: _headers,
-    );
+    final response = await _get('$baseUrl/rocket-league/accounts');
 
     if (response.statusCode == 200) {
       return List<Map<String, dynamic>>.from(jsonDecode(response.body));
@@ -575,10 +539,7 @@ class ApiService {
   }
 
   Future<void> deleteRocketLeagueAccount(String userId) async {
-    final response = await http.delete(
-      Uri.parse('$baseUrl/rocket-league/accounts/$userId'),
-      headers: _headers,
-    );
+    final response = await _delete('$baseUrl/rocket-league/accounts/$userId');
 
     if (response.statusCode != 200) {
       throw Exception('Failed to delete Rocket League account');
@@ -586,10 +547,7 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> triggerRankCheck() async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/rocket-league/check-ranks'),
-      headers: _headers,
-    );
+    final response = await _post('$baseUrl/rocket-league/check-ranks');
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -600,10 +558,7 @@ class ApiService {
 
   Future<Map<String, dynamic>> getRocketLeagueStats(
       String platform, String username) async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/rocket-league/stats/$platform/$username'),
-      headers: _headers,
-    );
+    final response = await _get('$baseUrl/rocket-league/stats/$platform/$username');
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -613,10 +568,7 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> getUserRLAccount() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/user/rocket-league/account'),
-      headers: _headers,
-    );
+    final response = await _get('$baseUrl/user/rocket-league/account');
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -627,10 +579,7 @@ class ApiService {
 
   Future<Map<String, dynamic>> getRLStats(
       String platform, String username) async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/rocket-league/stats/$platform/$username'),
-      headers: _headers,
-    );
+    final response = await _get('$baseUrl/rocket-league/stats/$platform/$username');
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -642,9 +591,8 @@ class ApiService {
 
   Future<Map<String, dynamic>> linkUserRLAccount(
       String platform, String username) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/user/rocket-league/link'),
-      headers: _headers,
+    final response = await _post(
+      '$baseUrl/user/rocket-league/link',
       body: jsonEncode({'platform': platform, 'username': username}),
     );
 
@@ -657,10 +605,7 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> unlinkUserRLAccount() async {
-    final response = await http.delete(
-      Uri.parse('$baseUrl/user/rocket-league/unlink'),
-      headers: _headers,
-    );
+    final response = await _delete('$baseUrl/user/rocket-league/unlink');
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -733,10 +678,7 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> getWelcomeConfig() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/config/welcome'),
-      headers: _headers,
-    );
+    final response = await _get('$baseUrl/config/welcome');
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -746,9 +688,8 @@ class ApiService {
   }
 
   Future<void> updateWelcomeConfig(Map<String, dynamic> config) async {
-    final response = await http.put(
-      Uri.parse('$baseUrl/config/welcome'),
-      headers: _headers,
+    final response = await _put(
+      '$baseUrl/config/welcome',
       body: jsonEncode(config),
     );
 
@@ -758,10 +699,7 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> resetWelcomeConfig() async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/config/welcome/reset'),
-      headers: _headers,
-    );
+    final response = await _post('$baseUrl/config/welcome/reset');
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -771,10 +709,7 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> getWelcomeTextsConfig() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/config/welcome_texts'),
-      headers: _headers,
-    );
+    final response = await _get('$baseUrl/config/welcome_texts');
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -784,9 +719,8 @@ class ApiService {
   }
 
   Future<void> updateWelcomeTextsConfig(Map<String, dynamic> config) async {
-    final response = await http.put(
-      Uri.parse('$baseUrl/config/welcome_texts'),
-      headers: _headers,
+    final response = await _put(
+      '$baseUrl/config/welcome_texts',
       body: jsonEncode(config),
     );
 
@@ -796,10 +730,7 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> resetWelcomeTextsConfig() async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/config/welcome_texts/reset'),
-      headers: _headers,
-    );
+    final response = await _post('$baseUrl/config/welcome_texts/reset');
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -809,10 +740,7 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> getRocketLeagueTextsConfig() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/config/rocket_league_texts'),
-      headers: _headers,
-    );
+    final response = await _get('$baseUrl/config/rocket_league_texts');
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -823,9 +751,8 @@ class ApiService {
 
   Future<void> updateRocketLeagueTextsConfig(
       Map<String, dynamic> config) async {
-    final response = await http.put(
-      Uri.parse('$baseUrl/config/rocket_league_texts'),
-      headers: _headers,
+    final response = await _put(
+      '$baseUrl/config/rocket_league_texts',
       body: jsonEncode(config),
     );
 
@@ -835,10 +762,7 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> resetRocketLeagueTextsConfig() async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/config/rocket_league_texts/reset'),
-      headers: _headers,
-    );
+    final response = await _post('$baseUrl/config/rocket_league_texts/reset');
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -848,10 +772,7 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> getServerGuideConfig() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/config/server_guide'),
-      headers: _headers,
-    );
+    final response = await _get('$baseUrl/config/server_guide');
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -861,9 +782,8 @@ class ApiService {
   }
 
   Future<void> updateServerGuideConfig(Map<String, dynamic> config) async {
-    final response = await http.put(
-      Uri.parse('$baseUrl/config/server_guide'),
-      headers: _headers,
+    final response = await _put(
+      '$baseUrl/config/server_guide',
       body: jsonEncode(config),
     );
 
@@ -874,10 +794,7 @@ class ApiService {
 
   // Test functions
   Future<Map<String, dynamic>> getMemeSources() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/meme-sources'),
-      headers: _headers,
-    );
+    final response = await _get('$baseUrl/meme-sources');
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -887,11 +804,8 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> getMemeFromSource(String source) async {
-    final response = await http.get(
-      Uri.parse(
-          '$baseUrl/test/meme-from-source?source=${Uri.encodeComponent(source)}'),
-      headers: _headers,
-    );
+    final response = await _get(
+        '$baseUrl/test/meme-from-source?source=${Uri.encodeComponent(source)}');
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -903,10 +817,7 @@ class ApiService {
   // ===== MEME GENERATOR ENDPOINTS =====
 
   Future<Map<String, dynamic>> getMemeTemplates() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/meme-generator/templates'),
-      headers: _headers,
-    );
+    final response = await _get('$baseUrl/meme-generator/templates');
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -916,10 +827,7 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> refreshMemeTemplates() async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/meme-generator/templates/refresh'),
-      headers: _headers,
-    );
+    final response = await _post('$baseUrl/meme-generator/templates/refresh');
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -930,9 +838,8 @@ class ApiService {
 
   Future<Map<String, dynamic>> generateMeme(
       String templateId, List<String> texts) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/meme-generator/generate'),
-      headers: _headers,
+    final response = await _post(
+      '$baseUrl/meme-generator/generate',
       body: jsonEncode({
         'template_id': templateId,
         'texts': texts,
@@ -948,9 +855,8 @@ class ApiService {
 
   Future<Map<String, dynamic>> postGeneratedMemeToDiscord(
       String memeUrl, String templateName, List<String> texts) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/meme-generator/post-to-discord'),
-      headers: _headers,
+    final response = await _post(
+      '$baseUrl/meme-generator/post-to-discord',
       body: jsonEncode({
         'meme_url': memeUrl,
         'template_name': templateName,
@@ -966,10 +872,7 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> getRandomMeme() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/test/random-meme'),
-      headers: _headers,
-    );
+    final response = await _get('$baseUrl/test/random-meme');
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -979,10 +882,7 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> testDailyMeme() async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/test/daily-meme'),
-      headers: _headers,
-    );
+    final response = await _post('$baseUrl/test/daily-meme');
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -993,9 +893,8 @@ class ApiService {
 
   Future<Map<String, dynamic>> sendMemeToDiscord(
       Map<String, dynamic> meme) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/test/send-meme'),
-      headers: _headers,
+    final response = await _post(
+      '$baseUrl/test/send-meme',
       body: jsonEncode({'meme': meme}),
     );
 
@@ -1008,10 +907,7 @@ class ApiService {
 
   // Guild Info
   Future<List<Map<String, dynamic>>> getGuildChannels() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/guild/channels'),
-      headers: _headers,
-    );
+    final response = await _get('$baseUrl/guild/channels');
 
     if (response.statusCode == 200) {
       return List<Map<String, dynamic>>.from(jsonDecode(response.body));
@@ -1021,10 +917,7 @@ class ApiService {
   }
 
   Future<List<Map<String, dynamic>>> getGuildRoles() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/guild/roles'),
-      headers: _headers,
-    );
+    final response = await _get('$baseUrl/guild/roles');
 
     if (response.statusCode == 200) {
       return List<Map<String, dynamic>>.from(jsonDecode(response.body));
@@ -1034,10 +927,7 @@ class ApiService {
   }
 
   Future<void> resetChannelsConfig() async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/config/channels/reset'),
-      headers: _headers,
-    );
+    final response = await _post('$baseUrl/config/channels/reset');
 
     if (response.statusCode != 200) {
       throw Exception('Failed to reset channels configuration');
@@ -1045,10 +935,7 @@ class ApiService {
   }
 
   Future<void> resetRolesConfig() async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/config/roles/reset'),
-      headers: _headers,
-    );
+    final response = await _post('$baseUrl/config/roles/reset');
 
     if (response.statusCode != 200) {
       throw Exception('Failed to reset roles configuration');
@@ -1075,10 +962,7 @@ class ApiService {
         .map((e) => '${e.key}=${Uri.encodeComponent(e.value)}')
         .join('&');
 
-    final response = await http.get(
-      Uri.parse('$baseUrl/logs?$queryString'),
-      headers: _headers,
-    );
+    final response = await _get('$baseUrl/logs?$queryString');
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -1095,10 +979,7 @@ class ApiService {
   }
 
   Future<List<String>> getAvailableCogs() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/logs/cogs'),
-      headers: _headers,
-    );
+    final response = await _get('$baseUrl/logs/cogs');
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
@@ -1110,10 +991,7 @@ class ApiService {
 
   // Get active API sessions (Admin/Mod only)
   Future<Map<String, dynamic>> getActiveSessions() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/admin/active-sessions'),
-      headers: _headers,
-    );
+    final response = await _get('$baseUrl/admin/active-sessions');
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);

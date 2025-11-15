@@ -125,8 +125,8 @@ class _HazeBotAdminAppState extends State<HazeBotAdminApp> {
                   ),
                   cardTheme: CardThemeData(
                     elevation: 2,
-                    // Use surfaceContainer for section cards (medium contrast)
-                    color: lightColorScheme.surfaceContainer,
+                    // Use surfaceContainerLow for better contrast with background
+                    color: lightColorScheme.surfaceContainerLow,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -159,8 +159,8 @@ class _HazeBotAdminAppState extends State<HazeBotAdminApp> {
                   ),
                   cardTheme: CardThemeData(
                     elevation: 2,
-                    // Use surfaceContainer for section cards (medium contrast)
-                    color: darkColorScheme.surfaceContainer,
+                    // Use surfaceContainerLow for better contrast with background
+                    color: darkColorScheme.surfaceContainerLow,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
