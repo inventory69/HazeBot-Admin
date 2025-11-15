@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
 import '../services/discord_auth_service.dart';
@@ -8,7 +7,6 @@ import '../services/permission_service.dart';
 import '../services/config_service.dart';
 import '../services/api_service.dart';
 import '../providers/data_cache_provider.dart';
-import '../utils/web_utils.dart';
 import '../utils/app_config.dart';
 import 'meme_detail_screen.dart';
 import 'profile_screen.dart';
@@ -51,7 +49,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
   int _selectedIndex = -1; // -1 = show user tabs, 0+ = admin item
-  int _selectedUserTab = 0;
   bool _isDrawerVisible = false; // Start with admin rail hidden
   int _reloadCounter = 0;
   late TabController _tabController;
@@ -64,7 +61,7 @@ class _HomeScreenState extends State<HomeScreen>
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) {
         setState(() {
-          _selectedUserTab = _tabController.index;
+          // Tab changed
         });
       }
     });
@@ -92,14 +89,14 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Future<void> _loadConfig() async {
-    final authService = Provider.of<AuthService>(context, listen: false);
     final configService = Provider.of<ConfigService>(context, listen: false);
-    // Use singleton ApiService directly instead of authService.apiService
+    // Use singleton ApiService directly
     await configService.loadConfig(ApiService());
 
     // Check if token expired
     if (configService.error == 'token_expired') {
-      debugPrint('⚠️ Config load failed with token_expired - Token refresh should have handled this');
+      debugPrint(
+          '⚠️ Config load failed with token_expired - Token refresh should have handled this');
       // DON'T logout immediately - token refresh should have been attempted
       // Only logout if refresh truly failed (indicated by clearToken being called)
       // The TokenExpiredException is thrown AFTER refresh attempts
@@ -306,7 +303,6 @@ class _HomeScreenState extends State<HomeScreen>
         title: LayoutBuilder(
           builder: (context, constraints) {
             final isMobile = MediaQuery.of(context).size.width < 600;
-            final isTablet = MediaQuery.of(context).size.width < 900;
 
             return Row(
               children: [
@@ -392,50 +388,52 @@ class _HomeScreenState extends State<HomeScreen>
                                       );
                                     },
                                     child: avatarUrl != null
-                                      ? ClipRRect(
-                                          borderRadius:
-                                              BorderRadius.circular(24),
-                                          child: Image.network(
-                                            avatarUrl,
+                                        ? ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(24),
+                                            child: Image.network(
+                                              avatarUrl,
+                                              width: 48,
+                                              height: 48,
+                                              fit: BoxFit.cover,
+                                              errorBuilder:
+                                                  (context, error, stackTrace) {
+                                                return Container(
+                                                  width: 48,
+                                                  height: 48,
+                                                  padding:
+                                                      const EdgeInsets.all(8),
+                                                  decoration: BoxDecoration(
+                                                    color:
+                                                        const Color(0xFF5865F2)
+                                                            .withValues(
+                                                                alpha: 0.1),
+                                                    shape: BoxShape.circle,
+                                                  ),
+                                                  child: const Icon(
+                                                    Icons.discord,
+                                                    size: 24,
+                                                    color: Color(0xFF5865F2),
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                          )
+                                        : Container(
                                             width: 48,
                                             height: 48,
-                                            fit: BoxFit.cover,
-                                            errorBuilder:
-                                                (context, error, stackTrace) {
-                                              return Container(
-                                                width: 48,
-                                                height: 48,
-                                                padding:
-                                                    const EdgeInsets.all(8),
-                                                decoration: BoxDecoration(
-                                                  color: const Color(0xFF5865F2)
-                                                      .withValues(alpha: 0.1),
-                                                  shape: BoxShape.circle,
-                                                ),
-                                                child: const Icon(
-                                                  Icons.discord,
-                                                  size: 24,
-                                                  color: Color(0xFF5865F2),
-                                                ),
-                                              );
-                                            },
+                                            padding: const EdgeInsets.all(8),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFF5865F2)
+                                                  .withValues(alpha: 0.1),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: const Icon(
+                                              Icons.discord,
+                                              size: 24,
+                                              color: Color(0xFF5865F2),
+                                            ),
                                           ),
-                                        )
-                                      : Container(
-                                          width: 48,
-                                          height: 48,
-                                          padding: const EdgeInsets.all(8),
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFF5865F2)
-                                                .withValues(alpha: 0.1),
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: const Icon(
-                                            Icons.discord,
-                                            size: 24,
-                                            color: Color(0xFF5865F2),
-                                          ),
-                                        ),
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
@@ -455,7 +453,8 @@ class _HomeScreenState extends State<HomeScreen>
                                             CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            discordAuthService.userInfo!['user'],
+                                            discordAuthService
+                                                .userInfo!['user'],
                                             style: const TextStyle(
                                               fontWeight: FontWeight.bold,
                                               fontSize: 16,
@@ -835,7 +834,8 @@ class _DashboardScreenState extends State<DashboardScreen>
     super.initState();
     // Load data only if cache is empty (first time only)
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final cacheProvider = Provider.of<DataCacheProvider>(context, listen: false);
+      final cacheProvider =
+          Provider.of<DataCacheProvider>(context, listen: false);
       // Only load if cache is empty - cache will prevent duplicate requests
       if (cacheProvider.memes == null || cacheProvider.rankups == null) {
         _loadData();
@@ -844,7 +844,8 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   Future<void> _loadData({bool force = false}) async {
-    final cacheProvider = Provider.of<DataCacheProvider>(context, listen: false);
+    final cacheProvider =
+        Provider.of<DataCacheProvider>(context, listen: false);
     await Future.wait([
       cacheProvider.loadLatestMemes(force: force),
       cacheProvider.loadLatestRankups(force: force),
@@ -862,86 +863,89 @@ class _DashboardScreenState extends State<DashboardScreen>
         final isLoadingRankups = cacheProvider.isLoadingRankups;
 
         return LayoutBuilder(
-      builder: (context, constraints) {
-        final isMobile = constraints.maxWidth < 600;
-        final padding = isMobile ? 12.0 : 16.0;
+          builder: (context, constraints) {
+            final isMobile = constraints.maxWidth < 600;
+            final padding = isMobile ? 12.0 : 16.0;
 
-        return RefreshIndicator(
-          onRefresh: () => _loadData(force: true),
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: EdgeInsets.all(padding),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                  // Header
-                  Text(
-                    '🌟 HazeHub',
-                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                          fontSize: isMobile ? 24 : null,
-                          fontWeight: FontWeight.bold,
+            return Scaffold(
+              appBar: AppBar(
+                title: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text('HazeHub'),
+                    if (cacheProvider.lastMemesLoad != null) ...[
+                      const SizedBox(width: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'Latest news from the community',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                fontSize: isMobile ? 13 : null,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.schedule,
+                              size: 14,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onPrimaryContainer,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              cacheProvider.getCacheAge(),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onPrimaryContainer,
                               ),
+                            ),
+                          ],
                         ),
                       ),
-                      if (cacheProvider.lastMemesLoad != null)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.primaryContainer,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.schedule,
-                                size: 14,
-                                color: Theme.of(context).colorScheme.onPrimaryContainer,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                cacheProvider.getCacheAge(),
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Theme.of(context).colorScheme.onPrimaryContainer,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                    ],
+                  ],
+                ),
+                actions: [
+                  IconButton(
+                    icon: const Icon(Icons.refresh),
+                    onPressed: () => _loadData(force: true),
+                    tooltip: 'Refresh',
+                  ),
+                ],
+              ),
+              body: RefreshIndicator(
+                onRefresh: () => _loadData(force: true),
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: EdgeInsets.all(padding),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Latest Memes Section
+                      _buildMemesSection(
+                          context, isMobile, memes, isLoadingMemes),
+
+                      SizedBox(height: isMobile ? 12 : 16),
+
+                      // Latest Rank-Ups Section
+                      _buildRankupsSection(
+                          context, isMobile, rankups, isLoadingRankups),
                     ],
                   ),
-                  SizedBox(height: isMobile ? 16 : 24),
-
-                // Latest Memes Section
-                _buildMemesSection(context, isMobile, memes, isLoadingMemes),
-
-                SizedBox(height: isMobile ? 12 : 16),
-
-                // Latest Rank-Ups Section
-                _buildRankupsSection(context, isMobile, rankups, isLoadingRankups),
-              ],
-            ),
-          ),
+                ),
+              ),
+            );
+          },
         );
-      },
-    );
       },
     );
   }
 
-  Widget _buildMemesSection(BuildContext context, bool isMobile, List<Map<String, dynamic>> memes, bool isLoadingMemes) {
+  Widget _buildMemesSection(BuildContext context, bool isMobile,
+      List<Map<String, dynamic>> memes, bool isLoadingMemes) {
     return Card(
       child: Padding(
         padding: EdgeInsets.all(isMobile ? 12 : 16),
@@ -1028,7 +1032,8 @@ class _DashboardScreenState extends State<DashboardScreen>
 
           // Refresh memes if changes were made
           if (result != null && result is Map<String, dynamic>) {
-            final cacheProvider = Provider.of<DataCacheProvider>(context, listen: false);
+            final cacheProvider =
+                Provider.of<DataCacheProvider>(context, listen: false);
             await cacheProvider.loadLatestMemes(force: true);
           }
         },
@@ -1160,7 +1165,8 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
-  Widget _buildRankupsSection(BuildContext context, bool isMobile, List<Map<String, dynamic>> rankups, bool isLoadingRankups) {
+  Widget _buildRankupsSection(BuildContext context, bool isMobile,
+      List<Map<String, dynamic>> rankups, bool isLoadingRankups) {
     return Card(
       child: Padding(
         padding: EdgeInsets.all(isMobile ? 12 : 16),

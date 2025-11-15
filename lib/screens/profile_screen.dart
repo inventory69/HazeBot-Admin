@@ -292,8 +292,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     width: 48,
                                     height: 48,
                                     fit: BoxFit.contain,
-                                    errorBuilder:
-                                        (context, error, stackTrace) {
+                                    errorBuilder: (context, error, stackTrace) {
                                       return Container(
                                         width: 48,
                                         height: 48,

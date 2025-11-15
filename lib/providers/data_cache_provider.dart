@@ -5,22 +5,22 @@ import '../services/api_service.dart';
 /// Prevents unnecessary API calls on tab switches
 class DataCacheProvider extends ChangeNotifier {
   final ApiService _apiService = ApiService();
-  
+
   // Cache timestamps
   DateTime? _lastMemesLoad;
   DateTime? _lastRankupsLoad;
-  
+
   // Cached data
   List<Map<String, dynamic>>? _cachedMemes;
   List<Map<String, dynamic>>? _cachedRankups;
-  
+
   // Loading states
   bool _isLoadingMemes = false;
   bool _isLoadingRankups = false;
-  
+
   // Cache duration (how long before we refresh data)
   static const Duration _cacheDuration = Duration(minutes: 5);
-  
+
   // Getters
   List<Map<String, dynamic>>? get memes => _cachedMemes;
   List<Map<String, dynamic>>? get rankups => _cachedRankups;
@@ -28,19 +28,21 @@ class DataCacheProvider extends ChangeNotifier {
   bool get isLoadingRankups => _isLoadingRankups;
   DateTime? get lastMemesLoad => _lastMemesLoad;
   DateTime? get lastRankupsLoad => _lastRankupsLoad;
-  
+
   /// Get cache age in human-readable format
   String getCacheAge() {
     if (_lastMemesLoad == null && _lastRankupsLoad == null) {
       return 'No data loaded';
     }
-    
+
     final latestLoad = _lastMemesLoad != null && _lastRankupsLoad != null
-        ? (_lastMemesLoad!.isAfter(_lastRankupsLoad!) ? _lastMemesLoad! : _lastRankupsLoad!)
+        ? (_lastMemesLoad!.isAfter(_lastRankupsLoad!)
+            ? _lastMemesLoad!
+            : _lastRankupsLoad!)
         : (_lastMemesLoad ?? _lastRankupsLoad!);
-    
+
     final age = DateTime.now().difference(latestLoad);
-    
+
     if (age.inSeconds < 60) {
       return 'Just now';
     } else if (age.inMinutes < 60) {
@@ -49,26 +51,27 @@ class DataCacheProvider extends ChangeNotifier {
       return '${age.inHours}h ago';
     }
   }
-  
+
   /// Load latest memes (with caching)
   Future<void> loadLatestMemes({bool force = false, int limit = 5}) async {
     // If cache is fresh and not forcing, return cached data
-    if (!force && 
-        _cachedMemes != null && 
+    if (!force &&
+        _cachedMemes != null &&
         _lastMemesLoad != null &&
         DateTime.now().difference(_lastMemesLoad!) < _cacheDuration) {
-      debugPrint('📦 Using cached memes (age: ${DateTime.now().difference(_lastMemesLoad!).inSeconds}s)');
+      debugPrint(
+          '📦 Using cached memes (age: ${DateTime.now().difference(_lastMemesLoad!).inSeconds}s)');
       return;
     }
-    
+
     if (_isLoadingMemes) {
       debugPrint('⏳ Memes already loading, skipping duplicate request');
       return;
     }
-    
+
     _isLoadingMemes = true;
     notifyListeners();
-    
+
     try {
       debugPrint('🔄 Loading latest memes from API...');
       final response = await _apiService.getLatestMemes(limit: limit);
@@ -85,32 +88,35 @@ class DataCacheProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
-  
+
   /// Load latest rankups (with caching)
   Future<void> loadLatestRankups({bool force = false, int limit = 10}) async {
-    if (!force && 
-        _cachedRankups != null && 
+    if (!force &&
+        _cachedRankups != null &&
         _lastRankupsLoad != null &&
         DateTime.now().difference(_lastRankupsLoad!) < _cacheDuration) {
-      debugPrint('📦 Using cached rankups (age: ${DateTime.now().difference(_lastRankupsLoad!).inSeconds}s)');
+      debugPrint(
+          '📦 Using cached rankups (age: ${DateTime.now().difference(_lastRankupsLoad!).inSeconds}s)');
       return;
     }
-    
+
     if (_isLoadingRankups) {
       debugPrint('⏳ Rankups already loading, skipping duplicate request');
       return;
     }
-    
+
     _isLoadingRankups = true;
     notifyListeners();
-    
+
     try {
       debugPrint('🔄 Loading latest rankups from API...');
       final response = await _apiService.getLatestRankups(limit: limit);
       if (response['success'] == true) {
-        _cachedRankups = List<Map<String, dynamic>>.from(response['rankups'] ?? []);
+        _cachedRankups =
+            List<Map<String, dynamic>>.from(response['rankups'] ?? []);
         _lastRankupsLoad = DateTime.now();
-        debugPrint('✅ Rankups loaded and cached (${_cachedRankups!.length} items)');
+        debugPrint(
+            '✅ Rankups loaded and cached (${_cachedRankups!.length} items)');
       }
     } catch (e) {
       debugPrint('❌ Failed to load rankups: $e');
@@ -119,7 +125,7 @@ class DataCacheProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
-  
+
   /// Clear all caches (e.g., on logout)
   void clearCache() {
     _cachedMemes = null;
@@ -128,7 +134,7 @@ class DataCacheProvider extends ChangeNotifier {
     _lastRankupsLoad = null;
     notifyListeners();
   }
-  
+
   /// Invalidate cache (force reload on next access)
   void invalidateCache() {
     _lastMemesLoad = null;

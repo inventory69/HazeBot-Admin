@@ -5,7 +5,6 @@ import 'package:dynamic_color/dynamic_color.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
 import 'services/auth_service.dart';
-import 'services/api_service.dart';
 import 'services/discord_auth_service.dart';
 import 'services/permission_service.dart';
 import 'services/config_service.dart';

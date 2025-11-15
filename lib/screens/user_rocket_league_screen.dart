@@ -353,7 +353,9 @@ class _UserRocketLeagueScreenState extends State<UserRocketLeagueScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
     }
 
     return LayoutBuilder(
@@ -362,42 +364,36 @@ class _UserRocketLeagueScreenState extends State<UserRocketLeagueScreen> {
         final padding = isMobile ? 12.0 : 16.0;
         final cardPadding = isMobile ? 12.0 : 16.0;
 
-        return Align(
-          alignment: Alignment.topCenter,
-          child: SingleChildScrollView(
-            padding: EdgeInsets.all(padding),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Rocket League',
-                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                        fontSize: isMobile ? 24 : null,
-                      ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  _isLinked
-                      ? 'Your linked account and rank tracking'
-                      : 'Link your Rocket League account to track your ranks',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.grey[600],
-                        fontSize: isMobile ? 13 : null,
-                      ),
-                ),
-                SizedBox(height: isMobile ? 16 : 24),
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Rocket League'),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.refresh),
+                onPressed: _loadAccount,
+                tooltip: 'Refresh',
+              ),
+            ],
+          ),
+          body: Align(
+            alignment: Alignment.topCenter,
+            child: SingleChildScrollView(
+              padding: EdgeInsets.all(padding),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Linked Account or Link Form
+                  if (_isLinked)
+                    _buildLinkedAccountCard(isMobile, cardPadding)
+                  else
+                    _buildLinkFormCard(isMobile, cardPadding),
 
-                // Linked Account or Link Form
-                if (_isLinked)
-                  _buildLinkedAccountCard(isMobile, cardPadding)
-                else
-                  _buildLinkFormCard(isMobile, cardPadding),
+                  SizedBox(height: isMobile ? 12 : 16),
 
-                SizedBox(height: isMobile ? 12 : 16),
-
-                // Test Player Stats
-                _buildTestStatsCard(isMobile, cardPadding),
-              ],
+                  // Test Player Stats
+                  _buildTestStatsCard(isMobile, cardPadding),
+                ],
+              ),
             ),
           ),
         );

@@ -64,7 +64,8 @@ class _MemeDetailScreenState extends State<MemeDetailScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(action == 'added' ? 'Upvoted! 👍' : 'Upvote removed'),
+              content:
+                  Text(action == 'added' ? 'Upvoted! 👍' : 'Upvote removed'),
               duration: const Duration(seconds: 1),
             ),
           );
@@ -109,28 +110,28 @@ class _MemeDetailScreenState extends State<MemeDetailScreen> {
     }
 
     return Scaffold(
-        appBar: AppBar(
-          title: const Text('Meme Details'),
-          leading: BackButton(
-            onPressed: () {
-              Navigator.of(context).pop({'upvotes': _upvotes});
-            },
-          ),
-          actions: [
-            if (url != null && url.isNotEmpty)
-              IconButton(
-                icon: const Icon(Icons.open_in_new),
-                tooltip: 'Open Original',
-                onPressed: () async {
-                  final uri = Uri.parse(url);
-                  if (await canLaunchUrl(uri)) {
-                    await launchUrl(uri, mode: LaunchMode.externalApplication);
-                  }
-                },
-              ),
-          ],
+      appBar: AppBar(
+        title: const Text('Meme Details'),
+        leading: BackButton(
+          onPressed: () {
+            Navigator.of(context).pop({'upvotes': _upvotes});
+          },
         ),
-        body: SingleChildScrollView(
+        actions: [
+          if (url != null && url.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.open_in_new),
+              tooltip: 'Open Original',
+              onPressed: () async {
+                final uri = Uri.parse(url);
+                if (await canLaunchUrl(uri)) {
+                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                }
+              },
+            ),
+        ],
+      ),
+      body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -230,8 +231,8 @@ class _MemeDetailScreenState extends State<MemeDetailScreen> {
                               ? const SizedBox(
                                   width: 16,
                                   height: 16,
-                                  child: CircularProgressIndicator(
-                                      strokeWidth: 2),
+                                  child:
+                                      CircularProgressIndicator(strokeWidth: 2),
                                 )
                               : Icon(
                                   _hasUpvoted
@@ -245,7 +246,9 @@ class _MemeDetailScreenState extends State<MemeDetailScreen> {
                                 ? Theme.of(context).colorScheme.primaryContainer
                                 : null,
                             foregroundColor: _hasUpvoted
-                                ? Theme.of(context).colorScheme.onPrimaryContainer
+                                ? Theme.of(context)
+                                    .colorScheme
+                                    .onPrimaryContainer
                                 : null,
                           ),
                         ),

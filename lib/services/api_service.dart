@@ -4,7 +4,6 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:jwt_decode/jwt_decode.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
@@ -18,8 +17,9 @@ class ApiService {
 
   String? _token;
   bool _isRefreshing = false;
-  Completer<bool>? _refreshCompleter; // For parallel refresh requests - signals completion
-  
+  Completer<bool>?
+      _refreshCompleter; // For parallel refresh requests - signals completion
+
   // Callback to update user info after token refresh (without extra API call)
   Function(Map<String, dynamic>)? onUserInfoUpdated;
 
@@ -30,11 +30,11 @@ class ApiService {
   void clearToken() {
     _token = null;
   }
-  
+
   // REMOVED: No proactive token expiration check
   // Token is only refreshed when backend returns 401
   // This is simpler and more reliable
-  
+
   /// Refresh the JWT token with a new expiry date
   /// Uses Completer to ensure only ONE refresh happens at a time, even with parallel requests
   Future<Map<String, dynamic>?> refreshToken() async {
@@ -57,7 +57,7 @@ class ApiService {
 
     _isRefreshing = true;
     _refreshCompleter = Completer<bool>(); // Changed to bool for success signal
-    
+
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/auth/refresh'),
@@ -71,21 +71,21 @@ class ApiService {
           throw TimeoutException('Token refresh timed out');
         },
       );
-      
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final newToken = data['token'];
-        
+
         if (newToken != null && newToken.isNotEmpty) {
           // Validate JWT structure
           if (newToken.split('.').length != 3) {
             _refreshCompleter!.complete(false);
             return null;
           }
-          
+
           // CRITICAL: Save token in memory FIRST (synchronous)
           setToken(newToken);
-          
+
           // Save to SharedPreferences (async, but complete before signaling)
           try {
             final prefs = await SharedPreferences.getInstance();
@@ -93,16 +93,16 @@ class ApiService {
           } catch (e) {
             debugPrint('⚠️ Failed to save token to SharedPreferences: $e');
           }
-          
+
           // Update user info synchronously BEFORE completing (no race condition)
           if (onUserInfoUpdated != null && data.containsKey('user')) {
             debugPrint('🔔 Updating user info from refresh response (sync)');
             onUserInfoUpdated!(data); // Call directly, not via microtask
           }
-          
+
           // NOW signal completion - token and user info are both updated
           _refreshCompleter!.complete(true);
-          
+
           return data;
         } else {
           _refreshCompleter!.complete(false);
@@ -121,7 +121,7 @@ class ApiService {
 
     return null;
   }
-  
+
   /// Make HTTP request with automatic token refresh on 401
   /// SIMPLE VERSION: Only refresh when backend says 401, no proactive checks
   /// CRITICAL: Request builder is called FRESH each time to get latest token!
@@ -135,23 +135,25 @@ class ApiService {
     // If 401: refresh token and retry ONCE
     if (response.statusCode == 401 && maxRetries > 0) {
       debugPrint('⚠️ Got 401, attempting token refresh and retry...');
-      
+
       // If another request is already refreshing, wait for it
       if (_isRefreshing && _refreshCompleter != null) {
         debugPrint('⏳ Another request is refreshing, waiting...');
         await _refreshCompleter!.future;
         // CRITICAL: Small delay to ensure token is fully propagated in all closures
         await Future.delayed(const Duration(milliseconds: 50));
-        debugPrint('✅ Refresh completed by other request, retrying with fresh token...');
+        debugPrint(
+            '✅ Refresh completed by other request, retrying with fresh token...');
       } else {
         // Refresh token
         await refreshToken();
         debugPrint('✅ Token refreshed, retrying request...');
       }
-      
+
       // CRITICAL: Call requestBuilder AGAIN to get FRESH headers with NEW token!
       // This is why we pass a builder function instead of a Response directly
-      final retryResponse = await _requestWithRetry(requestBuilder, maxRetries: maxRetries - 1);
+      final retryResponse =
+          await _requestWithRetry(requestBuilder, maxRetries: maxRetries - 1);
       if (retryResponse.statusCode != 401) {
         debugPrint('✅ Retry successful (${retryResponse.statusCode})');
       }
@@ -160,7 +162,7 @@ class ApiService {
 
     return response;
   }
-  
+
   /// HTTP GET with automatic token refresh
   /// IMPORTANT: Headers are computed inside the lambda to get fresh token after refresh
   Future<http.Response> _get(String url, {Map<String, String>? headers}) {
@@ -169,65 +171,67 @@ class ApiService {
     return _requestWithRetry(() {
       // Read token FRESH from instance variable (not captured in closure)
       final String currentToken = _token ?? '';
-      
+
       // Build headers with CURRENT token
       final Map<String, String> freshHeaders = {
         'Content-Type': 'application/json',
         if (currentToken.isNotEmpty) 'Authorization': 'Bearer $currentToken',
         ...?headers,
       };
-      
+
       return http.get(Uri.parse(url), headers: freshHeaders);
     });
   }
-  
+
   /// HTTP POST with automatic token refresh
   /// IMPORTANT: Headers are computed inside the lambda to get fresh token after refresh
-  Future<http.Response> _post(String url, {Map<String, String>? headers, Object? body}) {
+  Future<http.Response> _post(String url,
+      {Map<String, String>? headers, Object? body}) {
     return _requestWithRetry(() {
       // Read token FRESH from instance variable
       final String currentToken = _token ?? '';
-      
+
       final Map<String, String> freshHeaders = {
         'Content-Type': 'application/json',
         if (currentToken.isNotEmpty) 'Authorization': 'Bearer $currentToken',
         ...?headers,
       };
-      
+
       return http.post(Uri.parse(url), headers: freshHeaders, body: body);
     });
   }
-  
+
   /// HTTP PUT with automatic token refresh
   /// IMPORTANT: Headers are computed inside the lambda to get fresh token after refresh
-  Future<http.Response> _put(String url, {Map<String, String>? headers, Object? body}) {
+  Future<http.Response> _put(String url,
+      {Map<String, String>? headers, Object? body}) {
     return _requestWithRetry(() {
       // Read token FRESH from instance variable
       final String currentToken = _token ?? '';
-      
+
       final Map<String, String> freshHeaders = {
         'Content-Type': 'application/json',
         if (currentToken.isNotEmpty) 'Authorization': 'Bearer $currentToken',
         ...?headers,
       };
-      
+
       return http.put(Uri.parse(url), headers: freshHeaders, body: body);
     });
   }
-  
+
   /// HTTP DELETE with automatic token refresh
   /// IMPORTANT: Headers are computed inside the lambda to get fresh token after refresh
   Future<http.Response> _delete(String url, {Map<String, String>? headers}) {
     return _requestWithRetry(() {
       // Read token FRESH from instance variable
       final String currentToken = _token ?? '';
-      
+
       final Map<String, String> freshHeaders = {
         'Content-Type': 'application/json',
         if (currentToken.isNotEmpty) 'Authorization': 'Bearer $currentToken',
         ...?headers,
       };
-      
+
       return http.delete(Uri.parse(url), headers: freshHeaders);
     });
   }
@@ -235,10 +239,10 @@ class ApiService {
   String get _userAgent {
     // Detect platform and create appropriate user agent
     // Use environment-based app name (Chillventory for prod, Testventory for dev)
-    final appName = dotenv.env['PROD_MODE']?.toLowerCase() == 'true' 
-        ? 'Chillventory' 
+    final appName = dotenv.env['PROD_MODE']?.toLowerCase() == 'true'
+        ? 'Chillventory'
         : 'Testventory';
-    
+
     if (kIsWeb) {
       return '$appName/1.0 (Web; Flutter)';
     } else {

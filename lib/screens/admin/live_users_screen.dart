@@ -380,8 +380,6 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                     ),
                     SizedBox(height: isMobile ? 16 : 24),
 
-
-
                     // Sessions List Header
                     Text(
                       'Active Sessions',
@@ -430,18 +428,21 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                               final session = sessions[index];
                               final username = session['username'] ?? 'Unknown';
                               final role = session['role'] ?? 'unknown';
-                              final discordId = session['discord_id'] ?? 'Unknown';
+                              final discordId =
+                                  session['discord_id'] ?? 'Unknown';
                               final lastSeen = session['last_seen'] as String?;
                               final secondsAgo = session['seconds_ago'] ?? 0;
                               final ip = session['ip'] ?? 'Unknown';
-                              final userAgent = session['user_agent'] ?? 'Unknown';
+                              final userAgent =
+                                  session['user_agent'] ?? 'Unknown';
                               final lastEndpoint =
                                   session['last_endpoint'] ?? 'unknown';
 
                               final isRecent = secondsAgo < 30;
 
                               return Card(
-                                margin: EdgeInsets.only(bottom: isMobile ? 8 : 12),
+                                margin:
+                                    EdgeInsets.only(bottom: isMobile ? 8 : 12),
                                 child: ExpansionTile(
                                   leading: Stack(
                                     children: [
@@ -483,7 +484,8 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                                     ),
                                   ),
                                   subtitle: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       const SizedBox(height: 4),
                                       Row(
@@ -541,8 +543,8 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                                             ),
                                             const SizedBox(width: 4),
                                             Text(
-                                              timeago
-                                                  .format(DateTime.parse(lastSeen)),
+                                              timeago.format(
+                                                  DateTime.parse(lastSeen)),
                                               style: TextStyle(
                                                 fontSize: isMobile ? 11 : 12,
                                                 color: isRecent
@@ -559,8 +561,8 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                                   ),
                                   children: [
                                     Padding(
-                                      padding:
-                                          EdgeInsets.all(isMobile ? 12.0 : 16.0),
+                                      padding: EdgeInsets.all(
+                                          isMobile ? 12.0 : 16.0),
                                       child: Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
@@ -683,77 +685,77 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                   recentActivity.length > 20 ? 20 : recentActivity.length,
               separatorBuilder: (context, index) => const Divider(height: 1),
               itemBuilder: (context, index) {
-              final activity = recentActivity[index];
-              final username = activity['username'] ?? 'Unknown';
-              final displayName = activity['display_name'] ?? username;
-              final avatarUrl = activity['avatar_url'] as String?;
-              final action = activity['action'] ?? 'GET';
-              final endpoint = activity['endpoint'] ?? 'unknown';
-              final timestamp = activity['timestamp'] as String?;
+                final activity = recentActivity[index];
+                final username = activity['username'] ?? 'Unknown';
+                final displayName = activity['display_name'] ?? username;
+                final avatarUrl = activity['avatar_url'] as String?;
+                final action = activity['action'] ?? 'GET';
+                final endpoint = activity['endpoint'] ?? 'unknown';
+                final timestamp = activity['timestamp'] as String?;
 
-              return ListTile(
-                dense: isMobile,
-                leading: CircleAvatar(
-                  radius: isMobile ? 16 : 20,
-                  backgroundImage:
-                      avatarUrl != null ? NetworkImage(avatarUrl) : null,
-                  child: avatarUrl == null
-                      ? Icon(Icons.person, size: isMobile ? 16 : 20)
-                      : null,
-                ),
-                title: Text(
-                  displayName,
-                  style: TextStyle(
-                    fontSize: isMobile ? 13 : 14,
-                    fontWeight: FontWeight.w600,
+                return ListTile(
+                  dense: isMobile,
+                  leading: CircleAvatar(
+                    radius: isMobile ? 16 : 20,
+                    backgroundImage:
+                        avatarUrl != null ? NetworkImage(avatarUrl) : null,
+                    child: avatarUrl == null
+                        ? Icon(Icons.person, size: isMobile ? 16 : 20)
+                        : null,
                   ),
-                ),
-                subtitle: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: _getActionColor(action).withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        action,
-                        style: TextStyle(
-                          fontSize: isMobile ? 9 : 10,
-                          fontWeight: FontWeight.bold,
-                          color: _getActionColor(action),
-                        ),
-                      ),
+                  title: Text(
+                    displayName,
+                    style: TextStyle(
+                      fontSize: isMobile ? 13 : 14,
+                      fontWeight: FontWeight.w600,
                     ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        _formatEndpoint(endpoint),
-                        style: TextStyle(
-                          fontSize: isMobile ? 11 : 12,
-                          color:
-                              Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                  subtitle: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: _getActionColor(action).withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(4),
                         ),
-                        overflow: TextOverflow.ellipsis,
+                        child: Text(
+                          action,
+                          style: TextStyle(
+                            fontSize: isMobile ? 9 : 10,
+                            fontWeight: FontWeight.bold,
+                            color: _getActionColor(action),
+                          ),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                trailing: timestamp != null
-                    ? Text(
-                        timeago.format(DateTime.parse(timestamp)),
-                        style: TextStyle(
-                          fontSize: isMobile ? 10 : 11,
-                          color:
-                              Theme.of(context).colorScheme.onSurfaceVariant,
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          _formatEndpoint(endpoint),
+                          style: TextStyle(
+                            fontSize: isMobile ? 11 : 12,
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      )
-                    : null,
-              );
-            },
+                      ),
+                    ],
+                  ),
+                  trailing: timestamp != null
+                      ? Text(
+                          timeago.format(DateTime.parse(timestamp)),
+                          style: TextStyle(
+                            fontSize: isMobile ? 10 : 11,
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                        )
+                      : null,
+                );
+              },
+            ),
           ),
-        ),
       ],
     );
   }
