@@ -98,7 +98,7 @@ class _HazeBotAdminAppState extends State<HazeBotAdminApp> {
                   lightDynamic != null &&
                   darkDynamic != null) {
                 // Use dynamic colors from system (Material You / Android 16 Monet)
-                // harmonized() applies Material 3 color harmonization
+                // Apply harmonization for color consistency
                 lightColorScheme = lightDynamic.harmonized();
                 darkColorScheme = darkDynamic.harmonized();
               } else {
@@ -124,9 +124,9 @@ class _HazeBotAdminAppState extends State<HazeBotAdminApp> {
                     elevation: 2,
                   ),
                   cardTheme: CardThemeData(
-                    elevation: 1,
-                    // Use surfaceContainerLow for better contrast against background
-                    color: lightColorScheme.surfaceContainerLow,
+                    elevation: 2,
+                    // Use surfaceContainer for section cards (medium contrast)
+                    color: lightColorScheme.surfaceContainer,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -158,9 +158,9 @@ class _HazeBotAdminAppState extends State<HazeBotAdminApp> {
                     elevation: 2,
                   ),
                   cardTheme: CardThemeData(
-                    elevation: 1,
-                    // Use surfaceContainerLow for better contrast against background
-                    color: darkColorScheme.surfaceContainerLow,
+                    elevation: 2,
+                    // Use surfaceContainer for section cards (medium contrast)
+                    color: darkColorScheme.surfaceContainer,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),

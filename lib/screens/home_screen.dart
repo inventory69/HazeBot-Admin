@@ -346,7 +346,7 @@ class _HomeScreenState extends State<HomeScreen>
                 onTap: () {
                   showModalBottomSheet(
                     context: context,
-                    backgroundColor: Theme.of(context).colorScheme.surface,
+                    backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
                     shape: const RoundedRectangleBorder(
                       borderRadius:
                           BorderRadius.vertical(top: Radius.circular(20)),
@@ -775,7 +775,7 @@ class _HomeScreenState extends State<HomeScreen>
                       ),
                       // Tab bar for user features (at bottom)
                       Material(
-                        color: Theme.of(context).colorScheme.surface,
+                        color: Theme.of(context).colorScheme.surfaceContainer,
                         elevation: 4,
                         child: SafeArea(
                           child: TabBar(
@@ -1021,9 +1021,9 @@ class _DashboardScreenState extends State<DashboardScreen>
 
     return Card(
       margin: EdgeInsets.only(bottom: isMobile ? 8 : 12),
-      // Inner card uses surfaceContainerHighest for better contrast
-      color: Theme.of(context).colorScheme.surfaceContainerHighest,
-      elevation: 0,
+      // Inner card uses surfaceContainerHigh for better contrast in Dynamic Colors
+      color: Theme.of(context).colorScheme.surfaceContainerHigh,
+      elevation: 1,
       child: InkWell(
         onTap: () async {
           // Navigate to meme detail screen and handle result
@@ -1248,9 +1248,9 @@ class _DashboardScreenState extends State<DashboardScreen>
 
     return Card(
       margin: EdgeInsets.only(bottom: isMobile ? 8 : 12),
-      // Inner card uses surfaceContainerHighest for better contrast
-      color: Theme.of(context).colorScheme.surfaceContainerHighest,
-      elevation: 0,
+      // Inner card uses surfaceContainerHigh for better contrast in Dynamic Colors
+      color: Theme.of(context).colorScheme.surfaceContainerHigh,
+      elevation: 1,
       child: Padding(
         padding: EdgeInsets.all(isMobile ? 8 : 12),
         child: Row(
@@ -1931,9 +1931,9 @@ class _UserDashboardState extends State<_UserDashboard>
   }) {
     return Builder(
       builder: (context) => Card(
-        elevation: 0,
-        // Use surfaceContainerHighest for stat cards - better contrast
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        elevation: 1,
+        // Use surfaceContainerHigh for stat cards - better contrast in Dynamic Colors
+        color: Theme.of(context).colorScheme.surfaceContainerHigh,
         child: Padding(
           padding: EdgeInsets.all(isMobile ? 4 : 6),
           child: Column(
