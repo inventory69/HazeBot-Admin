@@ -778,7 +778,7 @@ class _HomeScreenState extends State<HomeScreen>
                       Material(
                         color:
                             Theme.of(context).colorScheme.surfaceContainerLow,
-                        elevation: 2, // Elevation for tab bar separation
+                        elevation: 0, // No shadow - Monet uses surface colors
                         child: SafeArea(
                           child: TabBar(
                             controller: _tabController,
@@ -1060,9 +1060,9 @@ class _DashboardScreenState extends State<DashboardScreen>
 
     return Card(
       margin: EdgeInsets.only(bottom: isMobile ? 8 : 12),
-      // Inner card uses surfaceContainerHigh for clear hierarchy (Android 16 Monet)
-      color: Theme.of(context).colorScheme.surfaceContainerHigh,
-      elevation: 1, // Subtle elevation for depth above section card
+      // Inner card uses surfaceContainerHighest for maximum contrast (Android 16 Monet)
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      elevation: 0, // No shadow - Monet uses surface tints for hierarchy
       child: InkWell(
         onTap: () async {
           // Navigate to meme detail screen and handle result
@@ -1314,9 +1314,9 @@ class _DashboardScreenState extends State<DashboardScreen>
 
     return Card(
       margin: EdgeInsets.only(bottom: isMobile ? 8 : 12),
-      // Inner card uses surfaceContainerHigh for clear hierarchy (Android 16 Monet)
-      color: Theme.of(context).colorScheme.surfaceContainerHigh,
-      elevation: 1, // Subtle elevation for depth above section card
+      // Inner card uses surfaceContainerHighest for maximum contrast (Android 16 Monet)
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      elevation: 0, // No shadow - Monet uses surface tints for hierarchy
       child: Padding(
         padding: EdgeInsets.all(isMobile ? 8 : 12),
         child: Row(
@@ -2028,9 +2028,9 @@ class _UserDashboardState extends State<_UserDashboard>
   }) {
     return Builder(
       builder: (context) => Card(
-        elevation: 1, // Subtle elevation for depth
-        // Use surfaceContainerHigh for stat cards (Android 16 Monet hierarchy)
-        color: Theme.of(context).colorScheme.surfaceContainerHigh,
+        elevation: 0, // No shadow - Monet uses surface tints
+        // Use surfaceContainerHighest for stat cards (maximum contrast)
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
         child: Padding(
           padding: EdgeInsets.all(isMobile ? 4 : 6),
           child: Column(

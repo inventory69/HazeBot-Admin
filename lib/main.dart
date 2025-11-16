@@ -124,9 +124,10 @@ class _HazeBotAdminAppState extends State<HazeBotAdminApp> {
                     elevation: 2,
                   ),
                   cardTheme: CardThemeData(
-                    elevation: 0.5, // Minimal elevation for subtle depth
-                    // Use surfaceContainerLow for section cards
-                    color: lightColorScheme.surfaceContainerLow,
+                    elevation:
+                        0, // No shadow - Monet uses surface tints for depth
+                    // Use surfaceContainer for section cards (medium level)
+                    color: lightColorScheme.surfaceContainer,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -159,9 +160,10 @@ class _HazeBotAdminAppState extends State<HazeBotAdminApp> {
                     elevation: 2,
                   ),
                   cardTheme: CardThemeData(
-                    elevation: 0.5, // Minimal elevation for subtle depth
-                    // Use surfaceContainerLow for section cards
-                    color: darkColorScheme.surfaceContainerLow,
+                    elevation:
+                        0, // No shadow - Monet uses surface tints for depth
+                    // Use surfaceContainer for section cards (medium level)
+                    color: darkColorScheme.surfaceContainer,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),

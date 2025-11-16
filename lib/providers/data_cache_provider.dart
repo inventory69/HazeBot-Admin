@@ -21,6 +21,10 @@ class DataCacheProvider extends ChangeNotifier {
   // Cache duration (how long before we refresh data)
   static const Duration _cacheDuration = Duration(minutes: 5);
 
+  // Local upvote overrides (to handle Discord sync delay)
+  // Maps message_id -> {upvotes: int, timestamp: DateTime}
+  final Map<String, Map<String, dynamic>> _localUpvoteOverrides = {};
+
   // Getters
   List<Map<String, dynamic>>? get memes => _cachedMemes;
   List<Map<String, dynamic>>? get rankups => _cachedRankups;
@@ -121,6 +125,34 @@ class DataCacheProvider extends ChangeNotifier {
           }
         }
 
+        // Apply local upvote overrides (for Discord sync delay)
+        final now = DateTime.now();
+        for (final meme in newMemes) {
+          final messageId = meme['message_id'] as String?;
+          if (messageId != null &&
+              _localUpvoteOverrides.containsKey(messageId)) {
+            final override = _localUpvoteOverrides[messageId]!;
+            final localUpvotes = override['upvotes'] as int;
+            final timestamp = override['timestamp'] as DateTime;
+            final apiUpvotes = meme['upvotes'] as int? ?? 0;
+
+            // Check if override is still valid (within 30 seconds)
+            final age = now.difference(timestamp);
+
+            if (age.inSeconds < 30) {
+              // Override still active
+              meme['upvotes'] = localUpvotes;
+              debugPrint(
+                  '👍 Applied local upvote override for $messageId: $localUpvotes (API: $apiUpvotes, age: ${age.inSeconds}s)');
+            } else {
+              // Override expired, use API value
+              _localUpvoteOverrides.remove(messageId);
+              debugPrint(
+                  '⏰ Override expired for $messageId (${age.inSeconds}s old), using API: $apiUpvotes');
+            }
+          }
+        }
+
         _cachedMemes = newMemes;
         _lastMemesLoad = DateTime.now();
         debugPrint('✅ Memes loaded and cached (${_cachedMemes!.length} items)');
@@ -177,6 +209,7 @@ class DataCacheProvider extends ChangeNotifier {
     _cachedRankups = null;
     _lastMemesLoad = null;
     _lastRankupsLoad = null;
+    _localUpvoteOverrides.clear();
     notifyListeners();
   }
 
@@ -225,26 +258,38 @@ class DataCacheProvider extends ChangeNotifier {
 
   /// Update upvotes for a specific meme in the cache
   void updateMemeUpvotes(String? messageId, int upvotes) {
-    if (messageId == null || _cachedMemes == null) return;
+    if (messageId == null) return;
 
     debugPrint('👍 Updating upvotes for message $messageId to $upvotes');
 
-    // Find the meme in cache and update its upvotes
-    bool updated = false;
-    for (int i = 0; i < _cachedMemes!.length; i++) {
-      if (_cachedMemes![i]['message_id'] == messageId) {
-        _cachedMemes![i]['upvotes'] = upvotes;
-        debugPrint('👍 Updated meme at index $i: ${_cachedMemes![i]['title']}');
-        updated = true;
-        break;
-      }
-    }
+    // Store as local override with timestamp (expires after 30s)
+    _localUpvoteOverrides[messageId] = {
+      'upvotes': upvotes,
+      'timestamp': DateTime.now(),
+    };
+    debugPrint(
+        '👍 Stored local override for $messageId: $upvotes (expires in 30s)');
 
-    if (updated) {
-      notifyListeners();
-      debugPrint('👍 Cache updated and listeners notified');
-    } else {
-      debugPrint('👍 Meme not found in cache');
+    // Also update in current cache if available
+    if (_cachedMemes != null) {
+      bool updated = false;
+      for (int i = 0; i < _cachedMemes!.length; i++) {
+        if (_cachedMemes![i]['message_id'] == messageId) {
+          _cachedMemes![i]['upvotes'] = upvotes;
+          debugPrint(
+              '👍 Updated meme at index $i: ${_cachedMemes![i]['title']}');
+          updated = true;
+          break;
+        }
+      }
+
+      if (updated) {
+        notifyListeners();
+        debugPrint('👍 Cache updated and listeners notified');
+      } else {
+        debugPrint(
+            '👍 Meme not found in current cache (will apply on next load)');
+      }
     }
   }
 }

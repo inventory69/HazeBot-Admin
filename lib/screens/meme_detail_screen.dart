@@ -64,13 +64,19 @@ class _MemeDetailScreenState extends State<MemeDetailScreen> {
     try {
       final response = await ApiService().upvoteMeme(messageId);
       if (response['success'] == true) {
-        // Update state from response
-        setState(() {
-          _hasUpvoted = response['has_upvoted'] as bool? ?? false;
-          _upvotes = response['upvotes'] as int? ?? 0;
-        });
-
         final action = response['action'] as String?;
+
+        // After toggling, fetch the FULL reaction count (custom + Discord)
+        final reactionsResponse =
+            await ApiService().getMemeReactions(messageId);
+        if (reactionsResponse['success'] == true) {
+          setState(() {
+            _hasUpvoted = reactionsResponse['has_upvoted'] as bool? ?? false;
+            _upvotes = reactionsResponse['upvotes'] as int? ??
+                0; // Total count (custom + Discord)
+          });
+        }
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
