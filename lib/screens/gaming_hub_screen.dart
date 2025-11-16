@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
@@ -16,10 +17,57 @@ class _GamingHubScreenState extends State<GamingHubScreen> {
   String _searchQuery = '';
   String _filterStatus = 'all'; // all, online, playing
 
+  // Rate limit for game requests (5 minutes cooldown)
+  DateTime? _lastRequestTime;
+  Timer? _cooldownTimer;
+
+  bool get _canSendRequest {
+    if (_lastRequestTime == null) return true;
+    final timeSinceLastRequest = DateTime.now().difference(_lastRequestTime!);
+    return timeSinceLastRequest.inSeconds >=
+        300; // 5 minutes (300 seconds) cooldown
+  }
+
+  int get _remainingCooldown {
+    if (_lastRequestTime == null) return 0;
+    final timeSinceLastRequest = DateTime.now().difference(_lastRequestTime!);
+    final remaining = 300 - timeSinceLastRequest.inSeconds;
+    return remaining > 0 ? remaining : 0;
+  }
+
+  String get _cooldownDisplayTime {
+    final seconds = _remainingCooldown;
+    final minutes = seconds ~/ 60;
+    final remainingSeconds = seconds % 60;
+    if (minutes > 0) {
+      return '${minutes}m ${remainingSeconds}s';
+    }
+    return '${seconds}s';
+  }
+
+  void _startCooldownTimer() {
+    _cooldownTimer?.cancel();
+    _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_canSendRequest) {
+        timer.cancel();
+        _cooldownTimer = null;
+      }
+      if (mounted) {
+        setState(() {}); // Update UI every second
+      }
+    });
+  }
+
   @override
   void initState() {
     super.initState();
     _loadMembers();
+  }
+
+  @override
+  void dispose() {
+    _cooldownTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadMembers() async {
@@ -193,25 +241,29 @@ class _GamingHubScreenState extends State<GamingHubScreen> {
             child: const Text('Cancel'),
           ),
           FilledButton.icon(
-            onPressed: () async {
-              if (gameController.text.trim().isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Please enter a game name')),
-                );
-                return;
-              }
+            onPressed: !_canSendRequest
+                ? null
+                : () async {
+                    if (gameController.text.trim().isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text('Please enter a game name')),
+                      );
+                      return;
+                    }
 
-              Navigator.pop(context);
-              await _sendGameRequest(
-                targetMember['id'],
-                gameController.text.trim(),
-                messageController.text.trim(),
-              );
-            },
+                    Navigator.pop(context);
+                    await _sendGameRequest(
+                      targetMember['id'],
+                      gameController.text.trim(),
+                      messageController.text.trim(),
+                    );
+                  },
             icon: const Icon(Icons.send),
-            label: const Text('Send Request'),
+            label:
+                Text(_canSendRequest ? 'Send Request' : _cooldownDisplayTime),
             style: FilledButton.styleFrom(
-              backgroundColor: Colors.green,
+              backgroundColor: _canSendRequest ? Colors.green : null,
             ),
           ),
         ],
@@ -221,6 +273,20 @@ class _GamingHubScreenState extends State<GamingHubScreen> {
 
   Future<void> _sendGameRequest(
       String targetUserId, String gameName, String message) async {
+    // Check cooldown
+    if (!_canSendRequest) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                '⏰ Please wait $_cooldownDisplayTime before sending another game request'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+      return;
+    }
+
     // Show loading
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -251,6 +317,12 @@ class _GamingHubScreenState extends State<GamingHubScreen> {
         gameName,
         message,
       );
+
+      // Set cooldown after successful request
+      setState(() {
+        _lastRequestTime = DateTime.now();
+      });
+      _startCooldownTimer();
 
       if (mounted) {
         ScaffoldMessenger.of(context).clearSnackBars();
@@ -301,7 +373,19 @@ class _GamingHubScreenState extends State<GamingHubScreen> {
         vertical: 6,
       ),
       child: InkWell(
-        onTap: () => _showGameRequestDialog(member),
+        onTap: () {
+          if (!_canSendRequest) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                    '⏰ Please wait $_cooldownDisplayTime before sending another game request'),
+                backgroundColor: Colors.orange,
+              ),
+            );
+            return;
+          }
+          _showGameRequestDialog(member);
+        },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: EdgeInsets.all(isMobile ? 12 : 16),

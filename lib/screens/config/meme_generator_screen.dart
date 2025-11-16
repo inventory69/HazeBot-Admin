@@ -307,14 +307,16 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
       });
 
       // Optimistically add meme to dashboard cache for immediate display
+      // Use the SAME format as the backend to prevent duplicates
       if (mounted) {
         debugPrint('🎨 Adding generated meme to dashboard cache...');
         final cacheProvider =
             Provider.of<DataCacheProvider>(context, listen: false);
         final memeData = {
           'image_url': _generatedMemeUrl,
-          'title': 'Generated: ${_selectedTemplate!['name']}',
-          'author': 'Generated Meme',
+          'title':
+              '🎨 Custom Meme: ${_selectedTemplate!['name']}', // Same format as backend
+          'author': 'Meme Generator',
           'score': 0,
           'is_custom': true,
           'timestamp': DateTime.now().toIso8601String(),

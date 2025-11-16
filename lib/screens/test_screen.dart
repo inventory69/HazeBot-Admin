@@ -19,11 +19,11 @@ class TestScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Test Functions',
+                    'Test Features',
                     style: Theme.of(context).textTheme.headlineLarge,
                   ),
                   Text(
-                    'Testing area for new features',
+                    'Development testing area',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
@@ -61,7 +61,7 @@ class TestScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'The Random Meme and Daily Meme test functions have been moved to the Memes section for better organization.',
+                    'Meme functions (fetch from Reddit/Lemmy, random memes, post to Discord) are now available in the Memes section.',
                     style: Theme.of(context).textTheme.bodyLarge,
                   ),
                   const SizedBox(height: 20),
@@ -76,7 +76,7 @@ class TestScreen extends StatelessWidget {
                               Icon(Icons.arrow_forward, color: Colors.white),
                               SizedBox(width: 12),
                               Text(
-                                  'Navigate to Memes section to test meme functions'),
+                                  'Navigate to Memes tab to fetch and post memes'),
                             ],
                           ),
                           behavior: SnackBarBehavior.floating,
@@ -87,7 +87,7 @@ class TestScreen extends StatelessWidget {
                       );
                     },
                     icon: const Icon(Icons.image),
-                    label: const Text('Go to Memes Section'),
+                    label: const Text('Go to Memes Tab'),
                     style: FilledButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 24, vertical: 16),

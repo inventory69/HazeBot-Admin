@@ -98,13 +98,24 @@ class DataCacheProvider extends ChangeNotifier {
                 '🔄 Preserving ${optimisticMemes.length} optimistic meme(s)');
             // Add optimistic memes that aren't in the API response yet
             for (final optimisticMeme in optimisticMemes) {
+              // Check if meme exists in API by image_url (more reliable than title)
               final existsInApi = newMemes.any((apiMeme) =>
-                  apiMeme['image_url'] == optimisticMeme['image_url'] &&
-                  apiMeme['title'] == optimisticMeme['title']);
+                  apiMeme['image_url'] == optimisticMeme['image_url'] ||
+                  (apiMeme['title'] == optimisticMeme['title'] &&
+                      apiMeme['image_url']?.toString().contains(
+                              optimisticMeme['image_url']
+                                      ?.toString()
+                                      .split('/')
+                                      .last ??
+                                  '') ==
+                          true));
               if (!existsInApi) {
                 newMemes.insert(0, optimisticMeme);
                 debugPrint(
                     '🔄 Kept optimistic meme: ${optimisticMeme['title']}');
+              } else {
+                debugPrint(
+                    '✅ Optimistic meme already in API response: ${optimisticMeme['title']}');
               }
             }
           }
@@ -210,5 +221,30 @@ class DataCacheProvider extends ChangeNotifier {
       debugPrint('✨ Background refresh triggered after 3s delay');
       loadLatestMemes(force: true);
     });
+  }
+
+  /// Update upvotes for a specific meme in the cache
+  void updateMemeUpvotes(String? messageId, int upvotes) {
+    if (messageId == null || _cachedMemes == null) return;
+
+    debugPrint('👍 Updating upvotes for message $messageId to $upvotes');
+
+    // Find the meme in cache and update its upvotes
+    bool updated = false;
+    for (int i = 0; i < _cachedMemes!.length; i++) {
+      if (_cachedMemes![i]['message_id'] == messageId) {
+        _cachedMemes![i]['upvotes'] = upvotes;
+        debugPrint('👍 Updated meme at index $i: ${_cachedMemes![i]['title']}');
+        updated = true;
+        break;
+      }
+    }
+
+    if (updated) {
+      notifyListeners();
+      debugPrint('👍 Cache updated and listeners notified');
+    } else {
+      debugPrint('👍 Meme not found in cache');
+    }
   }
 }

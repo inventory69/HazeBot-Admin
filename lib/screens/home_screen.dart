@@ -181,7 +181,7 @@ class _HomeScreenState extends State<HomeScreen>
           MemeGeneratorScreen(key: ValueKey('meme_generator_$_reloadCounter')),
     ));
 
-    // Meme Testing - available to all users (Daily Meme Test removed, now admin-only in Daily Meme Config)
+    // Memes - Fetch memes from Reddit/Lemmy and post to Discord (available to all users)
     items.add(NavigationItem(
       icon: Icons.image,
       label: 'Memes',
@@ -778,7 +778,7 @@ class _HomeScreenState extends State<HomeScreen>
                       Material(
                         color:
                             Theme.of(context).colorScheme.surfaceContainerLow,
-                        elevation: 0,
+                        elevation: 2, // Elevation for tab bar separation
                         child: SafeArea(
                           child: TabBar(
                             controller: _tabController,
@@ -1062,7 +1062,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       margin: EdgeInsets.only(bottom: isMobile ? 8 : 12),
       // Inner card uses surfaceContainerHigh for clear hierarchy (Android 16 Monet)
       color: Theme.of(context).colorScheme.surfaceContainerHigh,
-      elevation: 0,
+      elevation: 1, // Subtle elevation for depth above section card
       child: InkWell(
         onTap: () async {
           // Navigate to meme detail screen and handle result
@@ -1073,11 +1073,15 @@ class _DashboardScreenState extends State<DashboardScreen>
             ),
           );
 
-          // Refresh memes if changes were made
+          // Update upvotes in cache if changed (instant update without API call)
           if (result != null && result is Map<String, dynamic>) {
-            final cacheProvider =
-                Provider.of<DataCacheProvider>(context, listen: false);
-            await cacheProvider.loadLatestMemes(force: true);
+            final upvotes = result['upvotes'] as int?;
+            if (upvotes != null) {
+              final cacheProvider =
+                  Provider.of<DataCacheProvider>(context, listen: false);
+              cacheProvider.updateMemeUpvotes(
+                  meme['message_id'] as String?, upvotes);
+            }
           }
         },
         child: Padding(
@@ -1312,7 +1316,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       margin: EdgeInsets.only(bottom: isMobile ? 8 : 12),
       // Inner card uses surfaceContainerHigh for clear hierarchy (Android 16 Monet)
       color: Theme.of(context).colorScheme.surfaceContainerHigh,
-      elevation: 0,
+      elevation: 1, // Subtle elevation for depth above section card
       child: Padding(
         padding: EdgeInsets.all(isMobile ? 8 : 12),
         child: Row(
@@ -2024,7 +2028,7 @@ class _UserDashboardState extends State<_UserDashboard>
   }) {
     return Builder(
       builder: (context) => Card(
-        elevation: 0,
+        elevation: 1, // Subtle elevation for depth
         // Use surfaceContainerHigh for stat cards (Android 16 Monet hierarchy)
         color: Theme.of(context).colorScheme.surfaceContainerHigh,
         child: Padding(

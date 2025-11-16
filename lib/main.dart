@@ -124,7 +124,7 @@ class _HazeBotAdminAppState extends State<HazeBotAdminApp> {
                     elevation: 2,
                   ),
                   cardTheme: CardThemeData(
-                    elevation: 0, // Flat design per Android 16
+                    elevation: 0.5, // Minimal elevation for subtle depth
                     // Use surfaceContainerLow for section cards
                     color: lightColorScheme.surfaceContainerLow,
                     shape: RoundedRectangleBorder(
@@ -159,7 +159,7 @@ class _HazeBotAdminAppState extends State<HazeBotAdminApp> {
                     elevation: 2,
                   ),
                   cardTheme: CardThemeData(
-                    elevation: 0, // Flat design per Android 16
+                    elevation: 0.5, // Minimal elevation for subtle depth
                     // Use surfaceContainerLow for section cards
                     color: darkColorScheme.surfaceContainerLow,
                     shape: RoundedRectangleBorder(
