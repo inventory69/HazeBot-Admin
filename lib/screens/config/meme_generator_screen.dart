@@ -409,11 +409,54 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
           ),
           body: SingleChildScrollView(
             padding: EdgeInsets.all(padding),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Search Bar
-                TextField(
+            child: Builder(
+              builder: (context) {
+                // Card color based on theme (same as meme_config_screen)
+                final cardColor = (Theme.of(context).colorScheme.surfaceContainerHigh !=
+                        ThemeData.light().colorScheme.surfaceContainerHigh)
+                    ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
+                    : Theme.of(context).colorScheme.surface;
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Info Box
+                    Container(
+                      padding: EdgeInsets.all(isMobile ? 10 : 12),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: Colors.blue.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.info_outline,
+                              size: isMobile ? 18 : 20, color: Colors.blue[700]),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Create custom memes using Imgflip templates. Search, customize text, and send directly to Discord.',
+                              style: TextStyle(
+                                fontSize: isMobile ? 11 : 12,
+                                color: Colors.blue[700],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: isMobile ? 12 : 16),
+
+                    // Search Card
+                    Card(
+                      color: cardColor,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      child: Padding(
+                        padding: EdgeInsets.all(isMobile ? 16.0 : 24.0),
+                        child: TextField(
                   controller: _searchController,
                   decoration: InputDecoration(
                     labelText: 'Search Templates',
@@ -430,9 +473,11 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                           )
                         : null,
                   ),
-                  onChanged: _filterTemplates,
-                ),
-                SizedBox(height: isMobile ? 16 : 24),
+                          onChanged: _filterTemplates,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: isMobile ? 16 : 24),
 
                 if (_isLoadingTemplates)
                   const Center(
@@ -1065,7 +1110,9 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                     ),
                   ),
                 ),
-              ],
+                  ],
+                );
+              },
             ),
           ),
         );

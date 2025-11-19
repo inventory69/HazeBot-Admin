@@ -170,6 +170,9 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
           'score': memeData['score'] ?? 0,
           'is_custom': memeData['is_custom'] ?? false,
           'timestamp': DateTime.now().toIso8601String(),
+          // Extract message_id from API response if available
+          'message_id': result['message_id'] as String?,
+          'upvotes': 0, // New meme starts with 0 upvotes
         };
         debugPrint('🎨 Meme data: $optimisticData');
         cacheProvider.addMemeOptimistically(optimisticData);
@@ -222,9 +225,15 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
             title: const Text('Memes'),
             actions: [
               IconButton(
-                icon: const Icon(Icons.refresh),
-                onPressed: _loadMemeSources,
-                tooltip: 'Refresh',
+                icon: _isLoadingSources 
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.refresh),
+                onPressed: _isLoadingSources ? null : _loadMemeSources,
+                tooltip: 'Refresh Sources',
               ),
             ],
           ),
@@ -596,15 +605,7 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 24),
-                        Text(
-                          'Available Sources',
-                          style:
-                              Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                        ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 16),
                         if (_isLoadingSources)
                           const Center(
                             child: Padding(
@@ -613,42 +614,42 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                             ),
                           )
                         else ...[
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: [
-                              ..._subreddits.map((sub) => ActionChip(
-                                    avatar: const Icon(Icons.reddit, size: 16),
-                                    label: Text('r/$sub'),
-                                    onPressed: () {
-                                      setState(() {
-                                        _sourceController.text = sub;
-                                      });
-                                    },
-                                  )),
-                              ..._lemmyCommunities.map((comm) => ActionChip(
-                                    avatar: const Icon(Icons.public, size: 16),
-                                    label: Text(comm),
-                                    onPressed: () {
-                                      setState(() {
-                                        _sourceController.text = comm;
-                                      });
-                                    },
-                                  )),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-                          TextField(
-                            controller: _sourceController,
-                            decoration: InputDecoration(
-                              labelText: 'Source',
-                              hintText: 'e.g., memes or lemmy.world@memes',
-                              prefixIcon: const Icon(Icons.source),
-                              border: const OutlineInputBorder(),
-                              helperText:
-                                  'Enter a subreddit name or Lemmy community (instance@community)',
+                          DropdownButtonFormField<String>(
+                            decoration: const InputDecoration(
+                              labelText: 'Select Source',
+                              prefixIcon: Icon(Icons.list),
+                              border: OutlineInputBorder(),
+                              helperText: 'Choose from available subreddits and Lemmy communities',
                             ),
-                            onSubmitted: (_) => _getMemeFromSource(),
+                            items: [
+                              ..._subreddits.map((sub) => DropdownMenuItem(
+                                value: sub,
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.reddit, size: 16),
+                                    const SizedBox(width: 8),
+                                    Text('r/$sub'),
+                                  ],
+                                ),
+                              )),
+                              ..._lemmyCommunities.map((comm) => DropdownMenuItem(
+                                value: comm,
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.public, size: 16),
+                                    const SizedBox(width: 8),
+                                    Text(comm),
+                                  ],
+                                ),
+                              )),
+                            ],
+                            onChanged: (value) {
+                              if (value != null) {
+                                setState(() {
+                                  _sourceController.text = value;
+                                });
+                              }
+                            },
                           ),
                           const SizedBox(height: 16),
                           FilledButton.icon(
@@ -703,7 +704,7 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                                       height: 200,
                                       color: Theme.of(context)
                                           .colorScheme
-                                          .surfaceContainerHighest,
+                                          .surfaceContainerHigh,
                                       child: Center(
                                         child: CircularProgressIndicator(
                                           value: loadingProgress
@@ -752,9 +753,9 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                                 Container(
                                   width: double.infinity,
                                   padding: const EdgeInsets.all(20),
-                                  color: Theme.of(context)
+                                    color: Theme.of(context)
                                       .colorScheme
-                                      .surfaceContainerHighest,
+                                      .surfaceVariant,
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,

@@ -117,6 +117,7 @@ class _MemeDetailScreenState extends State<MemeDetailScreen> {
     final url = widget.meme['url'] as String?;
     final timestamp = widget.meme['timestamp'] as String?;
     final isCustom = widget.meme['is_custom'] as bool? ?? false;
+    final messageId = widget.meme['message_id'] as String?;
 
     DateTime? postedDate;
     if (timestamp != null) {
@@ -244,11 +245,13 @@ class _MemeDetailScreenState extends State<MemeDetailScreen> {
                       // Upvote Button
                       Expanded(
                         child: Tooltip(
-                          message: _hasDiscordUpvoted
-                              ? 'Du hast bereits über Discord upgevotet'
-                              : '',
+                          message: messageId == null
+                              ? 'Meme wird noch verarbeitet...'
+                              : _hasDiscordUpvoted
+                                  ? 'Du hast bereits über Discord upgevotet'
+                                  : '',
                           child: ElevatedButton.icon(
-                            onPressed: (_isUpvoting || _isLoadingReactions || _hasDiscordUpvoted)
+                            onPressed: (_isUpvoting || _isLoadingReactions || _hasDiscordUpvoted || messageId == null)
                                 ? null
                                 : _toggleUpvote,
                             icon: (_isUpvoting || _isLoadingReactions)

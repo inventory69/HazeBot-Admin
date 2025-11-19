@@ -83,15 +83,16 @@ class DataCacheProvider extends ChangeNotifier {
         final newMemes =
             List<Map<String, dynamic>>.from(response['memes'] ?? []);
 
-        // Preserve optimistically added memes (those with timestamp < 5 seconds old)
+        // Preserve optimistically added memes (those with timestamp < 60 seconds old)
         // These are memes we added locally that might not be in the API response yet
+        // Discord indexing can take 10-60 seconds, so we keep them longer
         if (_cachedMemes != null && _cachedMemes!.isNotEmpty) {
           final now = DateTime.now();
           final optimisticMemes = _cachedMemes!.where((meme) {
             try {
               final timestamp = DateTime.parse(meme['timestamp']);
               final age = now.difference(timestamp);
-              return age.inSeconds < 5; // Keep very recent optimistic adds
+              return age.inSeconds < 60; // Keep recent optimistic adds for up to 1 minute
             } catch (e) {
               return false;
             }
@@ -102,25 +103,39 @@ class DataCacheProvider extends ChangeNotifier {
                 '🔄 Preserving ${optimisticMemes.length} optimistic meme(s)');
             // Add optimistic memes that aren't in the API response yet
             for (final optimisticMeme in optimisticMemes) {
-              // Check if meme exists in API by image_url (more reliable than title)
-              final existsInApi = newMemes.any((apiMeme) =>
-                  apiMeme['image_url'] == optimisticMeme['image_url'] ||
-                  (apiMeme['title'] == optimisticMeme['title'] &&
-                      apiMeme['image_url']?.toString().contains(
-                              optimisticMeme['image_url']
-                                      ?.toString()
-                                      .split('/')
-                                      .last ??
-                                  '') ==
-                          true));
-              if (!existsInApi) {
-                newMemes.insert(0, optimisticMeme);
-                debugPrint(
-                    '🔄 Kept optimistic meme: ${optimisticMeme['title']}');
-              } else {
-                debugPrint(
-                    '✅ Optimistic meme already in API response: ${optimisticMeme['title']}');
+            // Check if meme exists in API by image_url AND title (most reliable)
+            final existsInApi = newMemes.any((apiMeme) {
+              // Exact image URL match (most reliable)
+              if (apiMeme['image_url'] == optimisticMeme['image_url']) {
+                return true;
               }
+              // Check by message_id if available (Discord memes)
+              if (optimisticMeme['message_id'] != null &&
+                  apiMeme['message_id'] == optimisticMeme['message_id']) {
+                return true;
+              }
+              // Fallback: same title and similar image URL
+              if (apiMeme['title'] == optimisticMeme['title']) {
+                final apiUrl = apiMeme['image_url']?.toString() ?? '';
+                final optUrl = optimisticMeme['image_url']?.toString() ?? '';
+                if (apiUrl.isNotEmpty &&
+                    optUrl.isNotEmpty &&
+                    (apiUrl.contains(optUrl.split('/').last) ||
+                        optUrl.contains(apiUrl.split('/').last))) {
+                  return true;
+                }
+              }
+              return false;
+            });
+            
+            if (!existsInApi) {
+              newMemes.insert(0, optimisticMeme);
+              debugPrint(
+                  '🔄 Kept optimistic meme: ${optimisticMeme['title']}');
+            } else {
+              debugPrint(
+                  '✅ Optimistic meme already in API response: ${optimisticMeme['title']}');
+            }
             }
           }
         }
@@ -136,10 +151,10 @@ class DataCacheProvider extends ChangeNotifier {
             final timestamp = override['timestamp'] as DateTime;
             final apiUpvotes = meme['upvotes'] as int? ?? 0;
 
-            // Check if override is still valid (within 30 seconds)
+            // Check if override is still valid (within 60 seconds - Discord sync can be slow)
             final age = now.difference(timestamp);
 
-            if (age.inSeconds < 30) {
+            if (age.inSeconds < 60) {
               // Override still active
               meme['upvotes'] = localUpvotes;
               debugPrint(
@@ -262,13 +277,13 @@ class DataCacheProvider extends ChangeNotifier {
 
     debugPrint('👍 Updating upvotes for message $messageId to $upvotes');
 
-    // Store as local override with timestamp (expires after 30s)
+    // Store as local override with timestamp (expires after 60s)
     _localUpvoteOverrides[messageId] = {
       'upvotes': upvotes,
       'timestamp': DateTime.now(),
     };
     debugPrint(
-        '👍 Stored local override for $messageId: $upvotes (expires in 30s)');
+        '👍 Stored local override for $messageId: $upvotes (expires in 60s)');
 
     // Also update in current cache if available
     if (_cachedMemes != null) {
