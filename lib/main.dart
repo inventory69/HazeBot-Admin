@@ -124,10 +124,11 @@ class _HazeBotAdminAppState extends State<HazeBotAdminApp> {
                     elevation: 2,
                   ),
                   cardTheme: CardThemeData(
-                    elevation:
-                        0, // No shadow - Monet uses surface tints for depth
-                    // Use surfaceContainer for section cards (medium level)
-                    color: lightColorScheme.surfaceContainer,
+                    elevation: 2, // Use light elevation so surfaceTint shows
+                    // Don't set a fixed color here so Material can apply
+                    // the Material 3 surface tint to indicate tonal elevation
+                    // (e.g. surfaceContainer variants). The default color will
+                    // be surface and the tone will be applied automatically.
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -160,10 +161,9 @@ class _HazeBotAdminAppState extends State<HazeBotAdminApp> {
                     elevation: 2,
                   ),
                   cardTheme: CardThemeData(
-                    elevation:
-                        0, // No shadow - Monet uses surface tints for depth
-                    // Use surfaceContainer for section cards (medium level)
-                    color: darkColorScheme.surfaceContainer,
+                    elevation: 2, // Let tonal elevation be visible in dark mode
+                    // Avoid forcing a color so the system's surface tint
+                    // appears with the elevation.
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),

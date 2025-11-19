@@ -299,19 +299,51 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
       return const Center(child: CircularProgressIndicator());
     }
 
+    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
+    final cardColor = isMonet
+      ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
+      : Theme.of(context).colorScheme.surface;
+    final infoBoxBlue = isMonet
+      ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.10)
+      : Colors.blue.withOpacity(0.1);
+    final infoBoxBlueBorder = isMonet
+      ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.30)
+      : Colors.blue.withOpacity(0.3);
+    final infoBoxGreen = isMonet
+      ? Theme.of(context).colorScheme.tertiaryContainer.withOpacity(0.10)
+      : Colors.green.withOpacity(0.1);
+    final infoBoxGreenBorder = isMonet
+      ? Theme.of(context).colorScheme.tertiaryContainer.withOpacity(0.30)
+      : Colors.green.withOpacity(0.3);
+    final infoBoxPurple = isMonet
+      ? Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.10)
+      : Colors.purple.withOpacity(0.1);
+    final infoBoxPurpleBorder = isMonet
+      ? Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.30)
+      : Colors.purple.withOpacity(0.3);
+    final infoBoxTeal = isMonet
+      ? Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.10)
+      : Colors.teal.withOpacity(0.1);
+    final infoBoxTealBorder = isMonet
+      ? Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.30)
+      : Colors.teal.withOpacity(0.3);
+    final infoBoxGrey = isMonet
+      ? Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.10)
+      : Colors.grey.withOpacity(0.1);
+
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isMobile = constraints.maxWidth < 600;
-        final padding = isMobile ? 12.0 : 24.0;
-        final cardPadding = isMobile ? 12.0 : 16.0;
+      final isMobile = constraints.maxWidth < 600;
+      final padding = isMobile ? 12.0 : 24.0;
+      final cardPadding = isMobile ? 12.0 : 16.0;
 
-        return SingleChildScrollView(
-          padding: EdgeInsets.all(padding),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+      return SingleChildScrollView(
+        padding: EdgeInsets.all(padding),
+        child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
                 Text(
                   'General Configuration',
                   style: Theme.of(context).textTheme.headlineLarge?.copyWith(
@@ -330,6 +362,9 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
 
                 // Bot Settings Card
                 Card(
+                  color: cardColor,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: EdgeInsets.all(cardPadding),
                     child: Column(
@@ -391,10 +426,10 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
                         Container(
                           padding: EdgeInsets.all(isMobile ? 10 : 12),
                           decoration: BoxDecoration(
-                            color: Colors.blue.withValues(alpha: 0.1),
+                            color: infoBoxBlue,
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: Colors.blue.withValues(alpha: 0.3),
+                              color: infoBoxBlueBorder,
                             ),
                           ),
                           child: Row(
@@ -424,6 +459,9 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
 
                 // Performance Settings Card
                 Card(
+                  color: cardColor,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: EdgeInsets.all(cardPadding),
                     child: Column(
@@ -522,10 +560,10 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
                         Container(
                           padding: EdgeInsets.all(isMobile ? 10 : 12),
                           decoration: BoxDecoration(
-                            color: Colors.green.withValues(alpha: 0.1),
+                            color: infoBoxGreen,
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: Colors.green.withValues(alpha: 0.3),
+                              color: infoBoxGreenBorder,
                             ),
                           ),
                           child: Row(
@@ -556,6 +594,9 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
 
                 // Color Scheme Card
                 Card(
+                  color: cardColor,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: EdgeInsets.all(cardPadding),
                     child: Column(
@@ -638,10 +679,10 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
                         Container(
                           padding: EdgeInsets.all(isMobile ? 10 : 12),
                           decoration: BoxDecoration(
-                            color: Colors.purple.withValues(alpha: 0.1),
+                            color: infoBoxPurple,
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: Colors.purple.withValues(alpha: 0.3),
+                              color: infoBoxPurpleBorder,
                             ),
                           ),
                           child: Row(
@@ -670,6 +711,9 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
 
                 // Embed Footer Text Card
                 Card(
+                  color: cardColor,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: EdgeInsets.all(cardPadding),
                     child: Column(
@@ -712,10 +756,10 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
                         Container(
                           padding: EdgeInsets.all(isMobile ? 10 : 12),
                           decoration: BoxDecoration(
-                            color: Colors.teal.withValues(alpha: 0.1),
+                            color: infoBoxTeal,
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: Colors.teal.withValues(alpha: 0.3),
+                              color: infoBoxTealBorder,
                             ),
                           ),
                           child: Row(
@@ -744,6 +788,9 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
 
                 // Role Names Card
                 Card(
+                  color: cardColor,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: EdgeInsets.all(cardPadding),
                     child: Column(
@@ -785,7 +832,7 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
                           Container(
                             padding: EdgeInsets.all(isMobile ? 12 : 16),
                             decoration: BoxDecoration(
-                              color: Colors.grey.withValues(alpha: 0.1),
+                              color: infoBoxGrey,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Row(

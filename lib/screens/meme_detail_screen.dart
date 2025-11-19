@@ -14,6 +14,7 @@ class MemeDetailScreen extends StatefulWidget {
 class _MemeDetailScreenState extends State<MemeDetailScreen> {
   int _upvotes = 0;
   bool _hasUpvoted = false;
+  bool _hasDiscordUpvoted = false;
   bool _isUpvoting = false;
   bool _isLoadingReactions = true; // Track loading state
 
@@ -40,8 +41,9 @@ class _MemeDetailScreenState extends State<MemeDetailScreen> {
         setState(() {
           _upvotes = response['upvotes'] as int? ?? 0;
           _hasUpvoted = response['has_upvoted'] as bool? ?? false;
+          _hasDiscordUpvoted = response['has_discord_upvoted'] as bool? ?? false;
           _isLoadingReactions = false;
-          print('Set _hasUpvoted to: $_hasUpvoted'); // Debug
+          print('Set _hasUpvoted to: $_hasUpvoted, _hasDiscordUpvoted: $_hasDiscordUpvoted'); // Debug
         });
       }
     } catch (e) {
@@ -241,36 +243,36 @@ class _MemeDetailScreenState extends State<MemeDetailScreen> {
                     children: [
                       // Upvote Button
                       Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: (_isUpvoting || _isLoadingReactions)
-                              ? null
-                              : _toggleUpvote,
-                          icon: (_isUpvoting || _isLoadingReactions)
-                              ? const SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child:
-                                      CircularProgressIndicator(strokeWidth: 2),
-                                )
-                              : Icon(
-                                  _hasUpvoted
-                                      ? Icons.thumb_up
-                                      : Icons.thumb_up_outlined,
-                                ),
-                          label: Text('$_upvotes'),
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            // Only apply upvoted style after loading is complete
-                            backgroundColor: (!_isLoadingReactions &&
-                                    _hasUpvoted)
-                                ? Theme.of(context).colorScheme.primaryContainer
-                                : null,
-                            foregroundColor:
-                                (!_isLoadingReactions && _hasUpvoted)
-                                    ? Theme.of(context)
-                                        .colorScheme
-                                        .onPrimaryContainer
-                                    : null,
+                        child: Tooltip(
+                          message: _hasDiscordUpvoted
+                              ? 'Du hast bereits über Discord upgevotet'
+                              : '',
+                          child: ElevatedButton.icon(
+                            onPressed: (_isUpvoting || _isLoadingReactions || _hasDiscordUpvoted)
+                                ? null
+                                : _toggleUpvote,
+                            icon: (_isUpvoting || _isLoadingReactions)
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  )
+                                : Icon(
+                                    _hasUpvoted
+                                        ? Icons.thumb_up
+                                        : Icons.thumb_up_outlined,
+                                  ),
+                            label: Text('$_upvotes'),
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              // Only apply upvoted style after loading is complete
+                              backgroundColor: (!_isLoadingReactions && _hasUpvoted)
+                                  ? Theme.of(context).colorScheme.primaryContainer
+                                  : null,
+                              foregroundColor: (!_isLoadingReactions && _hasUpvoted)
+                                  ? Theme.of(context).colorScheme.onPrimaryContainer
+                                  : null,
+                            ),
                           ),
                         ),
                       ),

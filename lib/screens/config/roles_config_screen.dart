@@ -193,6 +193,7 @@ class _RolesConfigScreenState extends State<RolesConfigScreen> {
     bool isMobile = false,
   }) {
     return DropdownButtonFormField<String>(
+      isExpanded: true,
       initialValue: value,
       decoration: InputDecoration(
         labelText: label,
@@ -208,12 +209,15 @@ class _RolesConfigScreenState extends State<RolesConfigScreen> {
         if (!required)
           const DropdownMenuItem<String>(
             value: null,
-            child: Text('None'),
+            child: SizedBox(width: 200, child: Text('None', maxLines: 1, overflow: TextOverflow.ellipsis)),
           ),
         ..._roles.map((role) {
           return DropdownMenuItem<String>(
             value: role['id'],
-            child: Text('@${role['name']}'),
+            child: SizedBox(
+              width: 200,
+              child: Text('@${role['name']}', maxLines: 1, overflow: TextOverflow.ellipsis),
+            ),
           );
         }),
       ],
@@ -229,6 +233,29 @@ class _RolesConfigScreenState extends State<RolesConfigScreen> {
     if (_isLoading && _roles.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
+
+    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
+    final cardColor = isMonet
+        ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
+        : Theme.of(context).colorScheme.surface;
+    final infoBoxBlue = isMonet
+        ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.10)
+        : Colors.blue.withOpacity(0.1);
+    final infoBoxBlueBorder = isMonet
+        ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.30)
+        : Colors.blue.withOpacity(0.3);
+    final infoBoxOrange = isMonet
+        ? Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.10)
+        : Colors.orange.withOpacity(0.1);
+    final infoBoxOrangeBorder = isMonet
+        ? Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.30)
+        : Colors.orange.withOpacity(0.3);
+    final infoBoxGreen = isMonet
+        ? Theme.of(context).colorScheme.tertiaryContainer.withOpacity(0.10)
+        : Colors.green.withOpacity(0.1);
+    final infoBoxGreenBorder = isMonet
+        ? Theme.of(context).colorScheme.tertiaryContainer.withOpacity(0.30)
+        : Colors.green.withOpacity(0.3);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -263,10 +290,10 @@ class _RolesConfigScreenState extends State<RolesConfigScreen> {
                 Container(
                   padding: EdgeInsets.all(isMobile ? 10 : 12),
                   decoration: BoxDecoration(
-                    color: Colors.blue.withValues(alpha: 0.1),
+                    color: infoBoxBlue,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: Colors.blue.withValues(alpha: 0.3),
+                      color: infoBoxBlueBorder,
                     ),
                   ),
                   child: Row(
@@ -290,6 +317,9 @@ class _RolesConfigScreenState extends State<RolesConfigScreen> {
 
                 // Permission Roles
                 Card(
+                  color: cardColor,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: EdgeInsets.all(cardPadding),
                     child: Column(
@@ -361,10 +391,10 @@ class _RolesConfigScreenState extends State<RolesConfigScreen> {
                         Container(
                           padding: EdgeInsets.all(isMobile ? 10 : 12),
                           decoration: BoxDecoration(
-                            color: Colors.orange.withValues(alpha: 0.1),
+                            color: infoBoxOrange,
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: Colors.orange.withValues(alpha: 0.3),
+                              color: infoBoxOrangeBorder,
                             ),
                           ),
                           child: Row(
@@ -393,6 +423,9 @@ class _RolesConfigScreenState extends State<RolesConfigScreen> {
 
                 // Feature Roles
                 Card(
+                  color: cardColor,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: EdgeInsets.all(cardPadding),
                     child: Column(
@@ -440,10 +473,10 @@ class _RolesConfigScreenState extends State<RolesConfigScreen> {
                         Container(
                           padding: EdgeInsets.all(isMobile ? 10 : 12),
                           decoration: BoxDecoration(
-                            color: Colors.green.withValues(alpha: 0.1),
+                            color: infoBoxGreen,
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: Colors.green.withValues(alpha: 0.3),
+                              color: infoBoxGreenBorder,
                             ),
                           ),
                           child: Row(

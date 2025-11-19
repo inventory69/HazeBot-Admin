@@ -192,6 +192,13 @@ class _DailyMemePreferencesScreenState
 
   @override
   Widget build(BuildContext context) {
+
+    final colorScheme = Theme.of(context).colorScheme;
+    final isMonet = colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
+    final cardColor = isMonet
+      ? colorScheme.primaryContainer.withOpacity(0.18)
+      : colorScheme.surface;
+
     return _isLoading
         ? const Center(child: CircularProgressIndicator())
         : LayoutBuilder(
@@ -211,7 +218,7 @@ class _DailyMemePreferencesScreenState
                         children: [
                           Icon(Icons.tune,
                               size: isMobile ? 28 : 32,
-                              color: Theme.of(context).colorScheme.primary),
+                              color: colorScheme.primary),
                           SizedBox(width: isMobile ? 8 : 12),
                           Expanded(
                             child: Column(
@@ -232,9 +239,7 @@ class _DailyMemePreferencesScreenState
                                       .textTheme
                                       .bodyMedium
                                       ?.copyWith(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurfaceVariant,
+                                        color: colorScheme.onSurfaceVariant,
                                         fontSize: isMobile ? 13 : null,
                                       ),
                                 ),
@@ -245,28 +250,28 @@ class _DailyMemePreferencesScreenState
                       ),
                       SizedBox(height: isMobile ? 20 : 32),
 
-                      // Info Box (keeping the existing one)
+                      // Info Box
                       Container(
                         padding: EdgeInsets.all(isMobile ? 10 : 12),
                         decoration: BoxDecoration(
-                          color: Colors.blue.withValues(alpha: 0.1),
+                          color: isMonet ? colorScheme.secondaryContainer.withOpacity(0.15) : Colors.blue.withOpacity(0.08),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color: Colors.blue.withValues(alpha: 0.3),
+                            color: isMonet ? colorScheme.secondary.withOpacity(0.25) : Colors.blue.withOpacity(0.18),
                           ),
                         ),
                         child: Row(
                           children: [
                             Icon(Icons.info_outline,
                                 size: isMobile ? 18 : 20,
-                                color: Colors.blue[700]),
+                                color: isMonet ? colorScheme.secondary : Colors.blue[700]),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 'Configure how memes are selected and which sources are used.',
                                 style: TextStyle(
                                   fontSize: isMobile ? 11 : 12,
-                                  color: Colors.blue[700],
+                                  color: isMonet ? colorScheme.secondary : Colors.blue[700],
                                 ),
                               ),
                             ),
@@ -277,6 +282,11 @@ class _DailyMemePreferencesScreenState
 
                       // Selection Settings
                       Card(
+                        color: cardColor,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                         child: Padding(
                           padding: EdgeInsets.all(isMobile ? 12.0 : 16.0),
                           child: Column(
@@ -288,14 +298,17 @@ class _DailyMemePreferencesScreenState
                                       color: Colors.green,
                                       size: isMobile ? 20 : 24),
                                   const SizedBox(width: 8),
-                                  Text(
-                                    'Selection Criteria',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleMedium
-                                        ?.copyWith(
-                                          fontSize: isMobile ? 16 : null,
-                                        ),
+                                  Flexible(
+                                    child: Text(
+                                      'Selection Criteria',
+                                      overflow: TextOverflow.ellipsis,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium
+                                          ?.copyWith(
+                                            fontSize: isMobile ? 16 : null,
+                                          ),
+                                    ),
                                   ),
                                 ],
                               ),
@@ -397,6 +410,11 @@ class _DailyMemePreferencesScreenState
                       // Subreddit Selection
                       if (_availableSubreddits.isNotEmpty) ...[
                         Card(
+                          color: cardColor,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
                           child: Padding(
                             padding: EdgeInsets.all(isMobile ? 12.0 : 16.0),
                             child: Column(
@@ -413,9 +431,10 @@ class _DailyMemePreferencesScreenState
                                               color: Colors.deepOrange,
                                               size: isMobile ? 20 : 24),
                                           const SizedBox(width: 8),
-                                          Expanded(
+                                          Flexible(
                                             child: Text(
                                               'Reddit Sources',
+                                              overflow: TextOverflow.ellipsis,
                                               style: Theme.of(context)
                                                   .textTheme
                                                   .titleMedium
@@ -430,7 +449,7 @@ class _DailyMemePreferencesScreenState
                                                 horizontal: 8, vertical: 4),
                                             decoration: BoxDecoration(
                                               color: Colors.deepOrange
-                                                  .withValues(alpha: 0.1),
+                                                  .withOpacity(0.08),
                                               borderRadius:
                                                   BorderRadius.circular(12),
                                             ),
@@ -474,6 +493,8 @@ class _DailyMemePreferencesScreenState
                                     .map((subreddit) => CheckboxListTile(
                                           title: Text(
                                             'r/$subreddit',
+                                            overflow: TextOverflow.ellipsis,
+                                            maxLines: 1,
                                             style: TextStyle(
                                                 fontSize: isMobile ? 13 : null),
                                           ),
@@ -517,6 +538,11 @@ class _DailyMemePreferencesScreenState
                       // Lemmy Selection
                       if (_availableLemmy.isNotEmpty) ...[
                         Card(
+                          color: cardColor,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
                           child: Padding(
                             padding: EdgeInsets.all(isMobile ? 12.0 : 16.0),
                             child: Column(
@@ -533,9 +559,10 @@ class _DailyMemePreferencesScreenState
                                               color: Colors.teal,
                                               size: isMobile ? 20 : 24),
                                           const SizedBox(width: 8),
-                                          Expanded(
+                                          Flexible(
                                             child: Text(
                                               'Lemmy Sources',
+                                              overflow: TextOverflow.ellipsis,
                                               style: Theme.of(context)
                                                   .textTheme
                                                   .titleMedium
@@ -549,8 +576,7 @@ class _DailyMemePreferencesScreenState
                                             padding: const EdgeInsets.symmetric(
                                                 horizontal: 8, vertical: 4),
                                             decoration: BoxDecoration(
-                                              color: Colors.teal
-                                                  .withValues(alpha: 0.1),
+                                              color: Colors.teal.withOpacity(0.08),
                                               borderRadius:
                                                   BorderRadius.circular(12),
                                             ),
@@ -594,6 +620,8 @@ class _DailyMemePreferencesScreenState
                                     CheckboxListTile(
                                       title: Text(
                                         community,
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 1,
                                         style: TextStyle(
                                             fontSize: isMobile ? 13 : null),
                                       ),

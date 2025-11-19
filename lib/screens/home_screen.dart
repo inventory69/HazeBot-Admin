@@ -613,25 +613,23 @@ class _HomeScreenState extends State<HomeScreen>
             AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               width: 72,
-              child: SingleChildScrollView(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minHeight: MediaQuery.of(context).size.height -
-                        kToolbarHeight -
-                        MediaQuery.of(context).padding.top -
-                        MediaQuery.of(context).padding.bottom,
-                  ),
-                  child: IntrinsicHeight(
+              child: Material(
+                color: Theme.of(context).colorScheme.surfaceContainerLow,
+                child: SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: MediaQuery.of(context).size.height -
+                          kToolbarHeight -
+                          MediaQuery.of(context).padding.top -
+                          MediaQuery.of(context).padding.bottom,
+                    ),
                     child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Home button to go back to user features
+                        // Home button
                         InkWell(
-                          onTap: () {
-                            setState(() {
-                              _selectedIndex = -1; // -1 = show user tabs
-                            });
-                          },
-                          child: Container(
+                          onTap: () => setState(() => _selectedIndex = -1),
+                          child: Padding(
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             child: Column(
                               children: [
@@ -663,20 +661,17 @@ class _HomeScreenState extends State<HomeScreen>
                         const Divider(thickness: 1, height: 1),
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 8.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.admin_panel_settings,
-                                size: 16,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                            ],
+                          child: Icon(
+                            Icons.admin_panel_settings,
+                            size: 16,
+                            color: Theme.of(context).colorScheme.primary,
                           ),
                         ),
                         const Divider(thickness: 1, height: 1),
-                        Expanded(
+                        Flexible(
+                          fit: FlexFit.loose,
                           child: ListView.builder(
+                            shrinkWrap: true,
                             padding: const EdgeInsets.symmetric(vertical: 8),
                             itemCount: adminItems.length,
                             itemBuilder: (context, index) {
@@ -684,20 +679,12 @@ class _HomeScreenState extends State<HomeScreen>
                               final isSelected = _selectedIndex == index;
 
                               return InkWell(
-                                onTap: () {
-                                  setState(() {
-                                    _selectedIndex = index;
-                                  });
-                                },
+                                onTap: () => setState(() => _selectedIndex = index),
                                 child: Container(
                                   margin: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
+                                      horizontal: 8, vertical: 4),
                                   padding: const EdgeInsets.symmetric(
-                                    vertical: 12,
-                                    horizontal: 8,
-                                  ),
+                                      vertical: 12, horizontal: 8),
                                   decoration: BoxDecoration(
                                     color: isSelected
                                         ? Theme.of(context)
@@ -759,11 +746,11 @@ class _HomeScreenState extends State<HomeScreen>
           // Main content area
           Expanded(
             child: _selectedIndex >= 0 &&
-                    _selectedIndex < adminItems.length &&
-                    permissionService.hasPermission('all')
-                ? // Admin selected: show admin screen directly
-                adminItems[_selectedIndex].screen
-                : // User features: show tabs at bottom
+                _selectedIndex < adminItems.length &&
+                permissionService.hasPermission('all')
+              ? // Admin selected: show admin screen directly
+              adminItems[_selectedIndex].screen
+              : // User features: show tabs at bottom
                 Column(
                     children: [
                       // Tab content
@@ -775,10 +762,10 @@ class _HomeScreenState extends State<HomeScreen>
                         ),
                       ),
                       // Tab bar for user features (at bottom)
-                      Material(
-                        color:
-                            Theme.of(context).colorScheme.surfaceContainerLow,
-                        elevation: 0, // No shadow - Monet uses surface colors
+                  Material(
+                    color:
+                      Theme.of(context).colorScheme.surfaceContainerLow,
+                    elevation: 1, // small elevation for tonal layering
                         child: SafeArea(
                           child: TabBar(
                             controller: _tabController,
@@ -837,14 +824,13 @@ class _DashboardScreenState extends State<DashboardScreen>
   void initState() {
     super.initState();
     // Load data only if cache is empty (first time only)
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final cacheProvider =
-          Provider.of<DataCacheProvider>(context, listen: false);
-      // Only load if cache is empty - cache will prevent duplicate requests
-      if (cacheProvider.memes == null || cacheProvider.rankups == null) {
-        _loadData();
-      }
-    });
+        WidgetsBinding.instance.addPostFrameCallback((_) async {
+          final cacheProvider = Provider.of<DataCacheProvider>(context, listen: false);
+          // Only load if cache is empty - cache will prevent duplicate requests
+          if (cacheProvider.memes == null || cacheProvider.rankups == null) {
+              await _loadData(force: true);
+          }
+        });
   }
 
   Future<void> _loadData({bool force = false}) async {
@@ -986,7 +972,10 @@ class _DashboardScreenState extends State<DashboardScreen>
   Widget _buildMemesSection(BuildContext context, bool isMobile,
       List<Map<String, dynamic>> memes, bool isLoadingMemes) {
     return Card(
-      // Main section card uses surfaceContainerLow (from CardTheme)
+      // Main section card - amplify tonal difference like 'How to Use' card
+      // Flat, no shadow for full Monet look
+      color: Colors.transparent,
+      elevation: 0,
       child: Padding(
         padding: EdgeInsets.all(isMobile ? 12 : 16),
         child: Column(
@@ -999,11 +988,25 @@ class _DashboardScreenState extends State<DashboardScreen>
                   children: [
                     Icon(Icons.image, size: isMobile ? 20 : 24),
                     const SizedBox(width: 8),
-                    Text(
-                      'Latest Memes',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontSize: isMobile ? 18 : null,
-                          ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 6),
+                      decoration: BoxDecoration(
+                        // Use same background as cache status chip (primaryContainer)
+                        color: Theme.of(context).colorScheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'Latest Memes',
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleLarge
+                            ?.copyWith(
+                              fontSize: isMobile ? 18 : null,
+                                  color:
+                                    Theme.of(context).colorScheme.onPrimaryContainer,
+                            ),
+                      ),
                     ),
                   ],
                 ),
@@ -1040,9 +1043,8 @@ class _DashboardScreenState extends State<DashboardScreen>
               )
             else
               Column(
-                children: memes
-                    .map((meme) => _buildMemeCard(context, meme, isMobile))
-                    .toList(),
+                      children: List.generate(memes.length,
+                        (i) => _buildMemeCard(context, memes[i], isMobile, i)),
               ),
           ],
         ),
@@ -1050,19 +1052,27 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
-  Widget _buildMemeCard(
-      BuildContext context, Map<String, dynamic> meme, bool isMobile) {
+    Widget _buildMemeCard(
+      BuildContext context, Map<String, dynamic> meme, bool isMobile, int index) {
     final imageUrl = meme['image_url'] as String?;
     final title = meme['title'] as String? ?? 'Untitled';
     final author = meme['author'] as String? ?? 'Unknown';
     final score = meme['score'] as int? ?? 0;
     final isCustom = meme['is_custom'] as bool? ?? false;
 
+      // Choose a subtle tonal container that contrasts the section background.
+      // Use a harmonized accent color (primaryContainer) for a friendlier, more Monet-like look.
+      // This makes the cards stand out and feel more dynamic, while still being subtle.
+    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
+    final cardColor = isMonet
+      ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
+      : Theme.of(context).colorScheme.surface;
+
     return Card(
+      color: cardColor,
       margin: EdgeInsets.only(bottom: isMobile ? 8 : 12),
-      // Inner card uses surfaceContainerHighest for maximum contrast (Android 16 Monet)
-      color: Theme.of(context).colorScheme.surfaceContainerHighest,
-      elevation: 0, // No shadow - Monet uses surface tints for hierarchy
+      // Flat card, no elevation for a modern Monet look
+      elevation: 0,
       child: InkWell(
         onTap: () async {
           // Navigate to meme detail screen and handle result
@@ -1106,9 +1116,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                           width: isMobile ? 80 : 100,
                           height: isMobile ? 80 : 100,
                           decoration: BoxDecoration(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .surfaceContainerHighest,
+                            color: cardColor,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Center(
@@ -1238,7 +1246,10 @@ class _DashboardScreenState extends State<DashboardScreen>
   Widget _buildRankupsSection(BuildContext context, bool isMobile,
       List<Map<String, dynamic>> rankups, bool isLoadingRankups) {
     return Card(
-      // Main section card uses surfaceContainerLow (from CardTheme)
+      // Main section card - amplify tonal difference like 'How to Use' card
+      // Flat, no shadow for full Monet look
+      color: Colors.transparent,
+      elevation: 0,
       child: Padding(
         padding: EdgeInsets.all(isMobile ? 12 : 16),
         child: Column(
@@ -1247,17 +1258,30 @@ class _DashboardScreenState extends State<DashboardScreen>
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Icon(Icons.trending_up, size: isMobile ? 20 : 24),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Latest Rank-Ups',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontSize: isMobile ? 18 : null,
+                Expanded(
+                  child: Row(
+                    children: [
+                      Icon(Icons.trending_up, size: isMobile ? 20 : 24),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.primaryContainer,
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                    ),
-                  ],
+                          child: Text(
+                            'Latest Rank-Ups',
+                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                  fontSize: isMobile ? 18 : null,
+                                ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 if (rankups.isNotEmpty)
                   TextButton.icon(
@@ -1291,10 +1315,8 @@ class _DashboardScreenState extends State<DashboardScreen>
               )
             else
               Column(
-                children: rankups
-                    .map(
-                        (rankup) => _buildRankupCard(context, rankup, isMobile))
-                    .toList(),
+                children: List.generate(rankups.length,
+                    (i) => _buildRankupCard(context, rankups[i], isMobile, i)),
               ),
           ],
         ),
@@ -1302,8 +1324,8 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
-  Widget _buildRankupCard(
-      BuildContext context, Map<String, dynamic> rankup, bool isMobile) {
+    Widget _buildRankupCard(
+      BuildContext context, Map<String, dynamic> rankup, bool isMobile, int index) {
     final user = rankup['user'] as String? ?? 'Unknown Player';
     final newRank = rankup['new_rank'] as String? ?? 'Unknown Rank';
     final oldRank = rankup['old_rank'] as String?;
@@ -1312,11 +1334,17 @@ class _DashboardScreenState extends State<DashboardScreen>
     final thumbnail = rankup['thumbnail'] as String?;
     final color = rankup['color'] as int?;
 
+    // Use a harmonized accent color (primaryContainer) for a friendlier, more Monet-like look.
+    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
+    final cardColor = isMonet
+      ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
+      : Theme.of(context).colorScheme.surface;
+
     return Card(
+      color: cardColor,
       margin: EdgeInsets.only(bottom: isMobile ? 8 : 12),
-      // Inner card uses surfaceContainerHighest for maximum contrast (Android 16 Monet)
-      color: Theme.of(context).colorScheme.surfaceContainerHighest,
-      elevation: 0, // No shadow - Monet uses surface tints for hierarchy
+      // Flat card, no elevation for a modern Monet look
+      elevation: 0,
       child: Padding(
         padding: EdgeInsets.all(isMobile ? 8 : 12),
         child: Row(
@@ -1338,10 +1366,8 @@ class _DashboardScreenState extends State<DashboardScreen>
                       height: isMobile ? 60 : 70,
                       decoration: BoxDecoration(
                         color: color != null
-                            ? Color(color).withOpacity(0.1)
-                            : Theme.of(context)
-                                .colorScheme
-                                .surfaceContainerHighest,
+                          ? Color(color).withOpacity(0.1)
+                          : cardColor,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Center(
@@ -2026,11 +2052,10 @@ class _UserDashboardState extends State<_UserDashboard>
     required Color color,
     required bool isMobile,
   }) {
-    return Builder(
-      builder: (context) => Card(
-        elevation: 0, // No shadow - Monet uses surface tints
-        // Use surfaceContainerHighest for stat cards (maximum contrast)
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        return Builder(
+          builder: (context) => Card(
+            elevation: 2, // Allow surface tint to be applied for tonal contrast
+            // Avoid forcing a color here so Material 3 surface tints are applied
         child: Padding(
           padding: EdgeInsets.all(isMobile ? 4 : 6),
           child: Column(

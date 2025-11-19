@@ -162,6 +162,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 // Profile Information Card
                 Card(
+                  color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: EdgeInsets.all(isMobile ? 12 : 16),
                     child: Row(
@@ -269,6 +272,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 // Rocket League Rank Card (if available)
                 if (_rlRank != null) ...[
                   Card(
+                    color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     child: Padding(
                       padding: EdgeInsets.all(isMobile ? 12 : 16),
                       child: Column(
@@ -350,6 +356,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 // Activity Stats
                 if (_activity != null) ...[
                   Card(
+                    color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     child: Padding(
                       padding: EdgeInsets.all(isMobile ? 12 : 16),
                       child: Column(
@@ -395,6 +404,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 // Custom Stats
                 if (_customStats != null) ...[
                   Card(
+                    color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     child: Padding(
                       padding: EdgeInsets.all(isMobile ? 12 : 16),
                       child: Column(

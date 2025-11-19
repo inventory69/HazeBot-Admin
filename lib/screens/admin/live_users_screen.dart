@@ -159,6 +159,10 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
 
   @override
   Widget build(BuildContext context) {
+      final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
+      final cardColor = isMonet
+        ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
+        : Theme.of(context).colorScheme.surface;
     if (_isLoading && _sessionData == null) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -229,6 +233,7 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
     final sessions = _sessionData?['sessions'] as List? ?? [];
     final totalActive = _sessionData?['total_active'] ?? 0;
     final checkedAt = _sessionData?['checked_at'] as String?;
+
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -305,6 +310,9 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
 
                     // Stats Card
                     Card(
+                      color: cardColor,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       child: Padding(
                         padding: EdgeInsets.all(isMobile ? 16.0 : 20.0),
                         child: Row(
@@ -441,8 +449,10 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                               final isRecent = secondsAgo < 30;
 
                               return Card(
-                                margin:
-                                    EdgeInsets.only(bottom: isMobile ? 8 : 12),
+                                margin: EdgeInsets.only(bottom: isMobile ? 8 : 12),
+                                color: cardColor,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                                 child: ExpansionTile(
                                   leading: Stack(
                                     children: [
@@ -627,6 +637,10 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
   Widget _buildRecentActivity(bool isMobile) {
     final recentActivity =
         _sessionData?['recent_activity'] as List<dynamic>? ?? [];
+    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
+    final cardColor = isMonet
+        ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
+        : Theme.of(context).colorScheme.surface;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -641,6 +655,9 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
         SizedBox(height: isMobile ? 8 : 12),
         if (recentActivity.isEmpty)
           Card(
+            color: cardColor,
+            elevation: 0,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Padding(
               padding: EdgeInsets.all(isMobile ? 16 : 24),
               child: Center(
@@ -678,6 +695,9 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
           )
         else
           Card(
+            color: cardColor,
+            elevation: 0,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),

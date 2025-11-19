@@ -348,6 +348,12 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
       return const Center(child: CircularProgressIndicator());
     }
 
+    // Monet/normal mode card color logic (match channels/roles config screens)
+    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
+    final cardColor = isMonet
+        ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
+        : Theme.of(context).colorScheme.surface;
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final isMobile = constraints.maxWidth < 600;
@@ -379,6 +385,9 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
 
                 // Rank Check Settings
                 Card(
+                  color: cardColor,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: EdgeInsets.all(cardPadding),
                     child: Column(
@@ -477,6 +486,9 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
 
                 // Cache Settings
                 Card(
+                  color: cardColor,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: EdgeInsets.all(cardPadding),
                     child: Column(
@@ -580,6 +592,9 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
 
                 // Quick Presets
                 Card(
+                  color: cardColor,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: EdgeInsets.all(cardPadding),
                     child: Column(
@@ -645,6 +660,9 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
 
                 // Linked Accounts Management
                 Card(
+                  color: cardColor,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: EdgeInsets.all(cardPadding),
                     child: Column(
@@ -941,6 +959,9 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
 
                 // Test Player Stats
                 Card(
+                  color: cardColor,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: EdgeInsets.all(cardPadding),
                     child: Column(

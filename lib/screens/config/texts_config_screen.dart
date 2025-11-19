@@ -281,6 +281,12 @@ class _TextsConfigScreenState extends State<TextsConfigScreen> {
       return const Center(child: CircularProgressIndicator());
     }
 
+    // Monet/normal mode card color logic (match channels/roles config screens)
+    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
+    final cardColor = isMonet
+        ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
+        : Theme.of(context).colorScheme.surface;
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final isMobile = constraints.maxWidth < 600;
@@ -311,11 +317,11 @@ class _TextsConfigScreenState extends State<TextsConfigScreen> {
                 SizedBox(height: isMobile ? 16 : 24),
 
                 // Welcome System Section
-                _buildWelcomeSection(isMobile, cardPadding),
+                _buildWelcomeSection(isMobile, cardPadding, cardColor),
                 SizedBox(height: isMobile ? 16 : 24),
 
                 // Rocket League Section
-                _buildRocketLeagueSection(isMobile, cardPadding),
+                _buildRocketLeagueSection(isMobile, cardPadding, cardColor),
               ],
             ),
           ),
@@ -324,8 +330,11 @@ class _TextsConfigScreenState extends State<TextsConfigScreen> {
     );
   }
 
-  Widget _buildWelcomeSection(bool isMobile, double cardPadding) {
+  Widget _buildWelcomeSection(bool isMobile, double cardPadding, Color cardColor) {
     return Card(
+      color: cardColor,
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: EdgeInsets.all(cardPadding),
         child: Column(
@@ -463,8 +472,11 @@ class _TextsConfigScreenState extends State<TextsConfigScreen> {
     );
   }
 
-  Widget _buildRocketLeagueSection(bool isMobile, double cardPadding) {
+  Widget _buildRocketLeagueSection(bool isMobile, double cardPadding, Color cardColor) {
     return Card(
+      color: cardColor,
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: EdgeInsets.all(cardPadding),
         child: Column(

@@ -212,6 +212,10 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
       builder: (context, constraints) {
         final isMobile = constraints.maxWidth < 600;
         final padding = isMobile ? 12.0 : 24.0;
+        final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
+        final cardColor = isMonet
+            ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
+            : Theme.of(context).colorScheme.surface;
 
         return Scaffold(
           appBar: AppBar(
@@ -260,7 +264,9 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
 
                 // Random Meme Card
                 Card(
-                  elevation: 2,
+                  color: cardColor,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: EdgeInsets.all(isMobile ? 16.0 : 24.0),
                     child: Column(
@@ -365,7 +371,7 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                                       height: 200,
                                       color: Theme.of(context)
                                           .colorScheme
-                                          .surfaceContainerHighest,
+                                          .surfaceContainerHigh,
                                       child: Center(
                                         child: CircularProgressIndicator(
                                           value: loadingProgress
@@ -415,9 +421,9 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                                 Container(
                                   width: double.infinity,
                                   padding: const EdgeInsets.all(20),
-                                  color: Theme.of(context)
+                                    color: Theme.of(context)
                                       .colorScheme
-                                      .surfaceContainerHighest,
+                                      .surfaceVariant,
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
@@ -535,7 +541,9 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
 
                 // Meme from Source Card
                 Card(
-                  elevation: 2,
+                  color: cardColor,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: EdgeInsets.all(isMobile ? 16.0 : 24.0),
                     child: Column(
@@ -867,7 +875,8 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                   const SizedBox(height: 24),
                   Card(
                     color: Theme.of(context).colorScheme.errorContainer,
-                    elevation: 2,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     child: Padding(
                       padding: const EdgeInsets.all(20.0),
                       child: Row(
@@ -926,10 +935,9 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
 
                 // Info Card
                 Card(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .surfaceContainerHighest
-                      .withValues(alpha: 0.5),
+                  color: cardColor,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: const EdgeInsets.all(20.0),
                     child: Column(

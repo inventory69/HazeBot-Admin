@@ -367,11 +367,18 @@ class _GamingHubScreenState extends State<GamingHubScreen> {
         statusColor = Colors.grey;
     }
 
+    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
+    final cardColor = isMonet
+        ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
+        : Theme.of(context).colorScheme.surface;
     return Card(
+      color: cardColor,
+      elevation: 0,
       margin: EdgeInsets.symmetric(
         horizontal: isMobile ? 8 : 12,
         vertical: 6,
       ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: () {
           if (!_canSendRequest) {

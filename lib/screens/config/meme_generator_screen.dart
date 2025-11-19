@@ -501,17 +501,14 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                               gridDelegate:
                                   SliverGridDelegateWithFixedCrossAxisCount(
                                 crossAxisCount:
-                                    isMobile ? 2 : (isTablet ? 3 : 4),
-                                crossAxisSpacing: 12,
-                                mainAxisSpacing: 12,
-                                childAspectRatio: 0.85,
+                                    isMobile ? 4 : (isTablet ? 6 : 8),
+                                crossAxisSpacing: 4,
+                                mainAxisSpacing: 4,
+                                childAspectRatio: 0.62,
                               ),
                               itemCount: pageTemplates.length,
                               itemBuilder: (context, index) {
                                 final template = pageTemplates[index];
-                                final isSelected = _selectedTemplate != null &&
-                                    _selectedTemplate!['id'] == template['id'];
-
                                 return InkWell(
                                   onTap: () {
                                     setState(() {
@@ -520,110 +517,67 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                                     });
                                   },
                                   borderRadius: BorderRadius.circular(12),
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      border: Border.all(
-                                        color: isSelected
-                                            ? Theme.of(context)
-                                                .colorScheme
-                                                .primary
-                                            : Theme.of(context)
-                                                .colorScheme
-                                                .outline
-                                                .withValues(alpha: 0.2),
-                                        width: isSelected ? 3 : 1,
-                                      ),
-                                      borderRadius: BorderRadius.circular(12),
-                                      color: isSelected
-                                          ? Theme.of(context)
-                                              .colorScheme
-                                              .primaryContainer
-                                              .withValues(alpha: 0.3)
-                                          : null,
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Expanded(
-                                          child: ClipRRect(
-                                            borderRadius:
-                                                const BorderRadius.vertical(
-                                                    top: Radius.circular(11)),
-                                            child: Image.network(
-                                              getProxiedImageUrl(
-                                                  template['url']),
-                                              width: double.infinity,
-                                              fit: BoxFit.cover,
-                                              loadingBuilder: (context, child,
-                                                  loadingProgress) {
-                                                if (loadingProgress == null) {
-                                                  return child;
-                                                }
-                                                return Center(
-                                                  child:
-                                                      CircularProgressIndicator(
-                                                    value: loadingProgress
-                                                                .expectedTotalBytes !=
-                                                            null
-                                                        ? loadingProgress
-                                                                .cumulativeBytesLoaded /
-                                                            loadingProgress
-                                                                .expectedTotalBytes!
-                                                        : null,
-                                                  ),
-                                                );
-                                              },
-                                              errorBuilder:
-                                                  (context, error, stackTrace) {
-                                                return Container(
-                                                  color: Theme.of(context)
-                                                      .colorScheme
-                                                      .errorContainer,
-                                                  child: const Center(
-                                                    child: Icon(
-                                                        Icons.broken_image,
-                                                        size: 32),
-                                                  ),
-                                                );
-                                              },
+                                  child: Card(
+                                    color: (Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh)
+                                        ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
+                                        : Theme.of(context).colorScheme.surface,
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                                    margin: const EdgeInsets.all(1.0),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 1.0, vertical: 0.0),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisSize: MainAxisSize.max,
+                                        mainAxisAlignment: MainAxisAlignment.start,
+                                        children: [
+                                          Expanded(
+                                            child: ClipRRect(
+                                              borderRadius: BorderRadius.circular(7),
+                                              child: Image.network(
+                                                getProxiedImageUrl(template['url']),
+                                                width: double.infinity,
+                                                fit: BoxFit.cover,
+                                                loadingBuilder: (context, child, loadingProgress) {
+                                                  if (loadingProgress == null) return child;
+                                                  return Center(
+                                                    child: CircularProgressIndicator(
+                                                      value: loadingProgress.expectedTotalBytes != null
+                                                          ? loadingProgress.cumulativeBytesLoaded /
+                                                              loadingProgress.expectedTotalBytes!
+                                                          : null,
+                                                    ),
+                                                  );
+                                                },
+                                                errorBuilder: (context, error, stackTrace) {
+                                                  return Container(
+                                                    color: Theme.of(context).colorScheme.errorContainer,
+                                                    child: const Center(
+                                                      child: Icon(Icons.broken_image, size: 18),
+                                                    ),
+                                                  );
+                                                },
+                                              ),
                                             ),
                                           ),
-                                        ),
-                                        Padding(
-                                          padding: const EdgeInsets.all(8.0),
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                template['name'],
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .bodyMedium
-                                                    ?.copyWith(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                    ),
-                                                maxLines: 2,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                '${template['box_count']} text boxes',
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .bodySmall
-                                                    ?.copyWith(
-                                                      color: Theme.of(context)
-                                                          .colorScheme
-                                                          .onSurfaceVariant,
-                                                    ),
-                                              ),
-                                            ],
+                                          Text(
+                                            template['name'],
+                                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 9,
+                                                ),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
                                           ),
-                                        ),
-                                      ],
+                                          Text(
+                                            '${template['box_count']} text boxes',
+                                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                                  fontSize: 8,
+                                                ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 );
@@ -647,8 +601,8 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                                   icon: const Icon(Icons.chevron_left),
                                   style: IconButton.styleFrom(
                                     disabledBackgroundColor: Theme.of(context)
-                                        .colorScheme
-                                        .surfaceContainerHighest,
+                                      .colorScheme
+                                      .surfaceContainerHigh,
                                   ),
                                 ),
                                 Padding(
@@ -700,7 +654,11 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                               const SizedBox(height: 12),
                               if (_selectedTemplate != null)
                                 Card(
-                                  elevation: 4,
+                                  color: (Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh)
+                                      ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
+                                      : Theme.of(context).colorScheme.surface,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
@@ -725,7 +683,7 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                                               height: 300,
                                               color: Theme.of(context)
                                                   .colorScheme
-                                                  .surfaceContainerHighest,
+                                                  .surfaceContainerHigh,
                                               child: Center(
                                                 child:
                                                     CircularProgressIndicator(
@@ -918,6 +876,11 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                 if (isMobile && _generatedMemeUrl != null) ...[
                   const SizedBox(height: 24),
                   Card(
+                    color: (Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh)
+                        ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
+                        : Theme.of(context).colorScheme.surface,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     child: Column(
                       children: [
                         ClipRRect(
@@ -1003,6 +966,8 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                   const SizedBox(height: 24),
                   Card(
                     color: Theme.of(context).colorScheme.errorContainer,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Row(
@@ -1041,10 +1006,9 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                 // Info Card
                 const SizedBox(height: 32),
                 Card(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .surfaceContainerHighest
-                      .withValues(alpha: 0.5),
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: const EdgeInsets.all(20.0),
                     child: Column(

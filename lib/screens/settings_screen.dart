@@ -65,8 +65,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       SnackBar(
                         content: Text(
                           value
-                              ? 'Dynamic colors enabled - restart app to apply'
-                              : 'Dynamic colors disabled - restart app to apply',
+                              ? 'Dynamic colors enabled - applied automatically'
+                              : 'Dynamic colors disabled - applied automatically',
                         ),
                         duration: const Duration(seconds: 3),
                       ),

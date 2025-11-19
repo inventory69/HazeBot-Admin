@@ -458,7 +458,14 @@ class _UserRocketLeagueScreenState extends State<UserRocketLeagueScreen> {
     final tierNames = account['ranks'] as Map<String, dynamic>? ?? {};
     final iconUrls = account['icon_urls'] as Map<String, dynamic>? ?? {};
 
+    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
+    final cardColor = isMonet
+        ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
+        : Theme.of(context).colorScheme.surface;
     return Card(
+      color: cardColor,
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: EdgeInsets.all(cardPadding),
         child: Column(
@@ -589,7 +596,14 @@ class _UserRocketLeagueScreenState extends State<UserRocketLeagueScreen> {
   }
 
   Widget _buildLinkFormCard(bool isMobile, double cardPadding) {
+    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
+    final cardColor = isMonet
+        ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
+        : Theme.of(context).colorScheme.surface;
     return Card(
+      color: cardColor,
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: EdgeInsets.all(cardPadding),
         child: Form(
@@ -712,7 +726,14 @@ class _UserRocketLeagueScreenState extends State<UserRocketLeagueScreen> {
   }
 
   Widget _buildTestStatsCard(bool isMobile, double cardPadding) {
+    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
+    final cardColor = isMonet
+        ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
+        : Theme.of(context).colorScheme.surface;
     return Card(
+      color: cardColor,
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: EdgeInsets.all(cardPadding),
         child: Form(
@@ -1123,13 +1144,7 @@ class _UserRocketLeagueScreenState extends State<UserRocketLeagueScreen> {
           color: color.withValues(alpha: 0.6),
           width: 2,
         ),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x4D000000),
-            blurRadius: 8,
-            spreadRadius: 1,
-          ),
-        ],
+        // No boxShadow for flat look
       ),
       child: Row(
         children: [

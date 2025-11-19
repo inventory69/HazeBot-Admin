@@ -230,6 +230,7 @@ class _ChannelsConfigScreenState extends State<ChannelsConfigScreen> {
     bool isMobile = false,
   }) {
     return DropdownButtonFormField<String>(
+      isExpanded: true,
       initialValue: value,
       decoration: InputDecoration(
         labelText: label,
@@ -245,14 +246,17 @@ class _ChannelsConfigScreenState extends State<ChannelsConfigScreen> {
         if (!required)
           const DropdownMenuItem<String>(
             value: null,
-            child: Text('None'),
+            child: SizedBox(width: 200, child: Text('None', maxLines: 1, overflow: TextOverflow.ellipsis)),
           ),
         ..._channels.map((channel) {
           final category =
               channel['category'] != null ? '${channel['category']} / ' : '';
           return DropdownMenuItem<String>(
             value: channel['id'],
-            child: Text('$category#${channel['name']}'),
+            child: SizedBox(
+              width: 200,
+              child: Text('$category#${channel['name']}', maxLines: 1, overflow: TextOverflow.ellipsis),
+            ),
           );
         }),
       ],
@@ -273,6 +277,7 @@ class _ChannelsConfigScreenState extends State<ChannelsConfigScreen> {
     bool isMobile = false,
   }) {
     return DropdownButtonFormField<String>(
+      isExpanded: true,
       initialValue: value,
       decoration: InputDecoration(
         labelText: label,
@@ -288,12 +293,15 @@ class _ChannelsConfigScreenState extends State<ChannelsConfigScreen> {
         if (!required)
           const DropdownMenuItem<String>(
             value: null,
-            child: Text('None'),
+            child: SizedBox(width: 200, child: Text('None', maxLines: 1, overflow: TextOverflow.ellipsis)),
           ),
         ..._categories.map((category) {
           return DropdownMenuItem<String>(
             value: category['id'],
-            child: Text(category['name']),
+            child: SizedBox(
+              width: 200,
+              child: Text(category['name'], maxLines: 1, overflow: TextOverflow.ellipsis),
+            ),
           );
         }),
       ],
@@ -306,6 +314,10 @@ class _ChannelsConfigScreenState extends State<ChannelsConfigScreen> {
 
   @override
   Widget build(BuildContext context) {
+      final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
+      final cardColor = isMonet
+        ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
+        : Theme.of(context).colorScheme.surface;
     if (_isLoading && _channels.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -361,6 +373,7 @@ class _ChannelsConfigScreenState extends State<ChannelsConfigScreen> {
                             fontSize: isMobile ? 11 : 12,
                             color: Colors.blue[700],
                           ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
@@ -370,6 +383,9 @@ class _ChannelsConfigScreenState extends State<ChannelsConfigScreen> {
 
                 // General Channels
                 Card(
+                  color: cardColor,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: EdgeInsets.all(cardPadding),
                     child: Column(
@@ -389,31 +405,38 @@ class _ChannelsConfigScreenState extends State<ChannelsConfigScreen> {
                                     ?.copyWith(
                                       fontSize: isMobile ? 18 : null,
                                     ),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ],
                         ),
                         SizedBox(height: isMobile ? 12 : 16),
-                        _buildChannelDropdown(
-                          label: 'Log Channel',
-                          value: _logChannelId,
-                          onChanged: (value) =>
-                              setState(() => _logChannelId = value),
-                          hint: 'Bot logs and events',
-                          icon: Icons.article,
-                          required: true,
-                          isMobile: isMobile,
+                        SizedBox(
+                          width: double.infinity,
+                          child: _buildChannelDropdown(
+                            label: 'Log Channel',
+                            value: _logChannelId,
+                            onChanged: (value) =>
+                                setState(() => _logChannelId = value),
+                            hint: 'Bot logs and events',
+                            icon: Icons.article,
+                            required: true,
+                            isMobile: isMobile,
+                          ),
                         ),
                         SizedBox(height: isMobile ? 12 : 16),
-                        _buildChannelDropdown(
-                          label: 'Changelog Channel',
-                          value: _changelogChannelId,
-                          onChanged: (value) =>
-                              setState(() => _changelogChannelId = value),
-                          hint: 'Bot updates and changes',
-                          icon: Icons.update,
-                          required: true,
-                          isMobile: isMobile,
+                        SizedBox(
+                          width: double.infinity,
+                          child: _buildChannelDropdown(
+                            label: 'Changelog Channel',
+                            value: _changelogChannelId,
+                            onChanged: (value) =>
+                                setState(() => _changelogChannelId = value),
+                            hint: 'Bot updates and changes',
+                            icon: Icons.update,
+                            required: true,
+                            isMobile: isMobile,
+                          ),
                         ),
                       ],
                     ),
@@ -423,6 +446,9 @@ class _ChannelsConfigScreenState extends State<ChannelsConfigScreen> {
 
                 // Feature Channels
                 Card(
+                  color: cardColor,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: EdgeInsets.all(cardPadding),
                     child: Column(
@@ -442,59 +468,75 @@ class _ChannelsConfigScreenState extends State<ChannelsConfigScreen> {
                                     ?.copyWith(
                                       fontSize: isMobile ? 18 : null,
                                     ),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ],
                         ),
                         SizedBox(height: isMobile ? 12 : 16),
-                        _buildChannelDropdown(
-                          label: 'Todo Channel',
-                          value: _todoChannelId,
-                          onChanged: (value) =>
-                              setState(() => _todoChannelId = value),
-                          hint: 'Todo list management',
-                          icon: Icons.checklist,
-                          isMobile: isMobile,
+                        SizedBox(
+                          width: double.infinity,
+                          child: _buildChannelDropdown(
+                            label: 'Todo Channel',
+                            value: _todoChannelId,
+                            onChanged: (value) =>
+                                setState(() => _todoChannelId = value),
+                            hint: 'Todo list management',
+                            icon: Icons.checklist,
+                            isMobile: isMobile,
+                          ),
                         ),
                         SizedBox(height: isMobile ? 12 : 16),
-                        _buildChannelDropdown(
-                          label: 'Rocket League Channel',
-                          value: _rlChannelId,
-                          onChanged: (value) =>
-                              setState(() => _rlChannelId = value),
-                          hint: 'Rocket League rank updates',
-                          icon: Icons.sports_esports,
-                          isMobile: isMobile,
+                        SizedBox(
+                          width: double.infinity,
+                          child: _buildChannelDropdown(
+                            label: 'Rocket League Channel',
+                            value: _rlChannelId,
+                            onChanged: (value) =>
+                                setState(() => _rlChannelId = value),
+                            hint: 'Rocket League rank updates',
+                            icon: Icons.sports_esports,
+                            isMobile: isMobile,
+                          ),
                         ),
                         SizedBox(height: isMobile ? 12 : 16),
-                        _buildChannelDropdown(
-                          label: 'Gaming Channel',
-                          value: _gamingChannelId,
-                          onChanged: (value) =>
-                              setState(() => _gamingChannelId = value),
-                          hint: 'Gaming requests and community gaming',
-                          icon: Icons.videogame_asset,
-                          isMobile: isMobile,
+                        SizedBox(
+                          width: double.infinity,
+                          child: _buildChannelDropdown(
+                            label: 'Gaming Channel',
+                            value: _gamingChannelId,
+                            onChanged: (value) =>
+                                setState(() => _gamingChannelId = value),
+                            hint: 'Gaming requests and community gaming',
+                            icon: Icons.videogame_asset,
+                            isMobile: isMobile,
+                          ),
                         ),
                         SizedBox(height: isMobile ? 12 : 16),
-                        _buildChannelDropdown(
-                          label: 'Meme Channel',
-                          value: _memeChannelId,
-                          onChanged: (value) =>
-                              setState(() => _memeChannelId = value),
-                          hint: 'Daily memes and meme commands',
-                          icon: Icons.image,
-                          isMobile: isMobile,
+                        SizedBox(
+                          width: double.infinity,
+                          child: _buildChannelDropdown(
+                            label: 'Meme Channel',
+                            value: _memeChannelId,
+                            onChanged: (value) =>
+                                setState(() => _memeChannelId = value),
+                            hint: 'Daily memes and meme commands',
+                            icon: Icons.image,
+                            isMobile: isMobile,
+                          ),
                         ),
                         SizedBox(height: isMobile ? 12 : 16),
-                        _buildChannelDropdown(
-                          label: 'Server Guide Channel',
-                          value: _serverGuideChannelId,
-                          onChanged: (value) =>
-                              setState(() => _serverGuideChannelId = value),
-                          hint: 'Server guide and info',
-                          icon: Icons.info,
-                          isMobile: isMobile,
+                        SizedBox(
+                          width: double.infinity,
+                          child: _buildChannelDropdown(
+                            label: 'Server Guide Channel',
+                            value: _serverGuideChannelId,
+                            onChanged: (value) =>
+                                setState(() => _serverGuideChannelId = value),
+                            hint: 'Server guide and info',
+                            icon: Icons.info,
+                            isMobile: isMobile,
+                          ),
                         ),
                       ],
                     ),
@@ -504,6 +546,9 @@ class _ChannelsConfigScreenState extends State<ChannelsConfigScreen> {
 
                 // Welcome System
                 Card(
+                  color: cardColor,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: EdgeInsets.all(cardPadding),
                     child: Column(
@@ -523,6 +568,7 @@ class _ChannelsConfigScreenState extends State<ChannelsConfigScreen> {
                                     ?.copyWith(
                                       fontSize: isMobile ? 18 : null,
                                     ),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ],
@@ -557,6 +603,9 @@ class _ChannelsConfigScreenState extends State<ChannelsConfigScreen> {
 
                 // Ticket System
                 Card(
+                  color: cardColor,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: EdgeInsets.all(cardPadding),
                     child: Column(
@@ -576,6 +625,7 @@ class _ChannelsConfigScreenState extends State<ChannelsConfigScreen> {
                                     ?.copyWith(
                                       fontSize: isMobile ? 18 : null,
                                     ),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ],
@@ -592,15 +642,18 @@ class _ChannelsConfigScreenState extends State<ChannelsConfigScreen> {
                           isMobile: isMobile,
                         ),
                         SizedBox(height: isMobile ? 12 : 16),
-                        _buildCategoryDropdown(
-                          label: 'Tickets Category',
-                          value: _ticketsCategoryId,
-                          onChanged: (value) =>
-                              setState(() => _ticketsCategoryId = value),
-                          hint: 'Category for ticket channels',
-                          icon: Icons.category,
-                          required: true,
-                          isMobile: isMobile,
+                        SizedBox(
+                          width: double.infinity,
+                          child: _buildCategoryDropdown(
+                            label: 'Tickets Category',
+                            value: _ticketsCategoryId,
+                            onChanged: (value) =>
+                                setState(() => _ticketsCategoryId = value),
+                            hint: 'Category for ticket channels',
+                            icon: Icons.category,
+                            required: true,
+                            isMobile: isMobile,
+                          ),
                         ),
                       ],
                     ),
@@ -657,11 +710,11 @@ class _ChannelsConfigScreenState extends State<ChannelsConfigScreen> {
                           label: const Text('Reset to Defaults'),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: Colors.orange,
-                            padding: const EdgeInsets.all(16),
+                            padding: const EdgeInsets.all(12),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 16),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: ElevatedButton.icon(
                           onPressed: _isLoading ? null : _saveConfig,
@@ -675,7 +728,7 @@ class _ChannelsConfigScreenState extends State<ChannelsConfigScreen> {
                               : const Icon(Icons.save),
                           label: const Text('Save Configuration'),
                           style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.all(16),
+                            padding: const EdgeInsets.all(12),
                           ),
                         ),
                       ),
