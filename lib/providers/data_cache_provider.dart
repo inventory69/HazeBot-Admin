@@ -272,8 +272,12 @@ class DataCacheProvider extends ChangeNotifier {
   }
 
   /// Update upvotes for a specific meme in the cache
-  void updateMemeUpvotes(String? messageId, int upvotes) {
-    if (messageId == null) return;
+  /// Also updates the message_id if it was null (optimistic add case)
+  void updateMemeUpvotes(String? messageId, int upvotes, {String? imageUrl}) {
+    if (messageId == null) {
+      debugPrint('⚠️ Cannot update upvotes: message_id is null');
+      return;
+    }
 
     debugPrint('👍 Updating upvotes for message $messageId to $upvotes');
 
@@ -289,8 +293,24 @@ class DataCacheProvider extends ChangeNotifier {
     if (_cachedMemes != null) {
       bool updated = false;
       for (int i = 0; i < _cachedMemes!.length; i++) {
-        if (_cachedMemes![i]['message_id'] == messageId) {
+        final cachedMeme = _cachedMemes![i];
+        
+        // Match by message_id OR by image_url (for optimistic adds with null message_id)
+        final matchesById = cachedMeme['message_id'] == messageId;
+        final matchesByUrl = imageUrl != null && 
+                              cachedMeme['message_id'] == null && 
+                              cachedMeme['image_url'] == imageUrl;
+        
+        if (matchesById || matchesByUrl) {
+          // Update upvotes
           _cachedMemes![i]['upvotes'] = upvotes;
+          
+          // If this was an optimistic add (null message_id), update it with real ID
+          if (_cachedMemes![i]['message_id'] == null && messageId != null) {
+            _cachedMemes![i]['message_id'] = messageId;
+            debugPrint('👍 Updated null message_id to $messageId for optimistic meme');
+          }
+          
           debugPrint(
               '👍 Updated meme at index $i: ${_cachedMemes![i]['title']}');
           updated = true;

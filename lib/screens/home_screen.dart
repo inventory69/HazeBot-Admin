@@ -1090,7 +1090,10 @@ class _DashboardScreenState extends State<DashboardScreen>
               final cacheProvider =
                   Provider.of<DataCacheProvider>(context, listen: false);
               cacheProvider.updateMemeUpvotes(
-                  meme['message_id'] as String?, upvotes);
+                meme['message_id'] as String?, 
+                upvotes,
+                imageUrl: meme['image_url'] as String?, // For optimistic adds with null message_id
+              );
             }
           }
         },
