@@ -172,6 +172,12 @@ class DataCacheProvider extends ChangeNotifier {
         _lastMemesLoad = DateTime.now();
         debugPrint('✅ Memes loaded and cached (${_cachedMemes!.length} items)');
       }
+    } on ApiTimeoutException {
+      debugPrint('⏱️ Timeout loading memes');
+      rethrow; // Let UI handle it
+    } on ApiConnectionException {
+      debugPrint('📡 Connection error loading memes');
+      rethrow; // Let UI handle it
     } catch (e) {
       debugPrint('❌ Failed to load memes: $e');
       // Keep old cache if available
@@ -210,6 +216,12 @@ class DataCacheProvider extends ChangeNotifier {
         debugPrint(
             '✅ Rankups loaded and cached (${_cachedRankups!.length} items)');
       }
+    } on ApiTimeoutException {
+      debugPrint('⏱️ Timeout loading rankups');
+      rethrow; // Let UI handle it
+    } on ApiConnectionException {
+      debugPrint('📡 Connection error loading rankups');
+      rethrow; // Let UI handle it
     } catch (e) {
       debugPrint('❌ Failed to load rankups: $e');
     } finally {

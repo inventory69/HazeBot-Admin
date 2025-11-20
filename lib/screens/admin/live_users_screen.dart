@@ -554,7 +554,7 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                                             const SizedBox(width: 4),
                                             Text(
                                               timeago.format(
-                                                  DateTime.parse(lastSeen)),
+                                                  DateTime.parse(lastSeen).toLocal()),
                                               style: TextStyle(
                                                 fontSize: isMobile ? 11 : 12,
                                                 color: isRecent

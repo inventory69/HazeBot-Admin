@@ -8,6 +8,7 @@ import '../services/config_service.dart';
 import '../services/api_service.dart';
 import '../providers/data_cache_provider.dart';
 import '../utils/app_config.dart';
+import '../widgets/api_error_widget.dart';
 import 'meme_detail_screen.dart';
 import 'profile_screen.dart';
 import 'config/general_config_screen.dart';
@@ -130,20 +131,6 @@ class _HomeScreenState extends State<HomeScreen>
       setState(() {
         _reloadCounter++;
       });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Row(
-            children: [
-              Icon(Icons.check_circle, color: Colors.white),
-              SizedBox(width: 12),
-              Text('Configuration reloaded successfully'),
-            ],
-          ),
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 2),
-        ),
-      );
     }
   }
 
@@ -819,6 +806,8 @@ class _DashboardScreenState extends State<DashboardScreen>
   bool get wantKeepAlive => true;
 
   bool _isRefreshing = false;
+  bool _hasInitialLoadError = false;
+  bool _isOfflineError = false;
 
   @override
   void initState() {
@@ -836,7 +825,14 @@ class _DashboardScreenState extends State<DashboardScreen>
   Future<void> _loadData({bool force = false}) async {
     if (_isRefreshing) return; // Prevent multiple simultaneous refreshes
 
-    setState(() => _isRefreshing = true);
+    setState(() {
+      _isRefreshing = true;
+      // Clear error state when retrying
+      if (force) {
+        _hasInitialLoadError = false;
+        _isOfflineError = false;
+      }
+    });
 
     try {
       final cacheProvider =
@@ -846,13 +842,49 @@ class _DashboardScreenState extends State<DashboardScreen>
         cacheProvider.loadLatestRankups(force: force),
       ]);
 
-      if (mounted && force) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Dashboard refreshed'),
-            duration: Duration(seconds: 1),
-          ),
-        );
+      // Success - clear any error state
+      if (mounted) {
+        setState(() {
+          _hasInitialLoadError = false;
+          _isOfflineError = false;
+        });
+      }
+    } on ApiTimeoutException catch (e) {
+      if (mounted) {
+        setState(() {
+          _hasInitialLoadError = true;
+          _isOfflineError = false; // Timeout, not offline
+        });
+        // Only show snackbar if it's a manual refresh (force = true)
+        if (force) {
+          ApiErrorSnackbar.show(context, isOffline: false);
+        }
+      }
+    } on ApiConnectionException catch (e) {
+      if (mounted) {
+        setState(() {
+          _hasInitialLoadError = true;
+          _isOfflineError = true; // Connection error = offline
+        });
+        // Only show snackbar if it's a manual refresh (force = true)
+        if (force) {
+          ApiErrorSnackbar.show(context, isOffline: true);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _hasInitialLoadError = true;
+          _isOfflineError = false;
+        });
+        if (force) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error loading data: $e'),
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
       }
     } finally {
       if (mounted) {
@@ -864,12 +896,30 @@ class _DashboardScreenState extends State<DashboardScreen>
   @override
   Widget build(BuildContext context) {
     super.build(context); // Required for AutomaticKeepAliveClientMixin
+    
+    // Show error widget if initial load failed and no cached data
     return Consumer<DataCacheProvider>(
       builder: (context, cacheProvider, child) {
         final memes = cacheProvider.memes ?? [];
         final rankups = cacheProvider.rankups ?? [];
         final isLoadingMemes = cacheProvider.isLoadingMemes;
         final isLoadingRankups = cacheProvider.isLoadingRankups;
+        
+        // Show full-screen error if initial load failed AND no cached data
+        if (_hasInitialLoadError && memes.isEmpty && rankups.isEmpty) {
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text('HazeHub'),
+            ),
+            body: ApiErrorWidget(
+              message: _isOfflineError 
+                ? 'The server is taking a siesta.\nCome back when it\'s well rested!'
+                : 'The server is not responding.\nPlease try again in a moment.',
+              isOffline: _isOfflineError,
+              onRetry: () => _loadData(force: true),
+            ),
+          );
+        }
 
         return LayoutBuilder(
           builder: (context, constraints) {

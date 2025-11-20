@@ -1,10 +1,21 @@
 import 'dart:convert';
-import 'dart:io' show Platform;
+import 'dart:io' show Platform, SocketException;
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+/// Custom exceptions for better error handling
+class ApiTimeoutException implements Exception {
+  final String message;
+  ApiTimeoutException([this.message = 'Server not responding... 🦥']);
+}
+
+class ApiConnectionException implements Exception {
+  final String message;
+  ApiConnectionException([this.message = 'No connection to server... 🌴']);
+}
 
 class ApiService {
   // Singleton pattern
@@ -163,77 +174,121 @@ class ApiService {
     return response;
   }
 
-  /// HTTP GET with automatic token refresh
+  /// HTTP GET with automatic token refresh and timeout handling
   /// IMPORTANT: Headers are computed inside the lambda to get fresh token after refresh
-  Future<http.Response> _get(String url, {Map<String, String>? headers}) {
+  Future<http.Response> _get(String url, {Map<String, String>? headers}) async {
     // CRITICAL: Return a builder function that reads _token FRESH each time it's called!
     // This ensures retry after refresh uses the NEW token, not the old one
-    return _requestWithRetry(() {
-      // Read token FRESH from instance variable (not captured in closure)
-      final String currentToken = _token ?? '';
+    try {
+      return await _requestWithRetry(() async {
+        // Read token FRESH from instance variable (not captured in closure)
+        final String currentToken = _token ?? '';
 
-      // Build headers with CURRENT token
-      final Map<String, String> freshHeaders = {
-        'Content-Type': 'application/json',
-        if (currentToken.isNotEmpty) 'Authorization': 'Bearer $currentToken',
-        ...?headers,
-      };
+        // Build headers with CURRENT token
+        final Map<String, String> freshHeaders = {
+          'Content-Type': 'application/json',
+          if (currentToken.isNotEmpty) 'Authorization': 'Bearer $currentToken',
+          ...?headers,
+        };
 
-      return http.get(Uri.parse(url), headers: freshHeaders);
-    });
+        return await http
+            .get(Uri.parse(url), headers: freshHeaders)
+            .timeout(
+              const Duration(seconds: 15),
+              onTimeout: () => throw ApiTimeoutException(),
+            );
+      });
+    } on SocketException {
+      throw ApiConnectionException();
+    } on TimeoutException {
+      throw ApiTimeoutException();
+    }
   }
 
-  /// HTTP POST with automatic token refresh
+  /// HTTP POST with automatic token refresh and timeout handling
   /// IMPORTANT: Headers are computed inside the lambda to get fresh token after refresh
   Future<http.Response> _post(String url,
-      {Map<String, String>? headers, Object? body}) {
-    return _requestWithRetry(() {
-      // Read token FRESH from instance variable
-      final String currentToken = _token ?? '';
+      {Map<String, String>? headers, Object? body}) async {
+    try {
+      return await _requestWithRetry(() async {
+        // Read token FRESH from instance variable
+        final String currentToken = _token ?? '';
 
-      final Map<String, String> freshHeaders = {
-        'Content-Type': 'application/json',
-        if (currentToken.isNotEmpty) 'Authorization': 'Bearer $currentToken',
-        ...?headers,
-      };
+        final Map<String, String> freshHeaders = {
+          'Content-Type': 'application/json',
+          if (currentToken.isNotEmpty) 'Authorization': 'Bearer $currentToken',
+          ...?headers,
+        };
 
-      return http.post(Uri.parse(url), headers: freshHeaders, body: body);
-    });
+        return await http
+            .post(Uri.parse(url), headers: freshHeaders, body: body)
+            .timeout(
+              const Duration(seconds: 15),
+              onTimeout: () => throw ApiTimeoutException(),
+            );
+      });
+    } on SocketException {
+      throw ApiConnectionException();
+    } on TimeoutException {
+      throw ApiTimeoutException();
+    }
   }
 
-  /// HTTP PUT with automatic token refresh
+  /// HTTP PUT with automatic token refresh and timeout handling
   /// IMPORTANT: Headers are computed inside the lambda to get fresh token after refresh
   Future<http.Response> _put(String url,
-      {Map<String, String>? headers, Object? body}) {
-    return _requestWithRetry(() {
-      // Read token FRESH from instance variable
-      final String currentToken = _token ?? '';
+      {Map<String, String>? headers, Object? body}) async {
+    try {
+      return await _requestWithRetry(() async {
+        // Read token FRESH from instance variable
+        final String currentToken = _token ?? '';
 
-      final Map<String, String> freshHeaders = {
-        'Content-Type': 'application/json',
-        if (currentToken.isNotEmpty) 'Authorization': 'Bearer $currentToken',
-        ...?headers,
-      };
+        final Map<String, String> freshHeaders = {
+          'Content-Type': 'application/json',
+          if (currentToken.isNotEmpty) 'Authorization': 'Bearer $currentToken',
+          ...?headers,
+        };
 
-      return http.put(Uri.parse(url), headers: freshHeaders, body: body);
-    });
+        return await http
+            .put(Uri.parse(url), headers: freshHeaders, body: body)
+            .timeout(
+              const Duration(seconds: 15),
+              onTimeout: () => throw ApiTimeoutException(),
+            );
+      });
+    } on SocketException {
+      throw ApiConnectionException();
+    } on TimeoutException {
+      throw ApiTimeoutException();
+    }
   }
 
-  /// HTTP DELETE with automatic token refresh
+  /// HTTP DELETE with automatic token refresh and timeout handling
   /// IMPORTANT: Headers are computed inside the lambda to get fresh token after refresh
-  Future<http.Response> _delete(String url, {Map<String, String>? headers}) {
-    return _requestWithRetry(() {
-      // Read token FRESH from instance variable
-      final String currentToken = _token ?? '';
+  Future<http.Response> _delete(String url, {Map<String, String>? headers}) async {
+    try {
+      return await _requestWithRetry(() async {
+        // Read token FRESH from instance variable
+        final String currentToken = _token ?? '';
 
-      final Map<String, String> freshHeaders = {
-        'Content-Type': 'application/json',
-        if (currentToken.isNotEmpty) 'Authorization': 'Bearer $currentToken',
-        ...?headers,
-      };
+        final Map<String, String> freshHeaders = {
+          'Content-Type': 'application/json',
+          if (currentToken.isNotEmpty) 'Authorization': 'Bearer $currentToken',
+          ...?headers,
+        };
 
-      return http.delete(Uri.parse(url), headers: freshHeaders);
-    });
+        return await http
+            .delete(Uri.parse(url), headers: freshHeaders)
+            .timeout(
+              const Duration(seconds: 15),
+              onTimeout: () => throw ApiTimeoutException(),
+            );
+      });
+    } on SocketException {
+      throw ApiConnectionException();
+    } on TimeoutException {
+      throw ApiTimeoutException();
+    }
   }
 
   String get _userAgent {
@@ -278,10 +333,18 @@ class ApiService {
     return headers;
   }
 
+  // Headers for unauthenticated requests (no token, but includes User-Agent)
+  Map<String, String> get _publicHeaders {
+    return {
+      'Content-Type': 'application/json',
+      'User-Agent': _userAgent,
+    };
+  }
+
   Future<Map<String, dynamic>> login(String username, String password) async {
     final response = await http.post(
       Uri.parse('$baseUrl/auth/login'),
-      headers: {'Content-Type': 'application/json'},
+      headers: _publicHeaders,
       body: jsonEncode({
         'username': username,
         'password': password,
@@ -299,7 +362,7 @@ class ApiService {
   Future<Map<String, dynamic>> getDiscordAuthUrl() async {
     final response = await http.get(
       Uri.parse('$baseUrl/discord/auth'),
-      headers: {'Content-Type': 'application/json'},
+      headers: _publicHeaders,
     );
 
     if (response.statusCode == 200) {
@@ -312,7 +375,7 @@ class ApiService {
   Future<Map<String, dynamic>> exchangeDiscordCode(String code) async {
     final response = await http.get(
       Uri.parse('$baseUrl/discord/callback?code=$code'),
-      headers: {'Content-Type': 'application/json'},
+      headers: _publicHeaders,
     );
 
     if (response.statusCode == 200) {
