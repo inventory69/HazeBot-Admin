@@ -86,9 +86,9 @@ class _MemeDetailScreenState extends State<MemeDetailScreen> {
           if (mounted) {
             final cacheProvider = Provider.of<DataCacheProvider>(context, listen: false);
             cacheProvider.updateMemeUpvotes(
-              messageId: messageId,
+              messageId,
+              newUpvotes,
               imageUrl: imageUrl,
-              upvotes: newUpvotes,
             );
           }
         }
