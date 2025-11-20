@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/api_service.dart';
+import '../providers/data_cache_provider.dart';
 
 class MemeDetailScreen extends StatefulWidget {
   final Map<String, dynamic> meme;
@@ -57,6 +59,7 @@ class _MemeDetailScreenState extends State<MemeDetailScreen> {
 
   Future<void> _toggleUpvote() async {
     final messageId = widget.meme['message_id'] as String?;
+    final imageUrl = widget.meme['image_url'] as String?;
     if (messageId == null || _isUpvoting) return;
 
     setState(() {
@@ -72,11 +75,22 @@ class _MemeDetailScreenState extends State<MemeDetailScreen> {
         final reactionsResponse =
             await ApiService().getMemeReactions(messageId);
         if (reactionsResponse['success'] == true) {
+          final newUpvotes = reactionsResponse['upvotes'] as int? ?? 0;
+          
           setState(() {
             _hasUpvoted = reactionsResponse['has_upvoted'] as bool? ?? false;
-            _upvotes = reactionsResponse['upvotes'] as int? ??
-                0; // Total count (custom + Discord)
+            _upvotes = newUpvotes; // Total count (custom + Discord)
           });
+
+          // Update the cache immediately with 60s override window
+          if (mounted) {
+            final cacheProvider = Provider.of<DataCacheProvider>(context, listen: false);
+            cacheProvider.updateMemeUpvotes(
+              messageId: messageId,
+              imageUrl: imageUrl,
+              upvotes: newUpvotes,
+            );
+          }
         }
 
         if (mounted) {
