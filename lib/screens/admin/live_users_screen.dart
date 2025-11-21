@@ -366,7 +366,7 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                                   if (checkedAt != null) ...[
                                     const SizedBox(height: 4),
                                     Text(
-                                      'Updated: ${timeago.format(DateTime.parse(checkedAt))}',
+                                      'Updated: ${timeago.format(DateTime.parse(checkedAt).toLocal())}',
                                       style: Theme.of(context)
                                           .textTheme
                                           .bodySmall
@@ -764,7 +764,7 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                   ),
                   trailing: timestamp != null
                       ? Text(
-                          timeago.format(DateTime.parse(timestamp)),
+                          timeago.format(DateTime.parse(timestamp).toLocal()),
                           style: TextStyle(
                             fontSize: isMobile ? 10 : 11,
                             color:
