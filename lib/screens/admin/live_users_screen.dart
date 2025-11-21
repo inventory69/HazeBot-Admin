@@ -135,8 +135,18 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
       return 'Mobile';
     } else if (ua.contains('tablet') || ua.contains('ipad')) {
       return 'Tablet';
-    } else if (ua.contains('dart') || ua.contains('flutter')) {
-      // If it's Dart/Flutter but not detected as mobile, check for web
+    } else if (ua.contains('dart') || 
+               ua.contains('flutter') ||
+               ua.contains('testventory') || 
+               ua.contains('chillventory')) {
+      // If it's Dart/Flutter/our app, it's Web (unless already detected as mobile/tablet)
+      return 'Web';
+    } else if (ua.contains('mozilla') || 
+               ua.contains('chrome') || 
+               ua.contains('safari') || 
+               ua.contains('firefox') ||
+               ua.contains('edge')) {
+      // Browser user agents
       return 'Web';
     } else {
       return 'Desktop';

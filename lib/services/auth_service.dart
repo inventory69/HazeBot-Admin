@@ -48,6 +48,15 @@ class AuthService extends ChangeNotifier {
   }
 
   Future<void> logout() async {
+    // Call backend logout endpoint to remove session
+    try {
+      await _apiService.logout();
+    } catch (e) {
+      // Ignore errors - logout locally anyway
+      debugPrint('Backend logout failed: $e');
+    }
+
+    // Clear local token
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('auth_token');
 

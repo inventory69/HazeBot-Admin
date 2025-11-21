@@ -184,9 +184,10 @@ class ApiService {
         // Read token FRESH from instance variable (not captured in closure)
         final String currentToken = _token ?? '';
 
-        // Build headers with CURRENT token
+        // Build headers with CURRENT token and User-Agent
         final Map<String, String> freshHeaders = {
           'Content-Type': 'application/json',
+          'User-Agent': _userAgent,
           if (currentToken.isNotEmpty) 'Authorization': 'Bearer $currentToken',
           ...?headers,
         };
@@ -216,6 +217,7 @@ class ApiService {
 
         final Map<String, String> freshHeaders = {
           'Content-Type': 'application/json',
+          'User-Agent': _userAgent,
           if (currentToken.isNotEmpty) 'Authorization': 'Bearer $currentToken',
           ...?headers,
         };
@@ -245,6 +247,7 @@ class ApiService {
 
         final Map<String, String> freshHeaders = {
           'Content-Type': 'application/json',
+          'User-Agent': _userAgent,
           if (currentToken.isNotEmpty) 'Authorization': 'Bearer $currentToken',
           ...?headers,
         };
@@ -273,6 +276,7 @@ class ApiService {
 
         final Map<String, String> freshHeaders = {
           'Content-Type': 'application/json',
+          'User-Agent': _userAgent,
           if (currentToken.isNotEmpty) 'Authorization': 'Bearer $currentToken',
           ...?headers,
         };
@@ -399,6 +403,15 @@ class ApiService {
       return jsonDecode(response.body);
     } else {
       throw Exception('Failed to get current user: ${response.body}');
+    }
+  }
+
+  Future<void> logout() async {
+    try {
+      await _post('$baseUrl/auth/logout');
+    } catch (e) {
+      // Ignore errors - session will expire naturally
+      debugPrint('Logout endpoint error: $e');
     }
   }
 

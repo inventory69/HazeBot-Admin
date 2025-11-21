@@ -226,6 +226,7 @@ class _LoginScreenState extends State<LoginScreen> {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 400),
             child: Card(
+              surfaceTintColor: Colors.transparent,
               child: Padding(
                 padding: const EdgeInsets.all(32.0),
                 child: AutofillGroup(
