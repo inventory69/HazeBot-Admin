@@ -412,10 +412,14 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
             child: Builder(
               builder: (context) {
                 // Card color based on theme (same as meme_config_screen)
-                final cardColor = (Theme.of(context).colorScheme.surfaceContainerHigh !=
-                        ThemeData.light().colorScheme.surfaceContainerHigh)
-                    ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
-                    : Theme.of(context).colorScheme.surface;
+                final cardColor =
+                    (Theme.of(context).colorScheme.surfaceContainerHigh !=
+                            ThemeData.light().colorScheme.surfaceContainerHigh)
+                        ? Theme.of(context)
+                            .colorScheme
+                            .primaryContainer
+                            .withOpacity(0.18)
+                        : Theme.of(context).colorScheme.surface;
 
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -433,7 +437,8 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                       child: Row(
                         children: [
                           Icon(Icons.info_outline,
-                              size: isMobile ? 18 : 20, color: Colors.blue[700]),
+                              size: isMobile ? 18 : 20,
+                              color: Colors.blue[700]),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -453,663 +458,755 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                     Card(
                       color: cardColor,
                       elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16)),
                       child: Padding(
                         padding: EdgeInsets.all(isMobile ? 16.0 : 24.0),
                         child: TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    labelText: 'Search Templates',
-                    hintText: 'e.g., Drake, Distracted Boyfriend...',
-                    prefixIcon: const Icon(Icons.search),
-                    border: const OutlineInputBorder(),
-                    suffixIcon: _searchController.text.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear),
-                            onPressed: () {
-                              _searchController.clear();
-                              _filterTemplates('');
-                            },
-                          )
-                        : null,
-                  ),
+                          controller: _searchController,
+                          decoration: InputDecoration(
+                            labelText: 'Search Templates',
+                            hintText: 'e.g., Drake, Distracted Boyfriend...',
+                            prefixIcon: const Icon(Icons.search),
+                            border: const OutlineInputBorder(),
+                            suffixIcon: _searchController.text.isNotEmpty
+                                ? IconButton(
+                                    icon: const Icon(Icons.clear),
+                                    onPressed: () {
+                                      _searchController.clear();
+                                      _filterTemplates('');
+                                    },
+                                  )
+                                : null,
+                          ),
                           onChanged: _filterTemplates,
                         ),
                       ),
                     ),
                     SizedBox(height: isMobile ? 16 : 24),
 
-                if (_isLoadingTemplates)
-                  const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(40.0),
-                      child: CircularProgressIndicator(),
-                    ),
-                  )
-                else if (_filteredTemplates.isEmpty)
-                  Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(40.0),
-                      child: Column(
-                        children: [
-                          Icon(Icons.search_off,
-                              size: 64,
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurfaceVariant),
-                          const SizedBox(height: 16),
-                          Text(
-                            'No templates found',
-                            style: Theme.of(context).textTheme.titleLarge,
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Try a different search term',
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                else
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Template Gallery (Left Side)
-                      Expanded(
-                        flex: isMobile ? 1 : 2,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  '📋 Template Gallery',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleLarge
-                                      ?.copyWith(fontWeight: FontWeight.bold),
-                                ),
-                                Text(
-                                  'Page ${_currentPage + 1}/$totalPages',
-                                  style: Theme.of(context).textTheme.bodySmall,
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-
-                            // Grid of templates
-                            GridView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              gridDelegate:
-                                  SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount:
-                                    isMobile ? 4 : (isTablet ? 6 : 8),
-                                crossAxisSpacing: 4,
-                                mainAxisSpacing: 4,
-                                childAspectRatio: 0.62,
-                              ),
-                              itemCount: pageTemplates.length,
-                              itemBuilder: (context, index) {
-                                final template = pageTemplates[index];
-                                return InkWell(
-                                  onTap: () {
-                                    setState(() {
-                                      _selectedTemplate = template;
-                                      _generatedMemeUrl = null; // Clear preview
-                                    });
-                                  },
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Card(
-                                    color: (Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh)
-                                        ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
-                                        : Theme.of(context).colorScheme.surface,
-                                    elevation: 0,
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                                    margin: const EdgeInsets.all(1.0),
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 1.0, vertical: 0.0),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        mainAxisSize: MainAxisSize.max,
-                                        mainAxisAlignment: MainAxisAlignment.start,
-                                        children: [
-                                          Expanded(
-                                            child: ClipRRect(
-                                              borderRadius: BorderRadius.circular(7),
-                                              child: Image.network(
-                                                getProxiedImageUrl(template['url']),
-                                                width: double.infinity,
-                                                fit: BoxFit.cover,
-                                                loadingBuilder: (context, child, loadingProgress) {
-                                                  if (loadingProgress == null) return child;
-                                                  return Center(
-                                                    child: CircularProgressIndicator(
-                                                      value: loadingProgress.expectedTotalBytes != null
-                                                          ? loadingProgress.cumulativeBytesLoaded /
-                                                              loadingProgress.expectedTotalBytes!
-                                                          : null,
-                                                    ),
-                                                  );
-                                                },
-                                                errorBuilder: (context, error, stackTrace) {
-                                                  return Container(
-                                                    color: Theme.of(context).colorScheme.errorContainer,
-                                                    child: const Center(
-                                                      child: Icon(Icons.broken_image, size: 18),
-                                                    ),
-                                                  );
-                                                },
-                                              ),
-                                            ),
-                                          ),
-                                          Text(
-                                            template['name'],
-                                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 9,
-                                                ),
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          Text(
-                                            '${template['box_count']} text boxes',
-                                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                                  fontSize: 8,
-                                                ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-
-                            const SizedBox(height: 16),
-
-                            // Pagination
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                IconButton.filled(
-                                  onPressed: _currentPage > 0
-                                      ? () {
-                                          setState(() {
-                                            _currentPage--;
-                                          });
-                                        }
-                                      : null,
-                                  icon: const Icon(Icons.chevron_left),
-                                  style: IconButton.styleFrom(
-                                    disabledBackgroundColor: Theme.of(context)
-                                      .colorScheme
-                                      .surfaceContainerHigh,
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 16),
-                                  child: Text(
-                                    '${startIdx + 1}-$endIdx of ${_filteredTemplates.length}',
-                                    style:
-                                        Theme.of(context).textTheme.bodyMedium,
-                                  ),
-                                ),
-                                IconButton.filled(
-                                  onPressed: _currentPage < totalPages - 1
-                                      ? () {
-                                          setState(() {
-                                            _currentPage++;
-                                          });
-                                        }
-                                      : null,
-                                  icon: const Icon(Icons.chevron_right),
-                                  style: IconButton.styleFrom(
-                                    disabledBackgroundColor: Theme.of(context)
-                                        .colorScheme
-                                        .surfaceContainerHighest,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
+                    if (_isLoadingTemplates)
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(40.0),
+                          child: CircularProgressIndicator(),
                         ),
-                      ),
-
-                      if (!isMobile) ...[
-                        const SizedBox(width: 24),
-
-                        // Preview Panel (Right Side)
-                        Expanded(
-                          flex: 1,
+                      )
+                    else if (_filteredTemplates.isEmpty)
+                      Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(40.0),
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              Icon(Icons.search_off,
+                                  size: 64,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant),
+                              const SizedBox(height: 16),
                               Text(
-                                '🎨 Preview',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleLarge
-                                    ?.copyWith(fontWeight: FontWeight.bold),
+                                'No templates found',
+                                style: Theme.of(context).textTheme.titleLarge,
                               ),
-                              const SizedBox(height: 12),
-                              if (_selectedTemplate != null)
-                                Card(
-                                  color: (Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh)
-                                      ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
-                                      : Theme.of(context).colorScheme.surface,
-                                  elevation: 0,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      // Preview Image
-                                      ClipRRect(
-                                        borderRadius:
-                                            const BorderRadius.vertical(
-                                                top: Radius.circular(12)),
-                                        child: Image.network(
-                                          getProxiedImageUrl(
-                                              _generatedMemeUrl ??
-                                                  _selectedTemplate!['url']),
-                                          width: double.infinity,
-                                          fit: BoxFit.contain,
-                                          loadingBuilder: (context, child,
-                                              loadingProgress) {
-                                            if (loadingProgress == null) {
-                                              return child;
-                                            }
-                                            return Container(
-                                              height: 300,
-                                              color: Theme.of(context)
-                                                  .colorScheme
-                                                  .surfaceContainerHigh,
-                                              child: Center(
-                                                child:
-                                                    CircularProgressIndicator(
-                                                  value: loadingProgress
-                                                              .expectedTotalBytes !=
-                                                          null
-                                                      ? loadingProgress
-                                                              .cumulativeBytesLoaded /
-                                                          loadingProgress
-                                                              .expectedTotalBytes!
-                                                      : null,
-                                                ),
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                      ),
-
-                                      // Template Info
-                                      Padding(
-                                        padding: const EdgeInsets.all(20.0),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              _selectedTemplate!['name'],
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .titleLarge
-                                                  ?.copyWith(
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                            ),
-                                            const SizedBox(height: 8),
-                                            Text(
-                                              '${_selectedTemplate!['box_count']} text boxes available',
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .bodyMedium
-                                                  ?.copyWith(
-                                                    color: Theme.of(context)
-                                                        .colorScheme
-                                                        .onSurfaceVariant,
-                                                  ),
-                                            ),
-                                            const SizedBox(height: 20),
-
-                                            // Create Button
-                                            SizedBox(
-                                              width: double.infinity,
-                                              child: FilledButton.icon(
-                                                onPressed: _isGenerating
-                                                    ? null
-                                                    : _showCreateMemeDialog,
-                                                icon: _isGenerating
-                                                    ? const SizedBox(
-                                                        width: 20,
-                                                        height: 20,
-                                                        child:
-                                                            CircularProgressIndicator(
-                                                          strokeWidth: 2,
-                                                          color: Colors.white,
-                                                        ),
-                                                      )
-                                                    : const Icon(Icons.create),
-                                                label: Text(_isGenerating
-                                                    ? 'Generating...'
-                                                    : 'Create Meme'),
-                                                style: FilledButton.styleFrom(
-                                                  padding: const EdgeInsets
-                                                      .symmetric(vertical: 16),
-                                                ),
-                                              ),
-                                            ),
-
-                                            if (_generatedMemeUrl != null) ...[
-                                              const SizedBox(height: 12),
-                                              SizedBox(
-                                                width: double.infinity,
-                                                child: FilledButton.icon(
-                                                  onPressed:
-                                                      (_isSendingToDiscord ||
-                                                              _memeSentToDiscord)
-                                                          ? null
-                                                          : _sendMemeToDiscord,
-                                                  icon: _isSendingToDiscord
-                                                      ? const SizedBox(
-                                                          width: 20,
-                                                          height: 20,
-                                                          child:
-                                                              CircularProgressIndicator(
-                                                            strokeWidth: 2,
-                                                            color: Colors.white,
-                                                          ),
-                                                        )
-                                                      : _memeSentToDiscord
-                                                          ? const Icon(Icons
-                                                              .check_circle)
-                                                          : const Icon(
-                                                              Icons.send),
-                                                  label: Text(_isSendingToDiscord
-                                                      ? 'Sending...'
-                                                      : _memeSentToDiscord
-                                                          ? 'Sent to Discord'
-                                                          : 'Send to Discord'),
-                                                  style: FilledButton.styleFrom(
-                                                    padding: const EdgeInsets
-                                                        .symmetric(
-                                                        vertical: 16),
-                                                  ),
-                                                ),
-                                              ),
-                                              const SizedBox(height: 12),
-                                              Container(
-                                                padding:
-                                                    const EdgeInsets.all(12),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.green
-                                                      .withValues(alpha: 0.1),
-                                                  borderRadius:
-                                                      BorderRadius.circular(8),
-                                                  border: Border.all(
-                                                    color: Colors.green
-                                                        .withValues(alpha: 0.3),
-                                                  ),
-                                                ),
-                                                child: Row(
-                                                  children: [
-                                                    const Icon(
-                                                        Icons.check_circle,
-                                                        color: Colors.green,
-                                                        size: 20),
-                                                    const SizedBox(width: 8),
-                                                    Expanded(
-                                                      child: Text(
-                                                        'Meme generated! Right-click to save.',
-                                                        style: TextStyle(
-                                                          color:
-                                                              Colors.green[800],
-                                                          fontSize: 12,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ],
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Try a different search term',
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
                             ],
                           ),
                         ),
-                      ],
-                    ],
-                  ),
-
-                // Mobile Create Button
-                if (isMobile && _selectedTemplate != null) ...[
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton.icon(
-                      onPressed: _isGenerating ? null : _showCreateMemeDialog,
-                      icon: _isGenerating
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Icon(Icons.create),
-                      label: Text(_isGenerating
-                          ? 'Generating...'
-                          : 'Create Meme: ${_selectedTemplate!['name']}'),
-                      style: FilledButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
-                    ),
-                  ),
-                ],
-
-                // Mobile Generated Meme Preview
-                if (isMobile && _generatedMemeUrl != null) ...[
-                  const SizedBox(height: 24),
-                  Card(
-                    color: (Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh)
-                        ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
-                        : Theme.of(context).colorScheme.surface,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    child: Column(
-                      children: [
-                        ClipRRect(
-                          borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(12)),
-                          child: Image.network(
-                            getProxiedImageUrl(_generatedMemeUrl!),
-                            width: double.infinity,
-                            fit: BoxFit.contain,
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            children: [
-                              SizedBox(
-                                width: double.infinity,
-                                child: FilledButton.icon(
-                                  onPressed: (_isSendingToDiscord ||
-                                          _memeSentToDiscord)
-                                      ? null
-                                      : _sendMemeToDiscord,
-                                  icon: _isSendingToDiscord
-                                      ? const SizedBox(
-                                          width: 20,
-                                          height: 20,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            color: Colors.white,
-                                          ),
-                                        )
-                                      : _memeSentToDiscord
-                                          ? const Icon(Icons.check_circle)
-                                          : const Icon(Icons.send),
-                                  label: Text(_isSendingToDiscord
-                                      ? 'Sending...'
-                                      : _memeSentToDiscord
-                                          ? 'Sent to Discord'
-                                          : 'Send to Discord'),
-                                  style: FilledButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 16),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: Colors.green.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: Colors.green.withValues(alpha: 0.3),
-                                  ),
-                                ),
-                                child: Row(
+                      )
+                    else
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Template Gallery (Left Side)
+                          Expanded(
+                            flex: isMobile ? 1 : 2,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
-                                    const Icon(Icons.check_circle,
-                                        color: Colors.green, size: 20),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        'Meme generated! Long-press to save.',
-                                        style: TextStyle(
-                                          color: Colors.green[800],
-                                          fontSize: 12,
+                                    Text(
+                                      '📋 Template Gallery',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleLarge
+                                          ?.copyWith(
+                                              fontWeight: FontWeight.bold),
+                                    ),
+                                    Text(
+                                      'Page ${_currentPage + 1}/$totalPages',
+                                      style:
+                                          Theme.of(context).textTheme.bodySmall,
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+
+                                // Grid of templates
+                                GridView.builder(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  gridDelegate:
+                                      SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount:
+                                        isMobile ? 4 : (isTablet ? 6 : 8),
+                                    crossAxisSpacing: 4,
+                                    mainAxisSpacing: 4,
+                                    childAspectRatio: 0.62,
+                                  ),
+                                  itemCount: pageTemplates.length,
+                                  itemBuilder: (context, index) {
+                                    final template = pageTemplates[index];
+                                    return InkWell(
+                                      onTap: () {
+                                        setState(() {
+                                          _selectedTemplate = template;
+                                          _generatedMemeUrl =
+                                              null; // Clear preview
+                                        });
+                                      },
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Card(
+                                        color: (Theme.of(context)
+                                                    .colorScheme
+                                                    .surfaceContainerHigh !=
+                                                ThemeData.light()
+                                                    .colorScheme
+                                                    .surfaceContainerHigh)
+                                            ? Theme.of(context)
+                                                .colorScheme
+                                                .primaryContainer
+                                                .withOpacity(0.18)
+                                            : Theme.of(context)
+                                                .colorScheme
+                                                .surface,
+                                        elevation: 0,
+                                        shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(4)),
+                                        margin: const EdgeInsets.all(1.0),
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 1.0, vertical: 0.0),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            mainAxisSize: MainAxisSize.max,
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.start,
+                                            children: [
+                                              Expanded(
+                                                child: ClipRRect(
+                                                  borderRadius:
+                                                      BorderRadius.circular(7),
+                                                  child: Image.network(
+                                                    getProxiedImageUrl(
+                                                        template['url']),
+                                                    width: double.infinity,
+                                                    fit: BoxFit.cover,
+                                                    loadingBuilder: (context,
+                                                        child,
+                                                        loadingProgress) {
+                                                      if (loadingProgress ==
+                                                          null) return child;
+                                                      return Center(
+                                                        child:
+                                                            CircularProgressIndicator(
+                                                          value: loadingProgress
+                                                                      .expectedTotalBytes !=
+                                                                  null
+                                                              ? loadingProgress
+                                                                      .cumulativeBytesLoaded /
+                                                                  loadingProgress
+                                                                      .expectedTotalBytes!
+                                                              : null,
+                                                        ),
+                                                      );
+                                                    },
+                                                    errorBuilder: (context,
+                                                        error, stackTrace) {
+                                                      return Container(
+                                                        color: Theme.of(context)
+                                                            .colorScheme
+                                                            .errorContainer,
+                                                        child: const Center(
+                                                          child: Icon(
+                                                              Icons
+                                                                  .broken_image,
+                                                              size: 18),
+                                                        ),
+                                                      );
+                                                    },
+                                                  ),
+                                                ),
+                                              ),
+                                              Text(
+                                                template['name'],
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .labelSmall
+                                                    ?.copyWith(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 9,
+                                                    ),
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                              Text(
+                                                '${template['box_count']} text boxes',
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .labelSmall
+                                                    ?.copyWith(
+                                                      color: Theme.of(context)
+                                                          .colorScheme
+                                                          .onSurfaceVariant,
+                                                      fontSize: 8,
+                                                    ),
+                                              ),
+                                            ],
+                                          ),
                                         ),
+                                      ),
+                                    );
+                                  },
+                                ),
+
+                                const SizedBox(height: 16),
+
+                                // Pagination
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    IconButton.filled(
+                                      onPressed: _currentPage > 0
+                                          ? () {
+                                              setState(() {
+                                                _currentPage--;
+                                              });
+                                            }
+                                          : null,
+                                      icon: const Icon(Icons.chevron_left),
+                                      style: IconButton.styleFrom(
+                                        disabledBackgroundColor:
+                                            Theme.of(context)
+                                                .colorScheme
+                                                .surfaceContainerHigh,
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 16),
+                                      child: Text(
+                                        '${startIdx + 1}-$endIdx of ${_filteredTemplates.length}',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium,
+                                      ),
+                                    ),
+                                    IconButton.filled(
+                                      onPressed: _currentPage < totalPages - 1
+                                          ? () {
+                                              setState(() {
+                                                _currentPage++;
+                                              });
+                                            }
+                                          : null,
+                                      icon: const Icon(Icons.chevron_right),
+                                      style: IconButton.styleFrom(
+                                        disabledBackgroundColor:
+                                            Theme.of(context)
+                                                .colorScheme
+                                                .surfaceContainerHighest,
                                       ),
                                     ),
                                   ],
                                 ),
+                              ],
+                            ),
+                          ),
+
+                          if (!isMobile) ...[
+                            const SizedBox(width: 24),
+
+                            // Preview Panel (Right Side)
+                            Expanded(
+                              flex: 1,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '🎨 Preview',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleLarge
+                                        ?.copyWith(fontWeight: FontWeight.bold),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  if (_selectedTemplate != null)
+                                    Card(
+                                      color: (Theme.of(context)
+                                                  .colorScheme
+                                                  .surfaceContainerHigh !=
+                                              ThemeData.light()
+                                                  .colorScheme
+                                                  .surfaceContainerHigh)
+                                          ? Theme.of(context)
+                                              .colorScheme
+                                              .primaryContainer
+                                              .withOpacity(0.18)
+                                          : Theme.of(context)
+                                              .colorScheme
+                                              .surface,
+                                      elevation: 0,
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(16)),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          // Preview Image
+                                          ClipRRect(
+                                            borderRadius:
+                                                const BorderRadius.vertical(
+                                                    top: Radius.circular(12)),
+                                            child: Image.network(
+                                              getProxiedImageUrl(
+                                                  _generatedMemeUrl ??
+                                                      _selectedTemplate![
+                                                          'url']),
+                                              width: double.infinity,
+                                              fit: BoxFit.contain,
+                                              loadingBuilder: (context, child,
+                                                  loadingProgress) {
+                                                if (loadingProgress == null) {
+                                                  return child;
+                                                }
+                                                return Container(
+                                                  height: 300,
+                                                  color: Theme.of(context)
+                                                      .colorScheme
+                                                      .surfaceContainerHigh,
+                                                  child: Center(
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                      value: loadingProgress
+                                                                  .expectedTotalBytes !=
+                                                              null
+                                                          ? loadingProgress
+                                                                  .cumulativeBytesLoaded /
+                                                              loadingProgress
+                                                                  .expectedTotalBytes!
+                                                          : null,
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                          ),
+
+                                          // Template Info
+                                          Padding(
+                                            padding: const EdgeInsets.all(20.0),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  _selectedTemplate!['name'],
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .titleLarge
+                                                      ?.copyWith(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
+                                                ),
+                                                const SizedBox(height: 8),
+                                                Text(
+                                                  '${_selectedTemplate!['box_count']} text boxes available',
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .bodyMedium
+                                                      ?.copyWith(
+                                                        color: Theme.of(context)
+                                                            .colorScheme
+                                                            .onSurfaceVariant,
+                                                      ),
+                                                ),
+                                                const SizedBox(height: 20),
+
+                                                // Create Button
+                                                SizedBox(
+                                                  width: double.infinity,
+                                                  child: FilledButton.icon(
+                                                    onPressed: _isGenerating
+                                                        ? null
+                                                        : _showCreateMemeDialog,
+                                                    icon: _isGenerating
+                                                        ? const SizedBox(
+                                                            width: 20,
+                                                            height: 20,
+                                                            child:
+                                                                CircularProgressIndicator(
+                                                              strokeWidth: 2,
+                                                              color:
+                                                                  Colors.white,
+                                                            ),
+                                                          )
+                                                        : const Icon(
+                                                            Icons.create),
+                                                    label: Text(_isGenerating
+                                                        ? 'Generating...'
+                                                        : 'Create Meme'),
+                                                    style:
+                                                        FilledButton.styleFrom(
+                                                      padding: const EdgeInsets
+                                                          .symmetric(
+                                                          vertical: 16),
+                                                    ),
+                                                  ),
+                                                ),
+
+                                                if (_generatedMemeUrl !=
+                                                    null) ...[
+                                                  const SizedBox(height: 12),
+                                                  SizedBox(
+                                                    width: double.infinity,
+                                                    child: FilledButton.icon(
+                                                      onPressed: (_isSendingToDiscord ||
+                                                              _memeSentToDiscord)
+                                                          ? null
+                                                          : _sendMemeToDiscord,
+                                                      icon: _isSendingToDiscord
+                                                          ? const SizedBox(
+                                                              width: 20,
+                                                              height: 20,
+                                                              child:
+                                                                  CircularProgressIndicator(
+                                                                strokeWidth: 2,
+                                                                color: Colors
+                                                                    .white,
+                                                              ),
+                                                            )
+                                                          : _memeSentToDiscord
+                                                              ? const Icon(Icons
+                                                                  .check_circle)
+                                                              : const Icon(
+                                                                  Icons.send),
+                                                      label: Text(_isSendingToDiscord
+                                                          ? 'Sending...'
+                                                          : _memeSentToDiscord
+                                                              ? 'Sent to Discord'
+                                                              : 'Send to Discord'),
+                                                      style: FilledButton
+                                                          .styleFrom(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .symmetric(
+                                                                vertical: 16),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 12),
+                                                  Container(
+                                                    padding:
+                                                        const EdgeInsets.all(
+                                                            12),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.green
+                                                          .withValues(
+                                                              alpha: 0.1),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              8),
+                                                      border: Border.all(
+                                                        color: Colors.green
+                                                            .withValues(
+                                                                alpha: 0.3),
+                                                      ),
+                                                    ),
+                                                    child: Row(
+                                                      children: [
+                                                        const Icon(
+                                                            Icons.check_circle,
+                                                            color: Colors.green,
+                                                            size: 20),
+                                                        const SizedBox(
+                                                            width: 8),
+                                                        Expanded(
+                                                          child: Text(
+                                                            'Meme generated! Right-click to save.',
+                                                            style: TextStyle(
+                                                              color: Colors
+                                                                  .green[800],
+                                                              fontSize: 12,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ],
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+
+                    // Mobile Create Button
+                    if (isMobile && _selectedTemplate != null) ...[
+                      const SizedBox(height: 24),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton.icon(
+                          onPressed:
+                              _isGenerating ? null : _showCreateMemeDialog,
+                          icon: _isGenerating
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Icon(Icons.create),
+                          label: Text(_isGenerating
+                              ? 'Generating...'
+                              : 'Create Meme: ${_selectedTemplate!['name']}'),
+                          style: FilledButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                          ),
+                        ),
+                      ),
+                    ],
+
+                    // Mobile Generated Meme Preview
+                    if (isMobile && _generatedMemeUrl != null) ...[
+                      const SizedBox(height: 24),
+                      Card(
+                        color: (Theme.of(context)
+                                    .colorScheme
+                                    .surfaceContainerHigh !=
+                                ThemeData.light()
+                                    .colorScheme
+                                    .surfaceContainerHigh)
+                            ? Theme.of(context)
+                                .colorScheme
+                                .primaryContainer
+                                .withOpacity(0.18)
+                            : Theme.of(context).colorScheme.surface,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16)),
+                        child: Column(
+                          children: [
+                            ClipRRect(
+                              borderRadius: const BorderRadius.vertical(
+                                  top: Radius.circular(12)),
+                              child: Image.network(
+                                getProxiedImageUrl(_generatedMemeUrl!),
+                                width: double.infinity,
+                                fit: BoxFit.contain,
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Column(
+                                children: [
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: FilledButton.icon(
+                                      onPressed: (_isSendingToDiscord ||
+                                              _memeSentToDiscord)
+                                          ? null
+                                          : _sendMemeToDiscord,
+                                      icon: _isSendingToDiscord
+                                          ? const SizedBox(
+                                              width: 20,
+                                              height: 20,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                color: Colors.white,
+                                              ),
+                                            )
+                                          : _memeSentToDiscord
+                                              ? const Icon(Icons.check_circle)
+                                              : const Icon(Icons.send),
+                                      label: Text(_isSendingToDiscord
+                                          ? 'Sending...'
+                                          : _memeSentToDiscord
+                                              ? 'Sent to Discord'
+                                              : 'Send to Discord'),
+                                      style: FilledButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 16),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color:
+                                          Colors.green.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color:
+                                            Colors.green.withValues(alpha: 0.3),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        const Icon(Icons.check_circle,
+                                            color: Colors.green, size: 20),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            'Meme generated! Long-press to save.',
+                                            style: TextStyle(
+                                              color: Colors.green[800],
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+
+                    // Error Display
+                    if (_errorMessage != null) ...[
+                      const SizedBox(height: 24),
+                      Card(
+                        color: Theme.of(context).colorScheme.errorContainer,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16)),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.error_outline,
+                                color: Theme.of(context).colorScheme.error,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  _errorMessage!,
+                                  style: TextStyle(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onErrorContainer,
+                                  ),
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.close),
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onErrorContainer,
+                                onPressed: () {
+                                  setState(() {
+                                    _errorMessage = null;
+                                  });
+                                },
                               ),
                             ],
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                ],
-
-                // Error Display
-                if (_errorMessage != null) ...[
-                  const SizedBox(height: 24),
-                  Card(
-                    color: Theme.of(context).colorScheme.errorContainer,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.error_outline,
-                            color: Theme.of(context).colorScheme.error,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              _errorMessage!,
-                              style: TextStyle(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onErrorContainer,
-                              ),
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.close),
-                            color:
-                                Theme.of(context).colorScheme.onErrorContainer,
-                            onPressed: () {
-                              setState(() {
-                                _errorMessage = null;
-                              });
-                            },
-                          ),
-                        ],
                       ),
-                    ),
-                  ),
-                ],
+                    ],
 
-                // Info Card
-                const SizedBox(height: 32),
-                Card(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  child: Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
+                    // Info Card
+                    const SizedBox(height: 32),
+                    Card(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .surfaceContainerHighest
+                          .withValues(alpha: 0.5),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16)),
+                      child: Padding(
+                        padding: const EdgeInsets.all(20.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(
-                              Icons.info_outline,
-                              color: Theme.of(context).colorScheme.primary,
-                              size: 24,
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.info_outline,
+                                  color: Theme.of(context).colorScheme.primary,
+                                  size: 24,
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  'How to Use',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleMedium
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 12),
-                            Text(
-                              'How to Use',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleMedium
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                            const SizedBox(height: 16),
+                            _buildInfoRow(
+                              context,
+                              icon: Icons.grid_view,
+                              text:
+                                  'Browse templates in the gallery and click to select',
+                            ),
+                            const SizedBox(height: 12),
+                            _buildInfoRow(
+                              context,
+                              icon: Icons.search,
+                              text:
+                                  'Use the search bar to find specific templates quickly',
+                            ),
+                            const SizedBox(height: 12),
+                            _buildInfoRow(
+                              context,
+                              icon: Icons.create,
+                              text:
+                                  'Click "Create Meme" to add text and generate your meme',
+                            ),
+                            const SizedBox(height: 12),
+                            _buildInfoRow(
+                              context,
+                              icon: Icons.download,
+                              text:
+                                  'Right-click (or long-press on mobile) the generated meme to save',
                             ),
                           ],
                         ),
-                        const SizedBox(height: 16),
-                        _buildInfoRow(
-                          context,
-                          icon: Icons.grid_view,
-                          text:
-                              'Browse templates in the gallery and click to select',
-                        ),
-                        const SizedBox(height: 12),
-                        _buildInfoRow(
-                          context,
-                          icon: Icons.search,
-                          text:
-                              'Use the search bar to find specific templates quickly',
-                        ),
-                        const SizedBox(height: 12),
-                        _buildInfoRow(
-                          context,
-                          icon: Icons.create,
-                          text:
-                              'Click "Create Meme" to add text and generate your meme',
-                        ),
-                        const SizedBox(height: 12),
-                        _buildInfoRow(
-                          context,
-                          icon: Icons.download,
-                          text:
-                              'Right-click (or long-press on mobile) the generated meme to save',
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
-                ),
                   ],
                 );
               },

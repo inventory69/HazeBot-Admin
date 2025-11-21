@@ -192,12 +192,12 @@ class _DailyMemePreferencesScreenState
 
   @override
   Widget build(BuildContext context) {
-
     final colorScheme = Theme.of(context).colorScheme;
-    final isMonet = colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
+    final isMonet = colorScheme.surfaceContainerHigh !=
+        ThemeData.light().colorScheme.surfaceContainerHigh;
     final cardColor = isMonet
-      ? colorScheme.primaryContainer.withOpacity(0.18)
-      : colorScheme.surface;
+        ? colorScheme.primaryContainer.withOpacity(0.18)
+        : colorScheme.surface;
 
     return _isLoading
         ? const Center(child: CircularProgressIndicator())
@@ -254,24 +254,32 @@ class _DailyMemePreferencesScreenState
                       Container(
                         padding: EdgeInsets.all(isMobile ? 10 : 12),
                         decoration: BoxDecoration(
-                          color: isMonet ? colorScheme.secondaryContainer.withOpacity(0.15) : Colors.blue.withOpacity(0.08),
+                          color: isMonet
+                              ? colorScheme.secondaryContainer.withOpacity(0.15)
+                              : Colors.blue.withOpacity(0.08),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color: isMonet ? colorScheme.secondary.withOpacity(0.25) : Colors.blue.withOpacity(0.18),
+                            color: isMonet
+                                ? colorScheme.secondary.withOpacity(0.25)
+                                : Colors.blue.withOpacity(0.18),
                           ),
                         ),
                         child: Row(
                           children: [
                             Icon(Icons.info_outline,
                                 size: isMobile ? 18 : 20,
-                                color: isMonet ? colorScheme.secondary : Colors.blue[700]),
+                                color: isMonet
+                                    ? colorScheme.secondary
+                                    : Colors.blue[700]),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 'Configure how memes are selected and which sources are used.',
                                 style: TextStyle(
                                   fontSize: isMobile ? 11 : 12,
-                                  color: isMonet ? colorScheme.secondary : Colors.blue[700],
+                                  color: isMonet
+                                      ? colorScheme.secondary
+                                      : Colors.blue[700],
                                 ),
                               ),
                             ),
@@ -576,7 +584,8 @@ class _DailyMemePreferencesScreenState
                                             padding: const EdgeInsets.symmetric(
                                                 horizontal: 8, vertical: 4),
                                             decoration: BoxDecoration(
-                                              color: Colors.teal.withOpacity(0.08),
+                                              color:
+                                                  Colors.teal.withOpacity(0.08),
                                               borderRadius:
                                                   BorderRadius.circular(12),
                                             ),

@@ -299,51 +299,52 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
+    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh !=
+        ThemeData.light().colorScheme.surfaceContainerHigh;
     final cardColor = isMonet
-      ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
-      : Theme.of(context).colorScheme.surface;
+        ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
+        : Theme.of(context).colorScheme.surface;
     final infoBoxBlue = isMonet
-      ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.10)
-      : Colors.blue.withOpacity(0.1);
+        ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.10)
+        : Colors.blue.withOpacity(0.1);
     final infoBoxBlueBorder = isMonet
-      ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.30)
-      : Colors.blue.withOpacity(0.3);
+        ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.30)
+        : Colors.blue.withOpacity(0.3);
     final infoBoxGreen = isMonet
-      ? Theme.of(context).colorScheme.tertiaryContainer.withOpacity(0.10)
-      : Colors.green.withOpacity(0.1);
+        ? Theme.of(context).colorScheme.tertiaryContainer.withOpacity(0.10)
+        : Colors.green.withOpacity(0.1);
     final infoBoxGreenBorder = isMonet
-      ? Theme.of(context).colorScheme.tertiaryContainer.withOpacity(0.30)
-      : Colors.green.withOpacity(0.3);
+        ? Theme.of(context).colorScheme.tertiaryContainer.withOpacity(0.30)
+        : Colors.green.withOpacity(0.3);
     final infoBoxPurple = isMonet
-      ? Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.10)
-      : Colors.purple.withOpacity(0.1);
+        ? Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.10)
+        : Colors.purple.withOpacity(0.1);
     final infoBoxPurpleBorder = isMonet
-      ? Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.30)
-      : Colors.purple.withOpacity(0.3);
+        ? Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.30)
+        : Colors.purple.withOpacity(0.3);
     final infoBoxTeal = isMonet
-      ? Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.10)
-      : Colors.teal.withOpacity(0.1);
+        ? Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.10)
+        : Colors.teal.withOpacity(0.1);
     final infoBoxTealBorder = isMonet
-      ? Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.30)
-      : Colors.teal.withOpacity(0.3);
+        ? Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.30)
+        : Colors.teal.withOpacity(0.3);
     final infoBoxGrey = isMonet
-      ? Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.10)
-      : Colors.grey.withOpacity(0.1);
+        ? Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.10)
+        : Colors.grey.withOpacity(0.1);
 
     return LayoutBuilder(
       builder: (context, constraints) {
-      final isMobile = constraints.maxWidth < 600;
-      final padding = isMobile ? 12.0 : 24.0;
-      final cardPadding = isMobile ? 12.0 : 16.0;
+        final isMobile = constraints.maxWidth < 600;
+        final padding = isMobile ? 12.0 : 24.0;
+        final cardPadding = isMobile ? 12.0 : 16.0;
 
-      return SingleChildScrollView(
-        padding: EdgeInsets.all(padding),
-        child: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+        return SingleChildScrollView(
+          padding: EdgeInsets.all(padding),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Text(
                   'General Configuration',
                   style: Theme.of(context).textTheme.headlineLarge?.copyWith(
@@ -364,7 +365,8 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
                 Card(
                   color: cardColor,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: EdgeInsets.all(cardPadding),
                     child: Column(
@@ -461,7 +463,8 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
                 Card(
                   color: cardColor,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: EdgeInsets.all(cardPadding),
                     child: Column(
@@ -596,7 +599,8 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
                 Card(
                   color: cardColor,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: EdgeInsets.all(cardPadding),
                     child: Column(
@@ -713,7 +717,8 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
                 Card(
                   color: cardColor,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: EdgeInsets.all(cardPadding),
                     child: Column(
@@ -790,7 +795,8 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
                 Card(
                   color: cardColor,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: EdgeInsets.all(cardPadding),
                     child: Column(

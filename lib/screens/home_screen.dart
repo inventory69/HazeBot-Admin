@@ -666,7 +666,8 @@ class _HomeScreenState extends State<HomeScreen>
                               final isSelected = _selectedIndex == index;
 
                               return InkWell(
-                                onTap: () => setState(() => _selectedIndex = index),
+                                onTap: () =>
+                                    setState(() => _selectedIndex = index),
                                 child: Container(
                                   margin: const EdgeInsets.symmetric(
                                       horizontal: 8, vertical: 4),
@@ -733,11 +734,11 @@ class _HomeScreenState extends State<HomeScreen>
           // Main content area
           Expanded(
             child: _selectedIndex >= 0 &&
-                _selectedIndex < adminItems.length &&
-                permissionService.hasPermission('all')
-              ? // Admin selected: show admin screen directly
-              adminItems[_selectedIndex].screen
-              : // User features: show tabs at bottom
+                    _selectedIndex < adminItems.length &&
+                    permissionService.hasPermission('all')
+                ? // Admin selected: show admin screen directly
+                adminItems[_selectedIndex].screen
+                : // User features: show tabs at bottom
                 Column(
                     children: [
                       // Tab content
@@ -749,10 +750,10 @@ class _HomeScreenState extends State<HomeScreen>
                         ),
                       ),
                       // Tab bar for user features (at bottom)
-                  Material(
-                    color:
-                      Theme.of(context).colorScheme.surfaceContainerLow,
-                    elevation: 1, // small elevation for tonal layering
+                      Material(
+                        color:
+                            Theme.of(context).colorScheme.surfaceContainerLow,
+                        elevation: 1, // small elevation for tonal layering
                         child: SafeArea(
                           child: TabBar(
                             controller: _tabController,
@@ -813,13 +814,14 @@ class _DashboardScreenState extends State<DashboardScreen>
   void initState() {
     super.initState();
     // Load data only if cache is empty (first time only)
-        WidgetsBinding.instance.addPostFrameCallback((_) async {
-          final cacheProvider = Provider.of<DataCacheProvider>(context, listen: false);
-          // Only load if cache is empty - cache will prevent duplicate requests
-          if (cacheProvider.memes == null || cacheProvider.rankups == null) {
-              await _loadData(force: true);
-          }
-        });
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final cacheProvider =
+          Provider.of<DataCacheProvider>(context, listen: false);
+      // Only load if cache is empty - cache will prevent duplicate requests
+      if (cacheProvider.memes == null || cacheProvider.rankups == null) {
+        await _loadData(force: true);
+      }
+    });
   }
 
   Future<void> _loadData({bool force = false}) async {
@@ -896,7 +898,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   @override
   Widget build(BuildContext context) {
     super.build(context); // Required for AutomaticKeepAliveClientMixin
-    
+
     // Show error widget if initial load failed and no cached data
     return Consumer<DataCacheProvider>(
       builder: (context, cacheProvider, child) {
@@ -904,7 +906,7 @@ class _DashboardScreenState extends State<DashboardScreen>
         final rankups = cacheProvider.rankups ?? [];
         final isLoadingMemes = cacheProvider.isLoadingMemes;
         final isLoadingRankups = cacheProvider.isLoadingRankups;
-        
+
         // Show full-screen error if initial load failed AND no cached data
         if (_hasInitialLoadError && memes.isEmpty && rankups.isEmpty) {
           return Scaffold(
@@ -912,9 +914,9 @@ class _DashboardScreenState extends State<DashboardScreen>
               title: const Text('HazeHub'),
             ),
             body: ApiErrorWidget(
-              message: _isOfflineError 
-                ? 'The server is taking a siesta.\nCome back when it\'s well rested!'
-                : 'The server is not responding.\nPlease try again in a moment.',
+              message: _isOfflineError
+                  ? 'The server is taking a siesta.\nCome back when it\'s well rested!'
+                  : 'The server is not responding.\nPlease try again in a moment.',
               isOffline: _isOfflineError,
               onRetry: () => _loadData(force: true),
             ),
@@ -1048,13 +1050,11 @@ class _DashboardScreenState extends State<DashboardScreen>
                       ),
                       child: Text(
                         'Latest Memes',
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleLarge
-                            ?.copyWith(
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
                               fontSize: isMobile ? 18 : null,
-                                  color:
-                                    Theme.of(context).colorScheme.onPrimaryContainer,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onPrimaryContainer,
                             ),
                       ),
                     ),
@@ -1093,8 +1093,8 @@ class _DashboardScreenState extends State<DashboardScreen>
               )
             else
               Column(
-                      children: List.generate(memes.length,
-                        (i) => _buildMemeCard(context, memes[i], isMobile, i)),
+                children: List.generate(memes.length,
+                    (i) => _buildMemeCard(context, memes[i], isMobile, i)),
               ),
           ],
         ),
@@ -1102,21 +1102,22 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
-    Widget _buildMemeCard(
-      BuildContext context, Map<String, dynamic> meme, bool isMobile, int index) {
+  Widget _buildMemeCard(BuildContext context, Map<String, dynamic> meme,
+      bool isMobile, int index) {
     final imageUrl = meme['image_url'] as String?;
     final title = meme['title'] as String? ?? 'Untitled';
     final author = meme['author'] as String? ?? 'Unknown';
     final score = meme['score'] as int? ?? 0;
     final isCustom = meme['is_custom'] as bool? ?? false;
 
-      // Choose a subtle tonal container that contrasts the section background.
-      // Use a harmonized accent color (primaryContainer) for a friendlier, more Monet-like look.
-      // This makes the cards stand out and feel more dynamic, while still being subtle.
-    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
+    // Choose a subtle tonal container that contrasts the section background.
+    // Use a harmonized accent color (primaryContainer) for a friendlier, more Monet-like look.
+    // This makes the cards stand out and feel more dynamic, while still being subtle.
+    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh !=
+        ThemeData.light().colorScheme.surfaceContainerHigh;
     final cardColor = isMonet
-      ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
-      : Theme.of(context).colorScheme.surface;
+        ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
+        : Theme.of(context).colorScheme.surface;
 
     return Card(
       color: cardColor,
@@ -1140,9 +1141,10 @@ class _DashboardScreenState extends State<DashboardScreen>
               final cacheProvider =
                   Provider.of<DataCacheProvider>(context, listen: false);
               cacheProvider.updateMemeUpvotes(
-                meme['message_id'] as String?, 
+                meme['message_id'] as String?,
                 upvotes,
-                imageUrl: meme['image_url'] as String?, // For optimistic adds with null message_id
+                imageUrl: meme['image_url']
+                    as String?, // For optimistic adds with null message_id
               );
             }
           }
@@ -1321,12 +1323,16 @@ class _DashboardScreenState extends State<DashboardScreen>
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 6),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.primaryContainer,
+                            color:
+                                Theme.of(context).colorScheme.primaryContainer,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
                             'Latest Rank-Ups',
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleLarge
+                                ?.copyWith(
                                   fontSize: isMobile ? 18 : null,
                                 ),
                             overflow: TextOverflow.ellipsis,
@@ -1377,8 +1383,8 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
-    Widget _buildRankupCard(
-      BuildContext context, Map<String, dynamic> rankup, bool isMobile, int index) {
+  Widget _buildRankupCard(BuildContext context, Map<String, dynamic> rankup,
+      bool isMobile, int index) {
     final user = rankup['user'] as String? ?? 'Unknown Player';
     final newRank = rankup['new_rank'] as String? ?? 'Unknown Rank';
     final oldRank = rankup['old_rank'] as String?;
@@ -1388,10 +1394,11 @@ class _DashboardScreenState extends State<DashboardScreen>
     final color = rankup['color'] as int?;
 
     // Use a harmonized accent color (primaryContainer) for a friendlier, more Monet-like look.
-    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
+    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh !=
+        ThemeData.light().colorScheme.surfaceContainerHigh;
     final cardColor = isMonet
-      ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
-      : Theme.of(context).colorScheme.surface;
+        ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
+        : Theme.of(context).colorScheme.surface;
 
     return Card(
       color: cardColor,
@@ -1419,8 +1426,8 @@ class _DashboardScreenState extends State<DashboardScreen>
                       height: isMobile ? 60 : 70,
                       decoration: BoxDecoration(
                         color: color != null
-                          ? Color(color).withOpacity(0.1)
-                          : cardColor,
+                            ? Color(color).withOpacity(0.1)
+                            : cardColor,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Center(
@@ -2105,10 +2112,10 @@ class _UserDashboardState extends State<_UserDashboard>
     required Color color,
     required bool isMobile,
   }) {
-        return Builder(
-          builder: (context) => Card(
-            elevation: 2, // Allow surface tint to be applied for tonal contrast
-            // Avoid forcing a color here so Material 3 surface tints are applied
+    return Builder(
+      builder: (context) => Card(
+        elevation: 2, // Allow surface tint to be applied for tonal contrast
+        // Avoid forcing a color here so Material 3 surface tints are applied
         child: Padding(
           padding: EdgeInsets.all(isMobile ? 4 : 6),
           child: Column(

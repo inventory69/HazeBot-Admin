@@ -282,7 +282,8 @@ class _TextsConfigScreenState extends State<TextsConfigScreen> {
     }
 
     // Monet/normal mode card color logic (match channels/roles config screens)
-    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
+    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh !=
+        ThemeData.light().colorScheme.surfaceContainerHigh;
     final cardColor = isMonet
         ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
         : Theme.of(context).colorScheme.surface;
@@ -330,7 +331,8 @@ class _TextsConfigScreenState extends State<TextsConfigScreen> {
     );
   }
 
-  Widget _buildWelcomeSection(bool isMobile, double cardPadding, Color cardColor) {
+  Widget _buildWelcomeSection(
+      bool isMobile, double cardPadding, Color cardColor) {
     return Card(
       color: cardColor,
       elevation: 0,
@@ -472,7 +474,8 @@ class _TextsConfigScreenState extends State<TextsConfigScreen> {
     );
   }
 
-  Widget _buildRocketLeagueSection(bool isMobile, double cardPadding, Color cardColor) {
+  Widget _buildRocketLeagueSection(
+      bool isMobile, double cardPadding, Color cardColor) {
     return Card(
       color: cardColor,
       elevation: 0,

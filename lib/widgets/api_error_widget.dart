@@ -15,7 +15,7 @@ class ApiErrorWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -28,30 +28,28 @@ class ApiErrorWidget extends StatelessWidget {
               style: TextStyle(fontSize: 80),
             ),
             const SizedBox(height: 24),
-            
+
             // Main message
             Text(
-              isOffline 
-                ? 'Taking it easy... 🌴'
-                : 'Something went wrong... 🍃',
+              isOffline ? 'Taking it easy... 🌴' : 'Something went wrong... 🍃',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+                    fontWeight: FontWeight.bold,
+                  ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 12),
-            
+
             // Secondary message
             Text(
               isOffline
-                ? 'The server is taking a siesta.\nCome back when it\'s well rested!'
-                : message,
+                  ? 'The server is taking a siesta.\nCome back when it\'s well rested!'
+                  : message,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
+                    color: colorScheme.onSurfaceVariant,
+                  ),
               textAlign: TextAlign.center,
             ),
-            
+
             if (onRetry != null) ...[
               const SizedBox(height: 32),
               FilledButton.tonalIcon(
@@ -73,7 +71,7 @@ class ApiErrorSnackbar {
     final message = isOffline
         ? '🦥 Server is taking a break... Try again in a moment!'
         : '🍃 Connection issue... But don\'t panic!';
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(

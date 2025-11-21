@@ -209,14 +209,18 @@ class _RolesConfigScreenState extends State<RolesConfigScreen> {
         if (!required)
           const DropdownMenuItem<String>(
             value: null,
-            child: SizedBox(width: 200, child: Text('None', maxLines: 1, overflow: TextOverflow.ellipsis)),
+            child: SizedBox(
+                width: 200,
+                child:
+                    Text('None', maxLines: 1, overflow: TextOverflow.ellipsis)),
           ),
         ..._roles.map((role) {
           return DropdownMenuItem<String>(
             value: role['id'],
             child: SizedBox(
               width: 200,
-              child: Text('@${role['name']}', maxLines: 1, overflow: TextOverflow.ellipsis),
+              child: Text('@${role['name']}',
+                  maxLines: 1, overflow: TextOverflow.ellipsis),
             ),
           );
         }),
@@ -234,7 +238,8 @@ class _RolesConfigScreenState extends State<RolesConfigScreen> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
+    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh !=
+        ThemeData.light().colorScheme.surfaceContainerHigh;
     final cardColor = isMonet
         ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
         : Theme.of(context).colorScheme.surface;
@@ -319,7 +324,8 @@ class _RolesConfigScreenState extends State<RolesConfigScreen> {
                 Card(
                   color: cardColor,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: EdgeInsets.all(cardPadding),
                     child: Column(
@@ -425,7 +431,8 @@ class _RolesConfigScreenState extends State<RolesConfigScreen> {
                 Card(
                   color: cardColor,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: EdgeInsets.all(cardPadding),
                     child: Column(

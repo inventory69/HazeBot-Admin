@@ -43,9 +43,11 @@ class _MemeDetailScreenState extends State<MemeDetailScreen> {
         setState(() {
           _upvotes = response['upvotes'] as int? ?? 0;
           _hasUpvoted = response['has_upvoted'] as bool? ?? false;
-          _hasDiscordUpvoted = response['has_discord_upvoted'] as bool? ?? false;
+          _hasDiscordUpvoted =
+              response['has_discord_upvoted'] as bool? ?? false;
           _isLoadingReactions = false;
-          print('Set _hasUpvoted to: $_hasUpvoted, _hasDiscordUpvoted: $_hasDiscordUpvoted'); // Debug
+          print(
+              'Set _hasUpvoted to: $_hasUpvoted, _hasDiscordUpvoted: $_hasDiscordUpvoted'); // Debug
         });
       }
     } catch (e) {
@@ -76,7 +78,7 @@ class _MemeDetailScreenState extends State<MemeDetailScreen> {
             await ApiService().getMemeReactions(messageId);
         if (reactionsResponse['success'] == true) {
           final newUpvotes = reactionsResponse['upvotes'] as int? ?? 0;
-          
+
           setState(() {
             _hasUpvoted = reactionsResponse['has_upvoted'] as bool? ?? false;
             _upvotes = newUpvotes; // Total count (custom + Discord)
@@ -84,7 +86,8 @@ class _MemeDetailScreenState extends State<MemeDetailScreen> {
 
           // Update the cache immediately with 60s override window
           if (mounted) {
-            final cacheProvider = Provider.of<DataCacheProvider>(context, listen: false);
+            final cacheProvider =
+                Provider.of<DataCacheProvider>(context, listen: false);
             cacheProvider.updateMemeUpvotes(
               messageId,
               newUpvotes,
@@ -265,14 +268,18 @@ class _MemeDetailScreenState extends State<MemeDetailScreen> {
                                   ? 'Du hast bereits über Discord upgevotet'
                                   : '',
                           child: ElevatedButton.icon(
-                            onPressed: (_isUpvoting || _isLoadingReactions || _hasDiscordUpvoted || messageId == null)
+                            onPressed: (_isUpvoting ||
+                                    _isLoadingReactions ||
+                                    _hasDiscordUpvoted ||
+                                    messageId == null)
                                 ? null
                                 : _toggleUpvote,
                             icon: (_isUpvoting || _isLoadingReactions)
                                 ? const SizedBox(
                                     width: 16,
                                     height: 16,
-                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2),
                                   )
                                 : Icon(
                                     _hasUpvoted
@@ -283,12 +290,18 @@ class _MemeDetailScreenState extends State<MemeDetailScreen> {
                             style: ElevatedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               // Only apply upvoted style after loading is complete
-                              backgroundColor: (!_isLoadingReactions && _hasUpvoted)
-                                  ? Theme.of(context).colorScheme.primaryContainer
-                                  : null,
-                              foregroundColor: (!_isLoadingReactions && _hasUpvoted)
-                                  ? Theme.of(context).colorScheme.onPrimaryContainer
-                                  : null,
+                              backgroundColor:
+                                  (!_isLoadingReactions && _hasUpvoted)
+                                      ? Theme.of(context)
+                                          .colorScheme
+                                          .primaryContainer
+                                      : null,
+                              foregroundColor:
+                                  (!_isLoadingReactions && _hasUpvoted)
+                                      ? Theme.of(context)
+                                          .colorScheme
+                                          .onPrimaryContainer
+                                      : null,
                             ),
                           ),
                         ),

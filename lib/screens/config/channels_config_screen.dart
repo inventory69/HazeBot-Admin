@@ -246,7 +246,10 @@ class _ChannelsConfigScreenState extends State<ChannelsConfigScreen> {
         if (!required)
           const DropdownMenuItem<String>(
             value: null,
-            child: SizedBox(width: 200, child: Text('None', maxLines: 1, overflow: TextOverflow.ellipsis)),
+            child: SizedBox(
+                width: 200,
+                child:
+                    Text('None', maxLines: 1, overflow: TextOverflow.ellipsis)),
           ),
         ..._channels.map((channel) {
           final category =
@@ -255,7 +258,8 @@ class _ChannelsConfigScreenState extends State<ChannelsConfigScreen> {
             value: channel['id'],
             child: SizedBox(
               width: 200,
-              child: Text('$category#${channel['name']}', maxLines: 1, overflow: TextOverflow.ellipsis),
+              child: Text('$category#${channel['name']}',
+                  maxLines: 1, overflow: TextOverflow.ellipsis),
             ),
           );
         }),
@@ -293,14 +297,18 @@ class _ChannelsConfigScreenState extends State<ChannelsConfigScreen> {
         if (!required)
           const DropdownMenuItem<String>(
             value: null,
-            child: SizedBox(width: 200, child: Text('None', maxLines: 1, overflow: TextOverflow.ellipsis)),
+            child: SizedBox(
+                width: 200,
+                child:
+                    Text('None', maxLines: 1, overflow: TextOverflow.ellipsis)),
           ),
         ..._categories.map((category) {
           return DropdownMenuItem<String>(
             value: category['id'],
             child: SizedBox(
               width: 200,
-              child: Text(category['name'], maxLines: 1, overflow: TextOverflow.ellipsis),
+              child: Text(category['name'],
+                  maxLines: 1, overflow: TextOverflow.ellipsis),
             ),
           );
         }),
@@ -314,8 +322,9 @@ class _ChannelsConfigScreenState extends State<ChannelsConfigScreen> {
 
   @override
   Widget build(BuildContext context) {
-      final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
-      final cardColor = isMonet
+    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh !=
+        ThemeData.light().colorScheme.surfaceContainerHigh;
+    final cardColor = isMonet
         ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
         : Theme.of(context).colorScheme.surface;
     if (_isLoading && _channels.isEmpty) {
@@ -385,7 +394,8 @@ class _ChannelsConfigScreenState extends State<ChannelsConfigScreen> {
                 Card(
                   color: cardColor,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: EdgeInsets.all(cardPadding),
                     child: Column(
@@ -448,7 +458,8 @@ class _ChannelsConfigScreenState extends State<ChannelsConfigScreen> {
                 Card(
                   color: cardColor,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: EdgeInsets.all(cardPadding),
                     child: Column(
@@ -548,7 +559,8 @@ class _ChannelsConfigScreenState extends State<ChannelsConfigScreen> {
                 Card(
                   color: cardColor,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: EdgeInsets.all(cardPadding),
                     child: Column(
@@ -605,7 +617,8 @@ class _ChannelsConfigScreenState extends State<ChannelsConfigScreen> {
                 Card(
                   color: cardColor,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: EdgeInsets.all(cardPadding),
                     child: Column(

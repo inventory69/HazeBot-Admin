@@ -219,6 +219,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Monet/normal mode card color logic (match other screens)
+    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh !=
+        ThemeData.light().colorScheme.surfaceContainerHigh;
+    final cardColor = isMonet
+        ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
+        : Theme.of(context).colorScheme.surface;
+
     return Scaffold(
       body: Center(
         child: SingleChildScrollView(
@@ -226,7 +233,11 @@ class _LoginScreenState extends State<LoginScreen> {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 400),
             child: Card(
-              surfaceTintColor: Colors.transparent,
+              color: cardColor,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
               child: Padding(
                 padding: const EdgeInsets.all(32.0),
                 child: AutofillGroup(

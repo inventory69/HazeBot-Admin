@@ -92,7 +92,8 @@ class DataCacheProvider extends ChangeNotifier {
             try {
               final timestamp = DateTime.parse(meme['timestamp']);
               final age = now.difference(timestamp);
-              return age.inSeconds < 60; // Keep recent optimistic adds for up to 1 minute
+              return age.inSeconds <
+                  60; // Keep recent optimistic adds for up to 1 minute
             } catch (e) {
               return false;
             }
@@ -103,39 +104,39 @@ class DataCacheProvider extends ChangeNotifier {
                 '🔄 Preserving ${optimisticMemes.length} optimistic meme(s)');
             // Add optimistic memes that aren't in the API response yet
             for (final optimisticMeme in optimisticMemes) {
-            // Check if meme exists in API by image_url AND title (most reliable)
-            final existsInApi = newMemes.any((apiMeme) {
-              // Exact image URL match (most reliable)
-              if (apiMeme['image_url'] == optimisticMeme['image_url']) {
-                return true;
-              }
-              // Check by message_id if available (Discord memes)
-              if (optimisticMeme['message_id'] != null &&
-                  apiMeme['message_id'] == optimisticMeme['message_id']) {
-                return true;
-              }
-              // Fallback: same title and similar image URL
-              if (apiMeme['title'] == optimisticMeme['title']) {
-                final apiUrl = apiMeme['image_url']?.toString() ?? '';
-                final optUrl = optimisticMeme['image_url']?.toString() ?? '';
-                if (apiUrl.isNotEmpty &&
-                    optUrl.isNotEmpty &&
-                    (apiUrl.contains(optUrl.split('/').last) ||
-                        optUrl.contains(apiUrl.split('/').last))) {
+              // Check if meme exists in API by image_url AND title (most reliable)
+              final existsInApi = newMemes.any((apiMeme) {
+                // Exact image URL match (most reliable)
+                if (apiMeme['image_url'] == optimisticMeme['image_url']) {
                   return true;
                 }
+                // Check by message_id if available (Discord memes)
+                if (optimisticMeme['message_id'] != null &&
+                    apiMeme['message_id'] == optimisticMeme['message_id']) {
+                  return true;
+                }
+                // Fallback: same title and similar image URL
+                if (apiMeme['title'] == optimisticMeme['title']) {
+                  final apiUrl = apiMeme['image_url']?.toString() ?? '';
+                  final optUrl = optimisticMeme['image_url']?.toString() ?? '';
+                  if (apiUrl.isNotEmpty &&
+                      optUrl.isNotEmpty &&
+                      (apiUrl.contains(optUrl.split('/').last) ||
+                          optUrl.contains(apiUrl.split('/').last))) {
+                    return true;
+                  }
+                }
+                return false;
+              });
+
+              if (!existsInApi) {
+                newMemes.insert(0, optimisticMeme);
+                debugPrint(
+                    '🔄 Kept optimistic meme: ${optimisticMeme['title']}');
+              } else {
+                debugPrint(
+                    '✅ Optimistic meme already in API response: ${optimisticMeme['title']}');
               }
-              return false;
-            });
-            
-            if (!existsInApi) {
-              newMemes.insert(0, optimisticMeme);
-              debugPrint(
-                  '🔄 Kept optimistic meme: ${optimisticMeme['title']}');
-            } else {
-              debugPrint(
-                  '✅ Optimistic meme already in API response: ${optimisticMeme['title']}');
-            }
             }
           }
         }
@@ -306,23 +307,24 @@ class DataCacheProvider extends ChangeNotifier {
       bool updated = false;
       for (int i = 0; i < _cachedMemes!.length; i++) {
         final cachedMeme = _cachedMemes![i];
-        
+
         // Match by message_id OR by image_url (for optimistic adds with null message_id)
         final matchesById = cachedMeme['message_id'] == messageId;
-        final matchesByUrl = imageUrl != null && 
-                              cachedMeme['message_id'] == null && 
-                              cachedMeme['image_url'] == imageUrl;
-        
+        final matchesByUrl = imageUrl != null &&
+            cachedMeme['message_id'] == null &&
+            cachedMeme['image_url'] == imageUrl;
+
         if (matchesById || matchesByUrl) {
           // Update upvotes
           _cachedMemes![i]['upvotes'] = upvotes;
-          
+
           // If this was an optimistic add (null message_id), update it with real ID
           if (_cachedMemes![i]['message_id'] == null && messageId != null) {
             _cachedMemes![i]['message_id'] = messageId;
-            debugPrint('👍 Updated null message_id to $messageId for optimistic meme');
+            debugPrint(
+                '👍 Updated null message_id to $messageId for optimistic meme');
           }
-          
+
           debugPrint(
               '👍 Updated meme at index $i: ${_cachedMemes![i]['title']}');
           updated = true;

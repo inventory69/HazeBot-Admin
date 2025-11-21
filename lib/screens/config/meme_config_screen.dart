@@ -215,7 +215,8 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
       builder: (context, constraints) {
         final isMobile = constraints.maxWidth < 600;
         final padding = isMobile ? 12.0 : 24.0;
-        final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
+        final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh !=
+            ThemeData.light().colorScheme.surfaceContainerHigh;
         final cardColor = isMonet
             ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
             : Theme.of(context).colorScheme.surface;
@@ -225,7 +226,7 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
             title: const Text('Memes'),
             actions: [
               IconButton(
-                icon: _isLoadingSources 
+                icon: _isLoadingSources
                     ? const SizedBox(
                         width: 20,
                         height: 20,
@@ -275,7 +276,8 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                 Card(
                   color: cardColor,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: EdgeInsets.all(isMobile ? 16.0 : 24.0),
                     child: Column(
@@ -430,7 +432,7 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                                 Container(
                                   width: double.infinity,
                                   padding: const EdgeInsets.all(20),
-                                    color: Theme.of(context)
+                                  color: Theme.of(context)
                                       .colorScheme
                                       .surfaceVariant,
                                   child: Column(
@@ -552,7 +554,8 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                 Card(
                   color: cardColor,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: EdgeInsets.all(isMobile ? 16.0 : 24.0),
                     child: Column(
@@ -619,29 +622,31 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                               labelText: 'Select Source',
                               prefixIcon: Icon(Icons.list),
                               border: OutlineInputBorder(),
-                              helperText: 'Choose from available subreddits and Lemmy communities',
+                              helperText:
+                                  'Choose from available subreddits and Lemmy communities',
                             ),
                             items: [
                               ..._subreddits.map((sub) => DropdownMenuItem(
-                                value: sub,
-                                child: Row(
-                                  children: [
-                                    const Icon(Icons.reddit, size: 16),
-                                    const SizedBox(width: 8),
-                                    Text('r/$sub'),
-                                  ],
-                                ),
-                              )),
-                              ..._lemmyCommunities.map((comm) => DropdownMenuItem(
-                                value: comm,
-                                child: Row(
-                                  children: [
-                                    const Icon(Icons.public, size: 16),
-                                    const SizedBox(width: 8),
-                                    Text(comm),
-                                  ],
-                                ),
-                              )),
+                                    value: sub,
+                                    child: Row(
+                                      children: [
+                                        const Icon(Icons.reddit, size: 16),
+                                        const SizedBox(width: 8),
+                                        Text('r/$sub'),
+                                      ],
+                                    ),
+                                  )),
+                              ..._lemmyCommunities
+                                  .map((comm) => DropdownMenuItem(
+                                        value: comm,
+                                        child: Row(
+                                          children: [
+                                            const Icon(Icons.public, size: 16),
+                                            const SizedBox(width: 8),
+                                            Text(comm),
+                                          ],
+                                        ),
+                                      )),
                             ],
                             onChanged: (value) {
                               if (value != null) {
@@ -753,7 +758,7 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                                 Container(
                                   width: double.infinity,
                                   padding: const EdgeInsets.all(20),
-                                    color: Theme.of(context)
+                                  color: Theme.of(context)
                                       .colorScheme
                                       .surfaceVariant,
                                   child: Column(
@@ -877,7 +882,8 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                   Card(
                     color: Theme.of(context).colorScheme.errorContainer,
                     elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16)),
                     child: Padding(
                       padding: const EdgeInsets.all(20.0),
                       child: Row(
@@ -938,7 +944,8 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                 Card(
                   color: cardColor,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: const EdgeInsets.all(20.0),
                     child: Column(

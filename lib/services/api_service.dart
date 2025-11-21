@@ -192,9 +192,7 @@ class ApiService {
           ...?headers,
         };
 
-        return await http
-            .get(Uri.parse(url), headers: freshHeaders)
-            .timeout(
+        return await http.get(Uri.parse(url), headers: freshHeaders).timeout(
               const Duration(seconds: 15),
               onTimeout: () => throw ApiTimeoutException(),
             );
@@ -268,7 +266,8 @@ class ApiService {
 
   /// HTTP DELETE with automatic token refresh and timeout handling
   /// IMPORTANT: Headers are computed inside the lambda to get fresh token after refresh
-  Future<http.Response> _delete(String url, {Map<String, String>? headers}) async {
+  Future<http.Response> _delete(String url,
+      {Map<String, String>? headers}) async {
     try {
       return await _requestWithRetry(() async {
         // Read token FRESH from instance variable
@@ -281,9 +280,7 @@ class ApiService {
           ...?headers,
         };
 
-        return await http
-            .delete(Uri.parse(url), headers: freshHeaders)
-            .timeout(
+        return await http.delete(Uri.parse(url), headers: freshHeaders).timeout(
               const Duration(seconds: 15),
               onTimeout: () => throw ApiTimeoutException(),
             );

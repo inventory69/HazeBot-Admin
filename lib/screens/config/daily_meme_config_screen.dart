@@ -324,10 +324,11 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final isMonet = colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
+    final isMonet = colorScheme.surfaceContainerHigh !=
+        ThemeData.light().colorScheme.surfaceContainerHigh;
     final cardColor = isMonet
-      ? colorScheme.primaryContainer.withOpacity(0.18)
-      : colorScheme.surface;
+        ? colorScheme.primaryContainer.withOpacity(0.18)
+        : colorScheme.surface;
 
     return _isLoading
         ? const Center(child: CircularProgressIndicator())
@@ -384,24 +385,32 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                       Container(
                         padding: EdgeInsets.all(isMobile ? 10 : 12),
                         decoration: BoxDecoration(
-                          color: isMonet ? colorScheme.secondaryContainer.withOpacity(0.15) : Colors.blue.withOpacity(0.08),
+                          color: isMonet
+                              ? colorScheme.secondaryContainer.withOpacity(0.15)
+                              : Colors.blue.withOpacity(0.08),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color: isMonet ? colorScheme.secondary.withOpacity(0.25) : Colors.blue.withOpacity(0.18),
+                            color: isMonet
+                                ? colorScheme.secondary.withOpacity(0.25)
+                                : Colors.blue.withOpacity(0.18),
                           ),
                         ),
                         child: Row(
                           children: [
                             Icon(Icons.info_outline,
                                 size: isMobile ? 18 : 20,
-                                color: isMonet ? colorScheme.secondary : Colors.blue[700]),
+                                color: isMonet
+                                    ? colorScheme.secondary
+                                    : Colors.blue[700]),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 'Set up automatic meme posting schedule and source configuration.',
                                 style: TextStyle(
                                   fontSize: isMobile ? 11 : 12,
-                                  color: isMonet ? colorScheme.secondary : Colors.blue[700],
+                                  color: isMonet
+                                      ? colorScheme.secondary
+                                      : Colors.blue[700],
                                 ),
                               ),
                             ),
@@ -475,9 +484,15 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                               Container(
                                 padding: EdgeInsets.all(isMobile ? 10 : 12),
                                 decoration: BoxDecoration(
-                                  color: isMonet ? colorScheme.secondaryContainer.withOpacity(0.15) : Colors.blue.withOpacity(0.08),
+                                  color: isMonet
+                                      ? colorScheme.secondaryContainer
+                                          .withOpacity(0.15)
+                                      : Colors.blue.withOpacity(0.08),
                                   border: Border.all(
-                                    color: isMonet ? colorScheme.secondary.withOpacity(0.25) : Colors.blue.withOpacity(0.18),
+                                    color: isMonet
+                                        ? colorScheme.secondary
+                                            .withOpacity(0.25)
+                                        : Colors.blue.withOpacity(0.18),
                                   ),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
@@ -486,14 +501,18 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                                   children: [
                                     Icon(Icons.info_outline,
                                         size: isMobile ? 18 : 20,
-                                        color: isMonet ? colorScheme.secondary : Colors.blue),
+                                        color: isMonet
+                                            ? colorScheme.secondary
+                                            : Colors.blue),
                                     const SizedBox(width: 8),
                                     Expanded(
                                       child: Text(
                                         'The daily meme will run once per day at the specified time. If you change the time to earlier than the current time, it will run tomorrow at that time.',
                                         style: TextStyle(
                                           fontSize: isMobile ? 12 : 13,
-                                          color: isMonet ? colorScheme.secondary : Colors.blue.shade900,
+                                          color: isMonet
+                                              ? colorScheme.secondary
+                                              : Colors.blue.shade900,
                                         ),
                                       ),
                                     ),
@@ -614,7 +633,8 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                                     child: Row(
                                       children: [
                                         Flexible(
-                                          child: Text('$category#${channel['name']}',
+                                          child: Text(
+                                              '$category#${channel['name']}',
                                               overflow: TextOverflow.ellipsis,
                                               maxLines: 1),
                                         ),
@@ -647,12 +667,16 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                                 items: [
                                   const DropdownMenuItem<String>(
                                     value: null,
-                                    child: Text('None', overflow: TextOverflow.ellipsis, maxLines: 1),
+                                    child: Text('None',
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 1),
                                   ),
                                   ..._roles.map((role) {
                                     return DropdownMenuItem<String>(
                                       value: role['id'],
-                                      child: Text('@${role['name']}', overflow: TextOverflow.ellipsis, maxLines: 1),
+                                      child: Text('@${role['name']}',
+                                          overflow: TextOverflow.ellipsis,
+                                          maxLines: 1),
                                     );
                                   }),
                                 ],
@@ -719,14 +743,19 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 8, vertical: 4),
                                     decoration: BoxDecoration(
-                                      color: isMonet ? colorScheme.secondaryContainer.withOpacity(0.15) : Colors.blue.withOpacity(0.08),
+                                      color: isMonet
+                                          ? colorScheme.secondaryContainer
+                                              .withOpacity(0.15)
+                                          : Colors.blue.withOpacity(0.08),
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Text(
                                       '${_subreddits.length + _lemmyCommunities.length} total',
                                       style: TextStyle(
                                         fontSize: isMobile ? 11 : 12,
-                                        color: isMonet ? colorScheme.secondary : Colors.blue[700],
+                                        color: isMonet
+                                            ? colorScheme.secondary
+                                            : Colors.blue[700],
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
@@ -744,8 +773,9 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                                     child: Text(
                                       'Subreddits (${_subreddits.length})',
                                       overflow: TextOverflow.ellipsis,
-                                      style:
-                                          Theme.of(context).textTheme.titleSmall,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleSmall,
                                     ),
                                   ),
                                   const Spacer(),
@@ -767,7 +797,9 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                                   runSpacing: 8,
                                   children: _subreddits.map((sub) {
                                     return Chip(
-                                      label: Text('r/$sub', overflow: TextOverflow.ellipsis, maxLines: 1),
+                                      label: Text('r/$sub',
+                                          overflow: TextOverflow.ellipsis,
+                                          maxLines: 1),
                                       onDeleted: () {
                                         setState(() => _subreddits.remove(sub));
                                       },
@@ -785,8 +817,9 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                                     child: Text(
                                       'Lemmy Communities (${_lemmyCommunities.length})',
                                       overflow: TextOverflow.ellipsis,
-                                      style:
-                                          Theme.of(context).textTheme.titleSmall,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleSmall,
                                     ),
                                   ),
                                   const Spacer(),
@@ -809,7 +842,9 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                                   runSpacing: 8,
                                   children: _lemmyCommunities.map((community) {
                                     return Chip(
-                                      label: Text(community, overflow: TextOverflow.ellipsis, maxLines: 1),
+                                      label: Text(community,
+                                          overflow: TextOverflow.ellipsis,
+                                          maxLines: 1),
                                       onDeleted: () {
                                         setState(() => _lemmyCommunities
                                             .remove(community));

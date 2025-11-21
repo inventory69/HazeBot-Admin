@@ -24,12 +24,19 @@ class _LogsScreenState extends State<LogsScreen> {
   bool _autoRefresh = false;
   Timer? _refreshTimer;
 
+  // Selection mode
+  bool _isSelectionMode = false;
+  Set<int> _selectedIndices = {};
+
   final _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _loadLogs();
+    // Load data after the first frame is rendered
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadLogs();
+    });
   }
 
   @override
@@ -58,6 +65,8 @@ class _LogsScreenState extends State<LogsScreen> {
           _logs = List<Map<String, dynamic>>.from(result['logs'] ?? []);
           _logs = _logs.reversed.toList(); // Neueste zuerst
           _availableCogs = List<String>.from(result['available_cogs'] ?? []);
+          debugPrint(
+              'Available cogs loaded: $_availableCogs (${_availableCogs.length} cogs)');
         });
       }
     } catch (e) {
@@ -97,18 +106,91 @@ class _LogsScreenState extends State<LogsScreen> {
     _loadLogs();
   }
 
+  void _toggleSelection(int index) {
+    setState(() {
+      if (_selectedIndices.contains(index)) {
+        _selectedIndices.remove(index);
+        if (_selectedIndices.isEmpty) {
+          _isSelectionMode = false;
+        }
+      } else {
+        _selectedIndices.add(index);
+      }
+    });
+  }
+
+  void _enterSelectionMode(int index) {
+    setState(() {
+      _isSelectionMode = true;
+      _selectedIndices.add(index);
+    });
+  }
+
+  void _exitSelectionMode() {
+    setState(() {
+      _isSelectionMode = false;
+      _selectedIndices.clear();
+    });
+  }
+
+  void _copySelectedLogs() {
+    final selectedLogs = _selectedIndices.map((index) {
+      final log = _logs[index];
+      final level = log['level'] ?? 'INFO';
+      final timestamp = log['timestamp'] ?? '';
+      final message = log['message'] ?? '';
+      return '[$timestamp] $level | $message';
+    }).join('\n');
+
+    Clipboard.setData(ClipboardData(text: selectedLogs));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${_selectedIndices.length} log entries copied'),
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+    _exitSelectionMode();
+  }
+
+  void _selectAll() {
+    setState(() {
+      _selectedIndices = Set.from(List.generate(_logs.length, (i) => i));
+    });
+  }
+
+  // Better emoji matching Logger.py styling
   String _getLevelEmoji(String level) {
     switch (level.toUpperCase()) {
       case 'DEBUG':
-        return '🔧';
+        return '�';
       case 'INFO':
-        return 'ℹ️';
+        return '💖';
       case 'WARNING':
-        return '⚠️';
+        return '🌸';
       case 'ERROR':
-        return '❌';
+        return '🩷';
+      case 'CRITICAL':
+        return '🚨';
       default:
         return '📝';
+    }
+  }
+
+  Color _getLevelBadgeColor(String level) {
+    switch (level.toUpperCase()) {
+      case 'DEBUG':
+        return Colors.grey.shade600;
+      case 'INFO':
+        return Colors.pink.shade700;
+      case 'WARNING':
+        return Colors.orange.shade700;
+      case 'ERROR':
+        return Colors.red.shade700;
+      case 'CRITICAL':
+        return Colors.red.shade900;
+      default:
+        return Colors.grey.shade600;
     }
   }
 
@@ -117,13 +199,15 @@ class _LogsScreenState extends State<LogsScreen> {
       case 'DEBUG':
         return Icons.bug_report;
       case 'INFO':
-        return Icons.info_outline;
+        return Icons.info;
       case 'WARNING':
-        return Icons.warning_amber;
+        return Icons.warning;
       case 'ERROR':
-        return Icons.error_outline;
+        return Icons.error;
+      case 'CRITICAL':
+        return Icons.dangerous;
       default:
-        return Icons.description;
+        return Icons.circle;
     }
   }
 
@@ -142,50 +226,121 @@ class _LogsScreenState extends State<LogsScreen> {
     }
   }
 
-  String _extractCogName(String message) {
-    final match = RegExp(r'\[([^\]]+)\]').firstMatch(message);
-    return match?.group(1) ?? '';
+  // Extract cog name from message (matching Config.py COG_PREFIXES)
+  String? _extractCogName(String message) {
+    // Check for cog prefixes in the message (from Config.py)
+    final cogPrefixes = {
+      '[CogManager]': 'CogManager',
+      '[Changelog]': 'Changelog',
+      '[DailyMeme]': 'DailyMeme',
+      '[DiscordLogging]': 'DiscordLogging',
+      '[GamingHub]': 'GamingHub',
+      '[Leaderboard]': 'Leaderboard',
+      '[MemeGenerator]': 'MemeGenerator',
+      '[ModPerks]': 'ModPerks',
+      '[Preferences]': 'Preferences',
+      '[Presence]': 'Presence',
+      '[Profile]': 'Profile',
+      '[RocketLeague]': 'RocketLeague',
+      '[RoleInfo]': 'RoleInfo',
+      '[ServerGuide]': 'ServerGuide',
+      '[SupportButtons]': 'SupportButtons',
+      '[TicketSystem]': 'TicketSystem',
+      '[TodoList]': 'TodoList',
+      '[Utility]': 'Utility',
+      '[Warframe]': 'Warframe',
+      '[Welcome]': 'Welcome',
+    };
+
+    for (final entry in cogPrefixes.entries) {
+      if (message.contains(entry.key)) {
+        return entry.value;
+      }
+    }
+    return null;
   }
 
-  Color? _getCogColor(String cogName) {
-    if (cogName.isEmpty) return null;
-    final colors = [
-      Colors.blue,
-      Colors.green,
-      Colors.orange,
-      Colors.purple,
-      Colors.pink,
-      Colors.teal,
-      Colors.cyan,
-      Colors.amber,
-    ];
-    final index = cogName.hashCode % colors.length;
-    return colors[index];
+  // Get color for specific cog (matching Logger.py ThemeDict)
+  Color? _getCogColor(String? cogName) {
+    if (cogName == null) return null;
+
+    switch (cogName) {
+      case 'RocketLeague':
+        return const Color(0xFFFFA500); // Orange (Rocket Boost color!)
+      case 'DailyMeme':
+        return const Color(0xFFFF69B4); // Hot Pink
+      case 'TicketSystem':
+      case 'SupportButtons':
+        return const Color(0xFF99FF99); // Light green
+      case 'DiscordLogging':
+        return const Color(0xFFE0BBFF); // Purple
+      case 'Welcome':
+        return Colors.cyan.shade400; // Cyan
+      case 'CogManager':
+      case 'Utility':
+        return Colors.blueGrey.shade400; // Blue-grey for utilities
+      case 'Leaderboard':
+        return Colors.yellow.shade700; // Gold for leaderboard
+      case 'Profile':
+        return Colors.lightBlue.shade400; // Light blue
+      case 'Warframe':
+        return Colors.teal.shade400; // Teal for Warframe
+      case 'GamingHub':
+        return Colors.deepPurple.shade400; // Deep purple for gaming
+      default:
+        return null;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     // Monet/normal mode card color logic (match other config screens)
-    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
+    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh !=
+        ThemeData.light().colorScheme.surfaceContainerHigh;
     final cardColor = isMonet
         ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
         : Theme.of(context).colorScheme.surface;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Bot Logs'),
-        actions: [
-          IconButton(
-            icon: Icon(_autoRefresh ? Icons.pause : Icons.play_arrow),
-            onPressed: _toggleAutoRefresh,
-            tooltip: _autoRefresh ? 'Pause auto-refresh' : 'Start auto-refresh',
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _isLoading ? null : _loadLogs,
-            tooltip: 'Refresh',
-          ),
-        ],
+        title: _isSelectionMode
+            ? Text('${_selectedIndices.length} selected')
+            : const Text('Bot Logs'),
+        leading: _isSelectionMode
+            ? IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: _exitSelectionMode,
+                tooltip: 'Cancel selection',
+              )
+            : null,
+        actions: _isSelectionMode
+            ? [
+                IconButton(
+                  icon: const Icon(Icons.select_all),
+                  onPressed: _selectAll,
+                  tooltip: 'Select all',
+                ),
+                IconButton(
+                  icon: const Icon(Icons.copy),
+                  onPressed:
+                      _selectedIndices.isEmpty ? null : _copySelectedLogs,
+                  tooltip: 'Copy selected',
+                ),
+              ]
+            : [
+                IconButton(
+                  icon: Icon(_autoRefresh ? Icons.pause : Icons.play_arrow),
+                  onPressed: _toggleAutoRefresh,
+                  tooltip: _autoRefresh
+                      ? 'Pause auto-refresh'
+                      : 'Start auto-refresh',
+                ),
+                IconButton(
+                  icon: const Icon(Icons.refresh),
+                  onPressed: _isLoading ? null : _loadLogs,
+                  tooltip: 'Refresh',
+                ),
+              ],
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
@@ -288,10 +443,14 @@ class _LogsScreenState extends State<LogsScreen> {
                                   isDense: true,
                                 ),
                                 items: const [
-                                  DropdownMenuItem(value: 100, child: Text('100')),
-                                  DropdownMenuItem(value: 250, child: Text('250')),
-                                  DropdownMenuItem(value: 500, child: Text('500')),
-                                  DropdownMenuItem(value: 1000, child: Text('1000')),
+                                  DropdownMenuItem(
+                                      value: 100, child: Text('100')),
+                                  DropdownMenuItem(
+                                      value: 500, child: Text('500')),
+                                  DropdownMenuItem(
+                                      value: 1000, child: Text('1000')),
+                                  DropdownMenuItem(
+                                      value: 2000, child: Text('2000')),
                                 ],
                                 onChanged: (value) {
                                   if (value != null) {
@@ -319,7 +478,8 @@ class _LogsScreenState extends State<LogsScreen> {
                                 : IconButton(
                                     icon: const Icon(Icons.search),
                                     onPressed: () {
-                                      setState(() => _searchQuery = _searchController.text);
+                                      setState(() => _searchQuery =
+                                          _searchController.text);
                                       _loadLogs();
                                     },
                                     tooltip: 'Search',
@@ -351,69 +511,116 @@ class _LogsScreenState extends State<LogsScreen> {
                                 final level = log['level'] ?? 'INFO';
                                 final timestamp = log['timestamp'] ?? '';
                                 final message = log['message'] ?? '';
-                                final fullLogText = '[$timestamp] $level | $message';
+                                final fullLogText =
+                                    '[$timestamp] $level | $message';
                                 final cogName = _extractCogName(message);
                                 final cogColor = _getCogColor(cogName);
+                                final isSelected =
+                                    _selectedIndices.contains(index);
 
                                 return InkWell(
+                                  onTap: _isSelectionMode
+                                      ? () => _toggleSelection(index)
+                                      : null,
                                   onLongPress: () {
-                                    Clipboard.setData(ClipboardData(text: fullLogText));
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('Log entry copied'),
-                                        duration: Duration(seconds: 1),
-                                        behavior: SnackBarBehavior.floating,
-                                        width: 200,
-                                      ),
-                                    );
+                                    if (_isSelectionMode) {
+                                      _toggleSelection(index);
+                                    } else {
+                                      _enterSelectionMode(index);
+                                    }
                                   },
                                   child: Card(
-                                    margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                    color: cardColor,
+                                    margin: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 2),
+                                    color: isSelected
+                                        ? Theme.of(context)
+                                            .colorScheme
+                                            .primaryContainer
+                                            .withOpacity(0.5)
+                                        : cardColor,
                                     elevation: 0,
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12),
+                                      side: isSelected
+                                          ? BorderSide(
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .primary,
+                                              width: 2,
+                                            )
+                                          : BorderSide.none,
                                     ),
                                     child: Padding(
-                                      padding: EdgeInsets.symmetric(horizontal: cardPadding, vertical: cardPadding * 0.75),
+                                      padding: EdgeInsets.symmetric(
+                                          horizontal: cardPadding,
+                                          vertical: cardPadding * 0.75),
                                       child: Row(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
+                                          // Selection checkbox
+                                          if (_isSelectionMode)
+                                            Container(
+                                              padding: const EdgeInsets.only(
+                                                  right: 8),
+                                              child: Checkbox(
+                                                value: isSelected,
+                                                onChanged: (_) =>
+                                                    _toggleSelection(index),
+                                              ),
+                                            ),
                                           // Emoji + Icon
                                           Container(
-                                            padding: const EdgeInsets.only(right: 8),
+                                            padding:
+                                                const EdgeInsets.only(right: 8),
                                             child: Row(
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
-                                                Text(_getLevelEmoji(level), style: const TextStyle(fontSize: 16)),
+                                                Text(_getLevelEmoji(level),
+                                                    style: const TextStyle(
+                                                        fontSize: 16)),
                                                 const SizedBox(width: 4),
-                                                Icon(_getLevelIcon(level), color: _getLevelTextColor(level), size: 16),
+                                                Icon(_getLevelIcon(level),
+                                                    color: _getLevelTextColor(
+                                                        level),
+                                                    size: 16),
                                               ],
                                             ),
                                           ),
                                           // Content
                                           Expanded(
                                             child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
                                               children: [
                                                 // Level badge + Timestamp
                                                 Wrap(
                                                   spacing: 8,
-                                                  crossAxisAlignment: WrapCrossAlignment.center,
+                                                  crossAxisAlignment:
+                                                      WrapCrossAlignment.center,
                                                   children: [
                                                     Container(
-                                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                                      padding: const EdgeInsets
+                                                          .symmetric(
+                                                          horizontal: 6,
+                                                          vertical: 2),
                                                       decoration: BoxDecoration(
-                                                        color: Theme.of(context).colorScheme.primaryContainer,
-                                                        borderRadius: BorderRadius.circular(6),
+                                                        color:
+                                                            _getLevelBadgeColor(
+                                                                level),
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(3),
                                                       ),
                                                       child: Text(
                                                         level.toUpperCase(),
-                                                        style: TextStyle(
-                                                          fontSize: 11,
-                                                          fontWeight: FontWeight.bold,
-                                                          color: Theme.of(context).colorScheme.onPrimaryContainer,
-                                                          fontFamily: 'monospace',
+                                                        style: const TextStyle(
+                                                          fontSize: 10,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color: Colors.white,
+                                                          fontFamily:
+                                                              'monospace',
                                                         ),
                                                       ),
                                                     ),
@@ -434,31 +641,43 @@ class _LogsScreenState extends State<LogsScreen> {
                                                   style: TextStyle(
                                                     fontFamily: 'monospace',
                                                     fontSize: 12,
-                                                    color: cogColor ?? Theme.of(context).textTheme.bodyMedium?.color,
+                                                    color: cogColor ??
+                                                        Theme.of(context)
+                                                            .textTheme
+                                                            .bodyMedium
+                                                            ?.color,
                                                   ),
                                                 ),
                                               ],
                                             ),
                                           ),
-                                          // Copy button
-                                          IconButton(
-                                            icon: const Icon(Icons.copy, size: 16),
-                                            color: Colors.grey,
-                                            onPressed: () {
-                                              Clipboard.setData(ClipboardData(text: fullLogText));
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                const SnackBar(
-                                                  content: Text('Log entry copied'),
-                                                  duration: Duration(seconds: 1),
-                                                  behavior: SnackBarBehavior.floating,
-                                                  width: 200,
-                                                ),
-                                              );
-                                            },
-                                            padding: EdgeInsets.zero,
-                                            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                                            tooltip: 'Copy log entry',
-                                          ),
+                                          // Copy button (only show when not in selection mode)
+                                          if (!_isSelectionMode)
+                                            IconButton(
+                                              icon: const Icon(Icons.copy,
+                                                  size: 16),
+                                              color: Colors.grey,
+                                              onPressed: () {
+                                                Clipboard.setData(ClipboardData(
+                                                    text: fullLogText));
+                                                ScaffoldMessenger.of(context)
+                                                    .showSnackBar(
+                                                  const SnackBar(
+                                                    content: Text(
+                                                        'Log entry copied'),
+                                                    duration:
+                                                        Duration(seconds: 1),
+                                                    behavior: SnackBarBehavior
+                                                        .floating,
+                                                    width: 200,
+                                                  ),
+                                                );
+                                              },
+                                              padding: EdgeInsets.zero,
+                                              constraints: const BoxConstraints(
+                                                  minWidth: 32, minHeight: 32),
+                                              tooltip: 'Copy log entry',
+                                            ),
                                         ],
                                       ),
                                     ),
@@ -474,7 +693,8 @@ class _LogsScreenState extends State<LogsScreen> {
                   color: Theme.of(context).colorScheme.surfaceVariant,
                   child: Row(
                     children: [
-                      Icon(Icons.description, size: 16, color: Colors.grey[600]),
+                      Icon(Icons.description,
+                          size: 16, color: Colors.grey[600]),
                       const SizedBox(width: 8),
                       Text(
                         '${_logs.length} logs',
@@ -484,9 +704,12 @@ class _LogsScreenState extends State<LogsScreen> {
                       if (_autoRefresh)
                         Row(
                           children: [
-                            Icon(Icons.autorenew, size: 16, color: Colors.green[600]),
+                            Icon(Icons.autorenew,
+                                size: 16, color: Colors.green[600]),
                             const SizedBox(width: 4),
-                            Text('Auto-refresh: 5s', style: TextStyle(fontSize: 12, color: Colors.green[600])),
+                            Text('Auto-refresh: 5s',
+                                style: TextStyle(
+                                    fontSize: 12, color: Colors.green[600])),
                           ],
                         ),
                     ],

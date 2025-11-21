@@ -458,7 +458,8 @@ class _UserRocketLeagueScreenState extends State<UserRocketLeagueScreen> {
     final tierNames = account['ranks'] as Map<String, dynamic>? ?? {};
     final iconUrls = account['icon_urls'] as Map<String, dynamic>? ?? {};
 
-    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
+    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh !=
+        ThemeData.light().colorScheme.surfaceContainerHigh;
     final cardColor = isMonet
         ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
         : Theme.of(context).colorScheme.surface;
@@ -596,7 +597,8 @@ class _UserRocketLeagueScreenState extends State<UserRocketLeagueScreen> {
   }
 
   Widget _buildLinkFormCard(bool isMobile, double cardPadding) {
-    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
+    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh !=
+        ThemeData.light().colorScheme.surfaceContainerHigh;
     final cardColor = isMonet
         ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
         : Theme.of(context).colorScheme.surface;
@@ -726,7 +728,8 @@ class _UserRocketLeagueScreenState extends State<UserRocketLeagueScreen> {
   }
 
   Widget _buildTestStatsCard(bool isMobile, double cardPadding) {
-    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
+    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh !=
+        ThemeData.light().colorScheme.surfaceContainerHigh;
     final cardColor = isMonet
         ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
         : Theme.of(context).colorScheme.surface;

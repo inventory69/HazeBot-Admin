@@ -135,17 +135,17 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
       return 'Mobile';
     } else if (ua.contains('tablet') || ua.contains('ipad')) {
       return 'Tablet';
-    } else if (ua.contains('dart') || 
-               ua.contains('flutter') ||
-               ua.contains('testventory') || 
-               ua.contains('chillventory')) {
+    } else if (ua.contains('dart') ||
+        ua.contains('flutter') ||
+        ua.contains('testventory') ||
+        ua.contains('chillventory')) {
       // If it's Dart/Flutter/our app, it's Web (unless already detected as mobile/tablet)
       return 'Web';
-    } else if (ua.contains('mozilla') || 
-               ua.contains('chrome') || 
-               ua.contains('safari') || 
-               ua.contains('firefox') ||
-               ua.contains('edge')) {
+    } else if (ua.contains('mozilla') ||
+        ua.contains('chrome') ||
+        ua.contains('safari') ||
+        ua.contains('firefox') ||
+        ua.contains('edge')) {
       // Browser user agents
       return 'Web';
     } else {
@@ -169,8 +169,9 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
 
   @override
   Widget build(BuildContext context) {
-      final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
-      final cardColor = isMonet
+    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh !=
+        ThemeData.light().colorScheme.surfaceContainerHigh;
+    final cardColor = isMonet
         ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
         : Theme.of(context).colorScheme.surface;
     if (_isLoading && _sessionData == null) {
@@ -243,7 +244,6 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
     final sessions = _sessionData?['sessions'] as List? ?? [];
     final totalActive = _sessionData?['total_active'] ?? 0;
     final checkedAt = _sessionData?['checked_at'] as String?;
-
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -322,7 +322,8 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                     Card(
                       color: cardColor,
                       elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16)),
                       child: Padding(
                         padding: EdgeInsets.all(isMobile ? 16.0 : 20.0),
                         child: Row(
@@ -459,10 +460,12 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                               final isRecent = secondsAgo < 30;
 
                               return Card(
-                                margin: EdgeInsets.only(bottom: isMobile ? 8 : 12),
+                                margin:
+                                    EdgeInsets.only(bottom: isMobile ? 8 : 12),
                                 color: cardColor,
                                 elevation: 0,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16)),
                                 child: ExpansionTile(
                                   leading: Stack(
                                     children: [
@@ -564,7 +567,8 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                                             const SizedBox(width: 4),
                                             Text(
                                               timeago.format(
-                                                  DateTime.parse(lastSeen).toLocal()),
+                                                  DateTime.parse(lastSeen)
+                                                      .toLocal()),
                                               style: TextStyle(
                                                 fontSize: isMobile ? 11 : 12,
                                                 color: isRecent
@@ -647,7 +651,8 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
   Widget _buildRecentActivity(bool isMobile) {
     final recentActivity =
         _sessionData?['recent_activity'] as List<dynamic>? ?? [];
-    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
+    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh !=
+        ThemeData.light().colorScheme.surfaceContainerHigh;
     final cardColor = isMonet
         ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
         : Theme.of(context).colorScheme.surface;
@@ -667,7 +672,8 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
           Card(
             color: cardColor,
             elevation: 0,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Padding(
               padding: EdgeInsets.all(isMobile ? 16 : 24),
               child: Center(
@@ -707,7 +713,8 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
           Card(
             color: cardColor,
             elevation: 0,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
