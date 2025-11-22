@@ -20,6 +20,7 @@ import 'config/daily_meme_preferences_screen.dart';
 import 'config/meme_generator_screen.dart';
 import 'config/rocket_league_config_screen.dart';
 import 'config/texts_config_screen.dart';
+import 'config/cog_manager_screen.dart';
 import 'admin/live_users_screen.dart';
 import 'logs_screen.dart';
 import 'settings_screen.dart';
@@ -230,6 +231,11 @@ class _HomeScreenState extends State<HomeScreen>
         icon: Icons.description,
         label: 'Logs',
         screen: LogsScreen(key: ValueKey('logs_$_reloadCounter')),
+      ),
+      NavigationItem(
+        icon: Icons.extension,
+        label: 'Cogs',
+        screen: CogManagerScreen(key: ValueKey('cogs_$_reloadCounter')),
       ),
       NavigationItem(
         icon: Icons.science,

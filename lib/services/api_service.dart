@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../models/cog.dart';
 
 /// Custom exceptions for better error handling
 class ApiTimeoutException implements Exception {
@@ -207,7 +208,7 @@ class ApiService {
   /// HTTP POST with automatic token refresh and timeout handling
   /// IMPORTANT: Headers are computed inside the lambda to get fresh token after refresh
   Future<http.Response> _post(String url,
-      {Map<String, String>? headers, Object? body}) async {
+      {Map<String, String>? headers, Object? body, int timeout = 15}) async {
     try {
       return await _requestWithRetry(() async {
         // Read token FRESH from instance variable
@@ -223,7 +224,7 @@ class ApiService {
         return await http
             .post(Uri.parse(url), headers: freshHeaders, body: body)
             .timeout(
-              const Duration(seconds: 15),
+              Duration(seconds: timeout),
               onTimeout: () => throw ApiTimeoutException(),
             );
       });
@@ -1157,6 +1158,64 @@ class ApiService {
       throw Exception('Failed to get meme reactions: ${response.statusCode}');
     }
   }
+
+  // ===== COG MANAGEMENT ENDPOINTS =====
+
+  Future<List<Cog>> getCogs() async {
+    final response = await _get('$baseUrl/cogs');
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final cogs = (data['cogs'] as List<dynamic>?)
+          ?.map((cog) => Cog.fromJson(cog as Map<String, dynamic>))
+          .toList() ?? [];
+      return cogs;
+    } else {
+      throw Exception('Failed to load cogs: ${response.body}');
+    }
+  }
+
+  Future<void> loadCog(String cogName) async {
+    final response = await _post('$baseUrl/cogs/$cogName/load');
+
+    if (response.statusCode != 200) {
+      final error = jsonDecode(response.body);
+      throw Exception(error['error'] ?? 'Failed to load cog');
+    }
+  }
+
+  Future<void> unloadCog(String cogName) async {
+    final response = await _post('$baseUrl/cogs/$cogName/unload');
+
+    if (response.statusCode != 200) {
+      final error = jsonDecode(response.body);
+      throw Exception(error['error'] ?? 'Failed to unload cog');
+    }
+  }
+
+  Future<void> reloadCog(String cogName) async {
+    // Longer timeout for reload operations (especially APIServer)
+    final response = await _post('$baseUrl/cogs/$cogName/reload', timeout: 30);
+
+    if (response.statusCode != 200) {
+      final error = jsonDecode(response.body);
+      throw Exception(error['error'] ?? 'Failed to reload cog');
+    }
+  }
+
+  Future<List<CogLog>> getCogLogs(String cogName, {int limit = 100}) async {
+    final response = await _get('$baseUrl/cogs/$cogName/logs?limit=$limit');
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final logs = (data['logs'] as List<dynamic>?)
+          ?.map((log) => CogLog.fromJson(log))
+          .toList() ?? [];
+      return logs;
+    } else {
+      throw Exception('Failed to load cog logs: ${response.body}');
+    }
+  }
 }
 
 // Custom exception for token expiration
@@ -1179,3 +1238,5 @@ String getProxiedImageUrl(String imageUrl) {
   final encodedUrl = Uri.encodeComponent(imageUrl);
   return '$apiBaseUrl/api/proxy/image?url=$encodedUrl';
 }
+
+
