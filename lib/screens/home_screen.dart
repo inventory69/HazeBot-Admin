@@ -602,150 +602,118 @@ class _HomeScreenState extends State<HomeScreen>
       body: Row(
         children: [
           // Admin Navigation Rail (only show if has admin permissions)
-          if (_isDrawerVisible && permissionService.hasPermission('all'))
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: 72,
-              child: Material(
-                color: Theme.of(context).colorScheme.surfaceContainerLow,
-                child: SingleChildScrollView(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minHeight: MediaQuery.of(context).size.height -
-                          kToolbarHeight -
-                          MediaQuery.of(context).padding.top -
-                          MediaQuery.of(context).padding.bottom,
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Home button
-                        InkWell(
-                          onTap: () => setState(() => _selectedIndex = -1),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            child: Column(
-                              children: [
-                                Icon(
-                                  Icons.home,
-                                  size: 24,
+          if (_isDrawerVisible && permissionService.hasPermission('all')) ...[
+            SafeArea(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: 72,
+                child: Material(
+                  color: Theme.of(context).colorScheme.surfaceContainerLow,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.max,
+                    children: [
+                      // Home button
+                      InkWell(
+                        onTap: () => setState(() => _selectedIndex = -1),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.home,
+                                size: 24,
+                                color: _selectedIndex == -1
+                                    ? Theme.of(context).colorScheme.primary
+                                    : Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Home',
+                                style: TextStyle(
+                                  fontSize: 11,
                                   color: _selectedIndex == -1
                                       ? Theme.of(context).colorScheme.primary
                                       : Theme.of(context)
                                           .colorScheme
                                           .onSurfaceVariant,
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Home',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: _selectedIndex == -1
-                                        ? Theme.of(context).colorScheme.primary
-                                        : Theme.of(context)
-                                            .colorScheme
-                                            .onSurfaceVariant,
-                                  ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const Divider(thickness: 1, height: 1),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Icon(
+                          Icons.admin_panel_settings,
+                          size: 16,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                      const Divider(thickness: 1, height: 1),
+                      Expanded(
+                        child: ListView.builder(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          itemCount: adminItems.length,
+                          itemBuilder: (context, index) {
+                            final item = adminItems[index];
+                            final isSelected = _selectedIndex == index;
+                            return InkWell(
+                              onTap: () => setState(() => _selectedIndex = index),
+                              child: Container(
+                                margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? Theme.of(context).colorScheme.primaryContainer
+                                      : null,
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const Divider(thickness: 1, height: 1),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8.0),
-                          child: Icon(
-                            Icons.admin_panel_settings,
-                            size: 16,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                        ),
-                        const Divider(thickness: 1, height: 1),
-                        Flexible(
-                          fit: FlexFit.loose,
-                          child: ListView.builder(
-                            shrinkWrap: true,
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            itemCount: adminItems.length,
-                            itemBuilder: (context, index) {
-                              final item = adminItems[index];
-                              final isSelected = _selectedIndex == index;
-
-                              return InkWell(
-                                onTap: () =>
-                                    setState(() => _selectedIndex = index),
-                                child: Container(
-                                  margin: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 4),
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 12, horizontal: 8),
-                                  decoration: BoxDecoration(
-                                    color: isSelected
-                                        ? Theme.of(context)
-                                            .colorScheme
-                                            .primaryContainer
-                                        : null,
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        item.icon,
-                                        size: 24,
-                                        color: isSelected
-                                            ? Theme.of(context)
-                                                .colorScheme
-                                                .onPrimaryContainer
-                                            : Theme.of(context)
-                                                .colorScheme
-                                                .onSurfaceVariant,
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        item.label,
-                                        textAlign: TextAlign.center,
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .labelSmall
-                                            ?.copyWith(
-                                              fontSize:
-                                                  item.label.contains('\n')
-                                                      ? 10
-                                                      : 11,
-                                              color: isSelected
-                                                  ? Theme.of(context)
-                                                      .colorScheme
-                                                      .onPrimaryContainer
-                                                  : Theme.of(context)
-                                                      .colorScheme
-                                                      .onSurfaceVariant,
-                                            ),
-                                      ),
-                                    ],
-                                  ),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      item.icon,
+                                      size: 24,
+                                      color: isSelected
+                                          ? Theme.of(context).colorScheme.onPrimaryContainer
+                                          : Theme.of(context).colorScheme.onSurfaceVariant,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      item.label,
+                                      textAlign: TextAlign.center,
+                                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                            fontSize: item.label.contains('\n') ? 10 : 11,
+                                            color: isSelected
+                                                ? Theme.of(context).colorScheme.onPrimaryContainer
+                                                : Theme.of(context).colorScheme.onSurfaceVariant,
+                                          ),
+                                    ),
+                                  ],
                                 ),
-                              );
-                            },
-                          ),
+                              ),
+                            );
+                          },
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),
             ),
-          if (_isDrawerVisible && permissionService.hasPermission('all'))
             const VerticalDivider(thickness: 1, width: 1),
+          ],
           // Main content area
           Expanded(
             child: _selectedIndex >= 0 &&
                     _selectedIndex < adminItems.length &&
                     permissionService.hasPermission('all')
-                ? // Admin selected: show admin screen directly
-                adminItems[_selectedIndex].screen
-                : // User features: show tabs at bottom
-                Column(
+                ? SafeArea(child: adminItems[_selectedIndex].screen)
+                : Column(
                     children: [
                       // Tab content
                       Expanded(
@@ -857,7 +825,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           _isOfflineError = false;
         });
       }
-    } on ApiTimeoutException catch (e) {
+    } on ApiTimeoutException {
       if (mounted) {
         setState(() {
           _hasInitialLoadError = true;
@@ -868,7 +836,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           ApiErrorSnackbar.show(context, isOffline: false);
         }
       }
-    } on ApiConnectionException catch (e) {
+    } on ApiConnectionException {
       if (mounted) {
         setState(() {
           _hasInitialLoadError = true;
