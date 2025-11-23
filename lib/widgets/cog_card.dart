@@ -3,9 +3,9 @@ import '../models/cog.dart';
 
 class CogCard extends StatefulWidget {
   final Cog cog;
-  final VoidCallback? onLoad;
-  final VoidCallback? onUnload;
-  final VoidCallback? onReload;
+  final Future<void> Function()? onLoad;
+  final Future<void> Function()? onUnload;
+  final Future<void> Function()? onReload;
   final VoidCallback? onShowLogs;
   final bool isMobile;
 
@@ -24,7 +24,20 @@ class CogCard extends StatefulWidget {
 }
 
 class _CogCardState extends State<CogCard> {
-  bool _expanded = false;
+  bool _isExpanded = false;
+  bool _showFeatures = false;
+  bool _isPerformingAction = false;
+
+  Future<void> _handleAction(Future<void> Function() action) async {
+    setState(() => _isPerformingAction = true);
+    try {
+      await action(); // Wait for the actual action to complete
+    } finally {
+      if (mounted) {
+        setState(() => _isPerformingAction = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +50,7 @@ class _CogCardState extends State<CogCard> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
-          color: widget.cog.status == CogStatus.loaded 
+          color: widget.cog.status == CogStatus.loaded
               ? categoryColor.withOpacity(0.3)
               : Colors.transparent,
           width: 2,
@@ -46,211 +59,259 @@ class _CogCardState extends State<CogCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header with gradient
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  categoryColor.withOpacity(0.15),
-                  categoryColor.withOpacity(0.05),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+          // Header with gradient (always visible) - clickable to expand/collapse
+          InkWell(
+            onTap: () => setState(() => _isExpanded = !_isExpanded),
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(16),
+              topRight: Radius.circular(16),
             ),
-            padding: EdgeInsets.all(widget.isMobile ? 16 : 20),
-            child: Row(
-              children: [
-                // Icon with background
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: categoryColor.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    widget.cog.materialIcon,
-                    color: categoryColor,
-                    size: widget.isMobile ? 24 : 28,
-                  ),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    categoryColor.withOpacity(0.15),
+                    categoryColor.withOpacity(0.05),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-                SizedBox(width: widget.isMobile ? 12 : 16),
-                
-                // Cog name and category
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.cog.name,
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontSize: widget.isMobile ? 18 : 20,
-                              fontWeight: FontWeight.w600,
-                            ),
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: categoryColor.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              widget.cog.categoryDisplay,
-                              style: TextStyle(
-                                color: categoryColor.withOpacity(0.9),
-                                fontSize: widget.isMobile ? 11 : 12,
-                                fontWeight: FontWeight.w600,
+              ),
+              padding: EdgeInsets.all(widget.isMobile ? 16 : 20),
+              child: Row(
+                children: [
+                  // Icon with background
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: categoryColor.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      widget.cog.materialIcon,
+                      color: categoryColor,
+                      size: widget.isMobile ? 24 : 28,
+                    ),
+                  ),
+                  SizedBox(width: widget.isMobile ? 12 : 16),
+
+                  // Cog name and category
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.cog.name,
+                          style:
+                              Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    fontSize: widget.isMobile ? 18 : 20,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: categoryColor.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                widget.cog.categoryDisplay,
+                                style: TextStyle(
+                                  color: categoryColor.withOpacity(0.9),
+                                  fontSize: widget.isMobile ? 11 : 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Status badge and expand icon
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildStatusBadge(context),
+                      const SizedBox(width: 8),
+                      Icon(
+                        _isExpanded ? Icons.expand_less : Icons.expand_more,
+                        color: Colors.grey[600],
                       ),
                     ],
                   ),
-                ),
-                
-                // Status badge
-                _buildStatusBadge(context),
-              ],
-            ),
-          ),
-
-          // Description and features
-          Padding(
-            padding: EdgeInsets.all(widget.isMobile ? 16 : 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Description
-                if (widget.cog.description != null && widget.cog.description!.isNotEmpty)
-                  Text(
-                    widget.cog.description!,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.grey[600],
-                          fontSize: widget.isMobile ? 13 : 14,
-                          height: 1.5,
-                        ),
-                  ),
-
-                // Features (collapsible)
-                if (widget.cog.features.isNotEmpty) ...[
-                  SizedBox(height: widget.isMobile ? 12 : 16),
-                  
-                  InkWell(
-                    onTap: () => setState(() => _expanded = !_expanded),
-                    borderRadius: BorderRadius.circular(8),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: Row(
-                        children: [
-                          Icon(
-                            _expanded ? Icons.expand_less : Icons.expand_more,
-                            size: 20,
-                            color: Colors.grey[600],
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${widget.cog.features.length} Features',
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontSize: widget.isMobile ? 12 : 13,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  
-                  if (_expanded) ...[
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: widget.cog.features.map((feature) {
-                        return Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: colorScheme.surfaceContainerHighest,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: categoryColor.withOpacity(0.3),
-                              width: 1,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.check_circle_outline,
-                                size: 14,
-                                color: categoryColor.withOpacity(0.8),
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                feature,
-                                style: TextStyle(
-                                  fontSize: widget.isMobile ? 11 : 12,
-                                  color: Colors.grey[700],
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ],
                 ],
-
-                SizedBox(height: widget.isMobile ? 16 : 20),
-
-                // Action buttons
-                Wrap(
-                  spacing: widget.isMobile ? 6 : 8,
-                  runSpacing: widget.isMobile ? 6 : 8,
-                  children: [
-                    if (widget.cog.canLoad && widget.onLoad != null)
-                      _buildActionButton(
-                        context,
-                        icon: Icons.play_arrow,
-                        label: 'Load',
-                        color: Colors.green,
-                        onPressed: widget.onLoad!,
-                      ),
-                    if (widget.cog.canUnload && widget.onUnload != null)
-                      _buildActionButton(
-                        context,
-                        icon: Icons.stop,
-                        label: 'Unload',
-                        color: Colors.orange,
-                        onPressed: widget.onUnload!,
-                      ),
-                    if (widget.cog.canReload && widget.onReload != null)
-                      _buildActionButton(
-                        context,
-                        icon: Icons.refresh,
-                        label: 'Reload',
-                        color: Colors.blue,
-                        onPressed: widget.onReload!,
-                      ),
-                    if (widget.onShowLogs != null)
-                      _buildActionButton(
-                        context,
-                        icon: Icons.description,
-                        label: 'Logs',
-                        color: Colors.grey,
-                        onPressed: widget.onShowLogs!,
-                        outlined: true,
-                      ),
-                  ],
-                ),
-              ],
+              ),
             ),
           ),
+
+          // Expandable content (description, features, buttons)
+          if (_isExpanded)
+            Padding(
+              padding: EdgeInsets.all(widget.isMobile ? 16 : 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Description
+                  if (widget.cog.description != null &&
+                      widget.cog.description!.isNotEmpty)
+                    Text(
+                      widget.cog.description!,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Colors.grey[600],
+                            fontSize: widget.isMobile ? 13 : 14,
+                            height: 1.5,
+                          ),
+                    ),
+
+                  // Features (collapsible)
+                  if (widget.cog.features.isNotEmpty) ...[
+                    SizedBox(height: widget.isMobile ? 12 : 16),
+                    InkWell(
+                      onTap: () =>
+                          setState(() => _showFeatures = !_showFeatures),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Row(
+                          children: [
+                            Icon(
+                              _showFeatures
+                                  ? Icons.expand_less
+                                  : Icons.expand_more,
+                              size: 20,
+                              color: Colors.grey[600],
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${widget.cog.features.length} Features',
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: widget.isMobile ? 12 : 13,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    if (_showFeatures) ...[
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: widget.cog.features.map((feature) {
+                          return Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: colorScheme.surfaceContainerHighest,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: categoryColor.withOpacity(0.3),
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.check_circle_outline,
+                                  size: 14,
+                                  color: categoryColor.withOpacity(0.8),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  feature,
+                                  style: TextStyle(
+                                    fontSize: widget.isMobile ? 11 : 12,
+                                    color: Colors.grey[700],
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ],
+
+                  SizedBox(height: widget.isMobile ? 16 : 20),
+
+                  // Loading indicator or action buttons
+                  if (_isPerformingAction)
+                    Row(
+                      children: [
+                        const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Processing...',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: widget.isMobile ? 13 : 14,
+                          ),
+                        ),
+                      ],
+                    )
+                  else
+                    Wrap(
+                      spacing: widget.isMobile ? 6 : 8,
+                      runSpacing: widget.isMobile ? 6 : 8,
+                      children: [
+                        if (widget.cog.canLoad && widget.onLoad != null)
+                          _buildActionButton(
+                            context,
+                            icon: Icons.play_arrow,
+                            label: 'Load',
+                            color: Colors.green,
+                            onPressed: () {
+                              _handleAction(widget.onLoad!);
+                            },
+                          ),
+                        if (widget.cog.canUnload && widget.onUnload != null)
+                          _buildActionButton(
+                            context,
+                            icon: Icons.stop,
+                            label: 'Unload',
+                            color: Colors.orange,
+                            onPressed: () {
+                              _handleAction(widget.onUnload!);
+                            },
+                          ),
+                        if (widget.cog.canReload && widget.onReload != null)
+                          _buildActionButton(
+                            context,
+                            icon: Icons.refresh,
+                            label: 'Reload',
+                            color: Colors.blue,
+                            onPressed: () {
+                              _handleAction(widget.onReload!);
+                            },
+                          ),
+                        if (widget.onShowLogs != null)
+                          _buildActionButton(
+                            context,
+                            icon: Icons.description,
+                            label: 'Logs',
+                            color: Colors.grey,
+                            onPressed: widget.onShowLogs!,
+                            outlined: true,
+                          ),
+                      ],
+                    ),
+                ],
+              ),
+            ),
         ],
       ),
     );
@@ -332,7 +393,8 @@ class _CogCardState extends State<CogCard> {
         ? OutlinedButton.icon(
             onPressed: onPressed,
             icon: Icon(icon, size: widget.isMobile ? 16 : 18),
-            label: Text(label, style: TextStyle(fontSize: widget.isMobile ? 13 : 14)),
+            label: Text(label,
+                style: TextStyle(fontSize: widget.isMobile ? 13 : 14)),
             style: OutlinedButton.styleFrom(
               padding: EdgeInsets.symmetric(
                 horizontal: widget.isMobile ? 12 : 16,
@@ -344,7 +406,8 @@ class _CogCardState extends State<CogCard> {
         : ElevatedButton.icon(
             onPressed: onPressed,
             icon: Icon(icon, size: widget.isMobile ? 16 : 18),
-            label: Text(label, style: TextStyle(fontSize: widget.isMobile ? 13 : 14)),
+            label: Text(label,
+                style: TextStyle(fontSize: widget.isMobile ? 13 : 14)),
             style: ElevatedButton.styleFrom(
               backgroundColor: color,
               foregroundColor: Colors.white,

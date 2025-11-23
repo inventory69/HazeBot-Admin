@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hazebot_admin/services/api_service.dart';
-import 'package:hazebot_admin/models/cog.dart' show Cog, CogAction;
+import 'package:hazebot_admin/models/cog.dart' show Cog, CogAction, CogStatus;
 import 'package:hazebot_admin/widgets/cog_card.dart';
 
 class CogManagerScreen extends StatefulWidget {
@@ -17,6 +17,7 @@ class _CogManagerScreenState extends State<CogManagerScreen> {
   String? _selectedCategory;
   final ScrollController _scrollController = ScrollController();
   final Map<String, GlobalKey> _categoryKeys = {};
+  final Map<String, bool> _expandedCategories = {};
 
   @override
   void initState() {
@@ -61,28 +62,6 @@ class _CogManagerScreenState extends State<CogManagerScreen> {
   }
 
   Future<void> _performCogAction(String cogName, CogAction action) async {
-    // Show loading snackbar for long-running operations
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Text('${action.name.substring(0, 1).toUpperCase()}${action.name.substring(1)}ing "$cogName"...'),
-          ],
-        ),
-        duration: const Duration(seconds: 30), // Long duration for reload
-        backgroundColor: Colors.blue,
-      ),
-    );
-
     try {
       switch (action) {
         case CogAction.load:
@@ -96,28 +75,44 @@ class _CogManagerScreenState extends State<CogManagerScreen> {
           break;
       }
 
-      // Hide loading snackbar
-      ScaffoldMessenger.of(context).hideCurrentSnackBar();
-
-      // Only reload cog list for load/unload actions (not reload to preserve scroll position)
-      if (action != CogAction.reload) {
-        await _loadCogs();
-      }
-
       // Show success message
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Cog "$cogName" ${action.name}ed successfully'),
             backgroundColor: Colors.green,
-            duration: const Duration(seconds: 3),
+            duration: const Duration(seconds: 2),
           ),
         );
       }
+
+      // Update local cog status without reloading entire list (preserves scroll position)
+      if (action == CogAction.load || action == CogAction.unload) {
+        setState(() {
+          final cogIndex = _cogs.indexWhere((c) => c.name == cogName);
+          if (cogIndex != -1) {
+            final cog = _cogs[cogIndex];
+            // Update the cog status locally
+            final newStatus = action == CogAction.load
+                ? CogStatus.loaded
+                : CogStatus.unloaded;
+            final updatedCog = Cog(
+              name: cog.name,
+              description: cog.description,
+              icon: cog.icon,
+              category: cog.category,
+              features: cog.features,
+              status: newStatus,
+              canLoad: action == CogAction.unload, // Can load if just unloaded
+              canUnload: action == CogAction.load, // Can unload if just loaded
+              canReload: action == CogAction.load, // Can only reload if loaded
+              errorMessage: null,
+            );
+            _cogs[cogIndex] = updatedCog;
+          }
+        });
+      }
     } catch (e) {
-      // Hide loading snackbar
-      ScaffoldMessenger.of(context).hideCurrentSnackBar();
-      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -223,9 +218,19 @@ class _CogManagerScreenState extends State<CogManagerScreen> {
 
     // Sort by category order
     final categoryOrder = [
-      'core', 'community', 'content', 'gaming', 'moderation', 
-      'support', 'user', 'info', 'productivity', 'utility', 
-      'notifications', 'monitoring', 'other'
+      'core',
+      'community',
+      'content',
+      'gaming',
+      'moderation',
+      'support',
+      'user',
+      'info',
+      'productivity',
+      'utility',
+      'notifications',
+      'monitoring',
+      'other'
     ];
     final sortedCategories = categories.keys.toList()
       ..sort((a, b) {
@@ -245,9 +250,9 @@ class _CogManagerScreenState extends State<CogManagerScreen> {
           Text(
             'Quick Jump',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              fontSize: isMobile ? 14 : 16,
-            ),
+                  fontWeight: FontWeight.bold,
+                  fontSize: isMobile ? 14 : 16,
+                ),
           ),
           const SizedBox(height: 12),
           Wrap(
@@ -256,13 +261,14 @@ class _CogManagerScreenState extends State<CogManagerScreen> {
             children: sortedCategories.map((category) {
               final count = categories[category]!;
               final isSelected = _selectedCategory == category;
-              
+
               return FilterChip(
                 label: Text(
                   '$category ($count)',
                   style: TextStyle(
                     fontSize: isMobile ? 12 : 13,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    fontWeight:
+                        isSelected ? FontWeight.bold : FontWeight.normal,
                   ),
                 ),
                 selected: isSelected,
@@ -297,9 +303,19 @@ class _CogManagerScreenState extends State<CogManagerScreen> {
 
     // Sort categories
     final categoryOrder = [
-      'core', 'community', 'content', 'gaming', 'moderation', 
-      'support', 'user', 'info', 'productivity', 'utility', 
-      'notifications', 'monitoring', 'other'
+      'core',
+      'community',
+      'content',
+      'gaming',
+      'moderation',
+      'support',
+      'user',
+      'info',
+      'productivity',
+      'utility',
+      'notifications',
+      'monitoring',
+      'other'
     ];
     final sortedCategories = cogsByCategory.keys.toList()
       ..sort((a, b) {
@@ -315,11 +331,17 @@ class _CogManagerScreenState extends State<CogManagerScreen> {
     final widgets = <Widget>[];
     for (var category in sortedCategories) {
       final cogs = cogsByCategory[category]!;
-      
+
       // Create or get key for this category
       _categoryKeys.putIfAbsent(category, () => GlobalKey());
-      
-      // Category header
+
+      // Initialize expanded state for this category (collapsed by default)
+      _expandedCategories.putIfAbsent(category, () => false);
+
+      // Get category color based on first cog in category
+      final categoryColor = cogs.first.getCategoryColor();
+
+      // Category header with expand/collapse
       widgets.add(
         Container(
           key: _categoryKeys[category],
@@ -327,36 +349,95 @@ class _CogManagerScreenState extends State<CogManagerScreen> {
             top: isMobile ? 8 : 16,
             bottom: isMobile ? 8 : 12,
           ),
-          child: Text(
-            category.toUpperCase(),
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: Colors.grey[600],
-              letterSpacing: 1.2,
-              fontSize: isMobile ? 11 : 12,
+          child: InkWell(
+            onTap: () {
+              setState(() {
+                _expandedCategories[category] = !_expandedCategories[category]!;
+              });
+            },
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: isMobile ? 12 : 16,
+                vertical: isMobile ? 10 : 12,
+              ),
+              decoration: BoxDecoration(
+                color: categoryColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: categoryColor.withOpacity(0.3),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    _expandedCategories[category]!
+                        ? Icons.expand_less
+                        : Icons.expand_more,
+                    color: categoryColor,
+                    size: isMobile ? 20 : 24,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      category.toUpperCase(),
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: categoryColor,
+                            letterSpacing: 1.2,
+                            fontSize: isMobile ? 12 : 14,
+                          ),
+                    ),
+                  ),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: categoryColor.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${cogs.length}',
+                      style: TextStyle(
+                        color: categoryColor,
+                        fontSize: isMobile ? 12 : 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
       );
 
-      // Cogs in this category
-      for (var cog in cogs) {
-        widgets.add(
-          Padding(
-            padding: EdgeInsets.only(bottom: isMobile ? 12 : 16),
-            child: CogCard(
-              cog: cog,
-              isMobile: isMobile,
-              onLoad: cog.canLoad ? () => _performCogAction(
-                  cog.name, CogAction.load) : null,
-              onUnload: cog.canUnload ? () => _performCogAction(
-                  cog.name, CogAction.unload) : null,
-              onReload: cog.canReload ? () => _performCogAction(
-                  cog.name, CogAction.reload) : null,
-              onShowLogs: () => _showCogLogs(cog.name),
+      // Cogs in this category (only if expanded)
+      if (_expandedCategories[category]!) {
+        for (var cog in cogs) {
+          widgets.add(
+            Padding(
+              padding: EdgeInsets.only(bottom: isMobile ? 12 : 16),
+              child: CogCard(
+                cog: cog,
+                isMobile: isMobile,
+                onLoad: cog.canLoad
+                    ? () => _performCogAction(cog.name, CogAction.load)
+                    : null,
+                // APIServer cannot be unloaded - only reloaded
+                onUnload:
+                    (cog.canUnload && cog.name.toLowerCase() != 'apiserver')
+                        ? () => _performCogAction(cog.name, CogAction.unload)
+                        : null,
+                onReload: cog.canReload
+                    ? () => _performCogAction(cog.name, CogAction.reload)
+                    : null,
+                onShowLogs: () => _showCogLogs(cog.name),
+              ),
             ),
-          ),
-        );
+          );
+        }
       }
     }
 
@@ -427,8 +508,7 @@ class _CogManagerScreenState extends State<CogManagerScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(Icons.extension_off,
-                                  size: isMobile ? 48 : 64,
-                                  color: Colors.grey),
+                                  size: isMobile ? 48 : 64, color: Colors.grey),
                               SizedBox(height: isMobile ? 12 : 16),
                               Text(
                                 'No cogs found',

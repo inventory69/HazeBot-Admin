@@ -1167,8 +1167,9 @@ class ApiService {
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       final cogs = (data['cogs'] as List<dynamic>?)
-          ?.map((cog) => Cog.fromJson(cog as Map<String, dynamic>))
-          .toList() ?? [];
+              ?.map((cog) => Cog.fromJson(cog as Map<String, dynamic>))
+              .toList() ??
+          [];
       return cogs;
     } else {
       throw Exception('Failed to load cogs: ${response.body}');
@@ -1194,8 +1195,8 @@ class ApiService {
   }
 
   Future<void> reloadCog(String cogName) async {
-    // Longer timeout for reload operations (especially APIServer)
-    final response = await _post('$baseUrl/cogs/$cogName/reload', timeout: 30);
+    // Longer timeout for reload operations (especially APIServer which takes ~27s)
+    final response = await _post('$baseUrl/cogs/$cogName/reload', timeout: 45);
 
     if (response.statusCode != 200) {
       final error = jsonDecode(response.body);
@@ -1209,8 +1210,9 @@ class ApiService {
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       final logs = (data['logs'] as List<dynamic>?)
-          ?.map((log) => CogLog.fromJson(log))
-          .toList() ?? [];
+              ?.map((log) => CogLog.fromJson(log))
+              .toList() ??
+          [];
       return logs;
     } else {
       throw Exception('Failed to load cog logs: ${response.body}');
@@ -1238,5 +1240,3 @@ String getProxiedImageUrl(String imageUrl) {
   final encodedUrl = Uri.encodeComponent(imageUrl);
   return '$apiBaseUrl/api/proxy/image?url=$encodedUrl';
 }
-
-
