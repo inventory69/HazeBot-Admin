@@ -135,6 +135,8 @@ class _MemeDetailScreenState extends State<MemeDetailScreen> {
     final timestamp = widget.meme['timestamp'] as String?;
     final isCustom = widget.meme['is_custom'] as bool? ?? false;
     final messageId = widget.meme['message_id'] as String?;
+    final requester = widget.meme['requester'] as String?;
+    final isDaily = widget.meme['is_daily'] as bool? ?? false;
 
     DateTime? postedDate;
     if (timestamp != null) {
@@ -167,38 +169,44 @@ class _MemeDetailScreenState extends State<MemeDetailScreen> {
             ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Meme Image
-            if (imageUrl != null)
-              Hero(
-                tag: 'meme_${widget.meme['message_id']}',
-                child: Image.network(
-                  imageUrl,
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      height: 300,
-                      color: Colors.grey[300],
-                      child: const Center(
-                        child: Icon(Icons.broken_image,
-                            size: 64, color: Colors.grey),
-                      ),
-                    );
-                  },
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Meme Image
+              if (imageUrl != null)
+                Hero(
+                  tag: 'meme_${widget.meme['message_id']}',
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxHeight: MediaQuery.of(context).size.height * 0.7,
+                    ),
+                    child: Image.network(
+                      imageUrl,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          height: 300,
+                          color: Colors.grey[300],
+                          child: const Center(
+                            child: Icon(Icons.broken_image,
+                                size: 64, color: Colors.grey),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                )
+              else
+                Container(
+                  height: 300,
+                  color: Colors.grey[300],
+                  child: const Center(
+                    child: Icon(Icons.image_not_supported,
+                        size: 64, color: Colors.grey),
+                  ),
                 ),
-              )
-            else
-              Container(
-                height: 300,
-                color: Colors.grey[300],
-                child: const Center(
-                  child: Icon(Icons.image_not_supported,
-                      size: 64, color: Colors.grey),
-                ),
-              ),
 
             // Meme Info
             Padding(
@@ -227,6 +235,14 @@ class _MemeDetailScreenState extends State<MemeDetailScreen> {
                             label: isCustom ? 'Created by' : 'Author',
                             value: author,
                           ),
+                          if (isDaily || (requester != null && requester.isNotEmpty)) ...[
+                            const Divider(height: 24),
+                            _InfoRow(
+                              icon: isDaily ? Icons.calendar_today : Icons.send,
+                              label: isDaily ? 'Daily Meme' : 'Requested by',
+                              value: isDaily ? 'Automated Post' : requester!,
+                            ),
+                          ],
                           if (!isCustom) ...[
                             const Divider(height: 24),
                             _InfoRow(
@@ -331,6 +347,7 @@ class _MemeDetailScreenState extends State<MemeDetailScreen> {
               ),
             ),
           ],
+        ),
         ),
       ),
     );

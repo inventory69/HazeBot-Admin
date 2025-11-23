@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/auth_service.dart';
 import '../services/discord_auth_service.dart';
 import '../services/permission_service.dart';
@@ -22,6 +23,7 @@ import 'config/rocket_league_config_screen.dart';
 import 'config/texts_config_screen.dart';
 import 'config/cog_manager_screen.dart';
 import 'admin/live_users_screen.dart';
+import 'admin/tickets_admin_screen.dart';
 import 'logs_screen.dart';
 import 'settings_screen.dart';
 import 'test_screen.dart';
@@ -70,7 +72,21 @@ class _HomeScreenState extends State<HomeScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _pingServer();
       _loadConfig();
+      _loadAdminPanelSetting();
     });
+  }
+
+  Future<void> _loadAdminPanelSetting() async {
+    final prefs = await SharedPreferences.getInstance();
+    final showOnStartup = prefs.getBool('show_admin_panel_on_startup') ?? false;
+    
+    // Only apply if user has permission
+    final permissionService = Provider.of<PermissionService>(context, listen: false);
+    if (showOnStartup && permissionService.hasPermission('all')) {
+      setState(() {
+        _isDrawerVisible = true;
+      });
+    }
   }
 
   @override
@@ -216,6 +232,11 @@ class _HomeScreenState extends State<HomeScreen>
         label: 'Rocket\nLeague',
         screen: RocketLeagueConfigScreen(
             key: ValueKey('rocket_league_$_reloadCounter')),
+      ),
+      NavigationItem(
+        icon: Icons.confirmation_number,
+        label: 'Tickets',
+        screen: TicketsAdminScreen(key: ValueKey('tickets_$_reloadCounter')),
       ),
       NavigationItem(
         icon: Icons.text_fields,
@@ -1010,29 +1031,34 @@ class _DashboardScreenState extends State<DashboardScreen>
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Icon(Icons.image, size: isMobile ? 20 : 24),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 6),
-                      decoration: BoxDecoration(
-                        // Use same background as cache status chip (primaryContainer)
-                        color: Theme.of(context).colorScheme.primaryContainer,
-                        borderRadius: BorderRadius.circular(8),
+                Flexible(
+                  child: Row(
+                    children: [
+                      Icon(Icons.image, size: isMobile ? 20 : 24),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 6),
+                          decoration: BoxDecoration(
+                            // Use same background as cache status chip (primaryContainer)
+                            color: Theme.of(context).colorScheme.primaryContainer,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            'Latest Memes',
+                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                  fontSize: isMobile ? 18 : null,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onPrimaryContainer,
+                                ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
                       ),
-                      child: Text(
-                        'Latest Memes',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontSize: isMobile ? 18 : null,
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onPrimaryContainer,
-                            ),
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
                 if (memes.isNotEmpty)
                   TextButton.icon(
@@ -1083,6 +1109,8 @@ class _DashboardScreenState extends State<DashboardScreen>
     final author = meme['author'] as String? ?? 'Unknown';
     final score = meme['score'] as int? ?? 0;
     final isCustom = meme['is_custom'] as bool? ?? false;
+    final requester = meme['requester'] as String?;
+    final isDaily = meme['is_daily'] as bool? ?? false;
 
     // Choose a subtle tonal container that contrasts the section background.
     // Use a harmonized accent color (primaryContainer) for a friendlier, more Monet-like look.
@@ -1208,6 +1236,30 @@ class _DashboardScreenState extends State<DashboardScreen>
                         ),
                       ],
                     ),
+                    if (isDaily || (requester != null && requester.isNotEmpty)) ...[
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(
+                            isDaily ? Icons.calendar_today : Icons.send,
+                            size: isMobile ? 14 : 16,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              isDaily ? 'Daily Meme' : 'Requested by $requester',
+                              style: TextStyle(
+                                fontSize: isMobile ? 12 : 13,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                fontStyle: FontStyle.italic,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                     const SizedBox(height: 4),
                     Row(
                       children: [

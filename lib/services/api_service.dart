@@ -6,6 +6,8 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/cog.dart';
+import '../models/ticket.dart';
+import '../models/ticket_config.dart';
 
 /// Custom exceptions for better error handling
 class ApiTimeoutException implements Exception {
@@ -1216,6 +1218,174 @@ class ApiService {
       return logs;
     } else {
       throw Exception('Failed to load cog logs: ${response.body}');
+    }
+  }
+
+  // ===== TICKET SYSTEM ENDPOINTS =====
+
+  Future<List<Ticket>> getTickets({String? status}) async {
+    String url = '$baseUrl/tickets';
+    if (status != null && status.isNotEmpty) {
+      url += '?status=$status';
+    }
+
+    final response = await _get(url);
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final tickets = (data['tickets'] as List<dynamic>?)
+              ?.map((ticket) => Ticket.fromJson(ticket as Map<String, dynamic>))
+              .toList() ??
+          [];
+      return tickets;
+    } else if (response.statusCode == 401) {
+      throw TokenExpiredException('Token has expired or is invalid');
+    } else {
+      throw Exception('Failed to load tickets: ${response.body}');
+    }
+  }
+
+  Future<Ticket> getTicket(String ticketId) async {
+    final response = await _get('$baseUrl/tickets/$ticketId');
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return Ticket.fromJson(data);
+    } else if (response.statusCode == 401) {
+      throw TokenExpiredException('Token has expired or is invalid');
+    } else if (response.statusCode == 404) {
+      throw Exception('Ticket not found');
+    } else {
+      throw Exception('Failed to load ticket: ${response.body}');
+    }
+  }
+
+  Future<void> updateTicket(
+      String ticketId, Map<String, dynamic> updates) async {
+    final response = await _put(
+      '$baseUrl/tickets/$ticketId',
+      body: jsonEncode(updates),
+    );
+
+    if (response.statusCode != 200) {
+      final error = jsonDecode(response.body);
+      throw Exception(error['error'] ?? 'Failed to update ticket');
+    }
+  }
+
+  Future<void> deleteTicket(String ticketId) async {
+    final response = await _delete('$baseUrl/tickets/$ticketId');
+
+    if (response.statusCode != 200) {
+      final error = jsonDecode(response.body);
+      throw Exception(error['error'] ?? 'Failed to delete ticket');
+    }
+  }
+
+  Future<TicketConfig> getTicketConfig() async {
+    final response = await _get('$baseUrl/config/tickets');
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return TicketConfig.fromJson(data);
+    } else if (response.statusCode == 401) {
+      throw TokenExpiredException('Token has expired or is invalid');
+    } else {
+      throw Exception('Failed to load ticket config: ${response.body}');
+    }
+  }
+
+  Future<void> updateTicketConfig(TicketConfig config) async {
+    final response = await _put(
+      '$baseUrl/config/tickets',
+      body: jsonEncode(config.toJson()),
+    );
+
+    if (response.statusCode != 200) {
+      final error = jsonDecode(response.body);
+      throw Exception(error['error'] ?? 'Failed to update ticket config');
+    }
+  }
+
+  Future<void> resetTicketConfig() async {
+    final response = await _post('$baseUrl/config/tickets/reset');
+
+    if (response.statusCode != 200) {
+      final error = jsonDecode(response.body);
+      throw Exception(error['error'] ?? 'Failed to reset ticket config');
+    }
+  }
+
+  // === Ticket Actions ===
+
+  Future<void> claimTicket(String ticketId, String userId) async {
+    final response = await _post(
+      '$baseUrl/tickets/$ticketId/claim',
+      body: jsonEncode({'user_id': userId}),
+    );
+
+    if (response.statusCode != 200) {
+      final error = jsonDecode(response.body);
+      throw Exception(error['error'] ?? 'Failed to claim ticket');
+    }
+  }
+
+  Future<void> assignTicket(String ticketId, String assignedTo) async {
+    final response = await _post(
+      '$baseUrl/tickets/$ticketId/assign',
+      body: jsonEncode({'assigned_to': assignedTo}),
+    );
+
+    if (response.statusCode != 200) {
+      final error = jsonDecode(response.body);
+      throw Exception(error['error'] ?? 'Failed to assign ticket');
+    }
+  }
+
+  Future<void> closeTicket(String ticketId, {String? closeMessage}) async {
+    final response = await _post(
+      '$baseUrl/tickets/$ticketId/close',
+      body: jsonEncode({'close_message': closeMessage ?? ''}),
+    );
+
+    if (response.statusCode != 200) {
+      final error = jsonDecode(response.body);
+      throw Exception(error['error'] ?? 'Failed to close ticket');
+    }
+  }
+
+  Future<void> reopenTicket(String ticketId) async {
+    final response = await _post('$baseUrl/tickets/$ticketId/reopen');
+
+    if (response.statusCode != 200) {
+      final error = jsonDecode(response.body);
+      throw Exception(error['error'] ?? 'Failed to reopen ticket');
+    }
+  }
+
+  // === Ticket Messages ===
+
+  Future<List<dynamic>> getTicketMessages(String ticketId) async {
+    final response = await _get('$baseUrl/tickets/$ticketId/messages');
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data['messages'] as List<dynamic>;
+    } else {
+      final error = jsonDecode(response.body);
+      throw Exception(error['error'] ?? 'Failed to fetch messages');
+    }
+  }
+
+  Future<void> sendTicketMessage(String ticketId, String content) async {
+    final response = await _post(
+      '$baseUrl/tickets/$ticketId/messages',
+      body: jsonEncode({'content': content}),
+    );
+
+    if (response.statusCode != 200) {
+      final error = jsonDecode(response.body);
+      throw Exception(error['error'] ?? 'Failed to send message');
     }
   }
 }
