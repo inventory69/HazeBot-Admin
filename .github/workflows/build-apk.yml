@@ -47,6 +47,17 @@ jobs:
           echo "API_BASE_URL=${{ secrets.API_BASE_URL }}" > .env
           echo "✅ .env file created with API URL"
       
+      - name: Create Firebase config
+        run: |
+          if [ -n "${{ secrets.GOOGLE_SERVICES_JSON }}" ]; then
+            echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
+            echo "✅ Firebase configuration created (Push notifications enabled)"
+          else
+            echo "⚠️ GOOGLE_SERVICES_JSON secret not set - Building without Firebase support"
+            echo "   Push notifications will be disabled in this build"
+            echo "   To enable: Add GOOGLE_SERVICES_JSON secret in repository settings"
+          fi
+      
       - name: Get dependencies
         run: flutter pub get
       
