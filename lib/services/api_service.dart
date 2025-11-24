@@ -1432,13 +1432,16 @@ class ApiService {
     }
   }
 
-  Future<void> sendTicketMessage(String ticketId, String content) async {
+  Future<Map<String, dynamic>> sendTicketMessage(String ticketId, String content) async {
     final response = await _post(
       '$baseUrl/tickets/$ticketId/messages',
       body: jsonEncode({'content': content}),
     );
 
-    if (response.statusCode != 200) {
+    if (response.statusCode == 200) {
+      final result = jsonDecode(response.body);
+      return result['data'] ?? {};
+    } else {
       final error = jsonDecode(response.body);
       throw Exception(error['error'] ?? 'Failed to send message');
     }

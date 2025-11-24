@@ -252,7 +252,16 @@ class _MyTicketsTabState extends State<_MyTicketsTab> {
         ? Colors.green
         : Colors.grey;
 
+    // Use harmonized accent color for cards (same as admin screen)
+    final isMonet = colorScheme.surfaceContainerHigh !=
+        ThemeData.light().colorScheme.surfaceContainerHigh;
+    final cardColor = isMonet
+        ? colorScheme.primaryContainer.withOpacity(0.18)
+        : colorScheme.surface;
+
     return Card(
+      color: cardColor,
+      elevation: 0, // Flat card
       margin: const EdgeInsets.only(bottom: 8),
       child: InkWell(
         onTap: () => _showTicketDetail(ticket),
@@ -507,11 +516,12 @@ class _CreateTicketTabState extends State<_CreateTicketTab> {
           _isLoading = false;
         });
 
-        // Show success message
+        // Show success message with null-safe ticket number
+        final ticketNum = result['ticket_num'] ?? 'Unknown';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              '✓ Ticket #${result['ticket_num']} created successfully!',
+              '✓ Ticket #$ticketNum created successfully!',
             ),
             backgroundColor: Colors.green,
             duration: const Duration(seconds: 3),
@@ -788,15 +798,18 @@ class _TicketDetailScreenState extends State<_TicketDetailScreen> {
 
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
-      await authService.apiService.sendTicketMessage(
+      final newMessage = await authService.apiService.sendTicketMessage(
         widget.ticket.ticketId,
         _messageController.text.trim(),
       );
 
       if (mounted) {
         _messageController.clear();
-        await _loadMessages(); // Reload messages
-        setState(() => _isSending = false);
+        // Add the new message to the list immediately (optimistic update)
+        setState(() {
+          _messages.add(newMessage);
+          _isSending = false;
+        });
       }
     } catch (e) {
       if (mounted) {
@@ -1047,60 +1060,156 @@ class _TicketDetailScreenState extends State<_TicketDetailScreen> {
 
   Widget _buildMessageBubble(
       dynamic message, ColorScheme colorScheme, ThemeData theme) {
-    final author = message['author'] as String? ?? 'Unknown';
+    // Get author info from backend response (author_name, author_avatar)
+    final author = message['author_name'] as String? ?? message['author'] as String? ?? 'Unknown';
+    final avatarUrl = message['author_avatar'] as String?;
     final content = message['content'] as String? ?? '';
     final timestamp = message['timestamp'] as String?;
     final isBot = message['is_bot'] as bool? ?? false;
 
+    // Check message types
+    final isAdminMessage = content.contains('[Admin Panel');
+    final isInitialMessage = content.contains('**Initial details');
+    final isClosingMessage = content.contains('Ticket successfully closed') || 
+                              content.contains('**Closing Message:**');
+    final isSystem = isBot && !isAdminMessage;
+
+    // Clean content
+    String cleanContent = content;
+    cleanContent = cleanContent.replaceAll('**', '');
+    
+    if (isAdminMessage) {
+      final match = RegExp(r'\[Admin Panel - [^\]]+\]:\s*(.+)', dotAll: true).firstMatch(cleanContent);
+      if (match != null) {
+        cleanContent = match.group(1) ?? cleanContent;
+      }
+    }
+    
+    if (isInitialMessage) {
+      final match = RegExp(r'Initial details from [^:]+:\s*(.+)', dotAll: true).firstMatch(cleanContent);
+      if (match != null) {
+        cleanContent = match.group(1) ?? cleanContent;
+      }
+    }
+
+    // Get display name
+    String displayName = author;
+    if (isAdminMessage) {
+      final match = RegExp(r'\[Admin Panel - ([^\]]+)\]').firstMatch(content);
+      if (match != null) {
+        displayName = match.group(1) ?? author;
+      }
+    }
+
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(
-            radius: 16,
-            backgroundColor: isBot
-                ? colorScheme.tertiaryContainer
-                : colorScheme.primaryContainer,
-            child: Text(
-              author[0].toUpperCase(),
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: isBot
-                    ? colorScheme.onTertiaryContainer
-                    : colorScheme.onPrimaryContainer,
-              ),
-            ),
-          ),
+          // Avatar with Discord image or fallback icon
+          avatarUrl != null
+              ? CircleAvatar(
+                  radius: 16,
+                  backgroundImage: NetworkImage(avatarUrl),
+                  onBackgroundImageError: (_, __) {
+                    // Fallback handled by child
+                  },
+                  child: null, // No child when image loads successfully
+                  backgroundColor: isClosingMessage
+                      ? Colors.green.withOpacity(0.2)
+                      : isAdminMessage
+                          ? colorScheme.primaryContainer
+                          : isSystem
+                              ? colorScheme.tertiaryContainer
+                              : colorScheme.secondaryContainer,
+                )
+              : CircleAvatar(
+                  radius: 16,
+                  backgroundColor: isClosingMessage
+                      ? Colors.green.withOpacity(0.2)
+                      : isAdminMessage
+                          ? colorScheme.primaryContainer
+                          : isSystem
+                              ? colorScheme.tertiaryContainer
+                              : colorScheme.secondaryContainer,
+                  child: isBot
+                      ? Icon(
+                          Icons.smart_toy,
+                          size: 20,
+                          color: isClosingMessage
+                              ? Colors.green
+                              : isAdminMessage
+                                  ? colorScheme.primary
+                                  : colorScheme.onTertiaryContainer,
+                        )
+                      : Icon(
+                          isAdminMessage
+                              ? Icons.admin_panel_settings
+                              : Icons.person,
+                          size: 20,
+                          color: isClosingMessage
+                              ? Colors.green
+                              : isAdminMessage
+                                  ? colorScheme.primary
+                                  : isSystem
+                                      ? colorScheme.onSurfaceVariant
+                                      : colorScheme.onSecondaryContainer,
+                        ),
+                ),
           const SizedBox(width: 12),
+          // Message content
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Header
                 Row(
                   children: [
-                    Text(
-                      author,
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
+                    Flexible(
+                      child: Text(
+                        displayName,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color: isAdminMessage
+                              ? colorScheme.primary
+                              : null,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    if (isBot) ...[
+                    if (isAdminMessage) ...[
                       const SizedBox(width: 6),
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: colorScheme.tertiaryContainer,
+                          color: colorScheme.primaryContainer,
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          'BOT',
+                          'ADMIN',
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
-                            color: colorScheme.onTertiaryContainer,
+                            color: colorScheme.primary,
+                          ),
+                        ),
+                      ),
+                    ],
+                    if (isClosingMessage) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.green.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          'CLOSED',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green,
                           ),
                         ),
                       ),
@@ -1108,17 +1217,46 @@ class _TicketDetailScreenState extends State<_TicketDetailScreen> {
                     const SizedBox(width: 8),
                     if (timestamp != null)
                       Text(
-                        timeago.format(DateTime.parse(timestamp)),
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
+                        _formatMessageTime(DateTime.parse(timestamp)),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey[600],
                         ),
                       ),
                   ],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  content,
-                  style: theme.textTheme.bodyMedium,
+                const SizedBox(height: 6),
+                // Message bubble
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isClosingMessage
+                        ? Colors.green.withOpacity(0.1)
+                        : isAdminMessage
+                            ? colorScheme.primaryContainer.withOpacity(0.3)
+                            : isSystem
+                                ? colorScheme.surfaceContainerHighest.withOpacity(0.5)
+                                : colorScheme.surfaceContainerHigh,
+                    borderRadius: BorderRadius.circular(12),
+                    border: isClosingMessage
+                        ? Border.all(
+                            color: Colors.green.withOpacity(0.3),
+                            width: 1,
+                          )
+                        : isAdminMessage
+                            ? Border.all(
+                                color: colorScheme.primary.withOpacity(0.3),
+                                width: 1,
+                              )
+                            : null,
+                  ),
+                  child: Text(
+                    cleanContent,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      height: 1.4,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -1126,6 +1264,23 @@ class _TicketDetailScreenState extends State<_TicketDetailScreen> {
         ],
       ),
     );
+  }
+
+  String _formatMessageTime(DateTime dateTime) {
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+
+    if (difference.inMinutes < 1) {
+      return 'just now';
+    } else if (difference.inMinutes < 60) {
+      return '${difference.inMinutes}m ago';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours}h ago';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays}d ago';
+    } else {
+      return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
+    }
   }
 
   String _extractSubject(String initialMessage) {
