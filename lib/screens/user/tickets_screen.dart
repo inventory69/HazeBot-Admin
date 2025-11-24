@@ -273,6 +273,54 @@ class _MyTicketsTabState extends State<_MyTicketsTab> {
             children: [
               Row(
                 children: [
+                  // User Avatar
+                  if (ticket.avatarUrl != null && ticket.avatarUrl!.isNotEmpty)
+                    CircleAvatar(
+                      radius: 16,
+                      backgroundColor: colorScheme.primaryContainer,
+                      child: ClipOval(
+                        child: Image.network(
+                          ticket.avatarUrl!,
+                          width: 32,
+                          height: 32,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Icon(
+                              Icons.person,
+                              size: 18,
+                              color: colorScheme.onPrimaryContainer,
+                            );
+                          },
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return SizedBox(
+                              width: 32,
+                              height: 32,
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  value: loadingProgress.expectedTotalBytes != null
+                                      ? loadingProgress.cumulativeBytesLoaded /
+                                          loadingProgress.expectedTotalBytes!
+                                      : null,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    )
+                  else
+                    CircleAvatar(
+                      radius: 16,
+                      backgroundColor: colorScheme.primaryContainer,
+                      child: Icon(
+                        Icons.person,
+                        size: 18,
+                        color: colorScheme.onPrimaryContainer,
+                      ),
+                    ),
+                  const SizedBox(width: 8),
                   Container(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -750,17 +798,77 @@ class _TicketDetailScreenState extends State<_TicketDetailScreen> {
   List<dynamic> _messages = [];
   String? _errorMessage;
   final _messageController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+  int _previousMessageCount = 0;
 
   @override
   void initState() {
     super.initState();
     _loadMessages();
+    _setupWebSocketListener();
+  }
+  
+  void _setupWebSocketListener() {
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final wsService = authService.wsService;
+    
+    // Join ticket room
+    wsService.joinTicket(widget.ticket.ticketId);
+    
+    // Listen for new messages
+    wsService.onTicketUpdate(widget.ticket.ticketId, (data) {
+      final eventType = data['event_type'] as String?;
+      
+      if (eventType == 'new_message') {
+        final messageData = data['data'] as Map<String, dynamic>?;
+        if (messageData != null) {
+          _handleNewMessage(messageData);
+        }
+      }
+    });
+  }
+  
+  void _handleNewMessage(Map<String, dynamic> messageData) {
+    if (!mounted) return;
+    
+    // Check if message already exists
+    final messageId = messageData['id'] as String;
+    if (_messages.any((m) => m['id'] == messageId)) {
+      return;
+    }
+    
+    setState(() {
+      _messages.add(messageData);
+      _previousMessageCount = _messages.length;
+    });
+    
+    // Scroll to bottom
+    _scrollToBottom();
   }
 
   @override
   void dispose() {
+    // Leave WebSocket ticket room
+    final authService = Provider.of<AuthService>(context, listen: false);
+    authService.wsService.leaveTicket(widget.ticket.ticketId);
+    
     _messageController.dispose();
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  void _scrollToBottom() {
+    if (_scrollController.hasClients) {
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (_scrollController.hasClients) {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        }
+      });
+    }
   }
 
   Future<void> _loadMessages() async {
@@ -777,8 +885,18 @@ class _TicketDetailScreenState extends State<_TicketDetailScreen> {
 
       if (mounted) {
         setState(() {
+          final newMessageCount = messages.length;
+          final hasNewMessages = newMessageCount > _previousMessageCount;
+          final isFirstLoad = _previousMessageCount == 0;
+          
           _messages = messages;
+          _previousMessageCount = newMessageCount;
           _isLoadingMessages = false;
+          
+          // Auto-scroll to bottom if there are new messages OR first load
+          if (hasNewMessages || isFirstLoad) {
+            _scrollToBottom();
+          }
         });
       }
     } catch (e) {
@@ -808,8 +926,11 @@ class _TicketDetailScreenState extends State<_TicketDetailScreen> {
         // Add the new message to the list immediately (optimistic update)
         setState(() {
           _messages.add(newMessage);
+          _previousMessageCount = _messages.length;
           _isSending = false;
         });
+        // Scroll to bottom after sending
+        _scrollToBottom();
       }
     } catch (e) {
       if (mounted) {
@@ -987,6 +1108,7 @@ class _TicketDetailScreenState extends State<_TicketDetailScreen> {
                                 ],
                               )
                             : ListView.builder(
+                                controller: _scrollController,
                                 padding: const EdgeInsets.all(16),
                                 itemCount: _messages.length,
                                 itemBuilder: (context, index) {
@@ -998,20 +1120,21 @@ class _TicketDetailScreenState extends State<_TicketDetailScreen> {
                       ),
           ),
 
-          // Message input (only if ticket is open)
-          if (widget.ticket.status.toLowerCase() == 'open')
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: colorScheme.surface,
-                border: Border(
-                  top: BorderSide(
-                    color: colorScheme.outlineVariant,
-                    width: 1,
+          // Message input (only if ticket is not closed)
+          if (widget.ticket.status.toLowerCase() != 'closed')
+            SafeArea(
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: colorScheme.surface,
+                  border: Border(
+                    top: BorderSide(
+                      color: colorScheme.outlineVariant,
+                      width: 1,
+                    ),
                   ),
                 ),
-              ),
-              child: Row(
+                child: Row(
                 children: [
                   Expanded(
                     child: TextField(
@@ -1053,6 +1176,7 @@ class _TicketDetailScreenState extends State<_TicketDetailScreen> {
                 ],
               ),
             ),
+          ),
         ],
       ),
     );
@@ -1066,9 +1190,11 @@ class _TicketDetailScreenState extends State<_TicketDetailScreen> {
     final content = message['content'] as String? ?? '';
     final timestamp = message['timestamp'] as String?;
     final isBot = message['is_bot'] as bool? ?? false;
-
+    final isAdmin = message['is_admin'] as bool? ?? false;
+    final role = message['role'] as String?; // 'admin', 'moderator', or null
+    
     // Check message types
-    final isAdminMessage = content.contains('[Admin Panel');
+    final isAdminMessage = isAdmin || content.contains('[Admin Panel');
     final isInitialMessage = content.contains('**Initial details');
     final isClosingMessage = content.contains('Ticket successfully closed') || 
                               content.contains('**Closing Message:**');
@@ -1107,21 +1233,48 @@ class _TicketDetailScreenState extends State<_TicketDetailScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Avatar with Discord image or fallback icon
-          avatarUrl != null
-              ? CircleAvatar(
-                  radius: 16,
-                  backgroundImage: NetworkImage(avatarUrl),
-                  onBackgroundImageError: (_, __) {
-                    // Fallback handled by child
-                  },
-                  child: null, // No child when image loads successfully
-                  backgroundColor: isClosingMessage
-                      ? Colors.green.withOpacity(0.2)
-                      : isAdminMessage
-                          ? colorScheme.primaryContainer
-                          : isSystem
-                              ? colorScheme.tertiaryContainer
-                              : colorScheme.secondaryContainer,
+          avatarUrl != null && avatarUrl.isNotEmpty
+              ? Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: colorScheme.surfaceContainerHighest,
+                  ),
+                  child: ClipOval(
+                    child: Image.network(
+                      avatarUrl,
+                      width: 32,
+                      height: 32,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        // Fallback to icon on error
+                        return Center(
+                          child: Icon(
+                            isBot
+                                ? Icons.smart_toy
+                                : isAdminMessage
+                                    ? Icons.admin_panel_settings
+                                    : Icons.person,
+                            size: 18,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        );
+                      },
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Center(
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            value: loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded /
+                                    loadingProgress.expectedTotalBytes!
+                                : null,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
                 )
               : CircleAvatar(
                   radius: 16,
@@ -1183,15 +1336,19 @@ class _TicketDetailScreenState extends State<_TicketDetailScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: colorScheme.primaryContainer,
+                          color: role == 'moderator'
+                              ? Colors.blue.withOpacity(0.2)
+                              : colorScheme.primaryContainer,
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          'ADMIN',
+                          role == 'moderator' ? 'MOD' : 'ADMIN',
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
-                            color: colorScheme.primary,
+                            color: role == 'moderator'
+                                ? Colors.blue
+                                : colorScheme.primary,
                           ),
                         ),
                       ),

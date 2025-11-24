@@ -651,28 +651,12 @@ class TicketCard extends StatelessWidget {
                 ],
               ),
 
-              // Assigned/Claimed Info
-              if (ticket.claimedBy != null || ticket.assignedTo != null) ...[
+              // Assigned/Claimed Info (Assigned takes priority)
+              if (ticket.assignedTo != null || ticket.claimedBy != null) ...[
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    if (ticket.claimedBy != null) ...[
-                      Icon(Icons.person_pin,
-                          size: 16,
-                          color:
-                              Theme.of(context).colorScheme.onSurfaceVariant),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Claimed by: ${ticket.claimedByName ?? "Unknown"}',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color:
-                              Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                    if (ticket.claimedBy != null && ticket.assignedTo != null)
-                      const SizedBox(width: 16),
+                    // Show Assigned To if exists (takes priority over Claimed By)
                     if (ticket.assignedTo != null) ...[
                       Icon(Icons.assignment_ind,
                           size: 16,
@@ -681,6 +665,21 @@ class TicketCard extends StatelessWidget {
                       const SizedBox(width: 4),
                       Text(
                         'Assigned: ${ticket.assignedToName ?? "Unknown"}',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color:
+                              Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ] else if (ticket.claimedBy != null) ...[
+                      // Only show Claimed By if NOT assigned
+                      Icon(Icons.person_pin,
+                          size: 16,
+                          color:
+                              Theme.of(context).colorScheme.onSurfaceVariant),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Claimed by: ${ticket.claimedByName ?? "Unknown"}',
                         style: TextStyle(
                           fontSize: 13,
                           color:

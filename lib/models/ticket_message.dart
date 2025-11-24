@@ -6,6 +6,8 @@ class TicketMessage {
   final String content;
   final DateTime timestamp;
   final bool isBot;
+  final bool isAdmin;
+  final String? role; // 'admin', 'moderator', or null
 
   TicketMessage({
     required this.id,
@@ -15,6 +17,8 @@ class TicketMessage {
     required this.content,
     required this.timestamp,
     required this.isBot,
+    this.isAdmin = false,
+    this.role,
   });
 
   factory TicketMessage.fromJson(Map<String, dynamic> json) {
@@ -26,6 +30,8 @@ class TicketMessage {
       content: json['content'] as String,
       timestamp: DateTime.parse(json['timestamp'] as String),
       isBot: json['is_bot'] as bool? ?? false,
+      isAdmin: json['is_admin'] as bool? ?? false,
+      role: json['role'] as String?,
     );
   }
 
@@ -38,6 +44,8 @@ class TicketMessage {
       'content': content,
       'timestamp': timestamp.toIso8601String(),
       'is_bot': isBot,
+      'is_admin': isAdmin,
+      'role': role,
     };
   }
 }

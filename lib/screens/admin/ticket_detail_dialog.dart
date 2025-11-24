@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../models/ticket.dart';
 import '../../models/ticket_message.dart';
 import '../../services/api_service.dart';
+import '../../services/auth_service.dart';
 
 class TicketDetailDialog extends StatefulWidget {
   final Ticket ticket;
@@ -25,23 +27,102 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
   bool _isSending = false;
   String? _messageError;
   final TextEditingController _messageController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+  int _previousMessageCount = 0;
+  Set<String> _seenMessageIds = {};
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(() {
-      if (_tabController.index == 1 && _messages.isEmpty) {
-        _loadMessages();
+      if (_tabController.index == 1) {
+        if (_messages.isEmpty) {
+          _loadMessages();
+        } else {
+          // Mark all messages as seen when switching to messages tab
+          _markAllAsSeen();
+          // Scroll to bottom when switching to messages tab
+          _scrollToBottom();
+        }
       }
+    });
+    
+    // Set up WebSocket listener for real-time updates
+    _setupWebSocketListener();
+  }
+  
+  void _setupWebSocketListener() {
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final wsService = authService.wsService;
+    
+    // Join ticket room
+    wsService.joinTicket(widget.ticket.ticketId);
+    
+    // Listen for new messages
+    wsService.onTicketUpdate(widget.ticket.ticketId, (data) {
+      final eventType = data['event_type'] as String?;
+      
+      if (eventType == 'new_message') {
+        final messageData = data['data'] as Map<String, dynamic>?;
+        if (messageData != null) {
+          _handleNewMessage(messageData);
+        }
+      }
+    });
+  }
+  
+  void _handleNewMessage(Map<String, dynamic> messageData) {
+    if (!mounted) return;
+    
+    final newMessage = TicketMessage.fromJson(messageData);
+    
+    // Check if message already exists
+    if (_messages.any((m) => m.id == newMessage.id)) {
+      return;
+    }
+    
+    setState(() {
+      _messages.add(newMessage);
+      _previousMessageCount = _messages.length;
+    });
+    
+    // Scroll to bottom if on messages tab
+    if (_tabController.index == 1) {
+      _scrollToBottom();
+    }
+  }
+
+  void _markAllAsSeen() {
+    setState(() {
+      _seenMessageIds = _messages.map((m) => m.id).toSet();
     });
   }
 
   @override
   void dispose() {
+    // Leave WebSocket ticket room
+    final authService = Provider.of<AuthService>(context, listen: false);
+    authService.wsService.leaveTicket(widget.ticket.ticketId);
+    
     _tabController.dispose();
     _messageController.dispose();
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  void _scrollToBottom() {
+    if (_scrollController.hasClients) {
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (_scrollController.hasClients) {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        }
+      });
+    }
   }
 
   Future<void> _loadMessages() async {
@@ -52,11 +133,28 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
 
     try {
       final messagesData = await ApiService().getTicketMessages(widget.ticket.ticketId);
+      
       setState(() {
+        final newMessageCount = messagesData.length;
+        final hasNewMessages = newMessageCount > _previousMessageCount;
+        final isFirstLoad = _previousMessageCount == 0;
+        
         _messages = messagesData
             .map((json) => TicketMessage.fromJson(json as Map<String, dynamic>))
             .toList();
+        
+        // Mark all current messages as seen if this is the first load
+        if (_seenMessageIds.isEmpty) {
+          _seenMessageIds = _messages.map((m) => m.id).toSet();
+        }
+        
+        _previousMessageCount = newMessageCount;
         _isLoadingMessages = false;
+        
+        // Auto-scroll to bottom if there are new messages OR first load
+        if (hasNewMessages || isFirstLoad) {
+          _scrollToBottom();
+        }
       });
     } catch (e) {
       setState(() {
@@ -474,32 +572,39 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      Icon(Icons.person, color: Theme.of(context).colorScheme.primary),
-                      const SizedBox(width: 8),
-                      Text(
-                        widget.ticket.username,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                      CircleAvatar(
+                        radius: 18,
+                        backgroundImage: widget.ticket.avatarUrl != null
+                            ? NetworkImage(widget.ticket.avatarUrl!)
+                            : null,
+                        child: widget.ticket.avatarUrl == null
+                            ? Icon(Icons.person,
+                                size: 20, color: Theme.of(context).colorScheme.primary)
+                            : null,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.ticket.displayName,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              'Created ${widget.ticket.createdAt != null ? _formatDateTime(widget.ticket.createdAt!) : 'Unknown'}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'ID: ${widget.ticket.userId}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Created: ${widget.ticket.createdAt != null ? _formatDateTime(widget.ticket.createdAt!) : 'Unknown'}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                    ),
                   ),
                 ],
               ),
@@ -508,8 +613,8 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
 
           const SizedBox(height: 16),
 
-          // Assignment Card
-          if (widget.ticket.claimedBy != null || widget.ticket.assignedTo != null)
+          // Assignment Card - Show assigned OR claimed (assigned takes priority)
+          if (widget.ticket.assignedTo != null || widget.ticket.claimedBy != null)
             Card(
               elevation: 0,
               color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18),
@@ -518,41 +623,7 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (widget.ticket.claimedBy != null) ...[
-                      Text(
-                        'Claimed by',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 18,
-                            backgroundImage: widget.ticket.claimedByAvatar != null
-                                ? NetworkImage(widget.ticket.claimedByAvatar!)
-                                : null,
-                            child: widget.ticket.claimedByAvatar == null
-                                ? Icon(Icons.person,
-                                    size: 20, color: Theme.of(context).colorScheme.primary)
-                                : null,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              widget.ticket.claimedByName ?? 'Unknown',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      if (widget.ticket.assignedTo != null) const SizedBox(height: 16),
-                    ],
+                    // Show Assigned To if exists (takes priority over Claimed By)
                     if (widget.ticket.assignedTo != null) ...[
                       Text(
                         'Assigned to',
@@ -578,6 +649,40 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
                           Expanded(
                             child: Text(
                               widget.ticket.assignedToName ?? 'Unknown',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ] else if (widget.ticket.claimedBy != null) ...[
+                      // Only show Claimed By if NOT assigned
+                      Text(
+                        'Claimed by',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 18,
+                            backgroundImage: widget.ticket.claimedByAvatar != null
+                                ? NetworkImage(widget.ticket.claimedByAvatar!)
+                                : null,
+                            child: widget.ticket.claimedByAvatar == null
+                                ? Icon(Icons.person,
+                                    size: 20, color: Theme.of(context).colorScheme.primary)
+                                : null,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              widget.ticket.claimedByName ?? 'Unknown',
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -616,7 +721,8 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
               ),
             ),
           ] else ...[
-            if (!widget.ticket.isClaimed)
+            // Show Claim OR Assign buttons (mutually exclusive)
+            if (widget.ticket.claimedBy == null && widget.ticket.assignedTo == null) ...[
               SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
@@ -625,18 +731,32 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
                   label: const Text('Claim Ticket'),
                 ),
               ),
-            if (!widget.ticket.isClaimed) const SizedBox(height: 8),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: _assignTicket,
-                icon: const Icon(Icons.person_add),
-                label: const Text('Assign to User'),
-                style: FilledButton.styleFrom(
-                  backgroundColor: Colors.blue,
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: _assignTicket,
+                  icon: const Icon(Icons.person_add),
+                  label: const Text('Assign to User'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                  ),
                 ),
               ),
-            ),
+            ] else if (widget.ticket.claimedBy != null && widget.ticket.assignedTo == null) ...[
+              // Already claimed - only show Assign option
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: _assignTicket,
+                  icon: const Icon(Icons.person_add),
+                  label: const Text('Assign to User'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: 8),
             SizedBox(
               width: double.infinity,
@@ -696,11 +816,16 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
               : RefreshIndicator(
                   onRefresh: _loadMessages,
                   child: ListView.builder(
+                    controller: _scrollController,
                     padding: const EdgeInsets.all(16),
                     itemCount: _messages.length,
                     itemBuilder: (context, index) {
                       final message = _messages[index];
-                      return _MessageCard(message: message);
+                      final isNew = !_seenMessageIds.contains(message.id);
+                      return _MessageCard(
+                        message: message,
+                        isNew: isNew,
+                      );
                     },
                   ),
                 ),
@@ -774,10 +899,11 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
 
 class _MessageCard extends StatelessWidget {
   final TicketMessage message;
+  final bool isNew;
 
-  const _MessageCard({required this.message});
+  const _MessageCard({required this.message, this.isNew = false});
 
-  bool get _isAdminMessage => message.content.contains('[Admin Panel');
+  bool get _isAdminMessage => message.isAdmin || message.content.contains('[Admin Panel');
   bool get _isInitialMessage => message.content.contains('**Initial details');
   bool get _isClosingMessage => message.content.contains('Ticket successfully closed') || 
                                  message.content.contains('**Closing Message:**');
@@ -821,26 +947,66 @@ class _MessageCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isSystem = message.isBot && !_isAdminMessage;
     
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    return Stack(
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
           // Avatar
-          CircleAvatar(
-            radius: 18,
-            backgroundColor: _isClosingMessage
-                ? Colors.green.withOpacity(0.2)
-                : _isAdminMessage 
-                    ? Theme.of(context).colorScheme.primaryContainer
-                    : isSystem
-                        ? Theme.of(context).colorScheme.surfaceContainerHighest
-                        : Theme.of(context).colorScheme.secondaryContainer,
-            backgroundImage: message.authorAvatar != null && !_isAdminMessage && !_isClosingMessage
-                ? NetworkImage(message.authorAvatar!)
-                : null,
-            child: message.authorAvatar == null || _isAdminMessage || _isClosingMessage
-                ? Icon(
+          (message.authorAvatar != null && 
+                  message.authorAvatar!.isNotEmpty && 
+                  !_isClosingMessage)
+              ? Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Theme.of(context).colorScheme.primaryContainer,
+                  ),
+                  child: ClipOval(
+                    child: Image.network(
+                      message.authorAvatar!,
+                      width: 36,
+                      height: 36,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Center(
+                          child: Icon(
+                            _isAdminMessage
+                                ? Icons.admin_panel_settings
+                                : Icons.person,
+                            size: 20,
+                            color: Theme.of(context).colorScheme.onPrimaryContainer,
+                          ),
+                        );
+                      },
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Center(
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            value: loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded /
+                                    loadingProgress.expectedTotalBytes!
+                                : null,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                )
+              : CircleAvatar(
+                  radius: 18,
+                  backgroundColor: _isClosingMessage
+                      ? Colors.green.withOpacity(0.2)
+                      : _isAdminMessage
+                          ? Theme.of(context).colorScheme.primaryContainer
+                          : isSystem
+                              ? Theme.of(context).colorScheme.surfaceContainerHighest
+                              : Theme.of(context).colorScheme.secondaryContainer,
+                  child: Icon(
                     _isClosingMessage
                         ? Icons.check_circle
                         : _isAdminMessage
@@ -852,13 +1018,12 @@ class _MessageCard extends StatelessWidget {
                     color: _isClosingMessage
                         ? Colors.green
                         : _isAdminMessage
-                            ? Theme.of(context).colorScheme.primary
+                            ? Theme.of(context).colorScheme.onPrimaryContainer
                             : isSystem
                                 ? Theme.of(context).colorScheme.onSurfaceVariant
                                 : Theme.of(context).colorScheme.onSecondaryContainer,
-                  )
-                : null,
-          ),
+                  ),
+                ),
           const SizedBox(width: 12),
           // Message content
           Expanded(
@@ -886,15 +1051,19 @@ class _MessageCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.primaryContainer,
+                          color: message.role == 'moderator'
+                              ? Colors.blue.withOpacity(0.2)
+                              : Theme.of(context).colorScheme.primaryContainer,
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          'ADMIN',
+                          message.role == 'moderator' ? 'MOD' : 'ADMIN',
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
-                            color: Theme.of(context).colorScheme.primary,
+                            color: message.role == 'moderator'
+                                ? Colors.blue
+                                : Theme.of(context).colorScheme.primary,
                           ),
                         ),
                       ),
@@ -930,7 +1099,7 @@ class _MessageCard extends StatelessWidget {
                 const SizedBox(height: 6),
                 // Message bubble
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   decoration: BoxDecoration(
                     color: _isClosingMessage
                         ? Colors.green.withOpacity(0.1)
@@ -938,7 +1107,7 @@ class _MessageCard extends StatelessWidget {
                             ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3)
                             : isSystem
                                 ? Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5)
-                                : Theme.of(context).colorScheme.surfaceContainerHigh,
+                                : Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.6),
                     borderRadius: BorderRadius.circular(12),
                     border: _isClosingMessage
                         ? Border.all(
@@ -950,7 +1119,12 @@ class _MessageCard extends StatelessWidget {
                                 color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
                                 width: 1,
                               )
-                            : null,
+                            : !message.isBot
+                                ? Border.all(
+                                    color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                                    width: 1,
+                                  )
+                                : null,
                   ),
                   child: Text(
                     _cleanContent,
@@ -965,6 +1139,22 @@ class _MessageCard extends StatelessWidget {
           ),
         ],
       ),
+    ),
+        // New message indicator
+        if (isNew)
+          Positioned(
+            left: 0,
+            top: 0,
+            bottom: 16,
+            child: Container(
+              width: 3,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+      ],
     );
   }
 
