@@ -12,8 +12,11 @@ class Ticket {
   final String? closedAt;
   final String? claimedBy;
   final String? claimedByName;
+  final String? claimedByAvatar;
   final String? assignedTo;
   final String? assignedToName;
+  final String? assignedToAvatar;
+  final String? initialMessage;
 
   Ticket({
     required this.ticketId,
@@ -29,8 +32,11 @@ class Ticket {
     this.closedAt,
     this.claimedBy,
     this.claimedByName,
+    this.claimedByAvatar,
     this.assignedTo,
     this.assignedToName,
+    this.assignedToAvatar,
+    this.initialMessage,
   });
 
   factory Ticket.fromJson(Map<String, dynamic> json) {
@@ -48,8 +54,11 @@ class Ticket {
       closedAt: json['closed_at'] as String?,
       claimedBy: json['claimed_by'] as String?,
       claimedByName: json['claimed_by_name'] as String?,
+      claimedByAvatar: json['claimed_by_avatar'] as String?,
       assignedTo: json['assigned_to'] as String?,
       assignedToName: json['assigned_to_name'] as String?,
+      assignedToAvatar: json['assigned_to_avatar'] as String?,
+      initialMessage: json['initial_message'] as String?,
     );
   }
 
@@ -68,8 +77,11 @@ class Ticket {
       'closed_at': closedAt,
       'claimed_by': claimedBy,
       'claimed_by_name': claimedByName,
+      'claimed_by_avatar': claimedByAvatar,
       'assigned_to': assignedTo,
       'assigned_to_name': assignedToName,
+      'assigned_to_avatar': assignedToAvatar,
+      'initial_message': initialMessage,
     };
   }
 

@@ -1245,6 +1245,61 @@ class ApiService {
     }
   }
 
+  /// Get current user's tickets
+  Future<List<Ticket>> getMyTickets({String? status}) async {
+    String url = '$baseUrl/tickets/my';
+    if (status != null && status.isNotEmpty) {
+      url += '?status=$status';
+    }
+
+    final response = await _get(url);
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final tickets = (data['tickets'] as List<dynamic>?)
+              ?.map((ticket) => Ticket.fromJson(ticket as Map<String, dynamic>))
+              .toList() ??
+          [];
+      return tickets;
+    } else if (response.statusCode == 401) {
+      throw TokenExpiredException('Token has expired or is invalid');
+    } else {
+      throw Exception('Failed to load your tickets: ${response.body}');
+    }
+  }
+
+  /// Create a new ticket (for regular users)
+  Future<Map<String, dynamic>> createTicket({
+    required String type,
+    required String subject,
+    required String description,
+  }) async {
+    final response = await _post(
+      '$baseUrl/tickets',
+      body: jsonEncode({
+        'type': type,
+        'subject': subject,
+        'description': description,
+      }),
+    );
+
+    if (response.statusCode == 201) {
+      final data = jsonDecode(response.body);
+      return data;
+    } else if (response.statusCode == 401) {
+      throw TokenExpiredException('Token has expired or is invalid');
+    } else if (response.statusCode == 429) {
+      final error = jsonDecode(response.body);
+      throw Exception(error['error'] ?? 'Rate limit exceeded');
+    } else if (response.statusCode == 400) {
+      final error = jsonDecode(response.body);
+      throw Exception(error['error'] ?? 'Invalid ticket data');
+    } else {
+      final error = jsonDecode(response.body);
+      throw Exception(error['error'] ?? 'Failed to create ticket');
+    }
+  }
+
   Future<Ticket> getTicket(String ticketId) async {
     final response = await _get('$baseUrl/tickets/$ticketId');
 

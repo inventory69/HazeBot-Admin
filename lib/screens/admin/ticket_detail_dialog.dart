@@ -142,47 +142,47 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
   }
 
   Future<void> _assignTicket() async {
-    final userIdController = TextEditingController();
-    
-    final userId = await showDialog<String>(
+    // Show loading dialog while fetching members
+    showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Assign Ticket'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Enter the Discord User ID to assign this ticket to:'),
-            const SizedBox(height: 16),
-            TextField(
-              controller: userIdController,
-              decoration: const InputDecoration(
-                labelText: 'User ID',
-                hintText: 'e.g., 123456789012345678',
-                border: OutlineInputBorder(),
-              ),
-              keyboardType: TextInputType.number,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: Card(
+          child: Padding(
+            padding: EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text('Loading members...'),
+              ],
             ),
-          ],
+          ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, userIdController.text.trim()),
-            child: const Text('Assign'),
-          ),
-        ],
       ),
     );
 
-    if (userId == null || userId.isEmpty) return;
-
     try {
+      // Fetch guild members
+      final membersData = await ApiService().getGamingMembers();
+      final members = membersData['members'] as List<dynamic>;
+
+      if (!mounted) return;
+      Navigator.pop(context); // Close loading dialog
+
+      // Show member selection dialog
+      final selectedUser = await showDialog<Map<String, dynamic>>(
+        context: context,
+        builder: (context) => _UserSelectionDialog(members: members),
+      );
+
+      if (selectedUser == null) return;
+
+      final userId = selectedUser['id'] as String;
+
       await ApiService().assignTicket(widget.ticket.ticketId, userId);
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -195,6 +195,7 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
       }
     } catch (e) {
       if (mounted) {
+        Navigator.pop(context); // Close loading dialog if still open
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to assign ticket: $e'),
@@ -525,12 +526,32 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
                           color: Colors.grey[600],
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'User ID: ${widget.ticket.claimedBy}',
-                        style: const TextStyle(fontSize: 14),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 18,
+                            backgroundImage: widget.ticket.claimedByAvatar != null
+                                ? NetworkImage(widget.ticket.claimedByAvatar!)
+                                : null,
+                            child: widget.ticket.claimedByAvatar == null
+                                ? Icon(Icons.person,
+                                    size: 20, color: Theme.of(context).colorScheme.primary)
+                                : null,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              widget.ticket.claimedByName ?? 'Unknown',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      if (widget.ticket.assignedTo != null) const SizedBox(height: 12),
+                      if (widget.ticket.assignedTo != null) const SizedBox(height: 16),
                     ],
                     if (widget.ticket.assignedTo != null) ...[
                       Text(
@@ -540,10 +561,30 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
                           color: Colors.grey[600],
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'User ID: ${widget.ticket.assignedTo}',
-                        style: const TextStyle(fontSize: 14),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 18,
+                            backgroundImage: widget.ticket.assignedToAvatar != null
+                                ? NetworkImage(widget.ticket.assignedToAvatar!)
+                                : null,
+                            child: widget.ticket.assignedToAvatar == null
+                                ? Icon(Icons.person,
+                                    size: 20, color: Theme.of(context).colorScheme.primary)
+                                : null,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              widget.ticket.assignedToName ?? 'Unknown',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ],
@@ -942,6 +983,159 @@ class _MessageCard extends StatelessWidget {
     } else {
       return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
     }
+  }
+}
+
+class _UserSelectionDialog extends StatefulWidget {
+  final List<dynamic> members;
+
+  const _UserSelectionDialog({required this.members});
+
+  @override
+  State<_UserSelectionDialog> createState() => _UserSelectionDialogState();
+}
+
+class _UserSelectionDialogState extends State<_UserSelectionDialog> {
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
+
+  List<dynamic> get _filteredMembers {
+    if (_searchQuery.isEmpty) {
+      return widget.members;
+    }
+    return widget.members.where((member) {
+      final name = (member['name'] as String? ?? '').toLowerCase();
+      final displayName = (member['display_name'] as String? ?? '').toLowerCase();
+      final query = _searchQuery.toLowerCase();
+      return name.contains(query) || displayName.contains(query);
+    }).toList();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final filteredMembers = _filteredMembers;
+
+    return Dialog(
+      child: Container(
+        width: 500,
+        height: 600,
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
+              children: [
+                Icon(Icons.person_add, color: Theme.of(context).colorScheme.primary),
+                const SizedBox(width: 12),
+                const Text(
+                  'Assign to User',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // Search
+            TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Search members...',
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              onChanged: (value) {
+                setState(() {
+                  _searchQuery = value;
+                });
+              },
+            ),
+            const SizedBox(height: 16),
+
+            // Members List
+            Expanded(
+              child: filteredMembers.isEmpty
+                  ? Center(
+                      child: Text(
+                        'No members found',
+                        style: TextStyle(color: Colors.grey[600]),
+                      ),
+                    )
+                  : ListView.builder(
+                      itemCount: filteredMembers.length,
+                      itemBuilder: (context, index) {
+                        final member = filteredMembers[index];
+                        final id = member['id'] as String;
+                        final name = member['name'] as String? ?? 'Unknown';
+                        final displayName = member['display_name'] as String? ?? name;
+                        final avatar = member['avatar_url'] as String?;
+                        final status = member['status'] as String?;
+
+                        Color statusColor = Colors.grey;
+                        if (status == 'online') statusColor = Colors.green;
+                        if (status == 'idle') statusColor = Colors.orange;
+                        if (status == 'dnd') statusColor = Colors.red;
+
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          child: ListTile(
+                            leading: Stack(
+                              children: [
+                                CircleAvatar(
+                                  backgroundImage: avatar != null ? NetworkImage(avatar) : null,
+                                  child: avatar == null ? const Icon(Icons.person) : null,
+                                ),
+                                Positioned(
+                                  right: 0,
+                                  bottom: 0,
+                                  child: Container(
+                                    width: 12,
+                                    height: 12,
+                                    decoration: BoxDecoration(
+                                      color: statusColor,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: Colors.white, width: 2),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            title: Text(
+                              displayName,
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            subtitle: Text('@$name'),
+                            onTap: () => Navigator.pop(
+                              context,
+                              {
+                                'id': id,
+                                'name': name,
+                                'display_name': displayName,
+                                'avatar_url': avatar,
+                              },
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

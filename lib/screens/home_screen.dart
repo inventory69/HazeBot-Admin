@@ -29,6 +29,7 @@ import 'settings_screen.dart';
 import 'test_screen.dart';
 import 'user_rocket_league_screen.dart';
 import 'preferences_screen.dart';
+import 'user/tickets_screen.dart';
 import 'gaming_hub_screen.dart';
 
 class NavigationItem {
@@ -510,6 +511,21 @@ class _HomeScreenState extends State<HomeScreen>
                                     key:
                                         ValueKey('preferences_$_reloadCounter'),
                                   ),
+                                ),
+                              );
+                            },
+                          ),
+
+                          ListTile(
+                            leading: const Icon(Icons.confirmation_number),
+                            title: const Text('Tickets'),
+                            onTap: () {
+                              Navigator.pop(context);
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const TicketsScreen(),
                                 ),
                               );
                             },

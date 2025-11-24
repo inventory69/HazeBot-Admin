@@ -32,12 +32,33 @@ class _TicketsAdminScreenState extends State<TicketsAdminScreen>
     return Scaffold(
       appBar: AppBar(
         title: const Text('Tickets'),
+        actions: [
+          // Reload button will be shown when in Manage Tickets tab
+          if (_tabController.index == 0)
+            Builder(
+              builder: (context) {
+                // Get the TicketsListTab state to call refresh
+                return IconButton(
+                  icon: const Icon(Icons.refresh),
+                  onPressed: () {
+                    // Find the TicketsListTab and refresh it
+                    final state = context.findAncestorStateOfType<_TicketsListTabState>();
+                    state?._loadTickets();
+                  },
+                  tooltip: 'Refresh',
+                );
+              },
+            ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
             Tab(icon: Icon(Icons.list), text: 'Manage Tickets'),
             Tab(icon: Icon(Icons.settings), text: 'Configuration'),
           ],
+          onTap: (index) {
+            setState(() {}); // Rebuild to show/hide refresh button
+          },
         ),
       ),
       body: TabBarView(
@@ -182,11 +203,11 @@ class _TicketsListTabState extends State<TicketsListTab> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
+    if (_isLoading && _tickets.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (_error != null) {
+    if (_error != null && _tickets.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -206,39 +227,25 @@ class _TicketsListTabState extends State<TicketsListTab> {
       );
     }
 
-    return Column(
-      children: [
-        // Filters and Search
-        Padding(
-          padding: const EdgeInsets.all(16.0),
+    return RefreshIndicator(
+      onRefresh: _loadTickets,
+      child: Column(
+        children: [
+          // Filters and Search - Kompakter
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
           child: Column(
             children: [
-              // Status Filter - Responsive layout
+              // Status Filter - Responsive layout (kompakt ohne Status-Label)
               LayoutBuilder(
                 builder: (context, constraints) {
                   final isCompact = constraints.maxWidth < 700;
                   
                   if (isCompact) {
-                    // Mobile/Tablet: Stack vertically with wrap layout
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Text('Status: ',
-                                style: TextStyle(fontWeight: FontWeight.bold)),
-                            const Spacer(),
-                            IconButton(
-                              icon: const Icon(Icons.refresh),
-                              onPressed: _loadTickets,
-                              tooltip: 'Refresh',
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
+                    // Mobile/Tablet: Wrap layout ohne Label
+                    return Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
                           children: [
                             FilterChip(
                               label: const Text('All'),
@@ -289,17 +296,10 @@ class _TicketsListTabState extends State<TicketsListTab> {
                               },
                             ),
                           ],
-                        ),
-                      ],
-                    );
+                        );
                   } else {
-                    // Desktop: Horizontal layout
-                    return Row(
-                      children: [
-                        const Text('Status: ',
-                            style: TextStyle(fontWeight: FontWeight.bold)),
-                        const SizedBox(width: 8),
-                        SegmentedButton<String>(
+                    // Desktop: Horizontal layout ohne Label
+                    return SegmentedButton<String>(
                           segments: const [
                             ButtonSegment(value: 'All', label: Text('All')),
                             ButtonSegment(value: 'Open', label: Text('Open')),
@@ -313,89 +313,94 @@ class _TicketsListTabState extends State<TicketsListTab> {
                               _filterTickets();
                             });
                           },
-                        ),
-                        const Spacer(),
-                        IconButton(
-                          icon: const Icon(Icons.refresh),
-                          onPressed: _loadTickets,
-                          tooltip: 'Refresh',
-                        ),
-                      ],
-                    );
+                        );
                   }
                 },
               ),
-              const SizedBox(height: 12),
-              // Search Bar
-              TextField(
-                controller: _searchController,
-                decoration: InputDecoration(
-                  hintText: 'Search tickets...',
-                  prefixIcon: const Icon(Icons.search),
-                  suffixIcon: _searchQuery.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: () {
-                            _searchController.clear();
-                            setState(() {
-                              _searchQuery = '';
-                              _filterTickets();
-                            });
-                          },
-                        )
-                      : null,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+              const SizedBox(height: 8),
+              // Search Bar - kompakter
+              SizedBox(
+                height: 44, // Kleinere Höhe
+                child: TextField(
+                  controller: _searchController,
+                  style: const TextStyle(fontSize: 14),
+                  decoration: InputDecoration(
+                    hintText: 'Search tickets...',
+                    hintStyle: const TextStyle(fontSize: 14),
+                    prefixIcon: const Icon(Icons.search, size: 20),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, size: 20),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() {
+                                _searchQuery = '';
+                                _filterTickets();
+                              });
+                            },
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          )
+                        : null,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    isDense: true,
                   ),
+                  onChanged: (value) {
+                    setState(() {
+                      _searchQuery = value;
+                      _filterTickets();
+                    });
+                  },
                 ),
-                onChanged: (value) {
-                  setState(() {
-                    _searchQuery = value;
-                    _filterTickets();
-                  });
-                },
               ),
             ],
           ),
         ),
 
-        // Results count
+        // Results count - kompakter
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
           child: Row(
             children: [
               Text(
                 'Showing ${_filteredTickets.length} of ${_tickets.length} tickets',
-                style: Theme.of(context).textTheme.bodySmall,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12),
               ),
             ],
           ),
         ),
 
-        const SizedBox(height: 8),
-
         // Tickets List
         Expanded(
           child: _filteredTickets.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.confirmation_number_outlined,
-                          size: 64, color: Colors.grey[400]),
-                      const SizedBox(height: 16),
-                      Text(
-                        'No tickets found',
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Colors.grey[600],
-                        ),
+              ? ListView(
+                  // Wrap in ListView for pull-to-refresh to work
+                  children: [
+                    SizedBox(height: MediaQuery.of(context).size.height * 0.25),
+                    Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.confirmation_number_outlined,
+                              size: 64, color: Colors.grey[400]),
+                          const SizedBox(height: 16),
+                          Text(
+                            'No tickets found',
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 )
               : ListView.builder(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
                   itemCount: _filteredTickets.length,
                   itemBuilder: (context, index) {
                     final ticket = _filteredTickets[index];
@@ -407,7 +412,8 @@ class _TicketsListTabState extends State<TicketsListTab> {
                   },
                 ),
         ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -466,7 +472,7 @@ class TicketCard extends StatelessWidget {
     return Card(
       color: cardColor,
       elevation: 0, // Flat card
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 8),
       child: InkWell(
         onTap: () {
           showDialog(
@@ -479,7 +485,7 @@ class TicketCard extends StatelessWidget {
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
