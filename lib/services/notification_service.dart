@@ -28,6 +28,9 @@ class NotificationService {
   bool _permissionGranted = false;
   String? _fcmToken;
   
+  // ✅ Track notification IDs by ticket ID for dismissal
+  final Map<String, List<int>> _ticketNotificationIds = {};
+  
   // Callback for notification tap
   Function(Map<String, dynamic>)? onNotificationTap;
   
@@ -237,13 +240,52 @@ class NotificationService {
       iOS: iosDetails,
     );
 
+    // ✅ FIX: Clean Markdown formatting from notification text
+    final cleanTitle = notification.title != null 
+        ? _cleanMarkdown(notification.title!) 
+        : null;
+    final cleanBody = notification.body != null 
+        ? _cleanMarkdown(notification.body!) 
+        : null;
+
+    final notificationId = notification.hashCode;
+    
+    // ✅ Track notification ID by ticket ID for later dismissal
+    final ticketId = message.data['ticket_id'] as String?;
+    if (ticketId != null) {
+      _ticketNotificationIds.putIfAbsent(ticketId, () => []).add(notificationId);
+      debugPrint('📝 Tracked notification $notificationId for ticket $ticketId');
+    }
+
     await _localNotifications!.show(
-      notification.hashCode,
-      notification.title,
-      notification.body,
+      notificationId,
+      cleanTitle,
+      cleanBody,
       details,
       payload: jsonEncode(message.data),
     );
+  }
+
+  /// Clean Markdown formatting from text (for notifications)
+  String _cleanMarkdown(String text) {
+    return text
+        // Bold: **text** or __text__
+        .replaceAll(RegExp(r'\*\*(.+?)\*\*'), r'$1')
+        .replaceAll(RegExp(r'__(.+?)__'), r'$1')
+        // Italic: *text* or _text_
+        .replaceAll(RegExp(r'\*(.+?)\*'), r'$1')
+        .replaceAll(RegExp(r'_(.+?)_'), r'$1')
+        // Strikethrough: ~~text~~
+        .replaceAll(RegExp(r'~~(.+?)~~'), r'$1')
+        // Inline code: `code`
+        .replaceAll(RegExp(r'`(.+?)`'), r'$1')
+        // Links: [text](url) -> text
+        .replaceAll(RegExp(r'\[(.+?)\]\(.+?\)'), r'$1')
+        // Code blocks: ```code``` -> code
+        .replaceAll(RegExp(r'```[\s\S]*?```'), '')
+        // Headers: # text -> text
+        .replaceAll(RegExp(r'^#{1,6}\s+'), '')
+        .trim();
   }
 
   /// Handle notification tap (from background/terminated state)
@@ -357,6 +399,43 @@ class NotificationService {
     } catch (e) {
       debugPrint('❌ Error updating notification settings: $e');
       return false;
+    }
+  }
+
+  /// Dismiss all notifications for a specific ticket (when user opens the ticket)
+  Future<void> dismissTicketNotifications(String ticketId) async {
+    if (_localNotifications == null) return;
+    
+    final notificationIds = _ticketNotificationIds[ticketId];
+    if (notificationIds == null || notificationIds.isEmpty) {
+      debugPrint('ℹ️ No notifications to dismiss for ticket $ticketId');
+      return;
+    }
+
+    try {
+      for (final id in notificationIds) {
+        await _localNotifications!.cancel(id);
+        debugPrint('✅ Dismissed notification $id for ticket $ticketId');
+      }
+      
+      // Clear the list after dismissing
+      _ticketNotificationIds.remove(ticketId);
+      debugPrint('✅ Cleared ${notificationIds.length} notifications for ticket $ticketId');
+    } catch (e) {
+      debugPrint('❌ Error dismissing notifications for ticket $ticketId: $e');
+    }
+  }
+
+  /// Dismiss all active notifications
+  Future<void> dismissAllNotifications() async {
+    if (_localNotifications == null) return;
+    
+    try {
+      await _localNotifications!.cancelAll();
+      _ticketNotificationIds.clear();
+      debugPrint('✅ Dismissed all notifications');
+    } catch (e) {
+      debugPrint('❌ Error dismissing all notifications: $e');
     }
   }
 }

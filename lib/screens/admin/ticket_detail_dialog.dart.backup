@@ -23,243 +23,17 @@ class TicketDetailDialog extends StatefulWidget {
 class _TicketDetailDialogState extends State<TicketDetailDialog>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  List<TicketMessage> _messages = [];
-  bool _isLoadingMessages = false;
-  bool _isSending = false;
-  String? _messageError;
-  final TextEditingController _messageController = TextEditingController();
-  final ScrollController _scrollController = ScrollController();
-  int _previousMessageCount = 0;
-  Set<String> _seenMessageIds = {};
-  int _firstNewMessageIndex = -1; // Index of first new message for divider
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _tabController.addListener(() {
-      if (_tabController.index == 1) {
-        if (_messages.isEmpty) {
-          _loadMessages();
-        } else {
-          // Mark all messages as seen when switching to messages tab
-          _markAllAsSeen();
-          // Scroll to bottom when switching to messages tab
-          _scrollToBottom();
-        }
-      }
-    });
-    
-    // Set up WebSocket listener for real-time updates
-    _setupWebSocketListener();
-  }
-  
-  void _setupWebSocketListener() {
-    final authService = Provider.of<AuthService>(context, listen: false);
-    final wsService = authService.wsService;
-    
-    // Join ticket room
-    wsService.joinTicket(widget.ticket.ticketId);
-    
-    // Listen for new messages
-    wsService.onTicketUpdate(widget.ticket.ticketId, (data) {
-      final eventType = data['event_type'] as String?;
-      
-      if (eventType == 'new_message') {
-        final messageData = data['data'] as Map<String, dynamic>?;
-        if (messageData != null) {
-          _handleNewMessage(messageData);
-        }
-      }
-    });
-  }
-  
-  void _handleNewMessage(Map<String, dynamic> messageData) {
-    if (!mounted) return;
-    
-    final newMessage = TicketMessage.fromJson(messageData);
-    
-    // Check if message already exists
-    if (_messages.any((m) => m.id == newMessage.id)) {
-      return;
-    }
-    
-    final oldCount = _messages.length;
-    
-    setState(() {
-      _messages.add(newMessage);
-      _previousMessageCount = _messages.length;
-      // Mark where new messages start (if not already set)
-      if (_firstNewMessageIndex < 0) {
-        _firstNewMessageIndex = oldCount;
-      }
-    });
-    
-    // Scroll behavior on messages tab
-    if (_tabController.index == 1) {
-      if (_firstNewMessageIndex >= 0) {
-        _scrollToNewMessages();
-      } else {
-        _scrollToBottom();
-      }
-    }
-  }
-
-  void _markAllAsSeen() {
-    setState(() {
-      _seenMessageIds = _messages.map((m) => m.id).toSet();
-    });
   }
 
   @override
   void dispose() {
-    // Leave WebSocket ticket room
-    final authService = Provider.of<AuthService>(context, listen: false);
-    authService.wsService.leaveTicket(widget.ticket.ticketId);
-    
     _tabController.dispose();
-    _messageController.dispose();
-    _scrollController.dispose();
     super.dispose();
-  }
-
-  void _scrollToBottom({bool animate = true}) {
-    // Use addPostFrameCallback to ensure widgets are built and layout is complete
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && _scrollController.hasClients) {
-        // Add delay to ensure layout is fully complete (200ms for reliable rendering)
-        Future.delayed(const Duration(milliseconds: 200), () {
-          if (mounted && _scrollController.hasClients) {
-            final targetPosition = _scrollController.position.maxScrollExtent;
-            if (animate) {
-              _scrollController.animateTo(
-                targetPosition,
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeOut,
-              );
-            } else {
-              // Jump instantly for initial load
-              _scrollController.jumpTo(targetPosition);
-            }
-          }
-        });
-      }
-    });
-  }
-
-  void _scrollToNewMessages() {
-    // Scroll to show the "New Messages" divider
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && _scrollController.hasClients && _firstNewMessageIndex > 0) {
-        // Add delay to ensure layout is fully complete (200ms for reliable rendering)
-        Future.delayed(const Duration(milliseconds: 200), () {
-          if (mounted && _scrollController.hasClients) {
-            // Calculate approximate position (each message ~100px height estimate)
-            final approximatePosition = _firstNewMessageIndex * 100.0;
-            final maxPosition = _scrollController.position.maxScrollExtent;
-            final targetPosition = approximatePosition.clamp(0.0, maxPosition);
-            
-            _scrollController.animateTo(
-              targetPosition,
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeOut,
-            );
-          }
-        });
-      }
-    });
-  }
-
-  Future<void> _loadMessages() async {
-    setState(() {
-      _isLoadingMessages = true;
-      _messageError = null;
-    });
-
-    try {
-      final messagesData = await ApiService().getTicketMessages(widget.ticket.ticketId);
-      
-      final newMessageCount = messagesData.length;
-      final hasNewMessages = newMessageCount > _previousMessageCount;
-      final isFirstLoad = _previousMessageCount == 0;
-      
-      setState(() {
-        _messages = messagesData
-            .map((json) => TicketMessage.fromJson(json as Map<String, dynamic>))
-            .toList();
-        
-        // Find first new message index
-        if (hasNewMessages && !isFirstLoad) {
-          _firstNewMessageIndex = _previousMessageCount; // Messages after this index are new
-        } else {
-          _firstNewMessageIndex = -1; // No new messages
-        }
-        
-        // Mark all current messages as seen if this is the first load
-        if (_seenMessageIds.isEmpty) {
-          _seenMessageIds = _messages.map((m) => m.id).toSet();
-        }
-        
-        _previousMessageCount = newMessageCount;
-        _isLoadingMessages = false;
-      });
-      
-      // Scroll behavior:
-      // - First load: Always scroll to bottom (no animation)
-      // - Updates with new messages: Scroll to divider
-      // - Updates without new messages: Do nothing (stay at current position)
-      if (isFirstLoad) {
-        _scrollToBottom(animate: false); // Jump instantly to bottom on first load
-      } else if (hasNewMessages && _firstNewMessageIndex >= 0) {
-        _scrollToNewMessages(); // Scroll to new messages divider
-      }
-    } catch (e) {
-      setState(() {
-        _messageError = e.toString();
-        _isLoadingMessages = false;
-      });
-    }
-  }
-
-  Future<void> _sendMessage() async {
-    final content = _messageController.text.trim();
-    if (content.isEmpty) return;
-
-    setState(() => _isSending = true);
-
-    try {
-      await ApiService().sendTicketMessage(widget.ticket.ticketId, content);
-      _messageController.clear();
-      
-      // Wait a moment for the bot to post the message
-      await Future.delayed(const Duration(milliseconds: 500));
-      
-      // Reload messages
-      await _loadMessages();
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Message sent successfully'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to send message: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isSending = false);
-      }
-    }
   }
 
   Future<void> _claimTicket() async {
@@ -377,11 +151,6 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
       
       // Wait a moment for the close message to be posted to Discord
       await Future.delayed(const Duration(milliseconds: 500));
-      
-      // Reload messages to show the closing message
-      if (_messages.isNotEmpty) {
-        await _loadMessages();
-      }
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -839,79 +608,10 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
       isFullScreen: false,
     );
   }
-
-  String _formatDateTime(String isoString) {
-    try {
-      final dateTime = DateTime.parse(isoString);
-      final now = DateTime.now();
-      final difference = now.difference(dateTime);
-
-      if (difference.inMinutes < 60) {
-        return '${difference.inMinutes}m ago';
-      } else if (difference.inHours < 24) {
-        return '${difference.inHours}h ago';
-      } else if (difference.inDays < 7) {
-        return '${difference.inDays}d ago';
-      } else {
-        return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
-      }
-    } catch (e) {
-      return 'Unknown';
-    }
-  }
 }
 
-class _MessageCard extends StatelessWidget {
-  final TicketMessage message;
-  final bool isNew;
-
-  const _MessageCard({required this.message, this.isNew = false});
-
-  bool get _isAdminMessage => message.isAdmin || message.content.contains('[Admin Panel');
-  bool get _isInitialMessage => message.content.contains('**Initial details');
-  bool get _isClosingMessage => message.content.contains('Ticket successfully closed') || 
-                                 message.content.contains('**Closing Message:**');
-
-  String get _cleanContent {
-    String content = message.content;
-    
-    // Remove markdown bold markers
-    content = content.replaceAll('**', '');
-    
-    // Extract actual message from admin panel format
-    if (_isAdminMessage) {
-      final match = RegExp(r'\[Admin Panel - [^\]]+\]:\s*(.+)', dotAll: true).firstMatch(content);
-      if (match != null) {
-        return match.group(1) ?? content;
-      }
-    }
-    
-    // Extract actual message from initial details format
-    if (_isInitialMessage) {
-      final match = RegExp(r'Initial details from [^:]+:\s*(.+)', dotAll: true).firstMatch(content);
-      if (match != null) {
-        return match.group(1) ?? content;
-      }
-    }
-    
-    return content;
-  }
-
-  String get _displayName {
-    if (_isAdminMessage) {
-      final match = RegExp(r'\[Admin Panel - ([^\]]+)\]').firstMatch(message.content);
-      if (match != null) {
-        return match.group(1) ?? message.authorName;
-      }
-    }
-    return message.authorName;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isSystem = message.isBot && !_isAdminMessage;
-    
-    return Stack(
+// User Selection Dialog for ticket assignment
+class _UserSelectionDialog extends StatefulWidget {
       children: [
         Padding(
           padding: const EdgeInsets.only(bottom: 16),
