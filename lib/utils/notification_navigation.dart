@@ -14,8 +14,9 @@ Future<void> handleNotificationTap(BuildContext? context, Map<String, dynamic> d
   try {
     final ticketId = data['ticket_id'] as String?;
     final notificationType = data['notification_type'] as String?;
+    final openTab = data['open_tab'] as String?;  // New: which tab to open
 
-    debugPrint('📱 Handling notification tap: type=$notificationType, ticketId=$ticketId');
+    debugPrint('📱 Handling notification tap: type=$notificationType, ticketId=$ticketId, openTab=$openTab');
 
     if (ticketId == null) {
       debugPrint('⚠️ No ticket_id in notification data');
@@ -31,9 +32,15 @@ Future<void> handleNotificationTap(BuildContext? context, Map<String, dynamic> d
       return;
     }
 
-    // Navigate to ticket detail
+    // Navigate to ticket based on open_tab parameter
     if (context.mounted) {
-      _navigateToTicket(context, ticket);
+      if (openTab == 'messages') {
+        // User notification: open ticket chat screen
+        _navigateToTicketChat(context, ticket);
+      } else {
+        // Admin notification: show ticket detail dialog
+        _navigateToTicket(context, ticket);
+      }
     }
 
   } catch (e) {
@@ -56,7 +63,7 @@ Future<Ticket?> _fetchTicket(BuildContext context, String ticketId) async {
   }
 }
 
-/// Navigate to ticket detail dialog
+/// Navigate to ticket detail dialog (for admins)
 void _navigateToTicket(BuildContext context, Ticket ticket) {
   // Show ticket dialog (works for both admin and user)
   showDialog(
@@ -68,6 +75,19 @@ void _navigateToTicket(BuildContext context, Ticket ticket) {
         debugPrint('🔄 Ticket updated from notification');
       },
     ),
+  );
+}
+
+/// Navigate to ticket chat screen (for regular users)
+void _navigateToTicketChat(BuildContext context, Ticket ticket) {
+  // Navigate to user tickets screen with this ticket opened
+  Navigator.of(context).pushAndRemoveUntil(
+    MaterialPageRoute(
+      builder: (context) => TicketsScreen(
+        initialTicketId: ticket.ticketId,  // Open this specific ticket
+      ),
+    ),
+    (route) => route.isFirst,  // Keep only the first route (home screen)
   );
 }
 

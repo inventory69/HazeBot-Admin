@@ -8,7 +8,9 @@ import '../../models/ticket_config.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 class TicketsScreen extends StatefulWidget {
-  const TicketsScreen({super.key});
+  final String? initialTicketId;  // Ticket to open automatically
+  
+  const TicketsScreen({super.key, this.initialTicketId});
 
   @override
   State<TicketsScreen> createState() => _TicketsScreenState();
@@ -23,6 +25,33 @@ class _TicketsScreenState extends State<TicketsScreen>
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _checkAndRequestNotificationPermission();
+    
+    // If initialTicketId provided, open that ticket after build
+    if (widget.initialTicketId != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _openTicketById(widget.initialTicketId!);
+      });
+    }
+  }
+  
+  /// Open a specific ticket by ID
+  Future<void> _openTicketById(String ticketId) async {
+    try {
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final ticket = await authService.apiService.getTicket(ticketId);
+      
+      if (mounted && ticket != null) {
+        // Navigate to ticket detail screen
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => _TicketDetailScreen(ticket: ticket),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('❌ Error opening ticket from notification: $e');
+    }
   }
 
   /// Ask for notification permission on first visit
