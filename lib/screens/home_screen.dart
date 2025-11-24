@@ -26,6 +26,7 @@ import 'admin/live_users_screen.dart';
 import 'admin/tickets_admin_screen.dart';
 import 'logs_screen.dart';
 import 'settings_screen.dart';
+import 'settings/notification_settings_screen.dart';
 import 'test_screen.dart';
 import 'user_rocket_league_screen.dart';
 import 'preferences_screen.dart';
@@ -542,6 +543,21 @@ class _HomeScreenState extends State<HomeScreen>
                                   builder: (context) => SettingsScreen(
                                     key: ValueKey('settings_$_reloadCounter'),
                                   ),
+                                ),
+                              );
+                            },
+                          ),
+
+                          ListTile(
+                            leading: const Icon(Icons.notifications_outlined),
+                            title: const Text('Notifications'),
+                            onTap: () {
+                              Navigator.pop(context);
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const NotificationSettingsScreen(),
                                 ),
                               );
                             },

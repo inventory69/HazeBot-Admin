@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/auth_service.dart';
+import '../../services/notification_service.dart';
 import '../../models/ticket.dart';
 import '../../models/ticket_config.dart';
 import 'package:timeago/timeago.dart' as timeago;
@@ -20,6 +22,72 @@ class _TicketsScreenState extends State<TicketsScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _checkAndRequestNotificationPermission();
+  }
+
+  /// Ask for notification permission on first visit
+  Future<void> _checkAndRequestNotificationPermission() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final hasAskedBefore = prefs.getBool('notification_permission_asked') ?? false;
+
+      if (!hasAskedBefore) {
+        final notificationService = NotificationService();
+        
+        if (!notificationService.hasPermission) {
+          debugPrint('📱 First time opening tickets, requesting notification permission...');
+          
+          // Show dialog explaining why we need permission
+          if (!mounted) return;
+          final shouldAsk = await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('📬 Enable Notifications?'),
+              content: const Text(
+                'Get instant notifications when:\n'
+                '• You receive new ticket messages\n'
+                '• Someone mentions you\n'
+                '• Your ticket is assigned to staff\n\n'
+                'You can customize this later in settings.',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text('Not now'),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text('Enable'),
+                ),
+              ],
+            ),
+          );
+
+          if (shouldAsk == true && mounted) {
+            final granted = await notificationService.requestPermissionAndRegister();
+            
+            if (granted) {
+              final authService = Provider.of<AuthService>(context, listen: false);
+              await notificationService.registerWithBackend(authService.apiService);
+              
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('✅ Notifications enabled'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              }
+            }
+          }
+
+          // Mark as asked
+          await prefs.setBool('notification_permission_asked', true);
+        }
+      }
+    } catch (e) {
+      debugPrint('⚠️ Error checking notification permission: $e');
+    }
   }
 
   @override
@@ -800,6 +868,7 @@ class _TicketDetailScreenState extends State<_TicketDetailScreen> {
   final _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   int _previousMessageCount = 0;
+  int _firstNewMessageIndex = -1;
 
   @override
   void initState() {
@@ -837,13 +906,23 @@ class _TicketDetailScreenState extends State<_TicketDetailScreen> {
       return;
     }
     
+    final oldCount = _messages.length;
+    
     setState(() {
       _messages.add(messageData);
       _previousMessageCount = _messages.length;
+      // Mark where new messages start
+      if (_firstNewMessageIndex < 0) {
+        _firstNewMessageIndex = oldCount;
+      }
     });
     
-    // Scroll to bottom
-    _scrollToBottom();
+    // Scroll to new messages divider
+    if (_firstNewMessageIndex >= 0) {
+      _scrollToNewMessages();
+    } else {
+      _scrollToBottom();
+    }
   }
 
   @override
@@ -857,18 +936,53 @@ class _TicketDetailScreenState extends State<_TicketDetailScreen> {
     super.dispose();
   }
 
-  void _scrollToBottom() {
-    if (_scrollController.hasClients) {
-      Future.delayed(const Duration(milliseconds: 300), () {
-        if (_scrollController.hasClients) {
-          _scrollController.animateTo(
-            _scrollController.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOut,
-          );
-        }
-      });
-    }
+  void _scrollToBottom({bool animate = true}) {
+    // Use addPostFrameCallback to ensure widgets are built and layout is complete
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _scrollController.hasClients) {
+        // Add delay to ensure layout is fully complete (200ms for reliable rendering)
+        Future.delayed(const Duration(milliseconds: 200), () {
+          if (mounted && _scrollController.hasClients) {
+            final targetPosition = _scrollController.position.maxScrollExtent;
+            if (animate) {
+              _scrollController.animateTo(
+                targetPosition,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOut,
+              );
+            } else {
+              // Jump instantly for initial load
+              _scrollController.jumpTo(targetPosition);
+            }
+          }
+        });
+      }
+    });
+  }
+
+  void _scrollToNewMessages() {
+    // Scroll to show the "New Messages" divider
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _scrollController.hasClients && _firstNewMessageIndex >= 0) {
+        // Add delay to ensure layout is fully complete (200ms for reliable rendering)
+        Future.delayed(const Duration(milliseconds: 200), () {
+          if (mounted && _scrollController.hasClients) {
+            final maxScroll = _scrollController.position.maxScrollExtent;
+            final messageHeight = 80.0; // Approximate average message height
+            final dividerOffset = _firstNewMessageIndex * messageHeight;
+            
+            // Ensure we don't scroll past the end
+            final targetPosition = dividerOffset < maxScroll ? dividerOffset : maxScroll;
+            
+            _scrollController.animateTo(
+              targetPosition,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+            );
+          }
+        });
+      }
+    });
   }
 
   Future<void> _loadMessages() async {
@@ -884,20 +998,31 @@ class _TicketDetailScreenState extends State<_TicketDetailScreen> {
           await authService.apiService.getTicketMessages(widget.ticket.ticketId);
 
       if (mounted) {
+        final newMessageCount = messages.length;
+        final hasNewMessages = newMessageCount > _previousMessageCount;
+        final isFirstLoad = _previousMessageCount == 0;
+        
+        // Find first new message index for divider (only for updates, not first load)
+        int firstNewIndex = -1;
+        if (hasNewMessages && !isFirstLoad) {
+          firstNewIndex = _previousMessageCount; // First new message is at the old count position
+        }
+        
         setState(() {
-          final newMessageCount = messages.length;
-          final hasNewMessages = newMessageCount > _previousMessageCount;
-          final isFirstLoad = _previousMessageCount == 0;
-          
           _messages = messages;
           _previousMessageCount = newMessageCount;
           _isLoadingMessages = false;
-          
-          // Auto-scroll to bottom if there are new messages OR first load
-          if (hasNewMessages || isFirstLoad) {
-            _scrollToBottom();
-          }
+          _firstNewMessageIndex = firstNewIndex;
         });
+        
+        // Scroll behavior: 
+        // - First load: Always scroll to bottom (no animation)
+        // - Updates with new messages: Scroll to divider
+        if (isFirstLoad) {
+          _scrollToBottom(animate: false); // Jump instantly to bottom on first load
+        } else if (hasNewMessages && firstNewIndex >= 0) {
+          _scrollToNewMessages(); // Scroll to new messages divider
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -1113,8 +1238,44 @@ class _TicketDetailScreenState extends State<_TicketDetailScreen> {
                                 itemCount: _messages.length,
                                 itemBuilder: (context, index) {
                                   final message = _messages[index];
-                                  return _buildMessageBubble(
-                                      message, colorScheme, theme);
+                                  
+                                  return Column(
+                                    children: [
+                                      // Show "New Messages" divider before first new message
+                                      if (index == _firstNewMessageIndex && _firstNewMessageIndex > 0)
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(vertical: 12),
+                                          child: Row(
+                                            children: [
+                                              Expanded(
+                                                child: Divider(
+                                                  color: colorScheme.primary,
+                                                  thickness: 2,
+                                                ),
+                                              ),
+                                              Padding(
+                                                padding: const EdgeInsets.symmetric(horizontal: 12),
+                                                child: Text(
+                                                  'New Messages',
+                                                  style: TextStyle(
+                                                    color: colorScheme.primary,
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 13,
+                                                  ),
+                                                ),
+                                              ),
+                                              Expanded(
+                                                child: Divider(
+                                                  color: colorScheme.primary,
+                                                  thickness: 2,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      _buildMessageBubble(message, colorScheme, theme),
+                                    ],
+                                  );
                                 },
                               ),
                       ),

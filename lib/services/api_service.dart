@@ -1448,6 +1448,72 @@ class ApiService {
       throw Exception(error['error'] ?? 'Failed to send message');
     }
   }
+
+  // === Notification API Methods ===
+
+  Future<bool> registerFCMToken(String fcmToken, String deviceInfo) async {
+    try {
+      final response = await _post(
+        '$baseUrl/notifications/register',
+        body: jsonEncode({
+          'fcm_token': fcmToken,
+          'device_info': deviceInfo,
+        }),
+      );
+
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('❌ Error registering FCM token: $e');
+      return false;
+    }
+  }
+
+  Future<bool> unregisterFCMToken(String fcmToken) async {
+    try {
+      final response = await _post(
+        '$baseUrl/notifications/unregister',
+        body: jsonEncode({
+          'fcm_token': fcmToken,
+        }),
+      );
+
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('❌ Error unregistering FCM token: $e');
+      return false;
+    }
+  }
+
+  Future<Map<String, bool>?> getNotificationSettings() async {
+    try {
+      final response = await _get('$baseUrl/notifications/settings');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return data.map((key, value) => MapEntry(key, value as bool));
+      } else {
+        debugPrint('⚠️ Failed to load notification settings: ${response.statusCode}');
+        return null;
+      }
+    } catch (e) {
+      debugPrint('❌ Error loading notification settings: $e');
+      return null;
+    }
+  }
+
+  Future<bool> updateNotificationSettings(Map<String, bool> settings) async {
+    try {
+      final response = await _put(
+        '$baseUrl/notifications/settings',
+        body: jsonEncode(settings),
+      );
+
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('❌ Error updating notification settings: $e');
+      return false;
+    }
+  }
 }
 
 // Custom exception for token expiration

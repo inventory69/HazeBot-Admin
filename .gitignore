@@ -56,3 +56,8 @@ android/app/upload-keystore.jks
 android/app/*.keystore
 android/app/*.jks
 android/app/keystore.b64
+
+# Firebase configuration (contains sensitive API keys)
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+lib/firebase_options.dart

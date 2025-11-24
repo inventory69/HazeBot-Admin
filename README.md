@@ -67,7 +67,17 @@ cd HazeBot-Admin
 flutter pub get
 ```
 
-### 3. Configure Environment
+### 3. Firebase Setup (Required for Push Notifications)
+
+**Android only** - Follow the [Firebase Setup Guide](FIREBASE_SETUP.md) to enable push notifications:
+
+1. Download `google-services.json` from Firebase Console
+2. Place in `android/app/google-services.json`
+3. Add `firebase-credentials.json` to HazeBot backend root
+
+⚠️ **Note:** App will build without Firebase, but push notifications won't work.
+
+### 4. Configure Environment
 
 Copy the example environment file:
 

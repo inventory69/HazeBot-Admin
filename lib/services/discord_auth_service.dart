@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api_service.dart';
 import 'websocket_service.dart';
+import 'notification_service.dart';
 
 class DiscordAuthService extends ChangeNotifier {
   final ApiService _apiService = ApiService();
@@ -123,6 +124,9 @@ class DiscordAuthService extends ChangeNotifier {
 
           // Connect WebSocket after successful authentication
           _wsService.connect(_apiService.baseUrl);
+          
+          // Note: FCM token registration happens when user opens tickets or enables notifications
+          // This ensures we ask for permission only when the user needs it
 
           notifyListeners();
         } else {
@@ -303,6 +307,17 @@ class DiscordAuthService extends ChangeNotifier {
   }
 
   Future<void> logout() async {
+    // Unregister FCM token
+    try {
+      final notificationService = NotificationService();
+      if (notificationService.isInitialized) {
+        await notificationService.unregisterFromBackend(_apiService);
+        await notificationService.deleteToken();
+      }
+    } catch (e) {
+      debugPrint('⚠️ Error unregistering FCM token on logout: $e');
+    }
+    
     // Disconnect WebSocket
     _wsService.disconnect();
     

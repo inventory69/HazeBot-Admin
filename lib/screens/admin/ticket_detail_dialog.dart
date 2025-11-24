@@ -30,6 +30,7 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
   final ScrollController _scrollController = ScrollController();
   int _previousMessageCount = 0;
   Set<String> _seenMessageIds = {};
+  int _firstNewMessageIndex = -1; // Index of first new message for divider
 
   @override
   void initState() {
@@ -82,14 +83,24 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
       return;
     }
     
+    final oldCount = _messages.length;
+    
     setState(() {
       _messages.add(newMessage);
       _previousMessageCount = _messages.length;
+      // Mark where new messages start (if not already set)
+      if (_firstNewMessageIndex < 0) {
+        _firstNewMessageIndex = oldCount;
+      }
     });
     
-    // Scroll to bottom if on messages tab
+    // Scroll behavior on messages tab
     if (_tabController.index == 1) {
-      _scrollToBottom();
+      if (_firstNewMessageIndex >= 0) {
+        _scrollToNewMessages();
+      } else {
+        _scrollToBottom();
+      }
     }
   }
 
@@ -111,18 +122,51 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
     super.dispose();
   }
 
-  void _scrollToBottom() {
-    if (_scrollController.hasClients) {
-      Future.delayed(const Duration(milliseconds: 300), () {
-        if (_scrollController.hasClients) {
-          _scrollController.animateTo(
-            _scrollController.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOut,
-          );
-        }
-      });
-    }
+  void _scrollToBottom({bool animate = true}) {
+    // Use addPostFrameCallback to ensure widgets are built and layout is complete
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _scrollController.hasClients) {
+        // Add delay to ensure layout is fully complete (200ms for reliable rendering)
+        Future.delayed(const Duration(milliseconds: 200), () {
+          if (mounted && _scrollController.hasClients) {
+            final targetPosition = _scrollController.position.maxScrollExtent;
+            if (animate) {
+              _scrollController.animateTo(
+                targetPosition,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOut,
+              );
+            } else {
+              // Jump instantly for initial load
+              _scrollController.jumpTo(targetPosition);
+            }
+          }
+        });
+      }
+    });
+  }
+
+  void _scrollToNewMessages() {
+    // Scroll to show the "New Messages" divider
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _scrollController.hasClients && _firstNewMessageIndex > 0) {
+        // Add delay to ensure layout is fully complete (200ms for reliable rendering)
+        Future.delayed(const Duration(milliseconds: 200), () {
+          if (mounted && _scrollController.hasClients) {
+            // Calculate approximate position (each message ~100px height estimate)
+            final approximatePosition = _firstNewMessageIndex * 100.0;
+            final maxPosition = _scrollController.position.maxScrollExtent;
+            final targetPosition = approximatePosition.clamp(0.0, maxPosition);
+            
+            _scrollController.animateTo(
+              targetPosition,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+            );
+          }
+        });
+      }
+    });
   }
 
   Future<void> _loadMessages() async {
@@ -134,14 +178,21 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
     try {
       final messagesData = await ApiService().getTicketMessages(widget.ticket.ticketId);
       
+      final newMessageCount = messagesData.length;
+      final hasNewMessages = newMessageCount > _previousMessageCount;
+      final isFirstLoad = _previousMessageCount == 0;
+      
       setState(() {
-        final newMessageCount = messagesData.length;
-        final hasNewMessages = newMessageCount > _previousMessageCount;
-        final isFirstLoad = _previousMessageCount == 0;
-        
         _messages = messagesData
             .map((json) => TicketMessage.fromJson(json as Map<String, dynamic>))
             .toList();
+        
+        // Find first new message index
+        if (hasNewMessages && !isFirstLoad) {
+          _firstNewMessageIndex = _previousMessageCount; // Messages after this index are new
+        } else {
+          _firstNewMessageIndex = -1; // No new messages
+        }
         
         // Mark all current messages as seen if this is the first load
         if (_seenMessageIds.isEmpty) {
@@ -150,12 +201,17 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
         
         _previousMessageCount = newMessageCount;
         _isLoadingMessages = false;
-        
-        // Auto-scroll to bottom if there are new messages OR first load
-        if (hasNewMessages || isFirstLoad) {
-          _scrollToBottom();
-        }
       });
+      
+      // Scroll behavior:
+      // - First load: Always scroll to bottom (no animation)
+      // - Updates with new messages: Scroll to divider
+      // - Updates without new messages: Do nothing (stay at current position)
+      if (isFirstLoad) {
+        _scrollToBottom(animate: false); // Jump instantly to bottom on first load
+      } else if (hasNewMessages && _firstNewMessageIndex >= 0) {
+        _scrollToNewMessages(); // Scroll to new messages divider
+      }
     } catch (e) {
       setState(() {
         _messageError = e.toString();
@@ -822,9 +878,46 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
                     itemBuilder: (context, index) {
                       final message = _messages[index];
                       final isNew = !_seenMessageIds.contains(message.id);
-                      return _MessageCard(
-                        message: message,
-                        isNew: isNew,
+                      
+                      return Column(
+                        children: [
+                          // Show "New Messages" divider before first new message
+                          if (index == _firstNewMessageIndex && _firstNewMessageIndex > 0)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Divider(
+                                      color: Theme.of(context).colorScheme.primary,
+                                      thickness: 2,
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                                    child: Text(
+                                      'New Messages',
+                                      style: TextStyle(
+                                        color: Theme.of(context).colorScheme.primary,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Divider(
+                                      color: Theme.of(context).colorScheme.primary,
+                                      thickness: 2,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          _MessageCard(
+                            message: message,
+                            isNew: isNew,
+                          ),
+                        ],
                       );
                     },
                   ),

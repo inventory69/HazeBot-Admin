@@ -10,14 +10,36 @@ import 'services/permission_service.dart';
 import 'services/config_service.dart';
 import 'services/theme_service.dart';
 import 'services/deep_link_service.dart';
+import 'services/notification_service.dart';
 import 'providers/data_cache_provider.dart';
 import 'utils/app_config.dart';
+import 'utils/notification_navigation.dart';
+
+// Global navigation key for push notification navigation
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Load environment variables
   await dotenv.load(fileName: ".env");
+  
+  // Initialize Firebase & Notifications (graceful - continues even if Firebase not configured)
+  try {
+    final notificationService = NotificationService();
+    await notificationService.initialize();
+    
+    // Set up notification tap handler
+    notificationService.onNotificationTap = (data) {
+      debugPrint('📱 Notification tapped with data: $data');
+      handleNotificationTap(navigatorKey.currentContext, data);
+    };
+    
+    debugPrint('✅ Notifications initialized');
+  } catch (e) {
+    debugPrint('ℹ️ Notifications not available (Web or Firebase not configured): $e');
+    // Continue without notifications - app still works
+  }
 
   runApp(const HazeBotAdminApp());
 }
@@ -114,6 +136,7 @@ class _HazeBotAdminAppState extends State<HazeBotAdminApp> {
               }
 
               return MaterialApp(
+                navigatorKey: navigatorKey,
                 title: AppConfig.appName,
                 debugShowCheckedModeBanner: false,
                 theme: ThemeData(
