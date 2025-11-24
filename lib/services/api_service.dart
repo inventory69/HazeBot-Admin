@@ -26,8 +26,10 @@ class ApiService {
   factory ApiService() => _instance;
   ApiService._internal();
 
-  static String get baseUrl =>
+  static String get _staticBaseUrl =>
       dotenv.env['API_BASE_URL'] ?? 'http://localhost:5070/api';
+  
+  String get baseUrl => _staticBaseUrl;
 
   String? _token;
   bool _isRefreshing = false;
@@ -1464,7 +1466,7 @@ String getProxiedImageUrl(String imageUrl) {
     return imageUrl;
   }
 
-  final apiBaseUrl = ApiService.baseUrl.replaceFirst('/api', '');
+  final apiBaseUrl = ApiService._staticBaseUrl.replaceFirst('/api', '');
   final encodedUrl = Uri.encodeComponent(imageUrl);
   return '$apiBaseUrl/api/proxy/image?url=$encodedUrl';
 }

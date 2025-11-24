@@ -3,9 +3,11 @@ import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api_service.dart';
+import 'websocket_service.dart';
 
 class DiscordAuthService extends ChangeNotifier {
   final ApiService _apiService = ApiService();
+  final WebSocketService _wsService = WebSocketService();
   bool _isAuthenticated = false;
   String? _token;
   Map<String, dynamic>? _userInfo;
@@ -16,6 +18,8 @@ class DiscordAuthService extends ChangeNotifier {
   String? get role => _userInfo?['role'];
   List<String> get permissions =>
       List<String>.from(_userInfo?['permissions'] ?? []);
+  WebSocketService get wsService => _wsService;
+  ApiService get apiService => _apiService;
 
   DiscordAuthService() {
     debugPrint('DEBUG: DiscordAuthService CONSTRUCTOR called');
@@ -117,6 +121,9 @@ class DiscordAuthService extends ChangeNotifier {
           // Save user info to cache for next page reload
           await prefs.setString('user_info', jsonEncode(userData));
 
+          // Connect WebSocket after successful authentication
+          _wsService.connect(_apiService.baseUrl);
+
           notifyListeners();
         } else {
           debugPrint(
@@ -208,6 +215,10 @@ class DiscordAuthService extends ChangeNotifier {
 
         _apiService.setToken(_token!);
         _isAuthenticated = true;
+        
+        // Connect WebSocket after successful OAuth login
+        _wsService.connect(_apiService.baseUrl);
+        
         notifyListeners();
         debugPrint('DEBUG: OAuth login successful');
         return true;
@@ -265,6 +276,10 @@ class DiscordAuthService extends ChangeNotifier {
       debugPrint('🔐 Setting _isAuthenticated = true');
       _isAuthenticated = true;
 
+      // Connect WebSocket after successful deep link authentication
+      debugPrint('🔐 Connecting WebSocket...');
+      _wsService.connect(_apiService.baseUrl);
+
       debugPrint('🔐 Calling notifyListeners()...');
       notifyListeners();
 
@@ -288,6 +303,9 @@ class DiscordAuthService extends ChangeNotifier {
   }
 
   Future<void> logout() async {
+    // Disconnect WebSocket
+    _wsService.disconnect();
+    
     _token = null;
     _userInfo = null;
     _isAuthenticated = false;
