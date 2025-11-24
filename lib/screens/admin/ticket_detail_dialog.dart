@@ -109,8 +109,15 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
 
   Future<void> _claimTicket() async {
     try {
-      // TODO: Get actual user ID from auth service
-      await ApiService().claimTicket(widget.ticket.ticketId, '123456789');
+      // Get current user's Discord ID
+      final userData = await ApiService().getCurrentUser();
+      final discordId = userData['discord_id']?.toString();
+      
+      if (discordId == null || discordId.isEmpty) {
+        throw Exception('Could not retrieve user Discord ID');
+      }
+      
+      await ApiService().claimTicket(widget.ticket.ticketId, discordId);
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -134,6 +141,70 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
     }
   }
 
+  Future<void> _assignTicket() async {
+    final userIdController = TextEditingController();
+    
+    final userId = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Assign Ticket'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Enter the Discord User ID to assign this ticket to:'),
+            const SizedBox(height: 16),
+            TextField(
+              controller: userIdController,
+              decoration: const InputDecoration(
+                labelText: 'User ID',
+                hintText: 'e.g., 123456789012345678',
+                border: OutlineInputBorder(),
+              ),
+              keyboardType: TextInputType.number,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, userIdController.text.trim()),
+            child: const Text('Assign'),
+          ),
+        ],
+      ),
+    );
+
+    if (userId == null || userId.isEmpty) return;
+
+    try {
+      await ApiService().assignTicket(widget.ticket.ticketId, userId);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Ticket assigned successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        widget.onUpdate();
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to assign ticket: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> _closeTicket() async {
     final closeMessage = await showDialog<String>(
       context: context,
@@ -147,6 +218,14 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
         widget.ticket.ticketId,
         closeMessage: closeMessage.isEmpty ? null : closeMessage,
       );
+      
+      // Wait a moment for the close message to be posted to Discord
+      await Future.delayed(const Duration(milliseconds: 500));
+      
+      // Reload messages to show the closing message
+      if (_messages.isNotEmpty) {
+        await _loadMessages();
+      }
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -505,6 +584,18 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
                   label: const Text('Claim Ticket'),
                 ),
               ),
+            if (!widget.ticket.isClaimed) const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: _assignTicket,
+                icon: const Icon(Icons.person_add),
+                label: const Text('Assign to User'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                ),
+              ),
+            ),
             const SizedBox(height: 8),
             SizedBox(
               width: double.infinity,
@@ -524,11 +615,11 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
   }
 
   Widget _buildMessagesTab() {
-    if (_isLoadingMessages) {
+    if (_isLoadingMessages && _messages.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (_messageError != null) {
+    if (_messageError != null && _messages.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -561,13 +652,16 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
                     style: TextStyle(color: Colors.grey[600]),
                   ),
                 )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: _messages.length,
-                  itemBuilder: (context, index) {
-                    final message = _messages[index];
-                    return _MessageCard(message: message);
-                  },
+              : RefreshIndicator(
+                  onRefresh: _loadMessages,
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: _messages.length,
+                    itemBuilder: (context, index) {
+                      final message = _messages[index];
+                      return _MessageCard(message: message);
+                    },
+                  ),
                 ),
         ),
 
@@ -644,6 +738,8 @@ class _MessageCard extends StatelessWidget {
 
   bool get _isAdminMessage => message.content.contains('[Admin Panel');
   bool get _isInitialMessage => message.content.contains('**Initial details');
+  bool get _isClosingMessage => message.content.contains('Ticket successfully closed') || 
+                                 message.content.contains('**Closing Message:**');
 
   String get _cleanContent {
     String content = message.content;
@@ -692,27 +788,33 @@ class _MessageCard extends StatelessWidget {
           // Avatar
           CircleAvatar(
             radius: 18,
-            backgroundColor: _isAdminMessage 
-                ? Theme.of(context).colorScheme.primaryContainer
-                : isSystem
-                    ? Theme.of(context).colorScheme.surfaceContainerHighest
-                    : Theme.of(context).colorScheme.secondaryContainer,
-            backgroundImage: message.authorAvatar != null && !_isAdminMessage
+            backgroundColor: _isClosingMessage
+                ? Colors.green.withOpacity(0.2)
+                : _isAdminMessage 
+                    ? Theme.of(context).colorScheme.primaryContainer
+                    : isSystem
+                        ? Theme.of(context).colorScheme.surfaceContainerHighest
+                        : Theme.of(context).colorScheme.secondaryContainer,
+            backgroundImage: message.authorAvatar != null && !_isAdminMessage && !_isClosingMessage
                 ? NetworkImage(message.authorAvatar!)
                 : null,
-            child: message.authorAvatar == null || _isAdminMessage
+            child: message.authorAvatar == null || _isAdminMessage || _isClosingMessage
                 ? Icon(
-                    _isAdminMessage
-                        ? Icons.admin_panel_settings
-                        : isSystem
-                            ? Icons.smart_toy
-                            : Icons.person,
+                    _isClosingMessage
+                        ? Icons.check_circle
+                        : _isAdminMessage
+                            ? Icons.admin_panel_settings
+                            : isSystem
+                                ? Icons.smart_toy
+                                : Icons.person,
                     size: 20,
-                    color: _isAdminMessage
-                        ? Theme.of(context).colorScheme.primary
-                        : isSystem
-                            ? Theme.of(context).colorScheme.onSurfaceVariant
-                            : Theme.of(context).colorScheme.onSecondaryContainer,
+                    color: _isClosingMessage
+                        ? Colors.green
+                        : _isAdminMessage
+                            ? Theme.of(context).colorScheme.primary
+                            : isSystem
+                                ? Theme.of(context).colorScheme.onSurfaceVariant
+                                : Theme.of(context).colorScheme.onSecondaryContainer,
                   )
                 : null,
           ),
@@ -756,6 +858,24 @@ class _MessageCard extends StatelessWidget {
                         ),
                       ),
                     ],
+                    if (_isClosingMessage) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.green.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          'CLOSED',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green,
+                          ),
+                        ),
+                      ),
+                    ],
                     const SizedBox(width: 8),
                     Text(
                       _formatDateTime(message.timestamp),
@@ -771,18 +891,25 @@ class _MessageCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
-                    color: _isAdminMessage
-                        ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3)
-                        : isSystem
-                            ? Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5)
-                            : Theme.of(context).colorScheme.surfaceContainerHigh,
+                    color: _isClosingMessage
+                        ? Colors.green.withOpacity(0.1)
+                        : _isAdminMessage
+                            ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3)
+                            : isSystem
+                                ? Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5)
+                                : Theme.of(context).colorScheme.surfaceContainerHigh,
                     borderRadius: BorderRadius.circular(12),
-                    border: _isAdminMessage
+                    border: _isClosingMessage
                         ? Border.all(
-                            color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                            color: Colors.green.withOpacity(0.3),
                             width: 1,
                           )
-                        : null,
+                        : _isAdminMessage
+                            ? Border.all(
+                                color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                                width: 1,
+                              )
+                            : null,
                   ),
                   child: Text(
                     _cleanContent,
