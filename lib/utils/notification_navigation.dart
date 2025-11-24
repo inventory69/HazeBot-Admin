@@ -35,9 +35,11 @@ Future<void> handleNotificationTap(BuildContext? context, Map<String, dynamic> d
     // Navigate to ticket based on open_tab parameter
     if (context.mounted) {
       if (openTab == 'messages') {
+        debugPrint('📱 Opening ticket in MESSAGES mode (user view)');
         // User notification: open ticket chat screen
         _navigateToTicketChat(context, ticket);
       } else {
+        debugPrint('📱 Opening ticket in DIALOG mode (admin view), openTab=$openTab');
         // Admin notification: show ticket detail dialog
         _navigateToTicket(context, ticket);
       }
@@ -80,14 +82,17 @@ void _navigateToTicket(BuildContext context, Ticket ticket) {
 
 /// Navigate to ticket chat screen (for regular users)
 void _navigateToTicketChat(BuildContext context, Ticket ticket) {
-  // Navigate to user tickets screen with this ticket opened
-  Navigator.of(context).pushAndRemoveUntil(
+  // Import the ticket detail screen from tickets_screen.dart
+  // Since _TicketDetailScreen is private, we need to use the public route
+  // Navigate directly to the chat by pushing a new screen
+  Navigator.of(context).push(
     MaterialPageRoute(
-      builder: (context) => TicketsScreen(
-        initialTicketId: ticket.ticketId,  // Open this specific ticket
-      ),
+      builder: (context) {
+        // We'll use a simple approach: navigate to TicketsScreen first,
+        // then it will auto-open the ticket via initialTicketId
+        return TicketsScreen(initialTicketId: ticket.ticketId);
+      },
     ),
-    (route) => route.isFirst,  // Keep only the first route (home screen)
   );
 }
 

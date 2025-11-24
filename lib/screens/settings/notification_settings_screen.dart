@@ -186,6 +186,13 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
     
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    
+    // Use harmonized accent color for cards (same as tickets screen)
+    final isMonet = colorScheme.surfaceContainerHigh !=
+        ThemeData.light().colorScheme.surfaceContainerHigh;
+    final cardColor = isMonet
+        ? colorScheme.primaryContainer.withOpacity(0.18)
+        : colorScheme.surface;
 
     return Scaffold(
       appBar: AppBar(
@@ -202,7 +209,9 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                   // Error message
                   if (_errorMessage != null)
                     Card(
+                      elevation: 0,
                       color: colorScheme.errorContainer,
+                      margin: const EdgeInsets.only(bottom: 8),
                       child: Padding(
                         padding: const EdgeInsets.all(16),
                         child: Row(
@@ -225,12 +234,14 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                       ),
                     ),
                   
-                  const SizedBox(height: 16),
+                  if (_errorMessage != null) const SizedBox(height: 8),
 
                   // Web warning card
                   if (kIsWeb)
                     Card(
+                      elevation: 0,
                       color: colorScheme.secondaryContainer,
+                      margin: const EdgeInsets.only(bottom: 8),
                       child: Padding(
                         padding: const EdgeInsets.all(16),
                         child: Row(
@@ -255,10 +266,13 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                       ),
                     ),
                   
-                  if (kIsWeb) const SizedBox(height: 16),
+                  if (kIsWeb) const SizedBox(height: 8),
 
                   // Info card
                   Card(
+                    elevation: 0,
+                    color: cardColor,
+                    margin: const EdgeInsets.only(bottom: 8),
                     child: Padding(
                       padding: const EdgeInsets.all(16),
                       child: Row(
@@ -282,21 +296,27 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                     ),
                   ),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
 
                   // Settings section
-                  Text(
-                    'Ticket Notifications',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: colorScheme.onSurface,
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Text(
+                      'Ticket Notifications',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,
+                      ),
                     ),
                   ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
 
                   // New Messages
                   Card(
+                    elevation: 0,
+                    color: cardColor,
+                    margin: const EdgeInsets.only(bottom: 8),
                     child: SwitchListTile(
                       value: _ticketNewMessages,
                       onChanged: (value) {
@@ -320,10 +340,11 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                     ),
                   ),
 
-                  const SizedBox(height: 8),
-
                   // Mentions
                   Card(
+                    elevation: 0,
+                    color: cardColor,
+                    margin: const EdgeInsets.only(bottom: 8),
                     child: SwitchListTile(
                       value: _ticketMentions,
                       onChanged: (value) {
@@ -345,11 +366,12 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                     ),
                   ),
 
-                  const SizedBox(height: 8),
-
                   // New Tickets (Admin/Mod only)
                   if (_isAdmin || _isModerator)
                     Card(
+                      elevation: 0,
+                      color: cardColor,
+                      margin: const EdgeInsets.only(bottom: 8),
                       child: SwitchListTile(
                         value: _ticketCreated,
                         onChanged: (value) {
@@ -371,10 +393,11 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                       ),
                     ),
 
-                  if (_isAdmin || _isModerator) const SizedBox(height: 8),
-
                   // Assignments
                   Card(
+                    elevation: 0,
+                    color: cardColor,
+                    margin: const EdgeInsets.only(bottom: 8),
                     child: SwitchListTile(
                       value: _ticketAssigned,
                       onChanged: (value) {
@@ -398,7 +421,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                     ),
                   ),
 
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 24),
 
                   // Save button
                   SizedBox(
@@ -427,7 +450,9 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                   // FCM Token Info (Debug)
                   if (NotificationService().fcmToken != null)
                     Card(
+                      elevation: 0,
                       color: colorScheme.surfaceContainerHighest,
+                      margin: const EdgeInsets.only(bottom: 8),
                       child: Padding(
                         padding: const EdgeInsets.all(12),
                         child: Column(
