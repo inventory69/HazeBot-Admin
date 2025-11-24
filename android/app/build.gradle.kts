@@ -6,8 +6,6 @@ plugins {
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
-    // Google Services plugin for Firebase
-    id("com.google.gms.google-services")
 }
 
 // Load keystore properties
@@ -68,4 +66,16 @@ flutter {
 dependencies {
     // Core library desugaring for flutter_local_notifications
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+}
+
+// Apply Google Services plugin only if google-services.json exists
+// This allows building without Firebase configuration (notifications won't work)
+val googleServicesFile = file("google-services.json")
+if (googleServicesFile.exists()) {
+    apply(plugin = "com.google.gms.google-services")
+    println("✅ Firebase google-services.json found - push notifications enabled")
+} else {
+    println("⚠️ Firebase google-services.json not found - push notifications disabled")
+    println("   To enable: Download google-services.json from Firebase Console")
+    println("   Place in: android/app/google-services.json")
 }
