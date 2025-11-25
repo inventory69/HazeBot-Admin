@@ -34,13 +34,27 @@ class _TicketChatWidgetState extends State<TicketChatWidget> {
   final Set<String> _seenMessageIds = {}; // Prevent duplicates
   int _firstNewMessageIndex = -1;
   final GlobalKey _newMessagesDividerKey = GlobalKey(); // For precise scroll position
+  String? _currentUserDiscordId; // ✅ Cache current user's Discord ID
 
   @override
   void initState() {
     super.initState();
+    _loadCurrentUser(); // ✅ Load current user ID first
     _loadMessages();
     _setupWebSocketListener();
     _dismissNotifications(); // ✅ Dismiss notifications when entering chat
+  }
+
+  /// Load current user's Discord ID for duplicate message detection
+  Future<void> _loadCurrentUser() async {
+    try {
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final userData = await authService.apiService.getCurrentUser();
+      _currentUserDiscordId = userData['discord_id']?.toString();
+      debugPrint('👤 Current user Discord ID: $_currentUserDiscordId');
+    } catch (e) {
+      debugPrint('⚠️ Could not load current user ID: $e');
+    }
   }
 
   /// Dismiss ticket notifications when user enters the chat
@@ -81,6 +95,13 @@ class _TicketChatWidgetState extends State<TicketChatWidget> {
     // ✅ FIX: Check if message already exists (prevent duplicates)
     if (_seenMessageIds.contains(newMessage.id)) {
       debugPrint('⚠️ Duplicate message ignored: ${newMessage.id}');
+      return;
+    }
+
+    // ✅ FIX: Skip own messages from WebSocket (already added optimistically)
+    // This prevents duplicate messages when user sends a message
+    if (_currentUserDiscordId != null && newMessage.authorId == _currentUserDiscordId) {
+      debugPrint('⏭️ Skipping own message from WebSocket: ${newMessage.id} (already added optimistically)');
       return;
     }
 
