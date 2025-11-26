@@ -42,7 +42,8 @@ class _TicketsAdminScreenState extends State<TicketsAdminScreen>
                   icon: const Icon(Icons.refresh),
                   onPressed: () {
                     // Find the TicketsListTab and refresh it
-                    final state = context.findAncestorStateOfType<_TicketsListTabState>();
+                    final state =
+                        context.findAncestorStateOfType<_TicketsListTabState>();
                     state?._loadTickets();
                   },
                   tooltip: 'Refresh',
@@ -130,9 +131,8 @@ class _TicketsListTabState extends State<TicketsListTab> {
 
     // Filter by status
     if (_statusFilter != 'All') {
-      filtered = filtered
-          .where((ticket) => ticket.status == _statusFilter)
-          .toList();
+      filtered =
+          filtered.where((ticket) => ticket.status == _statusFilter).toList();
     }
 
     // Filter by search query
@@ -234,184 +234,191 @@ class _TicketsListTabState extends State<TicketsListTab> {
           // Filters and Search - Kompakter
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-          child: Column(
-            children: [
-              // Status Filter - Responsive layout (kompakt ohne Status-Label)
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final isCompact = constraints.maxWidth < 700;
-                  
-                  if (isCompact) {
-                    // Mobile/Tablet: Wrap layout ohne Label
-                    return Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                          children: [
-                            FilterChip(
-                              label: const Text('All'),
-                              selected: _statusFilter == 'All',
-                              onSelected: (selected) {
-                                if (selected) {
-                                  setState(() {
-                                    _statusFilter = 'All';
-                                    _filterTickets();
-                                  });
-                                }
-                              },
-                            ),
-                            FilterChip(
-                              label: const Text('Open'),
-                              selected: _statusFilter == 'Open',
-                              onSelected: (selected) {
-                                if (selected) {
-                                  setState(() {
-                                    _statusFilter = 'Open';
-                                    _filterTickets();
-                                  });
-                                }
-                              },
-                            ),
-                            FilterChip(
-                              label: const Text('Claimed'),
-                              selected: _statusFilter == 'Claimed',
-                              onSelected: (selected) {
-                                if (selected) {
-                                  setState(() {
-                                    _statusFilter = 'Claimed';
-                                    _filterTickets();
-                                  });
-                                }
-                              },
-                            ),
-                            FilterChip(
-                              label: const Text('Closed'),
-                              selected: _statusFilter == 'Closed',
-                              onSelected: (selected) {
-                                if (selected) {
-                                  setState(() {
-                                    _statusFilter = 'Closed';
-                                    _filterTickets();
-                                  });
-                                }
-                              },
-                            ),
-                          ],
-                        );
-                  } else {
-                    // Desktop: Horizontal layout ohne Label
-                    return SegmentedButton<String>(
-                          segments: const [
-                            ButtonSegment(value: 'All', label: Text('All')),
-                            ButtonSegment(value: 'Open', label: Text('Open')),
-                            ButtonSegment(value: 'Claimed', label: Text('Claimed')),
-                            ButtonSegment(value: 'Closed', label: Text('Closed')),
-                          ],
-                          selected: {_statusFilter},
-                          onSelectionChanged: (Set<String> selected) {
-                            setState(() {
-                              _statusFilter = selected.first;
-                              _filterTickets();
-                            });
-                          },
-                        );
-                  }
-                },
-              ),
-              const SizedBox(height: 8),
-              // Search Bar - kompakter
-              SizedBox(
-                height: 44, // Kleinere Höhe
-                child: TextField(
-                  controller: _searchController,
-                  style: const TextStyle(fontSize: 14),
-                  decoration: InputDecoration(
-                    hintText: 'Search tickets...',
-                    hintStyle: const TextStyle(fontSize: 14),
-                    prefixIcon: const Icon(Icons.search, size: 20),
-                    suffixIcon: _searchQuery.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear, size: 20),
-                            onPressed: () {
-                              _searchController.clear();
-                              setState(() {
-                                _searchQuery = '';
-                                _filterTickets();
-                              });
-                            },
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                          )
-                        : null,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    isDense: true,
-                  ),
-                  onChanged: (value) {
-                    setState(() {
-                      _searchQuery = value;
-                      _filterTickets();
-                    });
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
+            child: Column(
+              children: [
+                // Status Filter - Responsive layout (kompakt ohne Status-Label)
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isCompact = constraints.maxWidth < 700;
 
-        // Results count - kompakter
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
-          child: Row(
-            children: [
-              Text(
-                'Showing ${_filteredTickets.length} of ${_tickets.length} tickets',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12),
-              ),
-            ],
-          ),
-        ),
-
-        // Tickets List
-        Expanded(
-          child: _filteredTickets.isEmpty
-              ? ListView(
-                  // Wrap in ListView for pull-to-refresh to work
-                  children: [
-                    SizedBox(height: MediaQuery.of(context).size.height * 0.25),
-                    Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                    if (isCompact) {
+                      // Mobile/Tablet: Wrap layout ohne Label
+                      return Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
                         children: [
-                          Icon(Icons.confirmation_number_outlined,
-                              size: 64, color: Colors.grey[400]),
-                          const SizedBox(height: 16),
-                          Text(
-                            'No tickets found',
-                            style: TextStyle(
-                              fontSize: 18,
-                              color: Colors.grey[600],
-                            ),
+                          FilterChip(
+                            label: const Text('All'),
+                            selected: _statusFilter == 'All',
+                            onSelected: (selected) {
+                              if (selected) {
+                                setState(() {
+                                  _statusFilter = 'All';
+                                  _filterTickets();
+                                });
+                              }
+                            },
+                          ),
+                          FilterChip(
+                            label: const Text('Open'),
+                            selected: _statusFilter == 'Open',
+                            onSelected: (selected) {
+                              if (selected) {
+                                setState(() {
+                                  _statusFilter = 'Open';
+                                  _filterTickets();
+                                });
+                              }
+                            },
+                          ),
+                          FilterChip(
+                            label: const Text('Claimed'),
+                            selected: _statusFilter == 'Claimed',
+                            onSelected: (selected) {
+                              if (selected) {
+                                setState(() {
+                                  _statusFilter = 'Claimed';
+                                  _filterTickets();
+                                });
+                              }
+                            },
+                          ),
+                          FilterChip(
+                            label: const Text('Closed'),
+                            selected: _statusFilter == 'Closed',
+                            onSelected: (selected) {
+                              if (selected) {
+                                setState(() {
+                                  _statusFilter = 'Closed';
+                                  _filterTickets();
+                                });
+                              }
+                            },
                           ),
                         ],
-                      ),
-                    ),
-                  ],
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-                  itemCount: _filteredTickets.length,
-                  itemBuilder: (context, index) {
-                    final ticket = _filteredTickets[index];
-                    return TicketCard(
-                      ticket: ticket,
-                      onDelete: () => _deleteTicket(ticket),
-                      onRefresh: _loadTickets,
-                    );
+                      );
+                    } else {
+                      // Desktop: Horizontal layout ohne Label
+                      return SegmentedButton<String>(
+                        segments: const [
+                          ButtonSegment(value: 'All', label: Text('All')),
+                          ButtonSegment(value: 'Open', label: Text('Open')),
+                          ButtonSegment(
+                              value: 'Claimed', label: Text('Claimed')),
+                          ButtonSegment(value: 'Closed', label: Text('Closed')),
+                        ],
+                        selected: {_statusFilter},
+                        onSelectionChanged: (Set<String> selected) {
+                          setState(() {
+                            _statusFilter = selected.first;
+                            _filterTickets();
+                          });
+                        },
+                      );
+                    }
                   },
                 ),
-        ),
+                const SizedBox(height: 8),
+                // Search Bar - kompakter
+                SizedBox(
+                  height: 44, // Kleinere Höhe
+                  child: TextField(
+                    controller: _searchController,
+                    style: const TextStyle(fontSize: 14),
+                    decoration: InputDecoration(
+                      hintText: 'Search tickets...',
+                      hintStyle: const TextStyle(fontSize: 14),
+                      prefixIcon: const Icon(Icons.search, size: 20),
+                      suffixIcon: _searchQuery.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear, size: 20),
+                              onPressed: () {
+                                _searchController.clear();
+                                setState(() {
+                                  _searchQuery = '';
+                                  _filterTickets();
+                                });
+                              },
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                            )
+                          : null,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
+                      isDense: true,
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        _searchQuery = value;
+                        _filterTickets();
+                      });
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Results count - kompakter
+          Padding(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
+            child: Row(
+              children: [
+                Text(
+                  'Showing ${_filteredTickets.length} of ${_tickets.length} tickets',
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodySmall
+                      ?.copyWith(fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+
+          // Tickets List
+          Expanded(
+            child: _filteredTickets.isEmpty
+                ? ListView(
+                    // Wrap in ListView for pull-to-refresh to work
+                    children: [
+                      SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.25),
+                      Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.confirmation_number_outlined,
+                                size: 64, color: Colors.grey[400]),
+                            const SizedBox(height: 16),
+                            Text(
+                              'No tickets found',
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                    itemCount: _filteredTickets.length,
+                    itemBuilder: (context, index) {
+                      final ticket = _filteredTickets[index];
+                      return TicketCard(
+                        ticket: ticket,
+                        onDelete: () => _deleteTicket(ticket),
+                        onRefresh: _loadTickets,
+                      );
+                    },
+                  ),
+          ),
         ],
       ),
     );
@@ -505,8 +512,7 @@ class TicketCard extends StatelessWidget {
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
-                        color:
-                            Theme.of(context).colorScheme.onPrimaryContainer,
+                        color: Theme.of(context).colorScheme.onPrimaryContainer,
                       ),
                     ),
                   ),
@@ -598,8 +604,7 @@ class TicketCard extends StatelessWidget {
                       ),
                       child: Icon(
                         Icons.person,
-                        color:
-                            Theme.of(context).colorScheme.onPrimaryContainer,
+                        color: Theme.of(context).colorScheme.onPrimaryContainer,
                       ),
                     ),
                   const SizedBox(width: 12),
@@ -642,9 +647,8 @@ class TicketCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSecondaryContainer,
+                        color:
+                            Theme.of(context).colorScheme.onSecondaryContainer,
                       ),
                     ),
                   ),
@@ -667,8 +671,7 @@ class TicketCard extends StatelessWidget {
                         'Assigned: ${ticket.assignedToName ?? "Unknown"}',
                         style: TextStyle(
                           fontSize: 13,
-                          color:
-                              Theme.of(context).colorScheme.onSurfaceVariant,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ] else if (ticket.claimedBy != null) ...[
@@ -682,8 +685,7 @@ class TicketCard extends StatelessWidget {
                         'Claimed by: ${ticket.claimedByName ?? "Unknown"}',
                         style: TextStyle(
                           fontSize: 13,
-                          color:
-                              Theme.of(context).colorScheme.onSurfaceVariant,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -1126,8 +1128,9 @@ class _TicketsConfigTabState extends State<TicketsConfigTab> {
                             onChanged: (value) {
                               setState(() {
                                 _config = _config!.copyWith(
-                                  autoDeleteAfterCloseDays:
-                                      value.isEmpty ? null : int.tryParse(value),
+                                  autoDeleteAfterCloseDays: value.isEmpty
+                                      ? null
+                                      : int.tryParse(value),
                                 );
                                 _hasChanges = true;
                               });
@@ -1183,8 +1186,8 @@ class _TicketsConfigTabState extends State<TicketsConfigTab> {
                   const SizedBox(height: 16),
                   SwitchListTile(
                     title: const Text('Send Transcript Email'),
-                    subtitle: const Text(
-                        'Email transcript when ticket is closed'),
+                    subtitle:
+                        const Text('Email transcript when ticket is closed'),
                     value: _config!.sendTranscriptEmail,
                     onChanged: (value) {
                       setState(() {
@@ -1235,7 +1238,8 @@ class _TicketsConfigTabState extends State<TicketsConfigTab> {
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton.icon(
-                        onPressed: (_isLoading || _isSaving) ? null : _resetConfig,
+                        onPressed:
+                            (_isLoading || _isSaving) ? null : _resetConfig,
                         icon: const Icon(Icons.restore, size: 20),
                         label: const Text('Reset to Defaults',
                             style: TextStyle(fontSize: 14)),
@@ -1249,12 +1253,14 @@ class _TicketsConfigTabState extends State<TicketsConfigTab> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
-                        onPressed: (_isLoading || _isSaving) ? null : _saveConfig,
+                        onPressed:
+                            (_isLoading || _isSaving) ? null : _saveConfig,
                         icon: _isSaving
                             ? const SizedBox(
                                 width: 14,
                                 height: 14,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
                               )
                             : const Icon(Icons.save, size: 20),
                         label: const Text('Save Configuration',
@@ -1272,7 +1278,8 @@ class _TicketsConfigTabState extends State<TicketsConfigTab> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     OutlinedButton.icon(
-                      onPressed: (_isLoading || _isSaving) ? null : _resetConfig,
+                      onPressed:
+                          (_isLoading || _isSaving) ? null : _resetConfig,
                       icon: const Icon(Icons.restore),
                       label: const Text('Reset to Defaults'),
                       style: OutlinedButton.styleFrom(

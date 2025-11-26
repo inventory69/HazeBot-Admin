@@ -30,10 +30,12 @@ class _TicketChatWidgetState extends State<TicketChatWidget> {
   String? _messageError;
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final FocusNode _messageFocusNode = FocusNode(); // For keyboard detection
   int _previousMessageCount = 0;
   final Set<String> _seenMessageIds = {}; // Prevent duplicates
   int _firstNewMessageIndex = -1;
-  final GlobalKey _newMessagesDividerKey = GlobalKey(); // For precise scroll position
+  final GlobalKey _newMessagesDividerKey =
+      GlobalKey(); // For precise scroll position
   String? _currentUserDiscordId; // ✅ Cache current user's Discord ID
 
   @override
@@ -43,6 +45,25 @@ class _TicketChatWidgetState extends State<TicketChatWidget> {
     _loadMessages();
     _setupWebSocketListener();
     _dismissNotifications(); // ✅ Dismiss notifications when entering chat
+    _setupKeyboardListener(); // ✅ Auto-scroll when keyboard opens
+  }
+
+  /// Auto-scroll to bottom when keyboard opens
+  void _setupKeyboardListener() {
+    _messageFocusNode.addListener(() {
+      if (_messageFocusNode.hasFocus && mounted) {
+        // Wait for keyboard to open and layout to settle
+        Future.delayed(const Duration(milliseconds: 300), () {
+          if (mounted && _scrollController.hasClients) {
+            _scrollController.animateTo(
+              _scrollController.position.maxScrollExtent,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+            );
+          }
+        });
+      }
+    });
   }
 
   /// Load current user's Discord ID for duplicate message detection
@@ -61,10 +82,11 @@ class _TicketChatWidgetState extends State<TicketChatWidget> {
   void _dismissNotifications() {
     // Get singleton instance of NotificationService
     final notificationService = NotificationService();
-    
+
     // Dismiss all notifications for this ticket
     notificationService.dismissTicketNotifications(widget.ticket.ticketId);
-    debugPrint('🔕 Dismissed notifications for ticket ${widget.ticket.ticketId}');
+    debugPrint(
+        '🔕 Dismissed notifications for ticket ${widget.ticket.ticketId}');
   }
 
   void _setupWebSocketListener() {
@@ -100,8 +122,10 @@ class _TicketChatWidgetState extends State<TicketChatWidget> {
 
     // ✅ FIX: Skip own messages from WebSocket (already added optimistically)
     // This prevents duplicate messages when user sends a message
-    if (_currentUserDiscordId != null && newMessage.authorId == _currentUserDiscordId) {
-      debugPrint('⏭️ Skipping own message from WebSocket: ${newMessage.id} (already added optimistically)');
+    if (_currentUserDiscordId != null &&
+        newMessage.authorId == _currentUserDiscordId) {
+      debugPrint(
+          '⏭️ Skipping own message from WebSocket: ${newMessage.id} (already added optimistically)');
       return;
     }
 
@@ -134,6 +158,7 @@ class _TicketChatWidgetState extends State<TicketChatWidget> {
 
     _messageController.dispose();
     _scrollController.dispose();
+    _messageFocusNode.dispose(); // ✅ Clean up focus node
     super.dispose();
   }
 
@@ -154,17 +179,18 @@ class _TicketChatWidgetState extends State<TicketChatWidget> {
             } else {
               _scrollController.jumpTo(targetPosition);
             }
-            
+
             // Retry after animation/jump to ensure we're at the bottom
             // (in case images/avatars loaded after first scroll)
             Future.delayed(const Duration(milliseconds: 400), () {
               if (mounted && _scrollController.hasClients) {
                 final newMaxExtent = _scrollController.position.maxScrollExtent;
                 final currentPos = _scrollController.position.pixels;
-                
+
                 // If we're not at the bottom, scroll again
                 if ((newMaxExtent - currentPos).abs() > 10) {
-                  debugPrint('🔄 Retry scroll to bottom (delta: ${newMaxExtent - currentPos}px)');
+                  debugPrint(
+                      '🔄 Retry scroll to bottom (delta: ${newMaxExtent - currentPos}px)');
                   _scrollController.jumpTo(newMaxExtent);
                 }
               }
@@ -193,14 +219,17 @@ class _TicketChatWidgetState extends State<TicketChatWidget> {
                 curve: Curves.easeOut,
                 alignment: 0.2, // Scroll to 20% from top (like Discord)
               );
-              debugPrint('✅ Scrolled to New Messages divider (precise position)');
+              debugPrint(
+                  '✅ Scrolled to New Messages divider (precise position)');
             } else {
               // Fallback: Estimate position (better than before)
               final maxScroll = _scrollController.position.maxScrollExtent;
-              final viewportHeight = _scrollController.position.viewportDimension;
+              final viewportHeight =
+                  _scrollController.position.viewportDimension;
               final estimatedMessageHeight = maxScroll / _messages.length;
-              final dividerOffset = _firstNewMessageIndex * estimatedMessageHeight;
-              
+              final dividerOffset =
+                  _firstNewMessageIndex * estimatedMessageHeight;
+
               // Scroll to show divider near top (20% from top like Discord)
               final targetPosition = (dividerOffset - (viewportHeight * 0.2))
                   .clamp(0.0, maxScroll);
@@ -210,7 +239,8 @@ class _TicketChatWidgetState extends State<TicketChatWidget> {
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.easeOut,
               );
-              debugPrint('⚠️ Scrolled to New Messages divider (estimated position)');
+              debugPrint(
+                  '⚠️ Scrolled to New Messages divider (estimated position)');
             }
           }
         });
@@ -227,8 +257,8 @@ class _TicketChatWidgetState extends State<TicketChatWidget> {
 
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
-      final messagesData =
-          await authService.apiService.getTicketMessages(widget.ticket.ticketId);
+      final messagesData = await authService.apiService
+          .getTicketMessages(widget.ticket.ticketId);
 
       if (mounted) {
         // Convert List<dynamic> to List<TicketMessage>
@@ -295,7 +325,8 @@ class _TicketChatWidgetState extends State<TicketChatWidget> {
         _messageController.clear();
 
         // Convert Map to TicketMessage
-        final newMessage = TicketMessage.fromJson(newMessageData as Map<String, dynamic>);
+        final newMessage =
+            TicketMessage.fromJson(newMessageData as Map<String, dynamic>);
 
         // ✅ FIX: Add to seen IDs immediately (before WebSocket arrives)
         _seenMessageIds.add(newMessage.id);
@@ -381,7 +412,8 @@ class _TicketChatWidgetState extends State<TicketChatWidget> {
                           if (index == _firstNewMessageIndex &&
                               _firstNewMessageIndex > 0)
                             Padding(
-                              key: _newMessagesDividerKey, // ✅ GlobalKey for precise scroll
+                              key:
+                                  _newMessagesDividerKey, // ✅ GlobalKey for precise scroll
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               child: Row(
                                 children: [
@@ -435,6 +467,8 @@ class _TicketChatWidgetState extends State<TicketChatWidget> {
                 Expanded(
                   child: TextField(
                     controller: _messageController,
+                    focusNode:
+                        _messageFocusNode, // ✅ Auto-scroll on keyboard open
                     decoration: InputDecoration(
                       hintText: 'Type a message...',
                       border: OutlineInputBorder(
@@ -486,8 +520,9 @@ class _TicketChatWidgetState extends State<TicketChatWidget> {
         message.content.contains('[Admin Panel') ||
         message.role != null;
     final isInitialMessage = message.content.contains('**Initial details');
-    final isClosingMessage = message.content.contains('Ticket successfully closed') ||
-        message.content.contains('**Closing Message:**');
+    final isClosingMessage =
+        message.content.contains('Ticket successfully closed') ||
+            message.content.contains('**Closing Message:**');
     final isSystem = message.isBot && !isAdminMessage;
 
     // Clean content
@@ -495,9 +530,8 @@ class _TicketChatWidgetState extends State<TicketChatWidget> {
     cleanContent = cleanContent.replaceAll('**', '');
 
     if (isAdminMessage) {
-      final match =
-          RegExp(r'\[Admin Panel - [^\]]+\]:\s*(.+)', dotAll: true)
-              .firstMatch(cleanContent);
+      final match = RegExp(r'\[Admin Panel - [^\]]+\]:\s*(.+)', dotAll: true)
+          .firstMatch(cleanContent);
       if (match != null) {
         cleanContent = match.group(1) ?? cleanContent;
       }

@@ -24,10 +24,10 @@ class AuthService extends ChangeNotifier {
     if (_token != null) {
       _apiService.setToken(_token!);
       _isAuthenticated = true;
-      
+
       // Connect WebSocket
       _wsService.connect(_apiService.baseUrl);
-      
+
       notifyListeners();
     }
   }
@@ -43,10 +43,10 @@ class AuthService extends ChangeNotifier {
 
         _apiService.setToken(_token!);
         _isAuthenticated = true;
-        
+
         // Connect WebSocket after successful login
         _wsService.connect(_apiService.baseUrl);
-        
+
         notifyListeners();
         return true;
       }
@@ -61,7 +61,7 @@ class AuthService extends ChangeNotifier {
   Future<void> logout() async {
     // Disconnect WebSocket
     _wsService.disconnect();
-    
+
     // Call backend logout endpoint to remove session
     try {
       await _apiService.logout();

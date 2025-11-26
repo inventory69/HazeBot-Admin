@@ -44,7 +44,10 @@ class Cog {
       description: json['description'] as String?,
       icon: json['icon'] as String?,
       category: json['category'] as String?,
-      features: (json['features'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+      features: (json['features'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
       status: _parseStatus(json['status'] as String),
       canLoad: json['can_load'] as bool? ?? false,
       canUnload: json['can_unload'] as bool? ?? false,
@@ -82,59 +85,98 @@ class Cog {
       'error_message': errorMessage,
     };
   }
-  
+
   // Helper to get Material Icon from icon name
   IconData get materialIcon {
     switch (icon) {
-      case 'api': return Icons.api;
-      case 'settings': return Icons.settings;
-      case 'update': return Icons.update;
-      case 'image': return Icons.image;
-      case 'analytics': return Icons.analytics;
-      case 'sports_esports': return Icons.sports_esports;
-      case 'leaderboard': return Icons.leaderboard;
-      case 'create': return Icons.create;
-      case 'shield': return Icons.shield;
-      case 'tune': return Icons.tune;
-      case 'visibility': return Icons.visibility;
-      case 'person': return Icons.person;
-      case 'rocket_launch': return Icons.rocket_launch;
-      case 'badge': return Icons.badge;
-      case 'menu_book': return Icons.menu_book;
-      case 'support_agent': return Icons.support_agent;
-      case 'confirmation_number': return Icons.confirmation_number;
-      case 'checklist': return Icons.checklist;
-      case 'build': return Icons.build;
-      case 'videogame_asset': return Icons.videogame_asset;
-      case 'waving_hand': return Icons.waving_hand;
-      default: return Icons.extension;
+      case 'api':
+        return Icons.api;
+      case 'settings':
+        return Icons.settings;
+      case 'update':
+        return Icons.update;
+      case 'image':
+        return Icons.image;
+      case 'analytics':
+        return Icons.analytics;
+      case 'sports_esports':
+        return Icons.sports_esports;
+      case 'leaderboard':
+        return Icons.leaderboard;
+      case 'create':
+        return Icons.create;
+      case 'shield':
+        return Icons.shield;
+      case 'tune':
+        return Icons.tune;
+      case 'visibility':
+        return Icons.visibility;
+      case 'person':
+        return Icons.person;
+      case 'rocket_launch':
+        return Icons.rocket_launch;
+      case 'badge':
+        return Icons.badge;
+      case 'menu_book':
+        return Icons.menu_book;
+      case 'support_agent':
+        return Icons.support_agent;
+      case 'confirmation_number':
+        return Icons.confirmation_number;
+      case 'checklist':
+        return Icons.checklist;
+      case 'build':
+        return Icons.build;
+      case 'videogame_asset':
+        return Icons.videogame_asset;
+      case 'waving_hand':
+        return Icons.waving_hand;
+      default:
+        return Icons.extension;
     }
   }
-  
+
   // Helper to get category color
   Color getCategoryColor() {
     switch (category) {
-      case 'core': return Colors.purple;
-      case 'community': return Colors.blue;
-      case 'content': return Colors.orange;
-      case 'gaming': return Colors.red;
-      case 'moderation': return Colors.amber;
-      case 'support': return Colors.green;
-      case 'user': return Colors.teal;
-      case 'info': return Colors.cyan;
-      case 'productivity': return Colors.indigo;
-      case 'utility': return Colors.blueGrey;
-      case 'notifications': return Colors.pink;
-      case 'monitoring': return Colors.deepOrange;
-      default: return Colors.grey;
+      case 'core':
+        return Colors.purple;
+      case 'community':
+        return Colors.blue;
+      case 'content':
+        return Colors.orange;
+      case 'gaming':
+        return Colors.red;
+      case 'moderation':
+        return Colors.amber;
+      case 'support':
+        return Colors.green;
+      case 'user':
+        return Colors.teal;
+      case 'info':
+        return Colors.cyan;
+      case 'productivity':
+        return Colors.indigo;
+      case 'utility':
+        return Colors.blueGrey;
+      case 'notifications':
+        return Colors.pink;
+      case 'monitoring':
+        return Colors.deepOrange;
+      default:
+        return Colors.grey;
     }
   }
-  
+
   // Helper to get category display name
   String get categoryDisplay {
-    return category?.replaceAll('_', ' ').split(' ').map((word) => 
-      word.isEmpty ? '' : word[0].toUpperCase() + word.substring(1)
-    ).join(' ') ?? 'Other';
+    return category
+            ?.replaceAll('_', ' ')
+            .split(' ')
+            .map((word) =>
+                word.isEmpty ? '' : word[0].toUpperCase() + word.substring(1))
+            .join(' ') ??
+        'Other';
   }
 }
 

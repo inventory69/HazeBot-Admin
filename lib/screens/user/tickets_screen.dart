@@ -8,8 +8,8 @@ import '../../widgets/ticket_chat_widget.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 class TicketsScreen extends StatefulWidget {
-  final String? initialTicketId;  // Ticket to open automatically
-  
+  final String? initialTicketId; // Ticket to open automatically
+
   const TicketsScreen({super.key, this.initialTicketId});
 
   @override
@@ -25,7 +25,7 @@ class _TicketsScreenState extends State<TicketsScreen>
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _checkAndRequestNotificationPermission();
-    
+
     // If initialTicketId provided, open that ticket after build
     if (widget.initialTicketId != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -33,13 +33,13 @@ class _TicketsScreenState extends State<TicketsScreen>
       });
     }
   }
-  
+
   /// Open a specific ticket by ID
   Future<void> _openTicketById(String ticketId) async {
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
       final ticket = await authService.apiService.getTicket(ticketId);
-      
+
       if (mounted && ticket != null) {
         // Navigate to ticket detail screen
         Navigator.push(
@@ -58,14 +58,16 @@ class _TicketsScreenState extends State<TicketsScreen>
   Future<void> _checkAndRequestNotificationPermission() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final hasAskedBefore = prefs.getBool('notification_permission_asked') ?? false;
+      final hasAskedBefore =
+          prefs.getBool('notification_permission_asked') ?? false;
 
       if (!hasAskedBefore) {
         final notificationService = NotificationService();
-        
+
         if (!notificationService.hasPermission) {
-          debugPrint('📱 First time opening tickets, requesting notification permission...');
-          
+          debugPrint(
+              '📱 First time opening tickets, requesting notification permission...');
+
           // Show dialog explaining why we need permission
           if (!mounted) return;
           final shouldAsk = await showDialog<bool>(
@@ -93,12 +95,15 @@ class _TicketsScreenState extends State<TicketsScreen>
           );
 
           if (shouldAsk == true && mounted) {
-            final granted = await notificationService.requestPermissionAndRegister();
-            
+            final granted =
+                await notificationService.requestPermissionAndRegister();
+
             if (granted) {
-              final authService = Provider.of<AuthService>(context, listen: false);
-              await notificationService.registerWithBackend(authService.apiService);
-              
+              final authService =
+                  Provider.of<AuthService>(context, listen: false);
+              await notificationService
+                  .registerWithBackend(authService.apiService);
+
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -344,10 +349,10 @@ class _MyTicketsTabState extends State<_MyTicketsTab> {
     );
   }
 
-  Widget _buildTicketCard(Ticket ticket, ColorScheme colorScheme, ThemeData theme) {
-    final statusColor = ticket.status.toLowerCase() == 'open'
-        ? Colors.green
-        : Colors.grey;
+  Widget _buildTicketCard(
+      Ticket ticket, ColorScheme colorScheme, ThemeData theme) {
+    final statusColor =
+        ticket.status.toLowerCase() == 'open' ? Colors.green : Colors.grey;
 
     // Use harmonized accent color for cards (same as admin screen)
     final isMonet = colorScheme.surfaceContainerHigh !=
@@ -396,7 +401,8 @@ class _MyTicketsTabState extends State<_MyTicketsTab> {
                               child: Center(
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  value: loadingProgress.expectedTotalBytes != null
+                                  value: loadingProgress.expectedTotalBytes !=
+                                          null
                                       ? loadingProgress.cumulativeBytesLoaded /
                                           loadingProgress.expectedTotalBytes!
                                       : null,
@@ -548,15 +554,15 @@ class _MyTicketsTabState extends State<_MyTicketsTab> {
   }
 
   String _extractSubject(String initialMessage) {
-    final subjectMatch = RegExp(r'\*\*Subject:\*\*\s*(.+?)(?:\n|$)')
-        .firstMatch(initialMessage);
+    final subjectMatch =
+        RegExp(r'\*\*Subject:\*\*\s*(.+?)(?:\n|$)').firstMatch(initialMessage);
     return subjectMatch?.group(1)?.trim() ?? 'No subject';
   }
 
   String _extractDescription(String initialMessage) {
-    final descMatch = RegExp(r'\*\*Description:\*\*\s*\n(.+)',
-            dotAll: true, multiLine: true)
-        .firstMatch(initialMessage);
+    final descMatch =
+        RegExp(r'\*\*Description:\*\*\s*\n(.+)', dotAll: true, multiLine: true)
+            .firstMatch(initialMessage);
     return descMatch?.group(1)?.trim() ?? '';
   }
 
@@ -889,9 +895,8 @@ class _TicketDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final statusColor = ticket.status.toLowerCase() == 'open'
-        ? Colors.green
-        : Colors.grey;
+    final statusColor =
+        ticket.status.toLowerCase() == 'open' ? Colors.green : Colors.grey;
 
     return Scaffold(
       appBar: AppBar(
@@ -1015,15 +1020,15 @@ class _TicketDetailScreen extends StatelessWidget {
   }
 
   String _extractSubject(String initialMessage) {
-    final subjectMatch = RegExp(r'\*\*Subject:\*\*\s*(.+?)(?:\n|$)')
-        .firstMatch(initialMessage);
+    final subjectMatch =
+        RegExp(r'\*\*Subject:\*\*\s*(.+?)(?:\n|$)').firstMatch(initialMessage);
     return subjectMatch?.group(1)?.trim() ?? 'No subject';
   }
 
   String _extractDescription(String initialMessage) {
-    final descMatch = RegExp(r'\*\*Description:\*\*\s*\n(.+)',
-            dotAll: true, multiLine: true)
-        .firstMatch(initialMessage);
+    final descMatch =
+        RegExp(r'\*\*Description:\*\*\s*\n(.+)', dotAll: true, multiLine: true)
+            .firstMatch(initialMessage);
     return descMatch?.group(1)?.trim() ?? '';
   }
 }

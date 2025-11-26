@@ -28,7 +28,7 @@ class ApiService {
 
   static String get _staticBaseUrl =>
       dotenv.env['API_BASE_URL'] ?? 'http://localhost:5070/api';
-  
+
   String get baseUrl => _staticBaseUrl;
 
   String? _token;
@@ -1434,7 +1434,8 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> sendTicketMessage(String ticketId, String content) async {
+  Future<Map<String, dynamic>> sendTicketMessage(
+      String ticketId, String content) async {
     final response = await _post(
       '$baseUrl/tickets/$ticketId/messages',
       body: jsonEncode({'content': content}),
@@ -1492,7 +1493,8 @@ class ApiService {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
         return data.map((key, value) => MapEntry(key, value as bool));
       } else {
-        debugPrint('⚠️ Failed to load notification settings: ${response.statusCode}');
+        debugPrint(
+            '⚠️ Failed to load notification settings: ${response.statusCode}');
         return null;
       }
     } catch (e) {

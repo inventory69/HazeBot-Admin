@@ -19,11 +19,11 @@ class TicketConfig {
               ?.map((e) => e.toString())
               .toList() ??
           ['Application', 'Bug', 'Support'],
-      autoDeleteAfterCloseDays: json['auto_delete_after_close_days'] as int? ?? 7,
+      autoDeleteAfterCloseDays:
+          json['auto_delete_after_close_days'] as int? ?? 7,
       requireClaim: json['require_claim'] as bool? ?? false,
       sendTranscriptEmail: json['send_transcript_email'] as bool? ?? false,
-      transcriptEmailAddress:
-          json['transcript_email_address'] as String? ?? '',
+      transcriptEmailAddress: json['transcript_email_address'] as String? ?? '',
     );
   }
 
@@ -46,7 +46,8 @@ class TicketConfig {
   }) {
     return TicketConfig(
       categories: categories ?? this.categories,
-      autoDeleteAfterCloseDays: autoDeleteAfterCloseDays ?? this.autoDeleteAfterCloseDays,
+      autoDeleteAfterCloseDays:
+          autoDeleteAfterCloseDays ?? this.autoDeleteAfterCloseDays,
       requireClaim: requireClaim ?? this.requireClaim,
       sendTranscriptEmail: sendTranscriptEmail ?? this.sendTranscriptEmail,
       transcriptEmailAddress:

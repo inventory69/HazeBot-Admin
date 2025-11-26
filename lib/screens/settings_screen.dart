@@ -30,7 +30,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _loadShowAdminPanelSetting() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _showAdminPanelOnStartup = prefs.getBool('show_admin_panel_on_startup') ?? false;
+      _showAdminPanelOnStartup =
+          prefs.getBool('show_admin_panel_on_startup') ?? false;
     });
   }
 
@@ -102,7 +103,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               if (!permissionService.hasPermission('all')) {
                 return const SizedBox.shrink();
               }
-              
+
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

@@ -124,7 +124,7 @@ class DiscordAuthService extends ChangeNotifier {
 
           // Connect WebSocket after successful authentication
           _wsService.connect(_apiService.baseUrl);
-          
+
           // Note: FCM token registration happens when user opens tickets or enables notifications
           // This ensures we ask for permission only when the user needs it
 
@@ -219,10 +219,10 @@ class DiscordAuthService extends ChangeNotifier {
 
         _apiService.setToken(_token!);
         _isAuthenticated = true;
-        
+
         // Connect WebSocket after successful OAuth login
         _wsService.connect(_apiService.baseUrl);
-        
+
         notifyListeners();
         debugPrint('DEBUG: OAuth login successful');
         return true;
@@ -307,20 +307,21 @@ class DiscordAuthService extends ChangeNotifier {
   }
 
   Future<void> logout() async {
-    // Unregister FCM token
+    // DON'T unregister FCM token on logout - keep receiving notifications
+    // Only unregister when explicitly disabled in notification settings
     try {
       final notificationService = NotificationService();
       if (notificationService.isInitialized) {
-        await notificationService.unregisterFromBackend(_apiService);
-        await notificationService.deleteToken();
+        // await notificationService.unregisterFromBackend(_apiService); // COMMENTED OUT - keep token
+        await notificationService.deleteToken(); // Only delete local token
       }
     } catch (e) {
-      debugPrint('⚠️ Error unregistering FCM token on logout: $e');
+      debugPrint('⚠️ Error cleaning up FCM token on logout: $e');
     }
-    
+
     // Disconnect WebSocket
     _wsService.disconnect();
-    
+
     _token = null;
     _userInfo = null;
     _isAuthenticated = false;

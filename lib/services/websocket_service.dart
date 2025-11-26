@@ -90,7 +90,7 @@ class WebSocketService {
 
     print('🎫 Joining ticket room: $ticketId');
     _socket!.emit('join_ticket', {'ticket_id': ticketId});
-    
+
     _socket!.once('joined_ticket', (data) {
       print('✅ Joined ticket room: $data');
     });
@@ -104,12 +104,13 @@ class WebSocketService {
 
     print('🎫 Leaving ticket room: $ticketId');
     _socket!.emit('leave_ticket', {'ticket_id': ticketId});
-    
+
     _ticketListeners.remove(ticketId);
   }
 
   /// Listen for ticket updates
-  void onTicketUpdate(String ticketId, Function(Map<String, dynamic>) callback) {
+  void onTicketUpdate(
+      String ticketId, Function(Map<String, dynamic>) callback) {
     if (!_ticketListeners.containsKey(ticketId)) {
       _ticketListeners[ticketId] = [];
     }
@@ -118,7 +119,8 @@ class WebSocketService {
   }
 
   /// Remove ticket update listener
-  void removeTicketListener(String ticketId, Function(Map<String, dynamic>) callback) {
+  void removeTicketListener(
+      String ticketId, Function(Map<String, dynamic>) callback) {
     if (_ticketListeners.containsKey(ticketId)) {
       _ticketListeners[ticketId]!.remove(callback);
       if (_ticketListeners[ticketId]!.isEmpty) {

@@ -24,17 +24,17 @@ class NotificationService {
 
   FirebaseMessaging? _firebaseMessaging;
   FlutterLocalNotificationsPlugin? _localNotifications;
-  
+
   bool _isInitialized = false;
   bool _permissionGranted = false;
   String? _fcmToken;
-  
+
   // ✅ Track notification IDs by ticket ID for dismissal
   final Map<String, List<int>> _ticketNotificationIds = {};
-  
+
   // Callback for notification tap
   Function(Map<String, dynamic>)? onNotificationTap;
-  
+
   bool get isInitialized => _isInitialized;
   bool get hasPermission => _permissionGranted;
   String? get fcmToken => _fcmToken;
@@ -66,37 +66,42 @@ class NotificationService {
       await _initializeLocalNotifications();
 
       // Set background message handler
-      FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+      FirebaseMessaging.onBackgroundMessage(
+          _firebaseMessagingBackgroundHandler);
 
       // Check current permission status (without requesting)
-      NotificationSettings settings = await _firebaseMessaging!.getNotificationSettings();
-      _permissionGranted = settings.authorizationStatus == AuthorizationStatus.authorized ||
-                          settings.authorizationStatus == AuthorizationStatus.provisional;
-      
+      NotificationSettings settings =
+          await _firebaseMessaging!.getNotificationSettings();
+      _permissionGranted =
+          settings.authorizationStatus == AuthorizationStatus.authorized ||
+              settings.authorizationStatus == AuthorizationStatus.provisional;
+
       if (_permissionGranted) {
         debugPrint('✅ Notification permission already granted');
         await _setupMessaging();
-        
+
         // ✅ FIX: Auto re-register token on app start (in case backend lost it)
         await _autoReRegisterTokenOnStartup();
       } else {
-        debugPrint('ℹ️ Notification permission not yet granted (will request later)');
+        debugPrint(
+            'ℹ️ Notification permission not yet granted (will request later)');
       }
 
       // Handle notification tap when app is in background/terminated
       FirebaseMessaging.onMessageOpenedApp.listen(_handleNotificationTap);
 
       // Check if app was opened from a notification
-      RemoteMessage? initialMessage = await _firebaseMessaging!.getInitialMessage();
+      RemoteMessage? initialMessage =
+          await _firebaseMessaging!.getInitialMessage();
       if (initialMessage != null) {
-        debugPrint('� App opened from notification: ${initialMessage.messageId}');
+        debugPrint(
+            '� App opened from notification: ${initialMessage.messageId}');
         _handleNotificationTap(initialMessage);
       }
 
       _isInitialized = true;
       debugPrint('✅ Notification service initialized successfully');
       return true;
-
     } catch (e) {
       debugPrint('❌ Failed to initialize notification service: $e');
       return false;
@@ -122,30 +127,32 @@ class NotificationService {
 
     try {
       debugPrint('📱 Requesting notification permission...');
-      
+
       // Request permission
-      NotificationSettings settings = await _firebaseMessaging!.requestPermission(
+      NotificationSettings settings =
+          await _firebaseMessaging!.requestPermission(
         alert: true,
         badge: true,
         sound: true,
         provisional: false,
       );
 
-      _permissionGranted = settings.authorizationStatus == AuthorizationStatus.authorized ||
-                          settings.authorizationStatus == AuthorizationStatus.provisional;
+      _permissionGranted =
+          settings.authorizationStatus == AuthorizationStatus.authorized ||
+              settings.authorizationStatus == AuthorizationStatus.provisional;
 
       if (!_permissionGranted) {
         debugPrint('❌ Notification permission denied by user');
         return false;
       }
 
-      debugPrint('✅ Notification permission granted: ${settings.authorizationStatus}');
+      debugPrint(
+          '✅ Notification permission granted: ${settings.authorizationStatus}');
 
       // Setup messaging with token
       await _setupMessaging();
-      
-      return true;
 
+      return true;
     } catch (e) {
       debugPrint('❌ Failed to request permission: $e');
       return false;
@@ -155,11 +162,11 @@ class NotificationService {
   /// Setup FCM messaging (token, listeners)
   Future<void> _setupMessaging() async {
     if (_firebaseMessaging == null) return;
-    
+
     // Get FCM token
     _fcmToken = await _firebaseMessaging!.getToken();
     debugPrint('🔑 FCM Token: $_fcmToken');
-    
+
     // ✅ FIX: Save token to SharedPreferences for persistence
     if (_fcmToken != null) {
       await _saveTokenToPrefs(_fcmToken!);
@@ -178,7 +185,7 @@ class NotificationService {
     // Handle foreground messages
     FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
   }
-  
+
   /// Save FCM token to SharedPreferences
   Future<void> _saveTokenToPrefs(String token) async {
     try {
@@ -189,7 +196,7 @@ class NotificationService {
       debugPrint('❌ Error saving FCM token to prefs: $e');
     }
   }
-  
+
   /// Load FCM token from SharedPreferences
   Future<String?> _loadTokenFromPrefs() async {
     try {
@@ -204,31 +211,33 @@ class NotificationService {
       return null;
     }
   }
-  
+
   /// Auto re-register token on app startup (prevents token loss)
   Future<void> _autoReRegisterTokenOnStartup() async {
     try {
       // Check if we have a saved token and current token
       final savedToken = await _loadTokenFromPrefs();
-      
+
       if (_fcmToken == null || savedToken == null) {
         debugPrint('⚠️ No token available for auto re-registration');
         return;
       }
-      
+
       // Check when we last registered
       final prefs = await SharedPreferences.getInstance();
       final lastRegistered = prefs.getInt('fcm_token_last_registered') ?? 0;
       final now = DateTime.now().millisecondsSinceEpoch;
       final hoursSinceLastReg = (now - lastRegistered) / (1000 * 60 * 60);
-      
+
       // Re-register if more than 24 hours since last registration
       if (hoursSinceLastReg > 24) {
-        debugPrint('🔄 Auto re-registering FCM token (last registered ${hoursSinceLastReg.toStringAsFixed(1)}h ago)');
+        debugPrint(
+            '🔄 Auto re-registering FCM token (last registered ${hoursSinceLastReg.toStringAsFixed(1)}h ago)');
         await _registerTokenWithBackend(_fcmToken!);
         await prefs.setInt('fcm_token_last_registered', now);
       } else {
-        debugPrint('✓ Token recently registered (${hoursSinceLastReg.toStringAsFixed(1)}h ago), skipping re-registration');
+        debugPrint(
+            '✓ Token recently registered (${hoursSinceLastReg.toStringAsFixed(1)}h ago), skipping re-registration');
       }
     } catch (e) {
       debugPrint('❌ Error in auto re-registration: $e');
@@ -237,7 +246,8 @@ class NotificationService {
 
   /// Initialize local notifications for foreground display
   Future<void> _initializeLocalNotifications() async {
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: false,
       requestBadgePermission: false,
@@ -264,7 +274,8 @@ class NotificationService {
     );
 
     await _localNotifications!
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(androidChannel);
 
     debugPrint('✅ Local notifications initialized');
@@ -287,28 +298,29 @@ class NotificationService {
     if (notification == null) return;
 
     // ✅ FIX: Clean Markdown formatting from notification text
-    final cleanTitle = notification.title != null 
-        ? _cleanMarkdown(notification.title!) 
-        : null;
-    final cleanBody = notification.body != null 
-        ? _cleanMarkdown(notification.body!) 
-        : null;
+    final cleanTitle =
+        notification.title != null ? _cleanMarkdown(notification.title!) : null;
+    final cleanBody =
+        notification.body != null ? _cleanMarkdown(notification.body!) : null;
 
     final notificationId = notification.hashCode;
-    
+
     // ✅ Get ticket ID for grouping and dismissal
     final ticketId = message.data['ticket_id'] as String?;
     final ticketNum = message.data['ticket_num'] as String?;
-    
+
     if (ticketId != null) {
-      _ticketNotificationIds.putIfAbsent(ticketId, () => []).add(notificationId);
-      debugPrint('📝 Tracked notification $notificationId for ticket $ticketId');
+      _ticketNotificationIds
+          .putIfAbsent(ticketId, () => [])
+          .add(notificationId);
+      debugPrint(
+          '📝 Tracked notification $notificationId for ticket $ticketId');
     }
-    
+
     // ✅ FIX: Group notifications by ticket_id
     final groupKey = ticketId != null ? 'ticket_$ticketId' : null;
     final threadIdentifier = ticketId; // For iOS threading
-    
+
     final androidDetails = AndroidNotificationDetails(
       'hazebot_tickets',
       'HazeBot Tickets',
@@ -316,9 +328,17 @@ class NotificationService {
       importance: Importance.high,
       priority: Priority.high,
       showWhen: true,
-      icon: '@mipmap/ic_launcher',
+      icon: '@drawable/ic_notification', // Monochrome notification icon
       groupKey: groupKey, // ✅ Group by ticket
       setAsGroupSummary: false, // Individual notifications
+      actions: <AndroidNotificationAction>[
+        AndroidNotificationAction(
+          'mark_read',
+          'Mark as Read',
+          showsUserInterface: false,
+          cancelNotification: true,
+        ),
+      ],
     );
 
     final iosDetails = DarwinNotificationDetails(
@@ -340,31 +360,33 @@ class NotificationService {
       details,
       payload: jsonEncode(message.data),
     );
-    
+
     // ✅ Show Android group summary if we have multiple notifications for this ticket
     if (groupKey != null && ticketId != null) {
       await _showGroupSummaryIfNeeded(ticketId, ticketNum, groupKey);
     }
   }
-  
+
   /// Show Android group summary notification when multiple messages exist
-  Future<void> _showGroupSummaryIfNeeded(String ticketId, String? ticketNum, String groupKey) async {
+  Future<void> _showGroupSummaryIfNeeded(
+      String ticketId, String? ticketNum, String groupKey) async {
     final notificationIds = _ticketNotificationIds[ticketId];
-    
-    // Only show summary if we have 2+ notifications for this ticket
-    if (notificationIds == null || notificationIds.length < 2) {
+
+    // Show summary immediately (even for 1 notification) to ensure proper grouping
+    if (notificationIds == null || notificationIds.isEmpty) {
       return;
     }
-    
+
     final count = notificationIds.length;
     final ticketLabel = ticketNum != null ? '#$ticketNum' : ticketId;
-    
+
     final androidDetails = AndroidNotificationDetails(
       'hazebot_tickets',
       'HazeBot Tickets',
       channelDescription: 'Notifications for ticket updates and messages',
       importance: Importance.high,
       priority: Priority.high,
+      icon: '@drawable/ic_notification', // Monochrome notification icon
       groupKey: groupKey,
       setAsGroupSummary: true, // ✅ This is the summary
       styleInformation: InboxStyleInformation(
@@ -372,22 +394,30 @@ class NotificationService {
         contentTitle: 'Ticket $ticketLabel',
         summaryText: '$count new messages',
       ),
+      actions: <AndroidNotificationAction>[
+        AndroidNotificationAction(
+          'mark_read',
+          'Mark as Read',
+          showsUserInterface: false,
+          cancelNotification: true,
+        ),
+      ],
     );
-    
+
     const iosDetails = DarwinNotificationDetails(
       presentAlert: false, // Don't show summary on iOS (uses threadIdentifier)
       presentBadge: false,
       presentSound: false,
     );
-    
+
     final details = NotificationDetails(
       android: androidDetails,
       iOS: iosDetails,
     );
-    
+
     // Use negative ticket ID hash as summary notification ID
     final summaryId = -ticketId.hashCode.abs();
-    
+
     await _localNotifications!.show(
       summaryId,
       'Ticket $ticketLabel',
@@ -395,8 +425,9 @@ class NotificationService {
       details,
       payload: jsonEncode({'ticket_id': ticketId, 'is_summary': 'true'}),
     );
-    
-    debugPrint('📊 Showed group summary for ticket $ticketId ($count messages)');
+
+    debugPrint(
+        '📊 Showed group summary for ticket $ticketId ($count messages)');
   }
 
   /// Clean Markdown formatting from text (for notifications)
@@ -424,7 +455,7 @@ class NotificationService {
   /// Handle notification tap (from background/terminated state)
   void _handleNotificationTap(RemoteMessage message) {
     debugPrint('👆 Notification tapped: ${message.data}');
-    
+
     if (onNotificationTap != null) {
       onNotificationTap!(message.data);
     }
@@ -433,7 +464,14 @@ class NotificationService {
   /// Handle local notification tap
   void _onLocalNotificationTap(NotificationResponse response) {
     debugPrint('👆 Local notification tapped: ${response.payload}');
-    
+
+    // Handle "Mark as Read" action
+    if (response.actionId == 'mark_read') {
+      debugPrint('✅ Marked notification as read (dismissed)');
+      // Notification already dismissed by cancelNotification: true
+      return;
+    }
+
     if (response.payload != null && onNotificationTap != null) {
       try {
         final data = jsonDecode(response.payload!);
@@ -454,10 +492,11 @@ class NotificationService {
     return _registerTokenWithBackend(_fcmToken!, apiService: apiService);
   }
 
-  Future<bool> _registerTokenWithBackend(String token, {ApiService? apiService}) async {
+  Future<bool> _registerTokenWithBackend(String token,
+      {ApiService? apiService}) async {
     try {
       final api = apiService ?? ApiService();
-      
+
       final success = await api.registerFCMToken(
         token,
         'Flutter ${defaultTargetPlatform.name}',
@@ -465,14 +504,15 @@ class NotificationService {
 
       if (success) {
         debugPrint('✅ FCM token registered with backend');
-        
+
         // Save registration timestamp
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setInt('fcm_token_last_registered', DateTime.now().millisecondsSinceEpoch);
+        await prefs.setInt(
+            'fcm_token_last_registered', DateTime.now().millisecondsSinceEpoch);
       } else {
         debugPrint('⚠️ Failed to register FCM token');
       }
-      
+
       return success;
     } catch (e) {
       debugPrint('❌ Error registering FCM token: $e');
@@ -489,13 +529,13 @@ class NotificationService {
 
     try {
       final success = await apiService.unregisterFCMToken(_fcmToken!);
-      
+
       if (success) {
         debugPrint('✅ FCM token unregistered from backend');
       } else {
         debugPrint('⚠️ Failed to unregister FCM token');
       }
-      
+
       return success;
     } catch (e) {
       debugPrint('❌ Error unregistering FCM token: $e');
@@ -506,7 +546,7 @@ class NotificationService {
   /// Delete FCM token locally (for logout)
   Future<void> deleteToken() async {
     if (_firebaseMessaging == null) return;
-    
+
     try {
       await _firebaseMessaging!.deleteToken();
       _fcmToken = null;
@@ -517,7 +557,8 @@ class NotificationService {
   }
 
   /// Get notification settings from backend
-  Future<Map<String, bool>?> getNotificationSettings(ApiService apiService) async {
+  Future<Map<String, bool>?> getNotificationSettings(
+      ApiService apiService) async {
     try {
       return await apiService.getNotificationSettings();
     } catch (e) {
@@ -542,7 +583,7 @@ class NotificationService {
   /// Dismiss all notifications for a specific ticket (when user opens the ticket)
   Future<void> dismissTicketNotifications(String ticketId) async {
     if (_localNotifications == null) return;
-    
+
     final notificationIds = _ticketNotificationIds[ticketId];
     if (notificationIds == null || notificationIds.isEmpty) {
       debugPrint('ℹ️ No notifications to dismiss for ticket $ticketId');
@@ -555,15 +596,16 @@ class NotificationService {
         await _localNotifications!.cancel(id);
         debugPrint('✅ Dismissed notification $id for ticket $ticketId');
       }
-      
+
       // Also cancel group summary notification
       final summaryId = -ticketId.hashCode.abs();
       await _localNotifications!.cancel(summaryId);
       debugPrint('✅ Dismissed group summary for ticket $ticketId');
-      
+
       // Clear the list after dismissing
       _ticketNotificationIds.remove(ticketId);
-      debugPrint('✅ Cleared ${notificationIds.length} notifications for ticket $ticketId');
+      debugPrint(
+          '✅ Cleared ${notificationIds.length} notifications for ticket $ticketId');
     } catch (e) {
       debugPrint('❌ Error dismissing notifications for ticket $ticketId: $e');
     }
@@ -572,7 +614,7 @@ class NotificationService {
   /// Dismiss all active notifications
   Future<void> dismissAllNotifications() async {
     if (_localNotifications == null) return;
-    
+
     try {
       await _localNotifications!.cancelAll();
       _ticketNotificationIds.clear();

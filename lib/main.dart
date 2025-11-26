@@ -23,21 +23,22 @@ Future<void> main() async {
 
   // Load environment variables
   await dotenv.load(fileName: ".env");
-  
+
   // Initialize Firebase & Notifications (graceful - continues even if Firebase not configured)
   try {
     final notificationService = NotificationService();
     await notificationService.initialize();
-    
+
     // Set up notification tap handler
     notificationService.onNotificationTap = (data) {
       debugPrint('📱 Notification tapped with data: $data');
       handleNotificationTap(navigatorKey.currentContext, data);
     };
-    
+
     debugPrint('✅ Notifications initialized');
   } catch (e) {
-    debugPrint('ℹ️ Notifications not available (Web or Firebase not configured): $e');
+    debugPrint(
+        'ℹ️ Notifications not available (Web or Firebase not configured): $e');
     // Continue without notifications - app still works
   }
 

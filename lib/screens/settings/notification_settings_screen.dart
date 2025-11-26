@@ -8,20 +8,22 @@ class NotificationSettingsScreen extends StatefulWidget {
   const NotificationSettingsScreen({super.key});
 
   @override
-  State<NotificationSettingsScreen> createState() => _NotificationSettingsScreenState();
+  State<NotificationSettingsScreen> createState() =>
+      _NotificationSettingsScreenState();
 }
 
-class _NotificationSettingsScreenState extends State<NotificationSettingsScreen> {
+class _NotificationSettingsScreenState
+    extends State<NotificationSettingsScreen> {
   bool _isLoading = true;
   bool _isSaving = false;
   String? _errorMessage;
-  
+
   // Settings state
   bool _ticketNewMessages = true;
   bool _ticketMentions = true;
   bool _ticketCreated = true;
   bool _ticketAssigned = true;
-  
+
   bool _isAdmin = false;
   bool _isModerator = false;
 
@@ -29,22 +31,23 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
   void initState() {
     super.initState();
     debugPrint('🎬 [NotificationSettings] initState() called');
-    
+
     // Delay to ensure context is fully available
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      debugPrint('🎬 [NotificationSettings] PostFrameCallback - calling _loadSettings()');
+      debugPrint(
+          '🎬 [NotificationSettings] PostFrameCallback - calling _loadSettings()');
       _loadSettings();
     });
   }
 
   Future<void> _loadSettings() async {
     debugPrint('🔧 [NotificationSettings] _loadSettings() started');
-    
+
     if (!mounted) {
       debugPrint('⚠️ [NotificationSettings] Widget not mounted, aborting');
       return;
     }
-    
+
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -52,10 +55,11 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
     debugPrint('🔧 [NotificationSettings] Loading state set');
 
     try {
-      debugPrint('🔧 [NotificationSettings] Getting DiscordAuthService from context...');
+      debugPrint(
+          '🔧 [NotificationSettings] Getting DiscordAuthService from context...');
       final authService = context.read<DiscordAuthService>();
       debugPrint('✅ [NotificationSettings] Got DiscordAuthService');
-      
+
       debugPrint('🔧 [NotificationSettings] Creating NotificationService...');
       final notificationService = NotificationService();
       debugPrint('✅ [NotificationSettings] NotificationService created');
@@ -64,23 +68,28 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
       final userInfo = authService.userInfo;
       _isAdmin = userInfo?['roles']?.contains('admin') ?? false;
       _isModerator = userInfo?['roles']?.contains('moderator') ?? false;
-      debugPrint('✅ [NotificationSettings] User role: admin=$_isAdmin, moderator=$_isModerator');
+      debugPrint(
+          '✅ [NotificationSettings] User role: admin=$_isAdmin, moderator=$_isModerator');
 
       // Check if permission already granted
       if (!notificationService.hasPermission) {
-        debugPrint('📱 [NotificationSettings] Notification permission not granted yet');
+        debugPrint(
+            '📱 [NotificationSettings] Notification permission not granted yet');
       }
 
       debugPrint('🔧 [NotificationSettings] Loading settings from backend...');
-      final settings = await notificationService.getNotificationSettings(authService.apiService);
-      debugPrint('✅ [NotificationSettings] Got settings from backend: $settings');
+      final settings = await notificationService
+          .getNotificationSettings(authService.apiService);
+      debugPrint(
+          '✅ [NotificationSettings] Got settings from backend: $settings');
 
       if (settings != null) {
         if (!mounted) {
-          debugPrint('⚠️ [NotificationSettings] Widget unmounted after loading, aborting setState');
+          debugPrint(
+              '⚠️ [NotificationSettings] Widget unmounted after loading, aborting setState');
           return;
         }
-        
+
         setState(() {
           _ticketNewMessages = settings['ticket_new_messages'] ?? true;
           _ticketMentions = settings['ticket_mentions'] ?? true;
@@ -95,12 +104,13 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
           _errorMessage = 'Failed to load notification settings';
           _isLoading = false;
         });
-        debugPrint('⚠️ [NotificationSettings] No settings returned from backend');
+        debugPrint(
+            '⚠️ [NotificationSettings] No settings returned from backend');
       }
     } catch (e, stackTrace) {
       debugPrint('❌ [NotificationSettings] Error loading settings: $e');
       debugPrint('📚 [NotificationSettings] Stack trace: $stackTrace');
-      
+
       if (!mounted) return;
       setState(() {
         _errorMessage = 'Error loading settings: $e';
@@ -111,7 +121,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
 
   Future<void> _saveSettings() async {
     if (!mounted) return;
-    
+
     setState(() {
       _isSaving = true;
       _errorMessage = null;
@@ -122,18 +132,23 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
       final notificationService = NotificationService();
 
       // Check if any notification is being enabled
-      final anyEnabled = _ticketNewMessages || _ticketMentions || _ticketCreated || _ticketAssigned;
+      final anyEnabled = _ticketNewMessages ||
+          _ticketMentions ||
+          _ticketCreated ||
+          _ticketAssigned;
 
       // Request permission if not granted and user wants notifications
       if (anyEnabled && !notificationService.hasPermission) {
         debugPrint('📱 User enabling notifications, requesting permission...');
-        
-        final permissionGranted = await notificationService.requestPermissionAndRegister();
-        
+
+        final permissionGranted =
+            await notificationService.requestPermissionAndRegister();
+
         if (!permissionGranted) {
           setState(() {
             _isSaving = false;
-            _errorMessage = 'Notification permission denied. Please enable notifications in system settings.';
+            _errorMessage =
+                'Notification permission denied. Please enable notifications in system settings.';
           });
           return;
         }
@@ -182,11 +197,12 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
 
   @override
   Widget build(BuildContext context) {
-    debugPrint('🎨 [NotificationSettings] build() called - isLoading=$_isLoading, error=$_errorMessage');
-    
+    debugPrint(
+        '🎨 [NotificationSettings] build() called - isLoading=$_isLoading, error=$_errorMessage');
+
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     // Use harmonized accent color for cards (same as tickets screen)
     final isMonet = colorScheme.surfaceContainerHigh !=
         ThemeData.light().colorScheme.surfaceContainerHigh;
@@ -233,7 +249,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                         ),
                       ),
                     ),
-                  
+
                   if (_errorMessage != null) const SizedBox(height: 8),
 
                   // Web warning card
@@ -265,7 +281,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                         ),
                       ),
                     ),
-                  
+
                   if (kIsWeb) const SizedBox(height: 8),
 
                   // Info card

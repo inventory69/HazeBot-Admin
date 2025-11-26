@@ -208,146 +208,153 @@ class _MemeDetailScreenState extends State<MemeDetailScreen> {
                   ),
                 ),
 
-            // Meme Info
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Title
-                  Text(
-                    title,
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
-                  const SizedBox(height: 16),
+              // Meme Info
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Title
+                    Text(
+                      title,
+                      style:
+                          Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                    ),
+                    const SizedBox(height: 16),
 
-                  // Stats Card
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        children: [
-                          _InfoRow(
-                            icon:
-                                isCustom ? Icons.person : Icons.account_circle,
-                            label: isCustom ? 'Created by' : 'Author',
-                            value: author,
-                          ),
-                          if (isDaily || (requester != null && requester.isNotEmpty)) ...[
+                    // Stats Card
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          children: [
+                            _InfoRow(
+                              icon: isCustom
+                                  ? Icons.person
+                                  : Icons.account_circle,
+                              label: isCustom ? 'Created by' : 'Author',
+                              value: author,
+                            ),
+                            if (isDaily ||
+                                (requester != null &&
+                                    requester.isNotEmpty)) ...[
+                              const Divider(height: 24),
+                              _InfoRow(
+                                icon:
+                                    isDaily ? Icons.calendar_today : Icons.send,
+                                label: isDaily ? 'Daily Meme' : 'Requested by',
+                                value: isDaily ? 'Automated Post' : requester!,
+                              ),
+                            ],
+                            if (!isCustom) ...[
+                              const Divider(height: 24),
+                              _InfoRow(
+                                icon: Icons.thumb_up,
+                                label: 'Upvotes',
+                                value: '$score',
+                              ),
+                            ],
                             const Divider(height: 24),
                             _InfoRow(
-                              icon: isDaily ? Icons.calendar_today : Icons.send,
-                              label: isDaily ? 'Daily Meme' : 'Requested by',
-                              value: isDaily ? 'Automated Post' : requester!,
+                              icon: Icons.source,
+                              label: 'Source',
+                              value: source,
                             ),
+                            if (postedDate != null) ...[
+                              const Divider(height: 24),
+                              _InfoRow(
+                                icon: Icons.calendar_today,
+                                label: 'Posted',
+                                value: _formatDate(postedDate),
+                              ),
+                            ],
                           ],
-                          if (!isCustom) ...[
-                            const Divider(height: 24),
-                            _InfoRow(
-                              icon: Icons.thumb_up,
-                              label: 'Upvotes',
-                              value: '$score',
-                            ),
-                          ],
-                          const Divider(height: 24),
-                          _InfoRow(
-                            icon: Icons.source,
-                            label: 'Source',
-                            value: source,
-                          ),
-                          if (postedDate != null) ...[
-                            const Divider(height: 24),
-                            _InfoRow(
-                              icon: Icons.calendar_today,
-                              label: 'Posted',
-                              value: _formatDate(postedDate),
-                            ),
-                          ],
-                        ],
+                        ),
                       ),
                     ),
-                  ),
 
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
-                  // Action Buttons
-                  Row(
-                    children: [
-                      // Upvote Button
-                      Expanded(
-                        child: Tooltip(
-                          message: messageId == null
-                              ? 'Meme wird noch verarbeitet...'
-                              : _hasDiscordUpvoted
-                                  ? 'Du hast bereits über Discord upgevotet'
-                                  : '',
-                          child: ElevatedButton.icon(
-                            onPressed: (_isUpvoting ||
-                                    _isLoadingReactions ||
-                                    _hasDiscordUpvoted ||
-                                    messageId == null)
-                                ? null
-                                : _toggleUpvote,
-                            icon: (_isUpvoting || _isLoadingReactions)
-                                ? const SizedBox(
-                                    width: 16,
-                                    height: 16,
-                                    child: CircularProgressIndicator(
-                                        strokeWidth: 2),
-                                  )
-                                : Icon(
-                                    _hasUpvoted
-                                        ? Icons.thumb_up
-                                        : Icons.thumb_up_outlined,
-                                  ),
-                            label: Text('$_upvotes'),
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              // Only apply upvoted style after loading is complete
-                              backgroundColor:
-                                  (!_isLoadingReactions && _hasUpvoted)
-                                      ? Theme.of(context)
-                                          .colorScheme
-                                          .primaryContainer
-                                      : null,
-                              foregroundColor:
-                                  (!_isLoadingReactions && _hasUpvoted)
-                                      ? Theme.of(context)
-                                          .colorScheme
-                                          .onPrimaryContainer
-                                      : null,
-                            ),
-                          ),
-                        ),
-                      ),
-                      if (url != null && url.isNotEmpty) ...[
-                        const SizedBox(width: 12),
+                    // Action Buttons
+                    Row(
+                      children: [
+                        // Upvote Button
                         Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () async {
-                              final uri = Uri.parse(url);
-                              if (await canLaunchUrl(uri)) {
-                                await launchUrl(uri,
-                                    mode: LaunchMode.externalApplication);
-                              }
-                            },
-                            icon: const Icon(Icons.open_in_new),
-                            label: const Text('Original'),
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 16),
+                          child: Tooltip(
+                            message: messageId == null
+                                ? 'Meme wird noch verarbeitet...'
+                                : _hasDiscordUpvoted
+                                    ? 'Du hast bereits über Discord upgevotet'
+                                    : '',
+                            child: ElevatedButton.icon(
+                              onPressed: (_isUpvoting ||
+                                      _isLoadingReactions ||
+                                      _hasDiscordUpvoted ||
+                                      messageId == null)
+                                  ? null
+                                  : _toggleUpvote,
+                              icon: (_isUpvoting || _isLoadingReactions)
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                          strokeWidth: 2),
+                                    )
+                                  : Icon(
+                                      _hasUpvoted
+                                          ? Icons.thumb_up
+                                          : Icons.thumb_up_outlined,
+                                    ),
+                              label: Text('$_upvotes'),
+                              style: ElevatedButton.styleFrom(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
+                                // Only apply upvoted style after loading is complete
+                                backgroundColor:
+                                    (!_isLoadingReactions && _hasUpvoted)
+                                        ? Theme.of(context)
+                                            .colorScheme
+                                            .primaryContainer
+                                        : null,
+                                foregroundColor:
+                                    (!_isLoadingReactions && _hasUpvoted)
+                                        ? Theme.of(context)
+                                            .colorScheme
+                                            .onPrimaryContainer
+                                        : null,
+                              ),
                             ),
                           ),
                         ),
+                        if (url != null && url.isNotEmpty) ...[
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () async {
+                                final uri = Uri.parse(url);
+                                if (await canLaunchUrl(uri)) {
+                                  await launchUrl(uri,
+                                      mode: LaunchMode.externalApplication);
+                                }
+                              },
+                              icon: const Icon(Icons.open_in_new),
+                              label: const Text('Original'),
+                              style: ElevatedButton.styleFrom(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
         ),
       ),
     );

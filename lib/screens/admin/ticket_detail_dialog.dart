@@ -49,22 +49,22 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
         }
       }
     });
-    
+
     // Set up WebSocket listener for real-time updates
     _setupWebSocketListener();
   }
-  
+
   void _setupWebSocketListener() {
     final authService = Provider.of<AuthService>(context, listen: false);
     final wsService = authService.wsService;
-    
+
     // Join ticket room
     wsService.joinTicket(widget.ticket.ticketId);
-    
+
     // Listen for new messages
     wsService.onTicketUpdate(widget.ticket.ticketId, (data) {
       final eventType = data['event_type'] as String?;
-      
+
       if (eventType == 'new_message') {
         final messageData = data['data'] as Map<String, dynamic>?;
         if (messageData != null) {
@@ -73,19 +73,19 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
       }
     });
   }
-  
+
   void _handleNewMessage(Map<String, dynamic> messageData) {
     if (!mounted) return;
-    
+
     final newMessage = TicketMessage.fromJson(messageData);
-    
+
     // Check if message already exists
     if (_messages.any((m) => m.id == newMessage.id)) {
       return;
     }
-    
+
     final oldCount = _messages.length;
-    
+
     setState(() {
       _messages.add(newMessage);
       _previousMessageCount = _messages.length;
@@ -94,7 +94,7 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
         _firstNewMessageIndex = oldCount;
       }
     });
-    
+
     // Scroll behavior on messages tab
     if (_tabController.index == 1) {
       if (_firstNewMessageIndex >= 0) {
@@ -116,7 +116,7 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
     // Leave WebSocket ticket room
     final authService = Provider.of<AuthService>(context, listen: false);
     authService.wsService.leaveTicket(widget.ticket.ticketId);
-    
+
     _tabController.dispose();
     _messageController.dispose();
     _scrollController.dispose();
@@ -150,7 +150,9 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
   void _scrollToNewMessages() {
     // Scroll to show the "New Messages" divider
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && _scrollController.hasClients && _firstNewMessageIndex > 0) {
+      if (mounted &&
+          _scrollController.hasClients &&
+          _firstNewMessageIndex > 0) {
         // Add delay to ensure layout is fully complete (200ms for reliable rendering)
         Future.delayed(const Duration(milliseconds: 200), () {
           if (mounted && _scrollController.hasClients) {
@@ -158,7 +160,7 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
             final approximatePosition = _firstNewMessageIndex * 100.0;
             final maxPosition = _scrollController.position.maxScrollExtent;
             final targetPosition = approximatePosition.clamp(0.0, maxPosition);
-            
+
             _scrollController.animateTo(
               targetPosition,
               duration: const Duration(milliseconds: 300),
@@ -177,39 +179,42 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
     });
 
     try {
-      final messagesData = await ApiService().getTicketMessages(widget.ticket.ticketId);
-      
+      final messagesData =
+          await ApiService().getTicketMessages(widget.ticket.ticketId);
+
       final newMessageCount = messagesData.length;
       final hasNewMessages = newMessageCount > _previousMessageCount;
       final isFirstLoad = _previousMessageCount == 0;
-      
+
       setState(() {
         _messages = messagesData
             .map((json) => TicketMessage.fromJson(json as Map<String, dynamic>))
             .toList();
-        
+
         // Find first new message index
         if (hasNewMessages && !isFirstLoad) {
-          _firstNewMessageIndex = _previousMessageCount; // Messages after this index are new
+          _firstNewMessageIndex =
+              _previousMessageCount; // Messages after this index are new
         } else {
           _firstNewMessageIndex = -1; // No new messages
         }
-        
+
         // Mark all current messages as seen if this is the first load
         if (_seenMessageIds.isEmpty) {
           _seenMessageIds = _messages.map((m) => m.id).toSet();
         }
-        
+
         _previousMessageCount = newMessageCount;
         _isLoadingMessages = false;
       });
-      
+
       // Scroll behavior:
       // - First load: Always scroll to bottom (no animation)
       // - Updates with new messages: Scroll to divider
       // - Updates without new messages: Do nothing (stay at current position)
       if (isFirstLoad) {
-        _scrollToBottom(animate: false); // Jump instantly to bottom on first load
+        _scrollToBottom(
+            animate: false); // Jump instantly to bottom on first load
       } else if (hasNewMessages && _firstNewMessageIndex >= 0) {
         _scrollToNewMessages(); // Scroll to new messages divider
       }
@@ -230,13 +235,13 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
     try {
       await ApiService().sendTicketMessage(widget.ticket.ticketId, content);
       _messageController.clear();
-      
+
       // Wait a moment for the bot to post the message
       await Future.delayed(const Duration(milliseconds: 500));
-      
+
       // Reload messages
       await _loadMessages();
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -267,13 +272,13 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
       // Get current user's Discord ID
       final userData = await ApiService().getCurrentUser();
       final discordId = userData['discord_id']?.toString();
-      
+
       if (discordId == null || discordId.isEmpty) {
         throw Exception('Could not retrieve user Discord ID');
       }
-      
+
       await ApiService().claimTicket(widget.ticket.ticketId, discordId);
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -374,15 +379,15 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
         widget.ticket.ticketId,
         closeMessage: closeMessage.isEmpty ? null : closeMessage,
       );
-      
+
       // Wait a moment for the close message to be posted to Discord
       await Future.delayed(const Duration(milliseconds: 500));
-      
+
       // Reload messages to show the closing message
       if (_messages.isNotEmpty) {
         await _loadMessages();
       }
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -428,7 +433,7 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
 
     try {
       await ApiService().reopenTicket(widget.ticket.ticketId);
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -470,7 +475,8 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
       child: LayoutBuilder(
         builder: (context, constraints) {
           final isCompact = constraints.maxWidth < 700;
-          final dialogWidth = isCompact ? constraints.maxWidth : constraints.maxWidth * 0.8;
+          final dialogWidth =
+              isCompact ? constraints.maxWidth : constraints.maxWidth * 0.8;
           final dialogHeight = constraints.maxHeight * 0.9;
 
           return Container(
@@ -482,8 +488,10 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                    color:
+                        Theme.of(context).colorScheme.surfaceContainerHighest,
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(28)),
                   ),
                   child: Row(
                     children: [
@@ -511,7 +519,9 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
                   controller: _tabController,
                   tabs: const [
                     Tab(text: 'Details', icon: Icon(Icons.info_outline)),
-                    Tab(text: 'Messages', icon: Icon(Icons.chat_bubble_outline)),
+                    Tab(
+                        text: 'Messages',
+                        icon: Icon(Icons.chat_bubble_outline)),
                   ],
                 ),
 
@@ -542,7 +552,10 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
           // Status & Type Card
           Card(
             elevation: 0,
-            color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18),
+            color: Theme.of(context)
+                .colorScheme
+                .primaryContainer
+                .withOpacity(0.18),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -613,7 +626,10 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
           // Creator Card
           Card(
             elevation: 0,
-            color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18),
+            color: Theme.of(context)
+                .colorScheme
+                .primaryContainer
+                .withOpacity(0.18),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -636,7 +652,8 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
                             : null,
                         child: widget.ticket.avatarUrl == null
                             ? Icon(Icons.person,
-                                size: 20, color: Theme.of(context).colorScheme.primary)
+                                size: 20,
+                                color: Theme.of(context).colorScheme.primary)
                             : null,
                       ),
                       const SizedBox(width: 12),
@@ -671,10 +688,14 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
           const SizedBox(height: 16),
 
           // Assignment Card - Show assigned OR claimed (assigned takes priority)
-          if (widget.ticket.assignedTo != null || widget.ticket.claimedBy != null)
+          if (widget.ticket.assignedTo != null ||
+              widget.ticket.claimedBy != null)
             Card(
               elevation: 0,
-              color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18),
+              color: Theme.of(context)
+                  .colorScheme
+                  .primaryContainer
+                  .withOpacity(0.18),
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -694,12 +715,15 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
                         children: [
                           CircleAvatar(
                             radius: 18,
-                            backgroundImage: widget.ticket.assignedToAvatar != null
+                            backgroundImage: widget.ticket.assignedToAvatar !=
+                                    null
                                 ? NetworkImage(widget.ticket.assignedToAvatar!)
                                 : null,
                             child: widget.ticket.assignedToAvatar == null
                                 ? Icon(Icons.person,
-                                    size: 20, color: Theme.of(context).colorScheme.primary)
+                                    size: 20,
+                                    color:
+                                        Theme.of(context).colorScheme.primary)
                                 : null,
                           ),
                           const SizedBox(width: 12),
@@ -728,12 +752,15 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
                         children: [
                           CircleAvatar(
                             radius: 18,
-                            backgroundImage: widget.ticket.claimedByAvatar != null
+                            backgroundImage: widget.ticket.claimedByAvatar !=
+                                    null
                                 ? NetworkImage(widget.ticket.claimedByAvatar!)
                                 : null,
                             child: widget.ticket.claimedByAvatar == null
                                 ? Icon(Icons.person,
-                                    size: 20, color: Theme.of(context).colorScheme.primary)
+                                    size: 20,
+                                    color:
+                                        Theme.of(context).colorScheme.primary)
                                 : null,
                           ),
                           const SizedBox(width: 12),
@@ -779,7 +806,8 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
             ),
           ] else ...[
             // Show Claim OR Assign buttons (mutually exclusive)
-            if (widget.ticket.claimedBy == null && widget.ticket.assignedTo == null) ...[
+            if (widget.ticket.claimedBy == null &&
+                widget.ticket.assignedTo == null) ...[
               SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
@@ -800,7 +828,8 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
                   ),
                 ),
               ),
-            ] else if (widget.ticket.claimedBy != null && widget.ticket.assignedTo == null) ...[
+            ] else if (widget.ticket.claimedBy != null &&
+                widget.ticket.assignedTo == null) ...[
               // Already claimed - only show Assign option
               SizedBox(
                 width: double.infinity,
@@ -867,39 +896,44 @@ class _MessageCard extends StatelessWidget {
 
   const _MessageCard({required this.message, this.isNew = false});
 
-  bool get _isAdminMessage => message.isAdmin || message.content.contains('[Admin Panel');
+  bool get _isAdminMessage =>
+      message.isAdmin || message.content.contains('[Admin Panel');
   bool get _isInitialMessage => message.content.contains('**Initial details');
-  bool get _isClosingMessage => message.content.contains('Ticket successfully closed') || 
-                                 message.content.contains('**Closing Message:**');
+  bool get _isClosingMessage =>
+      message.content.contains('Ticket successfully closed') ||
+      message.content.contains('**Closing Message:**');
 
   String get _cleanContent {
     String content = message.content;
-    
+
     // Remove markdown bold markers
     content = content.replaceAll('**', '');
-    
+
     // Extract actual message from admin panel format
     if (_isAdminMessage) {
-      final match = RegExp(r'\[Admin Panel - [^\]]+\]:\s*(.+)', dotAll: true).firstMatch(content);
+      final match = RegExp(r'\[Admin Panel - [^\]]+\]:\s*(.+)', dotAll: true)
+          .firstMatch(content);
       if (match != null) {
         return match.group(1) ?? content;
       }
     }
-    
+
     // Extract actual message from initial details format
     if (_isInitialMessage) {
-      final match = RegExp(r'Initial details from [^:]+:\s*(.+)', dotAll: true).firstMatch(content);
+      final match = RegExp(r'Initial details from [^:]+:\s*(.+)', dotAll: true)
+          .firstMatch(content);
       if (match != null) {
         return match.group(1) ?? content;
       }
     }
-    
+
     return content;
   }
 
   String get _displayName {
     if (_isAdminMessage) {
-      final match = RegExp(r'\[Admin Panel - ([^\]]+)\]').firstMatch(message.content);
+      final match =
+          RegExp(r'\[Admin Panel - ([^\]]+)\]').firstMatch(message.content);
       if (match != null) {
         return match.group(1) ?? message.authorName;
       }
@@ -910,7 +944,7 @@ class _MessageCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isSystem = message.isBot && !_isAdminMessage;
-    
+
     return Stack(
       children: [
         Padding(
@@ -918,192 +952,225 @@ class _MessageCard extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-          // Avatar
-          (message.authorAvatar != null && 
-                  message.authorAvatar!.isNotEmpty && 
-                  !_isClosingMessage)
-              ? Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Theme.of(context).colorScheme.primaryContainer,
-                  ),
-                  child: ClipOval(
-                    child: Image.network(
-                      message.authorAvatar!,
+              // Avatar
+              (message.authorAvatar != null &&
+                      message.authorAvatar!.isNotEmpty &&
+                      !_isClosingMessage)
+                  ? Container(
                       width: 36,
                       height: 36,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Center(
-                          child: Icon(
-                            _isAdminMessage
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Theme.of(context).colorScheme.primaryContainer,
+                      ),
+                      child: ClipOval(
+                        child: Image.network(
+                          message.authorAvatar!,
+                          width: 36,
+                          height: 36,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Center(
+                              child: Icon(
+                                _isAdminMessage
+                                    ? Icons.admin_panel_settings
+                                    : Icons.person,
+                                size: 20,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onPrimaryContainer,
+                              ),
+                            );
+                          },
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Center(
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                value: loadingProgress.expectedTotalBytes !=
+                                        null
+                                    ? loadingProgress.cumulativeBytesLoaded /
+                                        loadingProgress.expectedTotalBytes!
+                                    : null,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    )
+                  : CircleAvatar(
+                      radius: 18,
+                      backgroundColor: _isClosingMessage
+                          ? Colors.green.withOpacity(0.2)
+                          : _isAdminMessage
+                              ? Theme.of(context).colorScheme.primaryContainer
+                              : isSystem
+                                  ? Theme.of(context)
+                                      .colorScheme
+                                      .surfaceContainerHighest
+                                  : Theme.of(context)
+                                      .colorScheme
+                                      .secondaryContainer,
+                      child: Icon(
+                        _isClosingMessage
+                            ? Icons.check_circle
+                            : _isAdminMessage
                                 ? Icons.admin_panel_settings
-                                : Icons.person,
-                            size: 20,
-                            color: Theme.of(context).colorScheme.onPrimaryContainer,
-                          ),
-                        );
-                      },
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return Center(
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            value: loadingProgress.expectedTotalBytes != null
-                                ? loadingProgress.cumulativeBytesLoaded /
-                                    loadingProgress.expectedTotalBytes!
-                                : null,
-                          ),
-                        );
-                      },
+                                : isSystem
+                                    ? Icons.smart_toy
+                                    : Icons.person,
+                        size: 20,
+                        color: _isClosingMessage
+                            ? Colors.green
+                            : _isAdminMessage
+                                ? Theme.of(context)
+                                    .colorScheme
+                                    .onPrimaryContainer
+                                : isSystem
+                                    ? Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant
+                                    : Theme.of(context)
+                                        .colorScheme
+                                        .onSecondaryContainer,
+                      ),
                     ),
-                  ),
-                )
-              : CircleAvatar(
-                  radius: 18,
-                  backgroundColor: _isClosingMessage
-                      ? Colors.green.withOpacity(0.2)
-                      : _isAdminMessage
-                          ? Theme.of(context).colorScheme.primaryContainer
-                          : isSystem
-                              ? Theme.of(context).colorScheme.surfaceContainerHighest
-                              : Theme.of(context).colorScheme.secondaryContainer,
-                  child: Icon(
-                    _isClosingMessage
-                        ? Icons.check_circle
-                        : _isAdminMessage
-                            ? Icons.admin_panel_settings
-                            : isSystem
-                                ? Icons.smart_toy
-                                : Icons.person,
-                    size: 20,
-                    color: _isClosingMessage
-                        ? Colors.green
-                        : _isAdminMessage
-                            ? Theme.of(context).colorScheme.onPrimaryContainer
-                            : isSystem
-                                ? Theme.of(context).colorScheme.onSurfaceVariant
-                                : Theme.of(context).colorScheme.onSecondaryContainer,
-                  ),
-                ),
-          const SizedBox(width: 12),
-          // Message content
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header
-                Row(
+              const SizedBox(width: 12),
+              // Message content
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Flexible(
-                      child: Text(
-                        _displayName,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                          color: _isAdminMessage
-                              ? Theme.of(context).colorScheme.primary
-                              : null,
+                    // Header
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            _displayName,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              color: _isAdminMessage
+                                  ? Theme.of(context).colorScheme.primary
+                                  : null,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                        if (_isAdminMessage) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: message.role == 'moderator'
+                                  ? Colors.blue.withOpacity(0.2)
+                                  : Theme.of(context)
+                                      .colorScheme
+                                      .primaryContainer,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              message.role == 'moderator' ? 'MOD' : 'ADMIN',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: message.role == 'moderator'
+                                    ? Colors.blue
+                                    : Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+                          ),
+                        ],
+                        if (_isClosingMessage) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.green.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Text(
+                              'CLOSED',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green,
+                              ),
+                            ),
+                          ),
+                        ],
+                        const SizedBox(width: 8),
+                        Text(
+                          _formatDateTime(message.timestamp),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
                     ),
-                    if (_isAdminMessage) ...[
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: message.role == 'moderator'
-                              ? Colors.blue.withOpacity(0.2)
-                              : Theme.of(context).colorScheme.primaryContainer,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          message.role == 'moderator' ? 'MOD' : 'ADMIN',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: message.role == 'moderator'
-                                ? Colors.blue
-                                : Theme.of(context).colorScheme.primary,
-                          ),
-                        ),
+                    const SizedBox(height: 6),
+                    // Message bubble
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: _isClosingMessage
+                            ? Colors.green.withOpacity(0.1)
+                            : _isAdminMessage
+                                ? Theme.of(context)
+                                    .colorScheme
+                                    .primaryContainer
+                                    .withOpacity(0.3)
+                                : isSystem
+                                    ? Theme.of(context)
+                                        .colorScheme
+                                        .surfaceContainerHighest
+                                        .withOpacity(0.5)
+                                    : Theme.of(context)
+                                        .colorScheme
+                                        .secondaryContainer
+                                        .withOpacity(0.6),
+                        borderRadius: BorderRadius.circular(12),
+                        border: _isClosingMessage
+                            ? Border.all(
+                                color: Colors.green.withOpacity(0.3),
+                                width: 1,
+                              )
+                            : _isAdminMessage
+                                ? Border.all(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .primary
+                                        .withOpacity(0.3),
+                                    width: 1,
+                                  )
+                                : !message.isBot
+                                    ? Border.all(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .outline
+                                            .withOpacity(0.3),
+                                        width: 1,
+                                      )
+                                    : null,
                       ),
-                    ],
-                    if (_isClosingMessage) ...[
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Colors.green.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(4),
+                      child: Text(
+                        _cleanContent,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          height: 1.4,
                         ),
-                        child: const Text(
-                          'CLOSED',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.green,
-                          ),
-                        ),
-                      ),
-                    ],
-                    const SizedBox(width: 8),
-                    Text(
-                      _formatDateTime(message.timestamp),
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey[600],
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
-                // Message bubble
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: _isClosingMessage
-                        ? Colors.green.withOpacity(0.1)
-                        : _isAdminMessage
-                            ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3)
-                            : isSystem
-                                ? Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5)
-                                : Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.6),
-                    borderRadius: BorderRadius.circular(12),
-                    border: _isClosingMessage
-                        ? Border.all(
-                            color: Colors.green.withOpacity(0.3),
-                            width: 1,
-                          )
-                        : _isAdminMessage
-                            ? Border.all(
-                                color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
-                                width: 1,
-                              )
-                            : !message.isBot
-                                ? Border.all(
-                                    color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
-                                    width: 1,
-                                  )
-                                : null,
-                  ),
-                  child: Text(
-                    _cleanContent,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      height: 1.4,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
-    ),
+        ),
         // New message indicator
         if (isNew)
           Positioned(
@@ -1159,7 +1226,8 @@ class _UserSelectionDialogState extends State<_UserSelectionDialog> {
     }
     return widget.members.where((member) {
       final name = (member['name'] as String? ?? '').toLowerCase();
-      final displayName = (member['display_name'] as String? ?? '').toLowerCase();
+      final displayName =
+          (member['display_name'] as String? ?? '').toLowerCase();
       final query = _searchQuery.toLowerCase();
       return name.contains(query) || displayName.contains(query);
     }).toList();
@@ -1186,7 +1254,8 @@ class _UserSelectionDialogState extends State<_UserSelectionDialog> {
             // Header
             Row(
               children: [
-                Icon(Icons.person_add, color: Theme.of(context).colorScheme.primary),
+                Icon(Icons.person_add,
+                    color: Theme.of(context).colorScheme.primary),
                 const SizedBox(width: 12),
                 const Text(
                   'Assign to User',
@@ -1234,7 +1303,8 @@ class _UserSelectionDialogState extends State<_UserSelectionDialog> {
                         final member = filteredMembers[index];
                         final id = member['id'] as String;
                         final name = member['name'] as String? ?? 'Unknown';
-                        final displayName = member['display_name'] as String? ?? name;
+                        final displayName =
+                            member['display_name'] as String? ?? name;
                         final avatar = member['avatar_url'] as String?;
                         final status = member['status'] as String?;
 
@@ -1249,8 +1319,12 @@ class _UserSelectionDialogState extends State<_UserSelectionDialog> {
                             leading: Stack(
                               children: [
                                 CircleAvatar(
-                                  backgroundImage: avatar != null ? NetworkImage(avatar) : null,
-                                  child: avatar == null ? const Icon(Icons.person) : null,
+                                  backgroundImage: avatar != null
+                                      ? NetworkImage(avatar)
+                                      : null,
+                                  child: avatar == null
+                                      ? const Icon(Icons.person)
+                                      : null,
                                 ),
                                 Positioned(
                                   right: 0,
@@ -1261,7 +1335,8 @@ class _UserSelectionDialogState extends State<_UserSelectionDialog> {
                                     decoration: BoxDecoration(
                                       color: statusColor,
                                       shape: BoxShape.circle,
-                                      border: Border.all(color: Colors.white, width: 2),
+                                      border: Border.all(
+                                          color: Colors.white, width: 2),
                                     ),
                                   ),
                                 ),
@@ -1269,7 +1344,8 @@ class _UserSelectionDialogState extends State<_UserSelectionDialog> {
                             ),
                             title: Text(
                               displayName,
-                              style: const TextStyle(fontWeight: FontWeight.bold),
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold),
                             ),
                             subtitle: Text('@$name'),
                             onTap: () => Navigator.pop(
@@ -1310,7 +1386,8 @@ class _CloseMessageDialog extends StatelessWidget {
           TextField(
             controller: _controller,
             decoration: const InputDecoration(
-              hintText: 'e.g., Issue resolved, let me know if you need more help.',
+              hintText:
+                  'e.g., Issue resolved, let me know if you need more help.',
               border: OutlineInputBorder(),
             ),
             maxLines: 3,

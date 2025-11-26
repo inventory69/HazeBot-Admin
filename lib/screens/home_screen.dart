@@ -81,9 +81,10 @@ class _HomeScreenState extends State<HomeScreen>
   Future<void> _loadAdminPanelSetting() async {
     final prefs = await SharedPreferences.getInstance();
     final showOnStartup = prefs.getBool('show_admin_panel_on_startup') ?? false;
-    
+
     // Only apply if user has permission
-    final permissionService = Provider.of<PermissionService>(context, listen: false);
+    final permissionService =
+        Provider.of<PermissionService>(context, listen: false);
     if (showOnStartup && permissionService.hasPermission('all')) {
       setState(() {
         _isDrawerVisible = true;
@@ -525,8 +526,7 @@ class _HomeScreenState extends State<HomeScreen>
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) =>
-                                      const TicketsScreen(),
+                                  builder: (context) => const TicketsScreen(),
                                 ),
                               );
                             },
@@ -715,13 +715,18 @@ class _HomeScreenState extends State<HomeScreen>
                             final item = adminItems[index];
                             final isSelected = _selectedIndex == index;
                             return InkWell(
-                              onTap: () => setState(() => _selectedIndex = index),
+                              onTap: () =>
+                                  setState(() => _selectedIndex = index),
                               child: Container(
-                                margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                                margin: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 12, horizontal: 8),
                                 decoration: BoxDecoration(
                                   color: isSelected
-                                      ? Theme.of(context).colorScheme.primaryContainer
+                                      ? Theme.of(context)
+                                          .colorScheme
+                                          .primaryContainer
                                       : null,
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -732,18 +737,31 @@ class _HomeScreenState extends State<HomeScreen>
                                       item.icon,
                                       size: 24,
                                       color: isSelected
-                                          ? Theme.of(context).colorScheme.onPrimaryContainer
-                                          : Theme.of(context).colorScheme.onSurfaceVariant,
+                                          ? Theme.of(context)
+                                              .colorScheme
+                                              .onPrimaryContainer
+                                          : Theme.of(context)
+                                              .colorScheme
+                                              .onSurfaceVariant,
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
                                       item.label,
                                       textAlign: TextAlign.center,
-                                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                            fontSize: item.label.contains('\n') ? 10 : 11,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelSmall
+                                          ?.copyWith(
+                                            fontSize: item.label.contains('\n')
+                                                ? 10
+                                                : 11,
                                             color: isSelected
-                                                ? Theme.of(context).colorScheme.onPrimaryContainer
-                                                : Theme.of(context).colorScheme.onSurfaceVariant,
+                                                ? Theme.of(context)
+                                                    .colorScheme
+                                                    .onPrimaryContainer
+                                                : Theme.of(context)
+                                                    .colorScheme
+                                                    .onSurfaceVariant,
                                           ),
                                     ),
                                   ],
@@ -1074,12 +1092,16 @@ class _DashboardScreenState extends State<DashboardScreen>
                               horizontal: 8, vertical: 6),
                           decoration: BoxDecoration(
                             // Use same background as cache status chip (primaryContainer)
-                            color: Theme.of(context).colorScheme.primaryContainer,
+                            color:
+                                Theme.of(context).colorScheme.primaryContainer,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
                             'Latest Memes',
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleLarge
+                                ?.copyWith(
                                   fontSize: isMobile ? 18 : null,
                                   color: Theme.of(context)
                                       .colorScheme
@@ -1268,7 +1290,8 @@ class _DashboardScreenState extends State<DashboardScreen>
                         ),
                       ],
                     ),
-                    if (isDaily || (requester != null && requester.isNotEmpty)) ...[
+                    if (isDaily ||
+                        (requester != null && requester.isNotEmpty)) ...[
                       const SizedBox(height: 4),
                       Row(
                         children: [
@@ -1280,10 +1303,14 @@ class _DashboardScreenState extends State<DashboardScreen>
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
-                              isDaily ? 'Daily Meme' : 'Requested by $requester',
+                              isDaily
+                                  ? 'Daily Meme'
+                                  : 'Requested by $requester',
                               style: TextStyle(
                                 fontSize: isMobile ? 12 : 13,
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
                                 fontStyle: FontStyle.italic,
                               ),
                               overflow: TextOverflow.ellipsis,
