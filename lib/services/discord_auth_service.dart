@@ -225,6 +225,9 @@ class DiscordAuthService extends ChangeNotifier {
 
         notifyListeners();
 
+        // Small delay to ensure token propagates in ApiService
+        await Future.delayed(const Duration(milliseconds: 150));
+
         // Initialize and register FCM token after successful OAuth login
         try {
           debugPrint(
@@ -236,7 +239,10 @@ class DiscordAuthService extends ChangeNotifier {
               notificationService.fcmToken != null) {
             debugPrint(
                 '📱 FCM permission already granted, registering token...');
-            await notificationService.registerWithBackend(_apiService);
+            final success =
+                await notificationService.registerWithBackend(_apiService);
+            debugPrint(
+                '📱 FCM token registration: ${success ? "SUCCESS ✅" : "FAILED ❌"}');
           } else {
             debugPrint(
                 '📱 FCM permission not granted yet (will request later)');
@@ -309,6 +315,9 @@ class DiscordAuthService extends ChangeNotifier {
       debugPrint('🔐 Calling notifyListeners()...');
       notifyListeners();
 
+      // Small delay to ensure token propagates in ApiService
+      await Future.delayed(const Duration(milliseconds: 150));
+
       // Initialize and register FCM token after successful login
       try {
         debugPrint('📱 Initializing notification service after login...');
@@ -318,7 +327,10 @@ class DiscordAuthService extends ChangeNotifier {
         if (notificationService.hasPermission &&
             notificationService.fcmToken != null) {
           debugPrint('📱 FCM permission already granted, registering token...');
-          await notificationService.registerWithBackend(_apiService);
+          final success =
+              await notificationService.registerWithBackend(_apiService);
+          debugPrint(
+              '📱 FCM token registration: ${success ? "SUCCESS ✅" : "FAILED ❌"}');
         } else {
           debugPrint('📱 FCM permission not granted yet (will request later)');
         }

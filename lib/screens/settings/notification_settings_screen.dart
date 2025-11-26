@@ -18,6 +18,9 @@ class _NotificationSettingsScreenState
   bool _isSaving = false;
   String? _errorMessage;
 
+  // Master toggle for all notifications
+  bool _notificationsEnabled = true;
+
   // Settings state
   bool _ticketNewMessages = true;
   bool _ticketMentions = true;
@@ -91,6 +94,7 @@ class _NotificationSettingsScreenState
         }
 
         setState(() {
+          _notificationsEnabled = settings['notifications_enabled'] ?? true;
           _ticketNewMessages = settings['ticket_new_messages'] ?? true;
           _ticketMentions = settings['ticket_mentions'] ?? true;
           _ticketCreated = settings['ticket_created'] ?? true;
@@ -131,33 +135,46 @@ class _NotificationSettingsScreenState
       final authService = context.read<DiscordAuthService>();
       final notificationService = NotificationService();
 
-      // Check if any notification is being enabled
-      final anyEnabled = _ticketNewMessages ||
-          _ticketMentions ||
-          _ticketCreated ||
-          _ticketAssigned;
+      // Handle master toggle for notifications
+      if (_notificationsEnabled) {
+        // User wants notifications - check if any notification is enabled
+        final anyEnabled = _ticketNewMessages ||
+            _ticketMentions ||
+            _ticketCreated ||
+            _ticketAssigned;
 
-      // Request permission if not granted and user wants notifications
-      if (anyEnabled && !notificationService.hasPermission) {
-        debugPrint('📱 User enabling notifications, requesting permission...');
+        // Request permission if not granted and user wants notifications
+        if (anyEnabled && !notificationService.hasPermission) {
+          debugPrint(
+              '📱 User enabling notifications, requesting permission...');
 
-        final permissionGranted =
-            await notificationService.requestPermissionAndRegister();
+          final permissionGranted =
+              await notificationService.requestPermissionAndRegister();
 
-        if (!permissionGranted) {
-          setState(() {
-            _isSaving = false;
-            _errorMessage =
-                'Notification permission denied. Please enable notifications in system settings.';
-          });
-          return;
+          if (!permissionGranted) {
+            setState(() {
+              _isSaving = false;
+              _errorMessage =
+                  'Notification permission denied. Please enable notifications in system settings.';
+            });
+            return;
+          }
         }
 
-        // Register token with backend
-        await notificationService.registerWithBackend(authService.apiService);
+        // Register/Re-register token with backend
+        if (notificationService.hasPermission &&
+            notificationService.fcmToken != null) {
+          debugPrint('📱 Registering FCM token with backend...');
+          await notificationService.registerWithBackend(authService.apiService);
+        }
+      } else {
+        // User disabled notifications - unregister token from backend
+        debugPrint('📱 Notifications disabled, unregistering token...');
+        await notificationService.unregisterFromBackend(authService.apiService);
       }
 
       final settings = {
+        'notifications_enabled': _notificationsEnabled,
         'ticket_new_messages': _ticketNewMessages,
         'ticket_mentions': _ticketMentions,
         'ticket_created': _ticketCreated,
@@ -314,6 +331,47 @@ class _NotificationSettingsScreenState
 
                   const SizedBox(height: 16),
 
+                  // Master Toggle for all notifications
+                  Card(
+                    elevation: 0,
+                    color: _notificationsEnabled
+                        ? colorScheme.primaryContainer.withOpacity(0.3)
+                        : colorScheme.surfaceContainerHighest,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    child: SwitchListTile(
+                      value: _notificationsEnabled,
+                      onChanged: (value) {
+                        setState(() {
+                          _notificationsEnabled = value;
+                        });
+                      },
+                      title: Text(
+                        'Push Notifications',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                      subtitle: Text(
+                        _notificationsEnabled
+                            ? 'Notifications are enabled. You will receive push notifications based on your settings below.'
+                            : 'Notifications are disabled. Enable to receive push notifications.',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      secondary: Icon(
+                        _notificationsEnabled
+                            ? Icons.notifications_active
+                            : Icons.notifications_off,
+                        color: _notificationsEnabled
+                            ? colorScheme.primary
+                            : colorScheme.onSurfaceVariant,
+                        size: 32,
+                      ),
+                    ),
+                  ),
+
                   // Settings section
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -335,11 +393,13 @@ class _NotificationSettingsScreenState
                     margin: const EdgeInsets.only(bottom: 8),
                     child: SwitchListTile(
                       value: _ticketNewMessages,
-                      onChanged: (value) {
-                        setState(() {
-                          _ticketNewMessages = value;
-                        });
-                      },
+                      onChanged: _notificationsEnabled
+                          ? (value) {
+                              setState(() {
+                                _ticketNewMessages = value;
+                              });
+                            }
+                          : null,
                       title: const Text('New Messages'),
                       subtitle: Text(
                         _isAdmin || _isModerator
@@ -363,11 +423,13 @@ class _NotificationSettingsScreenState
                     margin: const EdgeInsets.only(bottom: 8),
                     child: SwitchListTile(
                       value: _ticketMentions,
-                      onChanged: (value) {
-                        setState(() {
-                          _ticketMentions = value;
-                        });
-                      },
+                      onChanged: _notificationsEnabled
+                          ? (value) {
+                              setState(() {
+                                _ticketMentions = value;
+                              });
+                            }
+                          : null,
                       title: const Text('Mentions'),
                       subtitle: Text(
                         'Get notified when someone mentions you (@username) in a ticket',
@@ -390,11 +452,13 @@ class _NotificationSettingsScreenState
                       margin: const EdgeInsets.only(bottom: 8),
                       child: SwitchListTile(
                         value: _ticketCreated,
-                        onChanged: (value) {
-                          setState(() {
-                            _ticketCreated = value;
-                          });
-                        },
+                        onChanged: _notificationsEnabled
+                            ? (value) {
+                                setState(() {
+                                  _ticketCreated = value;
+                                });
+                              }
+                            : null,
                         title: const Text('New Tickets'),
                         subtitle: Text(
                           'Get notified when a new ticket is created (Admin/Moderator only)',
@@ -416,11 +480,13 @@ class _NotificationSettingsScreenState
                     margin: const EdgeInsets.only(bottom: 8),
                     child: SwitchListTile(
                       value: _ticketAssigned,
-                      onChanged: (value) {
-                        setState(() {
-                          _ticketAssigned = value;
-                        });
-                      },
+                      onChanged: _notificationsEnabled
+                          ? (value) {
+                              setState(() {
+                                _ticketAssigned = value;
+                              });
+                            }
+                          : null,
                       title: const Text('Ticket Assignments'),
                       subtitle: Text(
                         _isAdmin || _isModerator
