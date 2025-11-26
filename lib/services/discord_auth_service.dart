@@ -224,6 +224,28 @@ class DiscordAuthService extends ChangeNotifier {
         _wsService.connect(_apiService.baseUrl);
 
         notifyListeners();
+
+        // Initialize and register FCM token after successful OAuth login
+        try {
+          debugPrint(
+              '📱 Initializing notification service after OAuth login...');
+          final notificationService = NotificationService();
+          await notificationService.initialize();
+
+          if (notificationService.hasPermission &&
+              notificationService.fcmToken != null) {
+            debugPrint(
+                '📱 FCM permission already granted, registering token...');
+            await notificationService.registerWithBackend(_apiService);
+          } else {
+            debugPrint(
+                '📱 FCM permission not granted yet (will request later)');
+          }
+        } catch (e) {
+          debugPrint(
+              '⚠️ Error initializing notifications after OAuth login: $e');
+        }
+
         debugPrint('DEBUG: OAuth login successful');
         return true;
       }
@@ -286,6 +308,23 @@ class DiscordAuthService extends ChangeNotifier {
 
       debugPrint('🔐 Calling notifyListeners()...');
       notifyListeners();
+
+      // Initialize and register FCM token after successful login
+      try {
+        debugPrint('📱 Initializing notification service after login...');
+        final notificationService = NotificationService();
+        await notificationService.initialize();
+
+        if (notificationService.hasPermission &&
+            notificationService.fcmToken != null) {
+          debugPrint('📱 FCM permission already granted, registering token...');
+          await notificationService.registerWithBackend(_apiService);
+        } else {
+          debugPrint('📱 FCM permission not granted yet (will request later)');
+        }
+      } catch (e) {
+        debugPrint('⚠️ Error initializing notifications after login: $e');
+      }
 
       // Small delay to ensure state propagates before navigation
       await Future.delayed(const Duration(milliseconds: 100));
