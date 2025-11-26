@@ -52,7 +52,7 @@ class HazeBotAdminApp extends StatefulWidget {
   State<HazeBotAdminApp> createState() => _HazeBotAdminAppState();
 }
 
-class _HazeBotAdminAppState extends State<HazeBotAdminApp> {
+class _HazeBotAdminAppState extends State<HazeBotAdminApp> with WidgetsBindingObserver {
   final DeepLinkService _deepLinkService = DeepLinkService();
   String? _pendingToken; // Store token until Provider is ready
 
@@ -60,6 +60,39 @@ class _HazeBotAdminAppState extends State<HazeBotAdminApp> {
   void initState() {
     super.initState();
     _initDeepLinks();
+    
+    // ✅ Monitor app lifecycle for WebSocket management
+    WidgetsBinding.instance.addObserver(this);
+  }
+  
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    
+    // Get WebSocket service from DiscordAuthService
+    final context = navigatorKey.currentContext;
+    if (context != null) {
+      try {
+        final discordAuthService = Provider.of<DiscordAuthService>(context, listen: false);
+        
+        if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+          // App going to background - disconnect WebSocket
+          debugPrint('📱 App paused/inactive - disconnecting WebSocket');
+          discordAuthService.wsService.disconnect();
+        } else if (state == AppLifecycleState.resumed) {
+          // App coming to foreground - reconnect if authenticated
+          if (discordAuthService.isAuthenticated) {
+            debugPrint('📱 App resumed - reconnecting WebSocket');
+            final baseUrl = dotenv.env['API_BASE_URL'] ?? '';
+            if (baseUrl.isNotEmpty) {
+              discordAuthService.wsService.connect(baseUrl);
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint('⚠️ Error managing WebSocket lifecycle: $e');
+      }
+    }
   }
 
   Future<void> _initDeepLinks() async {
@@ -94,6 +127,7 @@ class _HazeBotAdminAppState extends State<HazeBotAdminApp> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _deepLinkService.dispose();
     super.dispose();
   }

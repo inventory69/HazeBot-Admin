@@ -7,14 +7,144 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api_service.dart';
 
+// ✅ Message cache for InboxStyle notifications (persists across background handler calls)
+final Map<String, List<Map<String, String>>> _ticketMessages = {};
+
 /// Background message handler (must be top-level function)
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
   debugPrint('📱 Background message received: ${message.messageId}');
-  debugPrint('   Title: ${message.notification?.title}');
-  debugPrint('   Body: ${message.notification?.body}');
+  debugPrint('   Title: ${message.data['title']}');
+  debugPrint('   Body: ${message.data['body']}');
   debugPrint('   Data: ${message.data}');
+  
+  // ✅ FIX: Show single notification per ticket with InboxStyle (Discord/Telegram style)
+  try {
+    // Create local notifications plugin instance (background isolate)
+    final localNotifications = FlutterLocalNotificationsPlugin();
+    
+    // Initialize if needed
+    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const iosSettings = DarwinInitializationSettings(
+      requestAlertPermission: false,
+      requestBadgePermission: false,
+      requestSoundPermission: false,
+    );
+    const initSettings = InitializationSettings(
+      android: androidSettings,
+      iOS: iosSettings,
+    );
+    await localNotifications.initialize(initSettings);
+    
+    // Create notification channel
+    const androidChannel = AndroidNotificationChannel(
+      'hazebot_tickets',
+      'HazeBot Tickets',
+      description: 'Notifications for ticket updates and messages',
+      importance: Importance.high,
+      playSound: true,
+    );
+    await localNotifications
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(androidChannel);
+    
+    // Extract notification data from data payload (data-only message)
+    final title = message.data['title'] as String?;
+    final body = message.data['body'] as String?;
+    
+    if (title == null || body == null) {
+      debugPrint('⚠️ No title/body in data payload, skipping');
+      return;
+    }
+    
+    final ticketId = message.data['ticket_id'] as String?;
+    final ticketNum = message.data['ticket_num'] as String?;
+    
+    if (ticketId == null) {
+      debugPrint('⚠️ No ticket_id in message, skipping');
+      return;
+    }
+    
+    // ✅ Add message to cache (limit to last 10 messages)
+    _ticketMessages.putIfAbsent(ticketId, () => []);
+    _ticketMessages[ticketId]!.add({
+      'title': title,
+      'body': body,
+      'timestamp': DateTime.now().toIso8601String(),
+    });
+    
+    // Keep only last 10 messages
+    if (_ticketMessages[ticketId]!.length > 10) {
+      _ticketMessages[ticketId]!.removeAt(0);
+    }
+    
+    final messages = _ticketMessages[ticketId]!;
+    final count = messages.length;
+    final ticketLabel = ticketNum != null ? '#$ticketNum' : ticketId;
+    
+    // ✅ Create InboxStyle lines (show actual message content)
+    final lines = messages.map((msg) => msg['body']!).toList();
+    
+    // ✅ Use constant ID per ticket (updates existing notification)
+    final notificationId = ticketId.hashCode.abs() & 0x7FFFFFFF;
+    
+    final androidDetails = AndroidNotificationDetails(
+      'hazebot_tickets',
+      'HazeBot Tickets',
+      channelDescription: 'Notifications for ticket updates and messages',
+      importance: Importance.high,
+      priority: Priority.high,
+      showWhen: true,
+      icon: '@drawable/ic_notification',
+      styleInformation: InboxStyleInformation(
+        lines,
+        contentTitle: 'Ticket $ticketLabel',
+        summaryText: '$count new ${count == 1 ? "message" : "messages"}',
+      ),
+      actions: <AndroidNotificationAction>[
+        AndroidNotificationAction(
+          'mark_read',
+          'Mark as Read',
+          showsUserInterface: false,
+          cancelNotification: true,
+        ),
+        AndroidNotificationAction(
+          'reply',
+          'Reply',
+          showsUserInterface: true,
+          inputs: <AndroidNotificationActionInput>[
+            AndroidNotificationActionInput(
+              label: 'Reply...',
+            ),
+          ],
+        ),
+      ],
+    );
+    
+    final iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+      threadIdentifier: ticketId,
+    );
+    
+    await localNotifications.show(
+      notificationId,
+      'Ticket $ticketLabel',
+      '$count new ${count == 1 ? "message" : "messages"}',
+      NotificationDetails(
+        android: androidDetails,
+        iOS: iosDetails,
+      ),
+      payload: jsonEncode(message.data),
+    );
+    
+    debugPrint('✅ Background notification shown with grouping');
+  } catch (e, stackTrace) {
+    debugPrint('❌ Error showing background notification: $e');
+    debugPrint('Stack trace: $stackTrace');
+  }
 }
 
 class NotificationService {
@@ -29,8 +159,8 @@ class NotificationService {
   bool _permissionGranted = false;
   String? _fcmToken;
 
-  // ✅ Track notification IDs by ticket ID for dismissal
-  final Map<String, List<int>> _ticketNotificationIds = {};
+  // ✅ Message cache for InboxStyle notifications (foreground)
+  final Map<String, List<Map<String, String>>> _foregroundTicketMessages = {};
 
   // Callback for notification tap
   Function(Map<String, dynamic>)? onNotificationTap;
@@ -284,42 +414,55 @@ class NotificationService {
   /// Handle foreground messages
   void _handleForegroundMessage(RemoteMessage message) {
     debugPrint('📱 Foreground message received: ${message.messageId}');
-    debugPrint('   Title: ${message.notification?.title}');
-    debugPrint('   Body: ${message.notification?.body}');
+    debugPrint('   Title: ${message.data['title']}');
+    debugPrint('   Body: ${message.data['body']}');
     debugPrint('   Data: ${message.data}');
 
     // Display local notification when app is in foreground
-    _showLocalNotification(message);
+    showNotificationFromMessage(message);
   }
 
-  /// Show local notification with grouping support
-  Future<void> _showLocalNotification(RemoteMessage message) async {
-    final notification = message.notification;
-    if (notification == null) return;
-
-    // ✅ FIX: Clean Markdown formatting from notification text
-    final cleanTitle =
-        notification.title != null ? _cleanMarkdown(notification.title!) : null;
-    final cleanBody =
-        notification.body != null ? _cleanMarkdown(notification.body!) : null;
-
-    final notificationId = notification.hashCode;
-
-    // ✅ Get ticket ID for grouping and dismissal
-    final ticketId = message.data['ticket_id'] as String?;
-    final ticketNum = message.data['ticket_num'] as String?;
-
-    if (ticketId != null) {
-      _ticketNotificationIds
-          .putIfAbsent(ticketId, () => [])
-          .add(notificationId);
-      debugPrint(
-          '📝 Tracked notification $notificationId for ticket $ticketId');
+  /// Show single notification per ticket with InboxStyle (Discord/Telegram style)
+  Future<void> showNotificationFromMessage(RemoteMessage message) async {
+    // ✅ FIX: Read title/body from data payload (data-only message)
+    final title = message.data['title'] as String?;
+    final body = message.data['body'] as String?;
+    
+    if (title == null || body == null) {
+      debugPrint('⚠️ No title/body in data payload, skipping');
+      return;
     }
 
-    // ✅ FIX: Group notifications by ticket_id
-    final groupKey = ticketId != null ? 'ticket_$ticketId' : null;
-    final threadIdentifier = ticketId; // For iOS threading
+    final ticketId = message.data['ticket_id'] as String?;
+    final ticketNum = message.data['ticket_num'] as String?;
+    
+    if (ticketId == null) {
+      debugPrint('⚠️ No ticket_id in message, skipping');
+      return;
+    }
+
+    // ✅ Add message to cache (limit to last 10 messages)
+    _foregroundTicketMessages.putIfAbsent(ticketId, () => []);
+    _foregroundTicketMessages[ticketId]!.add({
+      'title': title,
+      'body': body,
+      'timestamp': DateTime.now().toIso8601String(),
+    });
+    
+    // Keep only last 10 messages
+    if (_foregroundTicketMessages[ticketId]!.length > 10) {
+      _foregroundTicketMessages[ticketId]!.removeAt(0);
+    }
+    
+    final messages = _foregroundTicketMessages[ticketId]!;
+    final count = messages.length;
+    final ticketLabel = ticketNum != null ? '#$ticketNum' : ticketId;
+    
+    // ✅ Create InboxStyle lines (show actual message content)
+    final lines = messages.map((msg) => msg['body']!).toList();
+    
+    // ✅ Use constant ID per ticket (updates existing notification)
+    final notificationId = ticketId.hashCode.abs() & 0x7FFFFFFF;
 
     final androidDetails = AndroidNotificationDetails(
       'hazebot_tickets',
@@ -328,15 +471,28 @@ class NotificationService {
       importance: Importance.high,
       priority: Priority.high,
       showWhen: true,
-      icon: '@drawable/ic_notification', // Monochrome notification icon
-      groupKey: groupKey, // ✅ Group by ticket
-      setAsGroupSummary: false, // Individual notifications
+      icon: '@drawable/ic_notification',
+      styleInformation: InboxStyleInformation(
+        lines,
+        contentTitle: 'Ticket $ticketLabel',
+        summaryText: '$count new ${count == 1 ? "message" : "messages"}',
+      ),
       actions: <AndroidNotificationAction>[
         AndroidNotificationAction(
           'mark_read',
           'Mark as Read',
           showsUserInterface: false,
           cancelNotification: true,
+        ),
+        AndroidNotificationAction(
+          'reply',
+          'Reply',
+          showsUserInterface: true,
+          inputs: <AndroidNotificationActionInput>[
+            AndroidNotificationActionInput(
+              label: 'Reply...',
+            ),
+          ],
         ),
       ],
     );
@@ -345,7 +501,7 @@ class NotificationService {
       presentAlert: true,
       presentBadge: true,
       presentSound: true,
-      threadIdentifier: threadIdentifier, // ✅ iOS threading by ticket
+      threadIdentifier: ticketId,
     );
 
     final details = NotificationDetails(
@@ -355,79 +511,13 @@ class NotificationService {
 
     await _localNotifications!.show(
       notificationId,
-      cleanTitle,
-      cleanBody,
+      'Ticket $ticketLabel',
+      '$count new ${count == 1 ? "message" : "messages"}',
       details,
       payload: jsonEncode(message.data),
     );
-
-    // ✅ Show Android group summary if we have multiple notifications for this ticket
-    if (groupKey != null && ticketId != null) {
-      await _showGroupSummaryIfNeeded(ticketId, ticketNum, groupKey);
-    }
-  }
-
-  /// Show Android group summary notification when multiple messages exist
-  Future<void> _showGroupSummaryIfNeeded(
-      String ticketId, String? ticketNum, String groupKey) async {
-    final notificationIds = _ticketNotificationIds[ticketId];
-
-    // Show summary immediately (even for 1 notification) to ensure proper grouping
-    if (notificationIds == null || notificationIds.isEmpty) {
-      return;
-    }
-
-    final count = notificationIds.length;
-    final ticketLabel = ticketNum != null ? '#$ticketNum' : ticketId;
-
-    final androidDetails = AndroidNotificationDetails(
-      'hazebot_tickets',
-      'HazeBot Tickets',
-      channelDescription: 'Notifications for ticket updates and messages',
-      importance: Importance.high,
-      priority: Priority.high,
-      icon: '@drawable/ic_notification', // Monochrome notification icon
-      groupKey: groupKey,
-      setAsGroupSummary: true, // ✅ This is the summary
-      styleInformation: InboxStyleInformation(
-        [],
-        contentTitle: 'Ticket $ticketLabel',
-        summaryText: '$count new messages',
-      ),
-      actions: <AndroidNotificationAction>[
-        AndroidNotificationAction(
-          'mark_read',
-          'Mark as Read',
-          showsUserInterface: false,
-          cancelNotification: true,
-        ),
-      ],
-    );
-
-    const iosDetails = DarwinNotificationDetails(
-      presentAlert: false, // Don't show summary on iOS (uses threadIdentifier)
-      presentBadge: false,
-      presentSound: false,
-    );
-
-    final details = NotificationDetails(
-      android: androidDetails,
-      iOS: iosDetails,
-    );
-
-    // Use negative ticket ID hash as summary notification ID
-    final summaryId = -ticketId.hashCode.abs();
-
-    await _localNotifications!.show(
-      summaryId,
-      'Ticket $ticketLabel',
-      '$count new messages',
-      details,
-      payload: jsonEncode({'ticket_id': ticketId, 'is_summary': 'true'}),
-    );
-
-    debugPrint(
-        '📊 Showed group summary for ticket $ticketId ($count messages)');
+    
+    debugPrint('✅ Updated notification for ticket $ticketId ($count messages)');
   }
 
   /// Clean Markdown formatting from text (for notifications)
@@ -580,34 +670,20 @@ class NotificationService {
     }
   }
 
-  /// Dismiss all notifications for a specific ticket (when user opens the ticket)
+  /// Dismiss notification for a specific ticket (when user opens the ticket)
   Future<void> dismissTicketNotifications(String ticketId) async {
     if (_localNotifications == null) return;
 
-    final notificationIds = _ticketNotificationIds[ticketId];
-    if (notificationIds == null || notificationIds.isEmpty) {
-      debugPrint('ℹ️ No notifications to dismiss for ticket $ticketId');
-      return;
-    }
-
     try {
-      // Cancel individual notifications
-      for (final id in notificationIds) {
-        await _localNotifications!.cancel(id);
-        debugPrint('✅ Dismissed notification $id for ticket $ticketId');
-      }
-
-      // Also cancel group summary notification
-      final summaryId = -ticketId.hashCode.abs();
-      await _localNotifications!.cancel(summaryId);
-      debugPrint('✅ Dismissed group summary for ticket $ticketId');
-
-      // Clear the list after dismissing
-      _ticketNotificationIds.remove(ticketId);
-      debugPrint(
-          '✅ Cleared ${notificationIds.length} notifications for ticket $ticketId');
+      // Cancel the single InboxStyle notification for this ticket
+      final notificationId = ticketId.hashCode.abs() & 0x7FFFFFFF;
+      await _localNotifications!.cancel(notificationId);
+      debugPrint('✅ Dismissed notification for ticket $ticketId');
+      
+      // Clear message cache
+      _foregroundTicketMessages.remove(ticketId);
     } catch (e) {
-      debugPrint('❌ Error dismissing notifications for ticket $ticketId: $e');
+      debugPrint('❌ Error dismissing notification for ticket $ticketId: $e');
     }
   }
 
@@ -617,7 +693,7 @@ class NotificationService {
 
     try {
       await _localNotifications!.cancelAll();
-      _ticketNotificationIds.clear();
+      _foregroundTicketMessages.clear();
       debugPrint('✅ Dismissed all notifications');
     } catch (e) {
       debugPrint('❌ Error dismissing all notifications: $e');

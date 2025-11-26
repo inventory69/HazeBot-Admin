@@ -48,22 +48,10 @@ class _TicketChatWidgetState extends State<TicketChatWidget> {
     _setupKeyboardListener(); // ✅ Auto-scroll when keyboard opens
   }
 
-  /// Auto-scroll to bottom when keyboard opens
+  /// Setup keyboard listener (removed auto-scroll - user wants to stay at current position)
   void _setupKeyboardListener() {
-    _messageFocusNode.addListener(() {
-      if (_messageFocusNode.hasFocus && mounted) {
-        // Wait for keyboard to open and layout to settle
-        Future.delayed(const Duration(milliseconds: 300), () {
-          if (mounted && _scrollController.hasClients) {
-            _scrollController.animateTo(
-              _scrollController.position.maxScrollExtent,
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeOut,
-            );
-          }
-        });
-      }
-    });
+    // Focus node is still used for keyboard detection elsewhere
+    // But we don't auto-scroll when keyboard opens anymore
   }
 
   /// Load current user's Discord ID for duplicate message detection

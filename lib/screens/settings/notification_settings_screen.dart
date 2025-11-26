@@ -19,7 +19,8 @@ class _NotificationSettingsScreenState
   String? _errorMessage;
 
   // Master toggle for all notifications
-  bool _notificationsEnabled = true;
+  // ✅ FIX: Default to false, will be set based on permission + backend settings
+  bool _notificationsEnabled = false;
 
   // Settings state
   bool _ticketNewMessages = true;
@@ -75,7 +76,8 @@ class _NotificationSettingsScreenState
           '✅ [NotificationSettings] User role: admin=$_isAdmin, moderator=$_isModerator');
 
       // Check if permission already granted
-      if (!notificationService.hasPermission) {
+      final hasPermission = notificationService.hasPermission;
+      if (!hasPermission) {
         debugPrint(
             '📱 [NotificationSettings] Notification permission not granted yet');
       }
@@ -94,7 +96,8 @@ class _NotificationSettingsScreenState
         }
 
         setState(() {
-          _notificationsEnabled = settings['notifications_enabled'] ?? true;
+          // ✅ FIX: Only enable if permission granted AND backend says enabled
+          _notificationsEnabled = hasPermission && (settings['notifications_enabled'] ?? true);
           _ticketNewMessages = settings['ticket_new_messages'] ?? true;
           _ticketMentions = settings['ticket_mentions'] ?? true;
           _ticketCreated = settings['ticket_created'] ?? true;
