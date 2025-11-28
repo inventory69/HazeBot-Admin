@@ -34,8 +34,7 @@ class _TicketChatWidgetState extends State<TicketChatWidget> {
   int _previousMessageCount = 0;
   final Set<String> _seenMessageIds = {}; // Prevent duplicates
   int _firstNewMessageIndex = -1;
-  final GlobalKey _newMessagesDividerKey =
-      GlobalKey(); // For precise scroll position
+  final GlobalKey _newMessagesDividerKey = GlobalKey(); // For precise scroll position
   String? _currentUserDiscordId; // ✅ Cache current user's Discord ID
 
   @override
@@ -73,8 +72,7 @@ class _TicketChatWidgetState extends State<TicketChatWidget> {
 
     // Dismiss all notifications for this ticket
     notificationService.dismissTicketNotifications(widget.ticket.ticketId);
-    debugPrint(
-        '🔕 Dismissed notifications for ticket ${widget.ticket.ticketId}');
+    debugPrint('🔕 Dismissed notifications for ticket ${widget.ticket.ticketId}');
   }
 
   void _setupWebSocketListener() {
@@ -110,10 +108,8 @@ class _TicketChatWidgetState extends State<TicketChatWidget> {
 
     // ✅ FIX: Skip own messages from WebSocket (already added optimistically)
     // This prevents duplicate messages when user sends a message
-    if (_currentUserDiscordId != null &&
-        newMessage.authorId == _currentUserDiscordId) {
-      debugPrint(
-          '⏭️ Skipping own message from WebSocket: ${newMessage.id} (already added optimistically)');
+    if (_currentUserDiscordId != null && newMessage.authorId == _currentUserDiscordId) {
+      debugPrint('⏭️ Skipping own message from WebSocket: ${newMessage.id} (already added optimistically)');
       return;
     }
 
@@ -177,8 +173,7 @@ class _TicketChatWidgetState extends State<TicketChatWidget> {
 
                 // If we're not at the bottom, scroll again
                 if ((newMaxExtent - currentPos).abs() > 10) {
-                  debugPrint(
-                      '🔄 Retry scroll to bottom (delta: ${newMaxExtent - currentPos}px)');
+                  debugPrint('🔄 Retry scroll to bottom (delta: ${newMaxExtent - currentPos}px)');
                   _scrollController.jumpTo(newMaxExtent);
                 }
               }
@@ -192,9 +187,7 @@ class _TicketChatWidgetState extends State<TicketChatWidget> {
   void _scrollToNewMessages() {
     // ✅ FIX: Discord-style scroll to "New Messages" divider with precise positioning
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted &&
-          _scrollController.hasClients &&
-          _firstNewMessageIndex >= 0) {
+      if (mounted && _scrollController.hasClients && _firstNewMessageIndex >= 0) {
         Future.delayed(const Duration(milliseconds: 300), () {
           if (mounted && _scrollController.hasClients) {
             // Try to use GlobalKey for exact position
@@ -207,28 +200,23 @@ class _TicketChatWidgetState extends State<TicketChatWidget> {
                 curve: Curves.easeOut,
                 alignment: 0.2, // Scroll to 20% from top (like Discord)
               );
-              debugPrint(
-                  '✅ Scrolled to New Messages divider (precise position)');
+              debugPrint('✅ Scrolled to New Messages divider (precise position)');
             } else {
               // Fallback: Estimate position (better than before)
               final maxScroll = _scrollController.position.maxScrollExtent;
-              final viewportHeight =
-                  _scrollController.position.viewportDimension;
+              final viewportHeight = _scrollController.position.viewportDimension;
               final estimatedMessageHeight = maxScroll / _messages.length;
-              final dividerOffset =
-                  _firstNewMessageIndex * estimatedMessageHeight;
+              final dividerOffset = _firstNewMessageIndex * estimatedMessageHeight;
 
               // Scroll to show divider near top (20% from top like Discord)
-              final targetPosition = (dividerOffset - (viewportHeight * 0.2))
-                  .clamp(0.0, maxScroll);
+              final targetPosition = (dividerOffset - (viewportHeight * 0.2)).clamp(0.0, maxScroll);
 
               _scrollController.animateTo(
                 targetPosition,
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.easeOut,
               );
-              debugPrint(
-                  '⚠️ Scrolled to New Messages divider (estimated position)');
+              debugPrint('⚠️ Scrolled to New Messages divider (estimated position)');
             }
           }
         });
@@ -245,14 +233,11 @@ class _TicketChatWidgetState extends State<TicketChatWidget> {
 
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
-      final messagesData = await authService.apiService
-          .getTicketMessages(widget.ticket.ticketId);
+      final messagesData = await authService.apiService.getTicketMessages(widget.ticket.ticketId);
 
       if (mounted) {
         // Convert List<dynamic> to List<TicketMessage>
-        final messages = messagesData
-            .map((json) => TicketMessage.fromJson(json as Map<String, dynamic>))
-            .toList();
+        final messages = messagesData.map((json) => TicketMessage.fromJson(json as Map<String, dynamic>)).toList();
 
         final newMessageCount = messages.length;
         final hasNewMessages = newMessageCount > _previousMessageCount;
@@ -313,8 +298,7 @@ class _TicketChatWidgetState extends State<TicketChatWidget> {
         _messageController.clear();
 
         // Convert Map to TicketMessage
-        final newMessage =
-            TicketMessage.fromJson(newMessageData as Map<String, dynamic>);
+        final newMessage = TicketMessage.fromJson(newMessageData as Map<String, dynamic>);
 
         // ✅ FIX: Add to seen IDs immediately (before WebSocket arrives)
         _seenMessageIds.add(newMessage.id);
@@ -397,11 +381,9 @@ class _TicketChatWidgetState extends State<TicketChatWidget> {
                       return Column(
                         children: [
                           // Show "New Messages" divider before first new message
-                          if (index == _firstNewMessageIndex &&
-                              _firstNewMessageIndex > 0)
+                          if (index == _firstNewMessageIndex && _firstNewMessageIndex > 0)
                             Padding(
-                              key:
-                                  _newMessagesDividerKey, // ✅ GlobalKey for precise scroll
+                              key: _newMessagesDividerKey, // ✅ GlobalKey for precise scroll
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               child: Row(
                                 children: [
@@ -412,8 +394,7 @@ class _TicketChatWidgetState extends State<TicketChatWidget> {
                                     ),
                                   ),
                                   Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 12),
+                                    padding: const EdgeInsets.symmetric(horizontal: 12),
                                     child: Text(
                                       'New Messages',
                                       style: TextStyle(
@@ -455,8 +436,7 @@ class _TicketChatWidgetState extends State<TicketChatWidget> {
                 Expanded(
                   child: TextField(
                     controller: _messageController,
-                    focusNode:
-                        _messageFocusNode, // ✅ Auto-scroll on keyboard open
+                    focusNode: _messageFocusNode, // ✅ Auto-scroll on keyboard open
                     decoration: InputDecoration(
                       hintText: 'Type a message...',
                       border: OutlineInputBorder(
@@ -504,13 +484,10 @@ class _TicketChatWidgetState extends State<TicketChatWidget> {
     final colorScheme = Theme.of(context).colorScheme;
 
     // Check message types
-    final isAdminMessage = message.isAdmin ||
-        message.content.contains('[Admin Panel') ||
-        message.role != null;
+    final isAdminMessage = message.isAdmin || message.content.contains('[Admin Panel') || message.role != null;
     final isInitialMessage = message.content.contains('**Initial details');
     final isClosingMessage =
-        message.content.contains('Ticket successfully closed') ||
-            message.content.contains('**Closing Message:**');
+        message.content.contains('Ticket successfully closed') || message.content.contains('**Closing Message:**');
     final isSystem = message.isBot && !isAdminMessage;
 
     // Clean content
@@ -518,16 +495,14 @@ class _TicketChatWidgetState extends State<TicketChatWidget> {
     cleanContent = cleanContent.replaceAll('**', '');
 
     if (isAdminMessage) {
-      final match = RegExp(r'\[Admin Panel - [^\]]+\]:\s*(.+)', dotAll: true)
-          .firstMatch(cleanContent);
+      final match = RegExp(r'\[Admin Panel - [^\]]+\]:\s*(.+)', dotAll: true).firstMatch(cleanContent);
       if (match != null) {
         cleanContent = match.group(1) ?? cleanContent;
       }
     }
 
     if (isInitialMessage) {
-      final match = RegExp(r'Initial details from [^:]+:\s*(.+)', dotAll: true)
-          .firstMatch(cleanContent);
+      final match = RegExp(r'Initial details from [^:]+:\s*(.+)', dotAll: true).firstMatch(cleanContent);
       if (match != null) {
         cleanContent = match.group(1) ?? cleanContent;
       }
@@ -536,8 +511,7 @@ class _TicketChatWidgetState extends State<TicketChatWidget> {
     // Get display name
     String displayName = message.authorName;
     if (isAdminMessage) {
-      final match =
-          RegExp(r'\[Admin Panel - ([^\]]+)\]').firstMatch(message.content);
+      final match = RegExp(r'\[Admin Panel - ([^\]]+)\]').firstMatch(message.content);
       if (match != null) {
         displayName = match.group(1) ?? message.authorName;
       }
@@ -641,8 +615,7 @@ class _TicketChatWidgetState extends State<TicketChatWidget> {
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
                   value: loadingProgress.expectedTotalBytes != null
-                      ? loadingProgress.cumulativeBytesLoaded /
-                          loadingProgress.expectedTotalBytes!
+                      ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
                       : null,
                 ),
               );
@@ -706,9 +679,7 @@ class _TicketChatWidgetState extends State<TicketChatWidget> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
-              color: message.role == 'moderator'
-                  ? Colors.blue.withOpacity(0.2)
-                  : colorScheme.primaryContainer,
+              color: message.role == 'moderator' ? Colors.blue.withOpacity(0.2) : colorScheme.primaryContainer,
               borderRadius: BorderRadius.circular(4),
             ),
             child: Text(
@@ -716,9 +687,7 @@ class _TicketChatWidgetState extends State<TicketChatWidget> {
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
-                color: message.role == 'moderator'
-                    ? Colors.blue
-                    : colorScheme.primary,
+                color: message.role == 'moderator' ? Colors.blue : colorScheme.primary,
               ),
             ),
           ),

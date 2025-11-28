@@ -7,8 +7,7 @@ class RocketLeagueConfigScreen extends StatefulWidget {
   const RocketLeagueConfigScreen({super.key});
 
   @override
-  State<RocketLeagueConfigScreen> createState() =>
-      _RocketLeagueConfigScreenState();
+  State<RocketLeagueConfigScreen> createState() => _RocketLeagueConfigScreenState();
 }
 
 class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
@@ -57,10 +56,8 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
 
       if (mounted) {
         setState(() {
-          _rankCheckIntervalController.text =
-              config['rank_check_interval_hours'].toString();
-          _cacheTtlController.text =
-              config['rank_cache_ttl_seconds'].toString();
+          _rankCheckIntervalController.text = config['rank_check_interval_hours'].toString();
+          _cacheTtlController.text = config['rank_cache_ttl_seconds'].toString();
         });
       }
     } catch (e) {
@@ -187,17 +184,14 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
 
     if (platform.isEmpty || username.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Please enter both platform and username')),
+        const SnackBar(content: Text('Please enter both platform and username')),
       );
       return;
     }
 
     if (!['steam', 'epic', 'psn', 'xbl', 'switch'].contains(platform)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text(
-                'Invalid platform. Use: steam, epic, psn, xbl, or switch')),
+        const SnackBar(content: Text('Invalid platform. Use: steam, epic, psn, xbl, or switch')),
       );
       return;
     }
@@ -211,8 +205,7 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
 
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
-      final result =
-          await authService.apiService.getRocketLeagueStats(platform, username);
+      final result = await authService.apiService.getRocketLeagueStats(platform, username);
 
       if (mounted) {
         setState(() {
@@ -246,8 +239,7 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
       final authService = Provider.of<AuthService>(context, listen: false);
 
       final config = {
-        'rank_check_interval_hours':
-            int.parse(_rankCheckIntervalController.text),
+        'rank_check_interval_hours': int.parse(_rankCheckIntervalController.text),
         'rank_cache_ttl_seconds': int.parse(_cacheTtlController.text),
       };
 
@@ -349,8 +341,8 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
     }
 
     // Monet/normal mode card color logic (match channels/roles config screens)
-    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh !=
-        ThemeData.light().colorScheme.surfaceContainerHigh;
+    final isMonet =
+        Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
     final cardColor = isMonet
         ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
         : Theme.of(context).colorScheme.surface;
@@ -388,8 +380,7 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
                 Card(
                   color: cardColor,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: EdgeInsets.all(cardPadding),
                     child: Column(
@@ -406,10 +397,7 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
                             Flexible(
                               child: Text(
                                 'Rank Check Settings',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleLarge
-                                    ?.copyWith(
+                                style: Theme.of(context).textTheme.titleLarge?.copyWith(
                                       fontSize: isMobile ? 18 : null,
                                     ),
                               ),
@@ -422,8 +410,7 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
                           decoration: InputDecoration(
                             labelText: 'Rank Check Interval (hours)',
                             hintText: 'How often to check for rank changes',
-                            helperText:
-                                'Bot will check for rank updates at this interval',
+                            helperText: 'Bot will check for rank updates at this interval',
                             helperMaxLines: isMobile ? 2 : 1,
                             border: const OutlineInputBorder(),
                             prefixIcon: const Icon(Icons.schedule),
@@ -431,9 +418,7 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
                             isDense: isMobile,
                           ),
                           keyboardType: TextInputType.number,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly
-                          ],
+                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return 'This field is required';
@@ -463,9 +448,7 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
                           ),
                           child: Row(
                             children: [
-                              Icon(Icons.info_outline,
-                                  size: isMobile ? 18 : 20,
-                                  color: Colors.blue[700]),
+                              Icon(Icons.info_outline, size: isMobile ? 18 : 20, color: Colors.blue[700]),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
@@ -490,8 +473,7 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
                 Card(
                   color: cardColor,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: EdgeInsets.all(cardPadding),
                     child: Column(
@@ -508,10 +490,7 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
                             Flexible(
                               child: Text(
                                 'Cache Settings',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleLarge
-                                    ?.copyWith(
+                                style: Theme.of(context).textTheme.titleLarge?.copyWith(
                                       fontSize: isMobile ? 18 : null,
                                     ),
                               ),
@@ -534,9 +513,7 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
                             isDense: isMobile,
                           ),
                           keyboardType: TextInputType.number,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly
-                          ],
+                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                           onChanged: (value) {
                             // Trigger rebuild to update helper text
                             setState(() {});
@@ -570,9 +547,7 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
                           ),
                           child: Row(
                             children: [
-                              Icon(Icons.info_outline,
-                                  size: isMobile ? 18 : 20,
-                                  color: Colors.green[700]),
+                              Icon(Icons.info_outline, size: isMobile ? 18 : 20, color: Colors.green[700]),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
@@ -597,8 +572,7 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
                 Card(
                   color: cardColor,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: EdgeInsets.all(cardPadding),
                     child: Column(
@@ -615,10 +589,7 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
                             Flexible(
                               child: Text(
                                 'Quick Presets',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleLarge
-                                    ?.copyWith(
+                                style: Theme.of(context).textTheme.titleLarge?.copyWith(
                                       fontSize: isMobile ? 18 : null,
                                     ),
                               ),
@@ -666,8 +637,7 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
                 Card(
                   color: cardColor,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: EdgeInsets.all(cardPadding),
                     child: Column(
@@ -684,21 +654,15 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
                             Flexible(
                               child: Text(
                                 'Linked Accounts',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleLarge
-                                    ?.copyWith(
+                                style: Theme.of(context).textTheme.titleLarge?.copyWith(
                                       fontSize: isMobile ? 18 : null,
                                     ),
                               ),
                             ),
                             const Spacer(),
                             IconButton(
-                              icon:
-                                  Icon(Icons.refresh, size: isMobile ? 20 : 24),
-                              onPressed: _isLoadingAccounts
-                                  ? null
-                                  : _loadLinkedAccounts,
+                              icon: Icon(Icons.refresh, size: isMobile ? 20 : 24),
+                              onPressed: _isLoadingAccounts ? null : _loadLinkedAccounts,
                               tooltip: 'Refresh accounts',
                             ),
                           ],
@@ -729,8 +693,7 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
                                 Flexible(
                                   child: Text(
                                     'No linked accounts found',
-                                    style:
-                                        TextStyle(fontSize: isMobile ? 13 : 14),
+                                    style: TextStyle(fontSize: isMobile ? 13 : 14),
                                   ),
                                 ),
                               ],
@@ -741,8 +704,7 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
                             scrollDirection: Axis.horizontal,
                             child: ConstrainedBox(
                               constraints: BoxConstraints(
-                                minWidth:
-                                    constraints.maxWidth - (isMobile ? 48 : 64),
+                                minWidth: constraints.maxWidth - (isMobile ? 48 : 64),
                               ),
                               child: DataTable(
                                 columnSpacing: isMobile ? 12 : 20,
@@ -753,58 +715,50 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
                                   DataColumn(
                                     label: Text(
                                       'Discord User',
-                                      style: TextStyle(
-                                          fontSize: isMobile ? 12 : 14),
+                                      style: TextStyle(fontSize: isMobile ? 12 : 14),
                                     ),
                                   ),
                                   DataColumn(
                                     label: Text(
                                       'Platform',
-                                      style: TextStyle(
-                                          fontSize: isMobile ? 12 : 14),
+                                      style: TextStyle(fontSize: isMobile ? 12 : 14),
                                     ),
                                   ),
                                   DataColumn(
                                     label: Text(
                                       'RL Username',
-                                      style: TextStyle(
-                                          fontSize: isMobile ? 12 : 14),
+                                      style: TextStyle(fontSize: isMobile ? 12 : 14),
                                     ),
                                   ),
                                   DataColumn(
                                     label: Text(
                                       '1v1',
-                                      style: TextStyle(
-                                          fontSize: isMobile ? 12 : 14),
+                                      style: TextStyle(fontSize: isMobile ? 12 : 14),
                                     ),
                                   ),
                                   DataColumn(
                                     label: Text(
                                       '2v2',
-                                      style: TextStyle(
-                                          fontSize: isMobile ? 12 : 14),
+                                      style: TextStyle(fontSize: isMobile ? 12 : 14),
                                     ),
                                   ),
                                   DataColumn(
                                     label: Text(
                                       '3v3',
-                                      style: TextStyle(
-                                          fontSize: isMobile ? 12 : 14),
+                                      style: TextStyle(fontSize: isMobile ? 12 : 14),
                                     ),
                                   ),
                                   if (!isMobile)
                                     DataColumn(
                                       label: Text(
                                         'Last Checked',
-                                        style: TextStyle(
-                                            fontSize: isMobile ? 12 : 14),
+                                        style: TextStyle(fontSize: isMobile ? 12 : 14),
                                       ),
                                     ),
                                   DataColumn(
                                     label: Text(
                                       'Actions',
-                                      style: TextStyle(
-                                          fontSize: isMobile ? 12 : 14),
+                                      style: TextStyle(fontSize: isMobile ? 12 : 14),
                                     ),
                                   ),
                                 ],
@@ -813,10 +767,7 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
                                   final iconUrls = account['icon_urls'] ?? {};
                                   final lastFetched = account['last_fetched'];
                                   final lastFetchedDisplay = lastFetched != null
-                                      ? DateTime.parse(lastFetched)
-                                          .toLocal()
-                                          .toString()
-                                          .split('.')[0]
+                                      ? DateTime.parse(lastFetched).toLocal().toString().split('.')[0]
                                       : 'Never';
 
                                   final avatarRadius = isMobile ? 14.0 : 16.0;
@@ -831,33 +782,26 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
                                             if (account['avatar_url'] != null)
                                               CircleAvatar(
                                                 radius: avatarRadius,
-                                                backgroundImage: NetworkImage(
-                                                    account['avatar_url']),
+                                                backgroundImage: NetworkImage(account['avatar_url']),
                                               )
                                             else
                                               CircleAvatar(
                                                 radius: avatarRadius,
-                                                child: Icon(Icons.person,
-                                                    size: avatarRadius),
+                                                child: Icon(Icons.person, size: avatarRadius),
                                               ),
                                             const SizedBox(width: 8),
                                             Flexible(
                                               child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                mainAxisAlignment: MainAxisAlignment.center,
                                                 children: [
                                                   Text(
-                                                    account['display_name'] ??
-                                                        'Unknown',
+                                                    account['display_name'] ?? 'Unknown',
                                                     style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
+                                                      fontWeight: FontWeight.bold,
                                                       fontSize: textSize,
                                                     ),
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
+                                                    overflow: TextOverflow.ellipsis,
                                                   ),
                                                   if (!isMobile)
                                                     Text(
@@ -866,8 +810,7 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
                                                         fontSize: textSize - 2,
                                                         color: Colors.grey,
                                                       ),
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
+                                                      overflow: TextOverflow.ellipsis,
                                                     ),
                                                 ],
                                               ),
@@ -877,9 +820,7 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
                                       ),
                                       DataCell(
                                         Text(
-                                          (account['platform'] ?? 'unknown')
-                                              .toString()
-                                              .toUpperCase(),
+                                          (account['platform'] ?? 'unknown').toString().toUpperCase(),
                                           style: TextStyle(fontSize: textSize),
                                         ),
                                       ),
@@ -890,36 +831,28 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
                                           overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
-                                      DataCell(_buildTableRankCell(ranks['1v1'],
-                                          iconUrls['1v1'], isMobile)),
-                                      DataCell(_buildTableRankCell(ranks['2v2'],
-                                          iconUrls['2v2'], isMobile)),
-                                      DataCell(_buildTableRankCell(ranks['3v3'],
-                                          iconUrls['3v3'], isMobile)),
+                                      DataCell(_buildTableRankCell(ranks['1v1'], iconUrls['1v1'], isMobile)),
+                                      DataCell(_buildTableRankCell(ranks['2v2'], iconUrls['2v2'], isMobile)),
+                                      DataCell(_buildTableRankCell(ranks['3v3'], iconUrls['3v3'], isMobile)),
                                       if (!isMobile)
                                         DataCell(
                                           Tooltip(
                                             message: lastFetchedDisplay,
                                             child: Text(
                                               _formatRelativeTime(lastFetched),
-                                              style:
-                                                  TextStyle(fontSize: textSize),
+                                              style: TextStyle(fontSize: textSize),
                                             ),
                                           ),
                                         ),
                                       DataCell(
                                         IconButton(
-                                          icon: Icon(Icons.delete_outline,
-                                              color: Colors.red,
-                                              size: isMobile ? 20 : 24),
+                                          icon: Icon(Icons.delete_outline, color: Colors.red, size: isMobile ? 20 : 24),
                                           onPressed: () => _deleteAccount(
                                             account['user_id'],
-                                            account['display_name'] ??
-                                                'Unknown',
+                                            account['display_name'] ?? 'Unknown',
                                           ),
                                           tooltip: 'Unlink account',
-                                          padding:
-                                              EdgeInsets.all(isMobile ? 4 : 8),
+                                          padding: EdgeInsets.all(isMobile ? 4 : 8),
                                         ),
                                       ),
                                     ],
@@ -932,8 +865,7 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton.icon(
-                            onPressed:
-                                _isCheckingRanks ? null : _triggerRankCheck,
+                            onPressed: _isCheckingRanks ? null : _triggerRankCheck,
                             icon: _isCheckingRanks
                                 ? SizedBox(
                                     width: isMobile ? 14 : 16,
@@ -945,9 +877,7 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
                                   )
                                 : Icon(Icons.refresh, size: isMobile ? 20 : 24),
                             label: Text(
-                              _isCheckingRanks
-                                  ? 'Checking Ranks...'
-                                  : 'Check All Ranks Now',
+                              _isCheckingRanks ? 'Checking Ranks...' : 'Check All Ranks Now',
                               style: TextStyle(fontSize: isMobile ? 14 : 16),
                             ),
                             style: ElevatedButton.styleFrom(
@@ -966,8 +896,7 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
                 Card(
                   color: cardColor,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: EdgeInsets.all(cardPadding),
                     child: Column(
@@ -984,10 +913,7 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
                             Flexible(
                               child: Text(
                                 'Test Player Stats',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleLarge
-                                    ?.copyWith(
+                                style: Theme.of(context).textTheme.titleLarge?.copyWith(
                                       fontSize: isMobile ? 18 : null,
                                     ),
                               ),
@@ -1000,9 +926,7 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
                             children: [
                               DropdownButtonFormField<String>(
                                 initialValue:
-                                    _testPlatformController.text.isEmpty
-                                        ? null
-                                        : _testPlatformController.text,
+                                    _testPlatformController.text.isEmpty ? null : _testPlatformController.text,
                                 decoration: const InputDecoration(
                                   labelText: 'Platform',
                                   border: OutlineInputBorder(),
@@ -1010,16 +934,11 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
                                   isDense: true,
                                 ),
                                 items: const [
-                                  DropdownMenuItem(
-                                      value: 'steam', child: Text('Steam')),
-                                  DropdownMenuItem(
-                                      value: 'epic', child: Text('Epic')),
-                                  DropdownMenuItem(
-                                      value: 'psn', child: Text('PSN')),
-                                  DropdownMenuItem(
-                                      value: 'xbl', child: Text('Xbox')),
-                                  DropdownMenuItem(
-                                      value: 'switch', child: Text('Switch')),
+                                  DropdownMenuItem(value: 'steam', child: Text('Steam')),
+                                  DropdownMenuItem(value: 'epic', child: Text('Epic')),
+                                  DropdownMenuItem(value: 'psn', child: Text('PSN')),
+                                  DropdownMenuItem(value: 'xbl', child: Text('Xbox')),
+                                  DropdownMenuItem(value: 'switch', child: Text('Switch')),
                                 ],
                                 onChanged: (value) {
                                   if (value != null) {
@@ -1042,8 +961,7 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
                               SizedBox(
                                 width: double.infinity,
                                 child: ElevatedButton.icon(
-                                  onPressed:
-                                      _isLoadingStats ? null : _testPlayerStats,
+                                  onPressed: _isLoadingStats ? null : _testPlayerStats,
                                   icon: _isLoadingStats
                                       ? const SizedBox(
                                           width: 14,
@@ -1054,8 +972,7 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
                                           ),
                                         )
                                       : const Icon(Icons.search, size: 20),
-                                  label: const Text('Fetch Stats',
-                                      style: TextStyle(fontSize: 14)),
+                                  label: const Text('Fetch Stats', style: TextStyle(fontSize: 14)),
                                   style: ElevatedButton.styleFrom(
                                     padding: const EdgeInsets.all(14),
                                   ),
@@ -1070,25 +987,18 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
                                 flex: 1,
                                 child: DropdownButtonFormField<String>(
                                   initialValue:
-                                      _testPlatformController.text.isEmpty
-                                          ? null
-                                          : _testPlatformController.text,
+                                      _testPlatformController.text.isEmpty ? null : _testPlatformController.text,
                                   decoration: const InputDecoration(
                                     labelText: 'Platform',
                                     border: OutlineInputBorder(),
                                     prefixIcon: Icon(Icons.gamepad),
                                   ),
                                   items: const [
-                                    DropdownMenuItem(
-                                        value: 'steam', child: Text('Steam')),
-                                    DropdownMenuItem(
-                                        value: 'epic', child: Text('Epic')),
-                                    DropdownMenuItem(
-                                        value: 'psn', child: Text('PSN')),
-                                    DropdownMenuItem(
-                                        value: 'xbl', child: Text('Xbox')),
-                                    DropdownMenuItem(
-                                        value: 'switch', child: Text('Switch')),
+                                    DropdownMenuItem(value: 'steam', child: Text('Steam')),
+                                    DropdownMenuItem(value: 'epic', child: Text('Epic')),
+                                    DropdownMenuItem(value: 'psn', child: Text('PSN')),
+                                    DropdownMenuItem(value: 'xbl', child: Text('Xbox')),
+                                    DropdownMenuItem(value: 'switch', child: Text('Switch')),
                                   ],
                                   onChanged: (value) {
                                     if (value != null) {
@@ -1112,8 +1022,7 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
                               ),
                               const SizedBox(width: 16),
                               ElevatedButton.icon(
-                                onPressed:
-                                    _isLoadingStats ? null : _testPlayerStats,
+                                onPressed: _isLoadingStats ? null : _testPlayerStats,
                                 icon: _isLoadingStats
                                     ? const SizedBox(
                                         width: 16,
@@ -1144,8 +1053,7 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
                                   Color(0xFF16213E),
                                 ],
                               ),
-                              borderRadius:
-                                  BorderRadius.circular(isMobile ? 12 : 16),
+                              borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
                               border: Border.all(
                                 color: Colors.blue.withValues(alpha: 0.3),
                                 width: 2,
@@ -1165,24 +1073,20 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
                                 if (isMobile)
                                   Column(
                                     children: [
-                                      if (_testStats!['highest_icon_url'] !=
-                                          null)
+                                      if (_testStats!['highest_icon_url'] != null)
                                         Container(
                                           decoration: BoxDecoration(
-                                            borderRadius:
-                                                BorderRadius.circular(12),
+                                            borderRadius: BorderRadius.circular(12),
                                             boxShadow: [
                                               BoxShadow(
-                                                color: Colors.blue
-                                                    .withValues(alpha: 0.5),
+                                                color: Colors.blue.withValues(alpha: 0.5),
                                                 blurRadius: 16,
                                                 spreadRadius: 2,
                                               ),
                                             ],
                                           ),
                                           child: ClipRRect(
-                                            borderRadius:
-                                                BorderRadius.circular(12),
+                                            borderRadius: BorderRadius.circular(12),
                                             child: Image.network(
                                               _testStats!['highest_icon_url'],
                                               width: 80,
@@ -1203,8 +1107,7 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
                                       ),
                                       const SizedBox(height: 8),
                                       Container(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 16, vertical: 6),
+                                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                                         decoration: BoxDecoration(
                                           gradient: const LinearGradient(
                                             colors: [
@@ -1212,12 +1115,10 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
                                               Color(0xFF0083B0),
                                             ],
                                           ),
-                                          borderRadius:
-                                              BorderRadius.circular(16),
+                                          borderRadius: BorderRadius.circular(16),
                                           boxShadow: [
                                             BoxShadow(
-                                              color: Colors.blue
-                                                  .withValues(alpha: 0.3),
+                                              color: Colors.blue.withValues(alpha: 0.3),
                                               blurRadius: 8,
                                             ),
                                           ],
@@ -1237,24 +1138,20 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
                                 else
                                   Row(
                                     children: [
-                                      if (_testStats!['highest_icon_url'] !=
-                                          null)
+                                      if (_testStats!['highest_icon_url'] != null)
                                         Container(
                                           decoration: BoxDecoration(
-                                            borderRadius:
-                                                BorderRadius.circular(12),
+                                            borderRadius: BorderRadius.circular(12),
                                             boxShadow: [
                                               BoxShadow(
-                                                color: Colors.blue
-                                                    .withValues(alpha: 0.5),
+                                                color: Colors.blue.withValues(alpha: 0.5),
                                                 blurRadius: 16,
                                                 spreadRadius: 2,
                                               ),
                                             ],
                                           ),
                                           child: ClipRRect(
-                                            borderRadius:
-                                                BorderRadius.circular(12),
+                                            borderRadius: BorderRadius.circular(12),
                                             child: Image.network(
                                               _testStats!['highest_icon_url'],
                                               width: 100,
@@ -1266,12 +1163,10 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
                                       const SizedBox(width: 20),
                                       Expanded(
                                         child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              _testStats!['username'] ??
-                                                  'Unknown',
+                                              _testStats!['username'] ?? 'Unknown',
                                               style: const TextStyle(
                                                 fontSize: 28,
                                                 fontWeight: FontWeight.bold,
@@ -1280,10 +1175,7 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
                                             ),
                                             const SizedBox(height: 8),
                                             Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal: 16,
-                                                      vertical: 6),
+                                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                                               decoration: BoxDecoration(
                                                 gradient: const LinearGradient(
                                                   colors: [
@@ -1291,19 +1183,16 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
                                                     Color(0xFF0083B0),
                                                   ],
                                                 ),
-                                                borderRadius:
-                                                    BorderRadius.circular(16),
+                                                borderRadius: BorderRadius.circular(16),
                                                 boxShadow: [
                                                   BoxShadow(
-                                                    color: Colors.blue
-                                                        .withValues(alpha: 0.3),
+                                                    color: Colors.blue.withValues(alpha: 0.3),
                                                     blurRadius: 8,
                                                   ),
                                                 ],
                                               ),
                                               child: Text(
-                                                _testStats!['platform'] ??
-                                                    'Unknown',
+                                                _testStats!['platform'] ?? 'Unknown',
                                                 style: const TextStyle(
                                                   color: Colors.white,
                                                   fontSize: 14,
@@ -1397,24 +1286,20 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
                                     ),
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
-                                      color:
-                                          Colors.orange.withValues(alpha: 0.5),
+                                      color: Colors.orange.withValues(alpha: 0.5),
                                       width: 2,
                                     ),
                                   ),
                                   child: Row(
                                     children: [
                                       Container(
-                                        padding:
-                                            EdgeInsets.all(isMobile ? 10 : 12),
+                                        padding: EdgeInsets.all(isMobile ? 10 : 12),
                                         decoration: BoxDecoration(
                                           color: Colors.orange,
-                                          borderRadius:
-                                              BorderRadius.circular(12),
+                                          borderRadius: BorderRadius.circular(12),
                                           boxShadow: [
                                             BoxShadow(
-                                              color: Colors.orange
-                                                  .withValues(alpha: 0.5),
+                                              color: Colors.orange.withValues(alpha: 0.5),
                                               blurRadius: 12,
                                             ),
                                           ],
@@ -1428,8 +1313,7 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
                                       SizedBox(width: isMobile ? 12 : 16),
                                       Expanded(
                                         child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             Text(
                                               'Season Reward Level',
@@ -1442,9 +1326,7 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
                                             ),
                                             SizedBox(height: isMobile ? 2 : 4),
                                             Text(
-                                              _cleanRankText(_testStats![
-                                                      'season_reward'] ??
-                                                  'N/A'),
+                                              _cleanRankText(_testStats!['season_reward'] ?? 'N/A'),
                                               style: TextStyle(
                                                 fontSize: isMobile ? 16 : 20,
                                                 fontWeight: FontWeight.bold,
@@ -1478,8 +1360,7 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
                         child: OutlinedButton.icon(
                           onPressed: _isLoading ? null : _resetToDefaults,
                           icon: const Icon(Icons.restore, size: 20),
-                          label: const Text('Reset to Defaults',
-                              style: TextStyle(fontSize: 14)),
+                          label: const Text('Reset to Defaults', style: TextStyle(fontSize: 14)),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: Colors.orange,
                             padding: const EdgeInsets.all(14),
@@ -1492,8 +1373,7 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
                         child: ElevatedButton.icon(
                           onPressed: _isLoading ? null : _saveConfig,
                           icon: const Icon(Icons.save, size: 20),
-                          label: const Text('Save Configuration',
-                              style: TextStyle(fontSize: 14)),
+                          label: const Text('Save Configuration', style: TextStyle(fontSize: 14)),
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.all(14),
                           ),
@@ -1561,8 +1441,7 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
   }
 
   Widget _buildTableRankCell(dynamic rank, String? iconUrl, bool isMobile) {
-    if (rank == null)
-      return Text('N/A', style: TextStyle(fontSize: isMobile ? 11 : 12));
+    if (rank == null) return Text('N/A', style: TextStyle(fontSize: isMobile ? 11 : 12));
 
     final cleanRank = _cleanRankText(rank.toString());
     final iconSize = isMobile ? 20.0 : 24.0;
@@ -1631,10 +1510,8 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
     return Colors.grey;
   }
 
-  Widget _buildRankCard(String mode, String? rankDisplay, String? tierName,
-      String? iconUrl, bool isMobile) {
-    final cleanRank =
-        rankDisplay != null ? _cleanRankText(rankDisplay) : 'Unranked';
+  Widget _buildRankCard(String mode, String? rankDisplay, String? tierName, String? iconUrl, bool isMobile) {
+    final cleanRank = rankDisplay != null ? _cleanRankText(rankDisplay) : 'Unranked';
     final color = _getRankColor(tierName);
 
     final iconSize = isMobile ? 40.0 : 50.0;

@@ -50,9 +50,7 @@ class _CogCardState extends State<CogCard> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
-          color: widget.cog.status == CogStatus.loaded
-              ? categoryColor.withOpacity(0.3)
-              : Colors.transparent,
+          color: widget.cog.status == CogStatus.loaded ? categoryColor.withOpacity(0.3) : Colors.transparent,
           width: 2,
         ),
       ),
@@ -102,18 +100,16 @@ class _CogCardState extends State<CogCard> {
                       children: [
                         Text(
                           widget.cog.name,
-                          style:
-                              Theme.of(context).textTheme.titleLarge?.copyWith(
-                                    fontSize: widget.isMobile ? 18 : 20,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                fontSize: widget.isMobile ? 18 : 20,
+                                fontWeight: FontWeight.w600,
+                              ),
                         ),
                         const SizedBox(height: 4),
                         Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 2),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                               decoration: BoxDecoration(
                                 color: categoryColor.withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(8),
@@ -158,8 +154,7 @@ class _CogCardState extends State<CogCard> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Description
-                  if (widget.cog.description != null &&
-                      widget.cog.description!.isNotEmpty)
+                  if (widget.cog.description != null && widget.cog.description!.isNotEmpty)
                     Text(
                       widget.cog.description!,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -173,17 +168,14 @@ class _CogCardState extends State<CogCard> {
                   if (widget.cog.features.isNotEmpty) ...[
                     SizedBox(height: widget.isMobile ? 12 : 16),
                     InkWell(
-                      onTap: () =>
-                          setState(() => _showFeatures = !_showFeatures),
+                      onTap: () => setState(() => _showFeatures = !_showFeatures),
                       borderRadius: BorderRadius.circular(8),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 4),
                         child: Row(
                           children: [
                             Icon(
-                              _showFeatures
-                                  ? Icons.expand_less
-                                  : Icons.expand_more,
+                              _showFeatures ? Icons.expand_less : Icons.expand_more,
                               size: 20,
                               color: Colors.grey[600],
                             ),
@@ -207,8 +199,7 @@ class _CogCardState extends State<CogCard> {
                         runSpacing: 6,
                         children: widget.cog.features.map((feature) {
                           return Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 6),
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                             decoration: BoxDecoration(
                               color: colorScheme.surfaceContainerHighest,
                               borderRadius: BorderRadius.circular(8),
@@ -393,8 +384,7 @@ class _CogCardState extends State<CogCard> {
         ? OutlinedButton.icon(
             onPressed: onPressed,
             icon: Icon(icon, size: widget.isMobile ? 16 : 18),
-            label: Text(label,
-                style: TextStyle(fontSize: widget.isMobile ? 13 : 14)),
+            label: Text(label, style: TextStyle(fontSize: widget.isMobile ? 13 : 14)),
             style: OutlinedButton.styleFrom(
               padding: EdgeInsets.symmetric(
                 horizontal: widget.isMobile ? 12 : 16,
@@ -406,8 +396,7 @@ class _CogCardState extends State<CogCard> {
         : ElevatedButton.icon(
             onPressed: onPressed,
             icon: Icon(icon, size: widget.isMobile ? 16 : 18),
-            label: Text(label,
-                style: TextStyle(fontSize: widget.isMobile ? 13 : 14)),
+            label: Text(label, style: TextStyle(fontSize: widget.isMobile ? 13 : 14)),
             style: ElevatedButton.styleFrom(
               backgroundColor: color,
               foregroundColor: Colors.white,

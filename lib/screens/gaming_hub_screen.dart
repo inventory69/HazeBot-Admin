@@ -24,8 +24,7 @@ class _GamingHubScreenState extends State<GamingHubScreen> {
   bool get _canSendRequest {
     if (_lastRequestTime == null) return true;
     final timeSinceLastRequest = DateTime.now().difference(_lastRequestTime!);
-    return timeSinceLastRequest.inSeconds >=
-        300; // 5 minutes (300 seconds) cooldown
+    return timeSinceLastRequest.inSeconds >= 300; // 5 minutes (300 seconds) cooldown
   }
 
   int get _remainingCooldown {
@@ -100,8 +99,7 @@ class _GamingHubScreenState extends State<GamingHubScreen> {
       if (_searchQuery.isNotEmpty) {
         final query = _searchQuery.toLowerCase();
         final username = (member['username'] as String?)?.toLowerCase() ?? '';
-        final displayName =
-            (member['display_name'] as String?)?.toLowerCase() ?? '';
+        final displayName = (member['display_name'] as String?)?.toLowerCase() ?? '';
         if (!username.contains(query) && !displayName.contains(query)) {
           return false;
         }
@@ -155,12 +153,9 @@ class _GamingHubScreenState extends State<GamingHubScreen> {
                   children: [
                     CircleAvatar(
                       radius: 20,
-                      backgroundImage: targetMember['avatar_url'] != null
-                          ? NetworkImage(targetMember['avatar_url'])
-                          : null,
-                      child: targetMember['avatar_url'] == null
-                          ? const Icon(Icons.person)
-                          : null,
+                      backgroundImage:
+                          targetMember['avatar_url'] != null ? NetworkImage(targetMember['avatar_url']) : null,
+                      child: targetMember['avatar_url'] == null ? const Icon(Icons.person) : null,
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -246,8 +241,7 @@ class _GamingHubScreenState extends State<GamingHubScreen> {
                 : () async {
                     if (gameController.text.trim().isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text('Please enter a game name')),
+                        const SnackBar(content: Text('Please enter a game name')),
                       );
                       return;
                     }
@@ -260,8 +254,7 @@ class _GamingHubScreenState extends State<GamingHubScreen> {
                     );
                   },
             icon: const Icon(Icons.send),
-            label:
-                Text(_canSendRequest ? 'Send Request' : _cooldownDisplayTime),
+            label: Text(_canSendRequest ? 'Send Request' : _cooldownDisplayTime),
             style: FilledButton.styleFrom(
               backgroundColor: _canSendRequest ? Colors.green : null,
             ),
@@ -271,15 +264,13 @@ class _GamingHubScreenState extends State<GamingHubScreen> {
     );
   }
 
-  Future<void> _sendGameRequest(
-      String targetUserId, String gameName, String message) async {
+  Future<void> _sendGameRequest(String targetUserId, String gameName, String message) async {
     // Check cooldown
     if (!_canSendRequest) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-                '⏰ Please wait $_cooldownDisplayTime before sending another game request'),
+            content: Text('⏰ Please wait $_cooldownDisplayTime before sending another game request'),
             backgroundColor: Colors.orange,
           ),
         );
@@ -367,8 +358,8 @@ class _GamingHubScreenState extends State<GamingHubScreen> {
         statusColor = Colors.grey;
     }
 
-    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh !=
-        ThemeData.light().colorScheme.surfaceContainerHigh;
+    final isMonet =
+        Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
     final cardColor = isMonet
         ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
         : Theme.of(context).colorScheme.surface;
@@ -385,8 +376,7 @@ class _GamingHubScreenState extends State<GamingHubScreen> {
           if (!_canSendRequest) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(
-                    '⏰ Please wait $_cooldownDisplayTime before sending another game request'),
+                content: Text('⏰ Please wait $_cooldownDisplayTime before sending another game request'),
                 backgroundColor: Colors.orange,
               ),
             );
@@ -404,12 +394,8 @@ class _GamingHubScreenState extends State<GamingHubScreen> {
                 children: [
                   CircleAvatar(
                     radius: isMobile ? 24 : 28,
-                    backgroundImage: member['avatar_url'] != null
-                        ? NetworkImage(member['avatar_url'])
-                        : null,
-                    child: member['avatar_url'] == null
-                        ? const Icon(Icons.person)
-                        : null,
+                    backgroundImage: member['avatar_url'] != null ? NetworkImage(member['avatar_url']) : null,
+                    child: member['avatar_url'] == null ? const Icon(Icons.person) : null,
                   ),
                   Positioned(
                     right: 0,
@@ -683,9 +669,7 @@ class _GamingHubScreenState extends State<GamingHubScreen> {
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              _searchQuery.isEmpty
-                                  ? 'No members found'
-                                  : 'No members match your search',
+                              _searchQuery.isEmpty ? 'No members found' : 'No members match your search',
                               style: TextStyle(
                                 fontSize: 16,
                                 color: Colors.grey[600],

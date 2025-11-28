@@ -28,11 +28,7 @@ class WebSocketService {
 
       _socket = IO.io(
         wsUrl,
-        IO.OptionBuilder()
-            .setTransports(['websocket'])
-            .disableAutoConnect()
-            .setExtraHeaders({'foo': 'bar'})
-            .build(),
+        IO.OptionBuilder().setTransports(['websocket']).disableAutoConnect().setExtraHeaders({'foo': 'bar'}).build(),
       );
 
       _socket!.onConnect((_) {
@@ -109,8 +105,7 @@ class WebSocketService {
   }
 
   /// Listen for ticket updates
-  void onTicketUpdate(
-      String ticketId, Function(Map<String, dynamic>) callback) {
+  void onTicketUpdate(String ticketId, Function(Map<String, dynamic>) callback) {
     if (!_ticketListeners.containsKey(ticketId)) {
       _ticketListeners[ticketId] = [];
     }
@@ -119,8 +114,7 @@ class WebSocketService {
   }
 
   /// Remove ticket update listener
-  void removeTicketListener(
-      String ticketId, Function(Map<String, dynamic>) callback) {
+  void removeTicketListener(String ticketId, Function(Map<String, dynamic>) callback) {
     if (_ticketListeners.containsKey(ticketId)) {
       _ticketListeners[ticketId]!.remove(callback);
       if (_ticketListeners[ticketId]!.isEmpty) {

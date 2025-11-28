@@ -16,8 +16,7 @@ class TicketsScreen extends StatefulWidget {
   State<TicketsScreen> createState() => _TicketsScreenState();
 }
 
-class _TicketsScreenState extends State<TicketsScreen>
-    with SingleTickerProviderStateMixin {
+class _TicketsScreenState extends State<TicketsScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   @override
@@ -58,15 +57,13 @@ class _TicketsScreenState extends State<TicketsScreen>
   Future<void> _checkAndRequestNotificationPermission() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final hasAskedBefore =
-          prefs.getBool('notification_permission_asked') ?? false;
+      final hasAskedBefore = prefs.getBool('notification_permission_asked') ?? false;
 
       if (!hasAskedBefore) {
         final notificationService = NotificationService();
 
         if (!notificationService.hasPermission) {
-          debugPrint(
-              '📱 First time opening tickets, requesting notification permission...');
+          debugPrint('📱 First time opening tickets, requesting notification permission...');
 
           // Show dialog explaining why we need permission
           if (!mounted) return;
@@ -95,14 +92,11 @@ class _TicketsScreenState extends State<TicketsScreen>
           );
 
           if (shouldAsk == true && mounted) {
-            final granted =
-                await notificationService.requestPermissionAndRegister();
+            final granted = await notificationService.requestPermissionAndRegister();
 
             if (granted) {
-              final authService =
-                  Provider.of<AuthService>(context, listen: false);
-              await notificationService
-                  .registerWithBackend(authService.apiService);
+              final authService = Provider.of<AuthService>(context, listen: false);
+              await notificationService.registerWithBackend(authService.apiService);
 
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -339,9 +333,7 @@ class _MyTicketsTabState extends State<_MyTicketsTab> {
       selectedColor: colorScheme.primaryContainer,
       checkmarkColor: colorScheme.onPrimaryContainer,
       labelStyle: TextStyle(
-        color: isSelected
-            ? colorScheme.onPrimaryContainer
-            : colorScheme.onSurfaceVariant,
+        color: isSelected ? colorScheme.onPrimaryContainer : colorScheme.onSurfaceVariant,
         fontSize: 13,
       ),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
@@ -349,17 +341,12 @@ class _MyTicketsTabState extends State<_MyTicketsTab> {
     );
   }
 
-  Widget _buildTicketCard(
-      Ticket ticket, ColorScheme colorScheme, ThemeData theme) {
-    final statusColor =
-        ticket.status.toLowerCase() == 'open' ? Colors.green : Colors.grey;
+  Widget _buildTicketCard(Ticket ticket, ColorScheme colorScheme, ThemeData theme) {
+    final statusColor = ticket.status.toLowerCase() == 'open' ? Colors.green : Colors.grey;
 
     // Use harmonized accent color for cards (same as admin screen)
-    final isMonet = colorScheme.surfaceContainerHigh !=
-        ThemeData.light().colorScheme.surfaceContainerHigh;
-    final cardColor = isMonet
-        ? colorScheme.primaryContainer.withOpacity(0.18)
-        : colorScheme.surface;
+    final isMonet = colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
+    final cardColor = isMonet ? colorScheme.primaryContainer.withOpacity(0.18) : colorScheme.surface;
 
     return Card(
       color: cardColor,
@@ -401,10 +388,8 @@ class _MyTicketsTabState extends State<_MyTicketsTab> {
                               child: Center(
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  value: loadingProgress.expectedTotalBytes !=
-                                          null
-                                      ? loadingProgress.cumulativeBytesLoaded /
-                                          loadingProgress.expectedTotalBytes!
+                                  value: loadingProgress.expectedTotalBytes != null
+                                      ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
                                       : null,
                                 ),
                               ),
@@ -425,8 +410,7 @@ class _MyTicketsTabState extends State<_MyTicketsTab> {
                     ),
                   const SizedBox(width: 8),
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: statusColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(4),
@@ -456,8 +440,7 @@ class _MyTicketsTabState extends State<_MyTicketsTab> {
                   ),
                   const SizedBox(width: 8),
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: colorScheme.primaryContainer,
                       borderRadius: BorderRadius.circular(4),
@@ -473,9 +456,7 @@ class _MyTicketsTabState extends State<_MyTicketsTab> {
                   ),
                   const Spacer(),
                   Icon(
-                    ticket.status.toLowerCase() == 'open'
-                        ? Icons.circle
-                        : Icons.check_circle,
+                    ticket.status.toLowerCase() == 'open' ? Icons.circle : Icons.check_circle,
                     color: statusColor,
                     size: 16,
                   ),
@@ -520,9 +501,7 @@ class _MyTicketsTabState extends State<_MyTicketsTab> {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    ticket.createdAt != null
-                        ? timeago.format(DateTime.parse(ticket.createdAt!))
-                        : 'Unknown',
+                    ticket.createdAt != null ? timeago.format(DateTime.parse(ticket.createdAt!)) : 'Unknown',
                     style: TextStyle(
                       fontSize: 12,
                       color: colorScheme.onSurfaceVariant,
@@ -554,15 +533,13 @@ class _MyTicketsTabState extends State<_MyTicketsTab> {
   }
 
   String _extractSubject(String initialMessage) {
-    final subjectMatch =
-        RegExp(r'\*\*Subject:\*\*\s*(.+?)(?:\n|$)').firstMatch(initialMessage);
+    final subjectMatch = RegExp(r'\*\*Subject:\*\*\s*(.+?)(?:\n|$)').firstMatch(initialMessage);
     return subjectMatch?.group(1)?.trim() ?? 'No subject';
   }
 
   String _extractDescription(String initialMessage) {
     final descMatch =
-        RegExp(r'\*\*Description:\*\*\s*\n(.+)', dotAll: true, multiLine: true)
-            .firstMatch(initialMessage);
+        RegExp(r'\*\*Description:\*\*\s*\n(.+)', dotAll: true, multiLine: true).firstMatch(initialMessage);
     return descMatch?.group(1)?.trim() ?? '';
   }
 
@@ -895,8 +872,7 @@ class _TicketDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final statusColor =
-        ticket.status.toLowerCase() == 'open' ? Colors.green : Colors.grey;
+    final statusColor = ticket.status.toLowerCase() == 'open' ? Colors.green : Colors.grey;
 
     return Scaffold(
       appBar: AppBar(
@@ -915,8 +891,7 @@ class _TicketDetailScreen extends StatelessWidget {
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: colorScheme.primaryContainer,
                         borderRadius: BorderRadius.circular(4),
@@ -932,8 +907,7 @@ class _TicketDetailScreen extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: statusColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(4),
@@ -945,9 +919,7 @@ class _TicketDetailScreen extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            ticket.status.toLowerCase() == 'open'
-                                ? Icons.circle
-                                : Icons.check_circle,
+                            ticket.status.toLowerCase() == 'open' ? Icons.circle : Icons.check_circle,
                             color: statusColor,
                             size: 14,
                           ),
@@ -1020,15 +992,13 @@ class _TicketDetailScreen extends StatelessWidget {
   }
 
   String _extractSubject(String initialMessage) {
-    final subjectMatch =
-        RegExp(r'\*\*Subject:\*\*\s*(.+?)(?:\n|$)').firstMatch(initialMessage);
+    final subjectMatch = RegExp(r'\*\*Subject:\*\*\s*(.+?)(?:\n|$)').firstMatch(initialMessage);
     return subjectMatch?.group(1)?.trim() ?? 'No subject';
   }
 
   String _extractDescription(String initialMessage) {
     final descMatch =
-        RegExp(r'\*\*Description:\*\*\s*\n(.+)', dotAll: true, multiLine: true)
-            .firstMatch(initialMessage);
+        RegExp(r'\*\*Description:\*\*\s*\n(.+)', dotAll: true, multiLine: true).firstMatch(initialMessage);
     return descMatch?.group(1)?.trim() ?? '';
   }
 }

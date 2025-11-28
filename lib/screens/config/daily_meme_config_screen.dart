@@ -71,16 +71,13 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
 
           // Load meme sources
           _subreddits = List<String>.from(config['available_subreddits'] ?? []);
-          _lemmyCommunities =
-              List<String>.from(config['available_lemmy'] ?? []);
+          _lemmyCommunities = List<String>.from(config['available_lemmy'] ?? []);
 
           // Only set selected IDs if they exist in the loaded lists
-          if (configChannelId != null &&
-              _channels.any((ch) => ch['id'] == configChannelId)) {
+          if (configChannelId != null && _channels.any((ch) => ch['id'] == configChannelId)) {
             _selectedChannelId = configChannelId;
           }
-          if (configRoleId != null &&
-              _roles.any((r) => r['id'] == configRoleId)) {
+          if (configRoleId != null && _roles.any((r) => r['id'] == configRoleId)) {
             _selectedRoleId = configRoleId;
           }
 
@@ -116,8 +113,7 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
         'enabled': _enabled,
         'hour': int.parse(_hourController.text),
         'minute': int.parse(_minuteController.text),
-        'channel_id':
-            _selectedChannelId != null ? int.parse(_selectedChannelId!) : null,
+        'channel_id': _selectedChannelId != null ? int.parse(_selectedChannelId!) : null,
         'role_id': // Changed from ping_role_id to match backend
             _selectedRoleId != null ? int.parse(_selectedRoleId!) : null,
         'allow_nsfw': _allowNsfw,
@@ -324,11 +320,8 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final isMonet = colorScheme.surfaceContainerHigh !=
-        ThemeData.light().colorScheme.surfaceContainerHigh;
-    final cardColor = isMonet
-        ? colorScheme.primaryContainer.withOpacity(0.18)
-        : colorScheme.surface;
+    final isMonet = colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
+    final cardColor = isMonet ? colorScheme.primaryContainer.withOpacity(0.18) : colorScheme.surface;
 
     return _isLoading
         ? const Center(child: CircularProgressIndicator())
@@ -347,9 +340,7 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                       // Header
                       Row(
                         children: [
-                          Icon(Icons.schedule_send,
-                              size: isMobile ? 28 : 32,
-                              color: colorScheme.primary),
+                          Icon(Icons.schedule_send, size: isMobile ? 28 : 32, color: colorScheme.primary),
                           SizedBox(width: isMobile ? 8 : 12),
                           Expanded(
                             child: Column(
@@ -357,19 +348,13 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                               children: [
                                 Text(
                                   'Daily Meme Configuration',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .headlineLarge
-                                      ?.copyWith(
+                                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                                         fontSize: isMobile ? 24 : null,
                                       ),
                                 ),
                                 Text(
                                   'Configure when and how daily memes are automatically posted',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodyMedium
-                                      ?.copyWith(
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                         color: colorScheme.onSurfaceVariant,
                                         fontSize: isMobile ? 13 : null,
                                       ),
@@ -390,27 +375,20 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                               : Colors.blue.withOpacity(0.08),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color: isMonet
-                                ? colorScheme.secondary.withOpacity(0.25)
-                                : Colors.blue.withOpacity(0.18),
+                            color: isMonet ? colorScheme.secondary.withOpacity(0.25) : Colors.blue.withOpacity(0.18),
                           ),
                         ),
                         child: Row(
                           children: [
                             Icon(Icons.info_outline,
-                                size: isMobile ? 18 : 20,
-                                color: isMonet
-                                    ? colorScheme.secondary
-                                    : Colors.blue[700]),
+                                size: isMobile ? 18 : 20, color: isMonet ? colorScheme.secondary : Colors.blue[700]),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 'Set up automatic meme posting schedule and source configuration.',
                                 style: TextStyle(
                                   fontSize: isMobile ? 11 : 12,
-                                  color: isMonet
-                                      ? colorScheme.secondary
-                                      : Colors.blue[700],
+                                  color: isMonet ? colorScheme.secondary : Colors.blue[700],
                                 ),
                               ),
                             ),
@@ -430,22 +408,18 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                           title: Row(
                             children: [
                               Icon(Icons.power_settings_new,
-                                  color: _enabled ? Colors.green : Colors.grey,
-                                  size: isMobile ? 20 : 24),
+                                  color: _enabled ? Colors.green : Colors.grey, size: isMobile ? 20 : 24),
                               const SizedBox(width: 8),
                               Flexible(
                                 child: Text('Enable Daily Memes',
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                        fontSize: isMobile ? 14 : null)),
+                                    overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: isMobile ? 14 : null)),
                               ),
                             ],
                           ),
-                          subtitle: Text('Automatically post memes daily',
-                              style: TextStyle(fontSize: isMobile ? 12 : null)),
+                          subtitle:
+                              Text('Automatically post memes daily', style: TextStyle(fontSize: isMobile ? 12 : null)),
                           value: _enabled,
-                          onChanged: (value) =>
-                              setState(() => _enabled = value),
+                          onChanged: (value) => setState(() => _enabled = value),
                         ),
                       ),
                       SizedBox(height: isMobile ? 12 : 16),
@@ -464,16 +438,11 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                             children: [
                               Row(
                                 children: [
-                                  Icon(Icons.schedule,
-                                      color: Colors.orange,
-                                      size: isMobile ? 20 : 24),
+                                  Icon(Icons.schedule, color: Colors.orange, size: isMobile ? 20 : 24),
                                   const SizedBox(width: 8),
                                   Text(
                                     'Posting Time',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleMedium
-                                        ?.copyWith(
+                                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                           fontSize: isMobile ? 16 : null,
                                         ),
                                   ),
@@ -485,13 +454,11 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                                 padding: EdgeInsets.all(isMobile ? 10 : 12),
                                 decoration: BoxDecoration(
                                   color: isMonet
-                                      ? colorScheme.secondaryContainer
-                                          .withOpacity(0.15)
+                                      ? colorScheme.secondaryContainer.withOpacity(0.15)
                                       : Colors.blue.withOpacity(0.08),
                                   border: Border.all(
                                     color: isMonet
-                                        ? colorScheme.secondary
-                                            .withOpacity(0.25)
+                                        ? colorScheme.secondary.withOpacity(0.25)
                                         : Colors.blue.withOpacity(0.18),
                                   ),
                                   borderRadius: BorderRadius.circular(8),
@@ -500,19 +467,14 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Icon(Icons.info_outline,
-                                        size: isMobile ? 18 : 20,
-                                        color: isMonet
-                                            ? colorScheme.secondary
-                                            : Colors.blue),
+                                        size: isMobile ? 18 : 20, color: isMonet ? colorScheme.secondary : Colors.blue),
                                     const SizedBox(width: 8),
                                     Expanded(
                                       child: Text(
                                         'The daily meme will run once per day at the specified time. If you change the time to earlier than the current time, it will run tomorrow at that time.',
                                         style: TextStyle(
                                           fontSize: isMobile ? 12 : 13,
-                                          color: isMonet
-                                              ? colorScheme.secondary
-                                              : Colors.blue.shade900,
+                                          color: isMonet ? colorScheme.secondary : Colors.blue.shade900,
                                         ),
                                       ),
                                     ),
@@ -539,9 +501,7 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                                           return 'Required';
                                         }
                                         final hour = int.tryParse(value);
-                                        if (hour == null ||
-                                            hour < 0 ||
-                                            hour > 23) {
+                                        if (hour == null || hour < 0 || hour > 23) {
                                           return 'Must be 0-23';
                                         }
                                         return null;
@@ -566,9 +526,7 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                                           return 'Required';
                                         }
                                         final minute = int.tryParse(value);
-                                        if (minute == null ||
-                                            minute < 0 ||
-                                            minute > 59) {
+                                        if (minute == null || minute < 0 || minute > 59) {
                                           return 'Must be 0-59';
                                         }
                                         return null;
@@ -597,18 +555,13 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                             children: [
                               Row(
                                 children: [
-                                  Icon(Icons.tag,
-                                      color: Colors.purple,
-                                      size: isMobile ? 20 : 24),
+                                  Icon(Icons.tag, color: Colors.purple, size: isMobile ? 20 : 24),
                                   const SizedBox(width: 8),
                                   Flexible(
                                     child: Text(
                                       'Channel & Role Settings',
                                       overflow: TextOverflow.ellipsis,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleMedium
-                                          ?.copyWith(
+                                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                             fontSize: isMobile ? 16 : null,
                                           ),
                                     ),
@@ -625,18 +578,14 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                                   prefixIcon: Icon(Icons.tag),
                                 ),
                                 items: _channels.map((channel) {
-                                  final category = channel['category'] != null
-                                      ? '${channel['category']} / '
-                                      : '';
+                                  final category = channel['category'] != null ? '${channel['category']} / ' : '';
                                   return DropdownMenuItem<String>(
                                     value: channel['id'],
                                     child: Row(
                                       children: [
                                         Flexible(
-                                          child: Text(
-                                              '$category#${channel['name']}',
-                                              overflow: TextOverflow.ellipsis,
-                                              maxLines: 1),
+                                          child: Text('$category#${channel['name']}',
+                                              overflow: TextOverflow.ellipsis, maxLines: 1),
                                         ),
                                       ],
                                     ),
@@ -667,16 +616,12 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                                 items: [
                                   const DropdownMenuItem<String>(
                                     value: null,
-                                    child: Text('None',
-                                        overflow: TextOverflow.ellipsis,
-                                        maxLines: 1),
+                                    child: Text('None', overflow: TextOverflow.ellipsis, maxLines: 1),
                                   ),
                                   ..._roles.map((role) {
                                     return DropdownMenuItem<String>(
                                       value: role['id'],
-                                      child: Text('@${role['name']}',
-                                          overflow: TextOverflow.ellipsis,
-                                          maxLines: 1),
+                                      child: Text('@${role['name']}', overflow: TextOverflow.ellipsis, maxLines: 1),
                                     );
                                   }),
                                 ],
@@ -701,11 +646,9 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                         ),
                         child: SwitchListTile(
                           title: const Text('Allow NSFW Content'),
-                          subtitle:
-                              const Text('Include NSFW memes in selection'),
+                          subtitle: const Text('Include NSFW memes in selection'),
                           value: _allowNsfw,
-                          onChanged: (value) =>
-                              setState(() => _allowNsfw = value),
+                          onChanged: (value) => setState(() => _allowNsfw = value),
                         ),
                       ),
                       SizedBox(height: isMobile ? 12 : 16),
@@ -724,28 +667,21 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                             children: [
                               Row(
                                 children: [
-                                  Icon(Icons.source,
-                                      color: Colors.red,
-                                      size: isMobile ? 20 : 24),
+                                  Icon(Icons.source, color: Colors.red, size: isMobile ? 20 : 24),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
                                       'Meme Sources',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleMedium
-                                          ?.copyWith(
+                                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                             fontSize: isMobile ? 16 : null,
                                           ),
                                     ),
                                   ),
                                   Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 4),
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                     decoration: BoxDecoration(
                                       color: isMonet
-                                          ? colorScheme.secondaryContainer
-                                              .withOpacity(0.15)
+                                          ? colorScheme.secondaryContainer.withOpacity(0.15)
                                           : Colors.blue.withOpacity(0.08),
                                       borderRadius: BorderRadius.circular(12),
                                     ),
@@ -753,9 +689,7 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                                       '${_subreddits.length + _lemmyCommunities.length} total',
                                       style: TextStyle(
                                         fontSize: isMobile ? 11 : 12,
-                                        color: isMonet
-                                            ? colorScheme.secondary
-                                            : Colors.blue[700],
+                                        color: isMonet ? colorScheme.secondary : Colors.blue[700],
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
@@ -773,9 +707,7 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                                     child: Text(
                                       'Subreddits (${_subreddits.length})',
                                       overflow: TextOverflow.ellipsis,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleSmall,
+                                      style: Theme.of(context).textTheme.titleSmall,
                                     ),
                                   ),
                                   const Spacer(),
@@ -797,9 +729,7 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                                   runSpacing: 8,
                                   children: _subreddits.map((sub) {
                                     return Chip(
-                                      label: Text('r/$sub',
-                                          overflow: TextOverflow.ellipsis,
-                                          maxLines: 1),
+                                      label: Text('r/$sub', overflow: TextOverflow.ellipsis, maxLines: 1),
                                       onDeleted: () {
                                         setState(() => _subreddits.remove(sub));
                                       },
@@ -817,9 +747,7 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                                     child: Text(
                                       'Lemmy Communities (${_lemmyCommunities.length})',
                                       overflow: TextOverflow.ellipsis,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleSmall,
+                                      style: Theme.of(context).textTheme.titleSmall,
                                     ),
                                   ),
                                   const Spacer(),
@@ -833,8 +761,7 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                               if (_lemmyCommunities.isEmpty)
                                 const Padding(
                                   padding: EdgeInsets.symmetric(vertical: 8.0),
-                                  child:
-                                      Text('No Lemmy communities configured'),
+                                  child: Text('No Lemmy communities configured'),
                                 )
                               else
                                 Wrap(
@@ -842,12 +769,9 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                                   runSpacing: 8,
                                   children: _lemmyCommunities.map((community) {
                                     return Chip(
-                                      label: Text(community,
-                                          overflow: TextOverflow.ellipsis,
-                                          maxLines: 1),
+                                      label: Text(community, overflow: TextOverflow.ellipsis, maxLines: 1),
                                       onDeleted: () {
-                                        setState(() => _lemmyCommunities
-                                            .remove(community));
+                                        setState(() => _lemmyCommunities.remove(community));
                                       },
                                     );
                                   }).toList(),
@@ -882,10 +806,7 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                                 const SizedBox(width: 8),
                                 Text(
                                   'Test Daily Meme',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleMedium
-                                      ?.copyWith(
+                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                         fontWeight: FontWeight.bold,
                                         fontSize: isMobile ? 14 : null,
                                       ),
@@ -895,10 +816,7 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                             SizedBox(height: isMobile ? 8 : 12),
                             Text(
                               'Test the daily meme posting function immediately. This bypasses the schedule and posts a meme to Discord right now.',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
-                                  ?.copyWith(
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                     fontSize: isMobile ? 11 : 12,
                                     color: colorScheme.onSurfaceVariant,
                                   ),
@@ -907,8 +825,7 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                             SizedBox(
                               width: isMobile ? double.infinity : null,
                               child: FilledButton.tonalIcon(
-                                onPressed:
-                                    _isTestingDailyMeme ? null : _testDailyMeme,
+                                onPressed: _isTestingDailyMeme ? null : _testDailyMeme,
                                 icon: _isTestingDailyMeme
                                     ? const SizedBox(
                                         width: 16,
@@ -919,11 +836,8 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                                       )
                                     : const Icon(Icons.send, size: 18),
                                 label: Text(
-                                  _isTestingDailyMeme
-                                      ? 'Posting...'
-                                      : 'Post Test Meme',
-                                  style:
-                                      TextStyle(fontSize: isMobile ? 13 : 14),
+                                  _isTestingDailyMeme ? 'Posting...' : 'Post Test Meme',
+                                  style: TextStyle(fontSize: isMobile ? 13 : 14),
                                 ),
                                 style: FilledButton.styleFrom(
                                   backgroundColor: Colors.green,
@@ -940,9 +854,7 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                               Container(
                                 padding: EdgeInsets.all(isMobile ? 8 : 10),
                                 decoration: BoxDecoration(
-                                  color: _testDailyMemeResult!
-                                          .toLowerCase()
-                                          .contains('error')
+                                  color: _testDailyMemeResult!.toLowerCase().contains('error')
                                       ? Colors.red.withOpacity(0.08)
                                       : Colors.green.withOpacity(0.15),
                                   borderRadius: BorderRadius.circular(8),
@@ -950,15 +862,11 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                                 child: Row(
                                   children: [
                                     Icon(
-                                      _testDailyMemeResult!
-                                              .toLowerCase()
-                                              .contains('error')
+                                      _testDailyMemeResult!.toLowerCase().contains('error')
                                           ? Icons.error_outline
                                           : Icons.check_circle_outline,
                                       size: 16,
-                                      color: _testDailyMemeResult!
-                                              .toLowerCase()
-                                              .contains('error')
+                                      color: _testDailyMemeResult!.toLowerCase().contains('error')
                                           ? Colors.red
                                           : Colors.green,
                                     ),
@@ -970,9 +878,7 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                                         maxLines: 2,
                                         style: TextStyle(
                                           fontSize: isMobile ? 11 : 12,
-                                          color: _testDailyMemeResult!
-                                                  .toLowerCase()
-                                                  .contains('error')
+                                          color: _testDailyMemeResult!.toLowerCase().contains('error')
                                               ? Colors.red[700]
                                               : Colors.green[700],
                                         ),
@@ -996,8 +902,7 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                               child: OutlinedButton.icon(
                                 onPressed: _isLoading ? null : _resetToDefaults,
                                 icon: const Icon(Icons.restore, size: 20),
-                                label: const Text('Reset to Defaults',
-                                    style: TextStyle(fontSize: 14)),
+                                label: const Text('Reset to Defaults', style: TextStyle(fontSize: 14)),
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: Colors.orange,
                                   padding: const EdgeInsets.all(14),
@@ -1013,12 +918,10 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                                     ? const SizedBox(
                                         width: 14,
                                         height: 14,
-                                        child: CircularProgressIndicator(
-                                            strokeWidth: 2),
+                                        child: CircularProgressIndicator(strokeWidth: 2),
                                       )
                                     : const Icon(Icons.save, size: 20),
-                                label: const Text('Save Configuration',
-                                    style: TextStyle(fontSize: 14)),
+                                label: const Text('Save Configuration', style: TextStyle(fontSize: 14)),
                                 style: ElevatedButton.styleFrom(
                                   padding: const EdgeInsets.all(14),
                                 ),
@@ -1048,8 +951,7 @@ class _DailyMemeConfigScreenState extends State<DailyMemeConfigScreen> {
                                     ? const SizedBox(
                                         width: 20,
                                         height: 20,
-                                        child: CircularProgressIndicator(
-                                            strokeWidth: 2),
+                                        child: CircularProgressIndicator(strokeWidth: 2),
                                       )
                                     : const Icon(Icons.save),
                                 label: const Text('Save Configuration'),

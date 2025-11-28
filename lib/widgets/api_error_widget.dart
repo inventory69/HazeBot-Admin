@@ -41,9 +41,7 @@ class ApiErrorWidget extends StatelessWidget {
 
             // Secondary message
             Text(
-              isOffline
-                  ? 'The server is taking a siesta.\nCome back when it\'s well rested!'
-                  : message,
+              isOffline ? 'The server is taking a siesta.\nCome back when it\'s well rested!' : message,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                   ),

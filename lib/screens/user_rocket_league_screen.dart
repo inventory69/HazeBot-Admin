@@ -194,6 +194,9 @@ class _UserRocketLeagueScreenState extends State<UserRocketLeagueScreen> {
         _usernameController.text,
       );
 
+      _usernameController.clear();
+      await _loadAccount();
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -201,8 +204,6 @@ class _UserRocketLeagueScreenState extends State<UserRocketLeagueScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        _usernameController.clear();
-        await _loadAccount();
       }
     } catch (e) {
       if (mounted) {
@@ -344,6 +345,8 @@ class _UserRocketLeagueScreenState extends State<UserRocketLeagueScreen> {
       final authService = Provider.of<AuthService>(context, listen: false);
       await authService.apiService.unlinkUserRLAccount();
 
+      await _loadAccount();
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -351,7 +354,6 @@ class _UserRocketLeagueScreenState extends State<UserRocketLeagueScreen> {
             backgroundColor: Colors.orange,
           ),
         );
-        await _loadAccount();
       }
     } catch (e) {
       if (mounted) {
@@ -458,8 +460,8 @@ class _UserRocketLeagueScreenState extends State<UserRocketLeagueScreen> {
     final tierNames = account['ranks'] as Map<String, dynamic>? ?? {};
     final iconUrls = account['icon_urls'] as Map<String, dynamic>? ?? {};
 
-    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh !=
-        ThemeData.light().colorScheme.surfaceContainerHigh;
+    final isMonet =
+        Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
     final cardColor = isMonet
         ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
         : Theme.of(context).colorScheme.surface;
@@ -576,8 +578,7 @@ class _UserRocketLeagueScreenState extends State<UserRocketLeagueScreen> {
                 children: rankDisplay.entries.map((entry) {
                   final playlist = entry.key;
                   final rank = entry.value as String;
-                  final tierName = tierNames[playlist] as String? ??
-                      _getTierNameFromRank(rank);
+                  final tierName = tierNames[playlist] as String? ?? _getTierNameFromRank(rank);
                   final iconUrl = iconUrls[playlist] as String?;
 
                   return _buildRankCard(
@@ -597,8 +598,8 @@ class _UserRocketLeagueScreenState extends State<UserRocketLeagueScreen> {
   }
 
   Widget _buildLinkFormCard(bool isMobile, double cardPadding) {
-    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh !=
-        ThemeData.light().colorScheme.surfaceContainerHigh;
+    final isMonet =
+        Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
     final cardColor = isMonet
         ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
         : Theme.of(context).colorScheme.surface;
@@ -687,8 +688,7 @@ class _UserRocketLeagueScreenState extends State<UserRocketLeagueScreen> {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.info_outline,
-                        size: isMobile ? 18 : 20, color: Colors.blue[700]),
+                    Icon(Icons.info_outline, size: isMobile ? 18 : 20, color: Colors.blue[700]),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -728,8 +728,8 @@ class _UserRocketLeagueScreenState extends State<UserRocketLeagueScreen> {
   }
 
   Widget _buildTestStatsCard(bool isMobile, double cardPadding) {
-    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh !=
-        ThemeData.light().colorScheme.surfaceContainerHigh;
+    final isMonet =
+        Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
     final cardColor = isMonet
         ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
         : Theme.of(context).colorScheme.surface;
@@ -829,8 +829,7 @@ class _UserRocketLeagueScreenState extends State<UserRocketLeagueScreen> {
                           ),
                         )
                       : const Icon(Icons.search),
-                  label: Text(
-                      _isLoadingStats ? 'Fetching...' : 'Fetch Player Stats'),
+                  label: Text(_isLoadingStats ? 'Fetching...' : 'Fetch Player Stats'),
                   style: FilledButton.styleFrom(
                     backgroundColor: Colors.purple,
                   ),
@@ -923,8 +922,7 @@ class _UserRocketLeagueScreenState extends State<UserRocketLeagueScreen> {
                     ),
                   ),
                 ),
-              if (_testStats!['highest_icon_url'] != null)
-                SizedBox(width: isMobile ? 12 : 16),
+              if (_testStats!['highest_icon_url'] != null) SizedBox(width: isMobile ? 12 : 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1118,10 +1116,8 @@ class _UserRocketLeagueScreenState extends State<UserRocketLeagueScreen> {
         .trim();
   }
 
-  Widget _buildRankCard(String mode, String? rankDisplay, String? tierName,
-      String? iconUrl, bool isMobile) {
-    final cleanRank =
-        rankDisplay != null ? _cleanRankText(rankDisplay) : 'Unranked';
+  Widget _buildRankCard(String mode, String? rankDisplay, String? tierName, String? iconUrl, bool isMobile) {
+    final cleanRank = rankDisplay != null ? _cleanRankText(rankDisplay) : 'Unranked';
     final division = rankDisplay != null ? _extractDivision(rankDisplay) : '';
     final color = _getRankColor(tierName);
 

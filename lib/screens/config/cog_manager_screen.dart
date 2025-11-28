@@ -93,9 +93,7 @@ class _CogManagerScreenState extends State<CogManagerScreen> {
           if (cogIndex != -1) {
             final cog = _cogs[cogIndex];
             // Update the cog status locally
-            final newStatus = action == CogAction.load
-                ? CogStatus.loaded
-                : CogStatus.unloaded;
+            final newStatus = action == CogAction.load ? CogStatus.loaded : CogStatus.unloaded;
             final updatedCog = Cog(
               name: cog.name,
               description: cog.description,
@@ -267,8 +265,7 @@ class _CogManagerScreenState extends State<CogManagerScreen> {
                   '$category ($count)',
                   style: TextStyle(
                     fontSize: isMobile ? 12 : 13,
-                    fontWeight:
-                        isSelected ? FontWeight.bold : FontWeight.normal,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                   ),
                 ),
                 selected: isSelected,
@@ -372,9 +369,7 @@ class _CogManagerScreenState extends State<CogManagerScreen> {
               child: Row(
                 children: [
                   Icon(
-                    _expandedCategories[category]!
-                        ? Icons.expand_less
-                        : Icons.expand_more,
+                    _expandedCategories[category]! ? Icons.expand_less : Icons.expand_more,
                     color: categoryColor,
                     size: isMobile ? 20 : 24,
                   ),
@@ -391,8 +386,7 @@ class _CogManagerScreenState extends State<CogManagerScreen> {
                     ),
                   ),
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: categoryColor.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(12),
@@ -422,17 +416,12 @@ class _CogManagerScreenState extends State<CogManagerScreen> {
               child: CogCard(
                 cog: cog,
                 isMobile: isMobile,
-                onLoad: cog.canLoad
-                    ? () => _performCogAction(cog.name, CogAction.load)
-                    : null,
+                onLoad: cog.canLoad ? () => _performCogAction(cog.name, CogAction.load) : null,
                 // APIServer cannot be unloaded - only reloaded
-                onUnload:
-                    (cog.canUnload && cog.name.toLowerCase() != 'apiserver')
-                        ? () => _performCogAction(cog.name, CogAction.unload)
-                        : null,
-                onReload: cog.canReload
-                    ? () => _performCogAction(cog.name, CogAction.reload)
+                onUnload: (cog.canUnload && cog.name.toLowerCase() != 'apiserver')
+                    ? () => _performCogAction(cog.name, CogAction.unload)
                     : null,
+                onReload: cog.canReload ? () => _performCogAction(cog.name, CogAction.reload) : null,
                 onShowLogs: () => _showCogLogs(cog.name),
               ),
             ),
@@ -473,15 +462,11 @@ class _CogManagerScreenState extends State<CogManagerScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.error,
-                                size: isMobile ? 48 : 64, color: Colors.red),
+                            Icon(Icons.error, size: isMobile ? 48 : 64, color: Colors.red),
                             SizedBox(height: isMobile ? 12 : 16),
                             Text(
                               'Error loading cogs',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleLarge
-                                  ?.copyWith(fontSize: isMobile ? 18 : null),
+                              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: isMobile ? 18 : null),
                             ),
                             const SizedBox(height: 8),
                             Text(
@@ -507,8 +492,7 @@ class _CogManagerScreenState extends State<CogManagerScreen> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.extension_off,
-                                  size: isMobile ? 48 : 64, color: Colors.grey),
+                              Icon(Icons.extension_off, size: isMobile ? 48 : 64, color: Colors.grey),
                               SizedBox(height: isMobile ? 12 : 16),
                               Text(
                                 'No cogs found',
@@ -530,20 +514,14 @@ class _CogManagerScreenState extends State<CogManagerScreen> {
                               children: [
                                 Text(
                                   'Bot Cogs',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .headlineLarge
-                                      ?.copyWith(
+                                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                                         fontSize: isMobile ? 24 : null,
                                       ),
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
                                   'Manage bot modules and extensions',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodyMedium
-                                      ?.copyWith(
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                         color: Colors.grey[600],
                                         fontSize: isMobile ? 13 : null,
                                       ),

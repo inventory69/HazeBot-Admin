@@ -8,12 +8,10 @@ class NotificationSettingsScreen extends StatefulWidget {
   const NotificationSettingsScreen({super.key});
 
   @override
-  State<NotificationSettingsScreen> createState() =>
-      _NotificationSettingsScreenState();
+  State<NotificationSettingsScreen> createState() => _NotificationSettingsScreenState();
 }
 
-class _NotificationSettingsScreenState
-    extends State<NotificationSettingsScreen> {
+class _NotificationSettingsScreenState extends State<NotificationSettingsScreen> {
   bool _isLoading = true;
   bool _isSaving = false;
   String? _errorMessage;
@@ -38,8 +36,7 @@ class _NotificationSettingsScreenState
 
     // Delay to ensure context is fully available
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      debugPrint(
-          '🎬 [NotificationSettings] PostFrameCallback - calling _loadSettings()');
+      debugPrint('🎬 [NotificationSettings] PostFrameCallback - calling _loadSettings()');
       _loadSettings();
     });
   }
@@ -59,8 +56,7 @@ class _NotificationSettingsScreenState
     debugPrint('🔧 [NotificationSettings] Loading state set');
 
     try {
-      debugPrint(
-          '🔧 [NotificationSettings] Getting DiscordAuthService from context...');
+      debugPrint('🔧 [NotificationSettings] Getting DiscordAuthService from context...');
       final authService = context.read<DiscordAuthService>();
       debugPrint('✅ [NotificationSettings] Got DiscordAuthService');
 
@@ -72,26 +68,21 @@ class _NotificationSettingsScreenState
       final userInfo = authService.userInfo;
       _isAdmin = userInfo?['roles']?.contains('admin') ?? false;
       _isModerator = userInfo?['roles']?.contains('moderator') ?? false;
-      debugPrint(
-          '✅ [NotificationSettings] User role: admin=$_isAdmin, moderator=$_isModerator');
+      debugPrint('✅ [NotificationSettings] User role: admin=$_isAdmin, moderator=$_isModerator');
 
       // Check if permission already granted
       final hasPermission = notificationService.hasPermission;
       if (!hasPermission) {
-        debugPrint(
-            '📱 [NotificationSettings] Notification permission not granted yet');
+        debugPrint('📱 [NotificationSettings] Notification permission not granted yet');
       }
 
       debugPrint('🔧 [NotificationSettings] Loading settings from backend...');
-      final settings = await notificationService
-          .getNotificationSettings(authService.apiService);
-      debugPrint(
-          '✅ [NotificationSettings] Got settings from backend: $settings');
+      final settings = await notificationService.getNotificationSettings(authService.apiService);
+      debugPrint('✅ [NotificationSettings] Got settings from backend: $settings');
 
       if (settings != null) {
         if (!mounted) {
-          debugPrint(
-              '⚠️ [NotificationSettings] Widget unmounted after loading, aborting setState');
+          debugPrint('⚠️ [NotificationSettings] Widget unmounted after loading, aborting setState');
           return;
         }
 
@@ -111,8 +102,7 @@ class _NotificationSettingsScreenState
           _errorMessage = 'Failed to load notification settings';
           _isLoading = false;
         });
-        debugPrint(
-            '⚠️ [NotificationSettings] No settings returned from backend');
+        debugPrint('⚠️ [NotificationSettings] No settings returned from backend');
       }
     } catch (e, stackTrace) {
       debugPrint('❌ [NotificationSettings] Error loading settings: $e');
@@ -141,32 +131,25 @@ class _NotificationSettingsScreenState
       // Handle master toggle for notifications
       if (_notificationsEnabled) {
         // User wants notifications - check if any notification is enabled
-        final anyEnabled = _ticketNewMessages ||
-            _ticketMentions ||
-            _ticketCreated ||
-            _ticketAssigned;
+        final anyEnabled = _ticketNewMessages || _ticketMentions || _ticketCreated || _ticketAssigned;
 
         // Request permission if not granted and user wants notifications
         if (anyEnabled && !notificationService.hasPermission) {
-          debugPrint(
-              '📱 User enabling notifications, requesting permission...');
+          debugPrint('📱 User enabling notifications, requesting permission...');
 
-          final permissionGranted =
-              await notificationService.requestPermissionAndRegister();
+          final permissionGranted = await notificationService.requestPermissionAndRegister();
 
           if (!permissionGranted) {
             setState(() {
               _isSaving = false;
-              _errorMessage =
-                  'Notification permission denied. Please enable notifications in system settings.';
+              _errorMessage = 'Notification permission denied. Please enable notifications in system settings.';
             });
             return;
           }
         }
 
         // Register/Re-register token with backend
-        if (notificationService.hasPermission &&
-            notificationService.fcmToken != null) {
+        if (notificationService.hasPermission && notificationService.fcmToken != null) {
           debugPrint('📱 Registering FCM token with backend...');
           await notificationService.registerWithBackend(authService.apiService);
         }
@@ -217,18 +200,14 @@ class _NotificationSettingsScreenState
 
   @override
   Widget build(BuildContext context) {
-    debugPrint(
-        '🎨 [NotificationSettings] build() called - isLoading=$_isLoading, error=$_errorMessage');
+    debugPrint('🎨 [NotificationSettings] build() called - isLoading=$_isLoading, error=$_errorMessage');
 
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
     // Use harmonized accent color for cards (same as tickets screen)
-    final isMonet = colorScheme.surfaceContainerHigh !=
-        ThemeData.light().colorScheme.surfaceContainerHigh;
-    final cardColor = isMonet
-        ? colorScheme.primaryContainer.withOpacity(0.18)
-        : colorScheme.surface;
+    final isMonet = colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
+    final cardColor = isMonet ? colorScheme.primaryContainer.withOpacity(0.18) : colorScheme.surface;
 
     return Scaffold(
       appBar: AppBar(
@@ -364,12 +343,8 @@ class _NotificationSettingsScreenState
                         ),
                       ),
                       secondary: Icon(
-                        _notificationsEnabled
-                            ? Icons.notifications_active
-                            : Icons.notifications_off,
-                        color: _notificationsEnabled
-                            ? colorScheme.primary
-                            : colorScheme.onSurfaceVariant,
+                        _notificationsEnabled ? Icons.notifications_active : Icons.notifications_off,
+                        color: _notificationsEnabled ? colorScheme.primary : colorScheme.onSurfaceVariant,
                         size: 32,
                       ),
                     ),

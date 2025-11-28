@@ -12,8 +12,7 @@ class TestScreen extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.science,
-                  size: 32, color: Theme.of(context).colorScheme.primary),
+              Icon(Icons.science, size: 32, color: Theme.of(context).colorScheme.primary),
               const SizedBox(width: 12),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -34,10 +33,7 @@ class TestScreen extends StatelessWidget {
           ),
           const SizedBox(height: 32),
           Card(
-            color: Theme.of(context)
-                .colorScheme
-                .surfaceContainerHigh
-                .withValues(alpha: 0.6),
+            color: Theme.of(context).colorScheme.surfaceContainerHigh.withValues(alpha: 0.6),
             child: Padding(
               padding: const EdgeInsets.all(24.0),
               child: Column(
@@ -75,8 +71,7 @@ class TestScreen extends StatelessWidget {
                             children: [
                               Icon(Icons.arrow_forward, color: Colors.white),
                               SizedBox(width: 12),
-                              Text(
-                                  'Navigate to Memes tab to fetch and post memes'),
+                              Text('Navigate to Memes tab to fetch and post memes'),
                             ],
                           ),
                           behavior: SnackBarBehavior.floating,
@@ -89,8 +84,7 @@ class TestScreen extends StatelessWidget {
                     icon: const Icon(Icons.image),
                     label: const Text('Go to Memes Tab'),
                     style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 24, vertical: 16),
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                     ),
                   ),
                 ],
@@ -130,8 +124,7 @@ class TestScreen extends StatelessWidget {
                     style: TextStyle(fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 8),
-                  _buildFeatureItem(
-                      context, 'Rocket League rank checking tests'),
+                  _buildFeatureItem(context, 'Rocket League rank checking tests'),
                   _buildFeatureItem(context, 'Welcome message preview'),
                   _buildFeatureItem(context, 'Ticket system simulation'),
                   _buildFeatureItem(context, 'Custom command testing'),

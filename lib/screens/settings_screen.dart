@@ -30,8 +30,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _loadShowAdminPanelSetting() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _showAdminPanelOnStartup =
-          prefs.getBool('show_admin_panel_on_startup') ?? false;
+      _showAdminPanelOnStartup = prefs.getBool('show_admin_panel_on_startup') ?? false;
     });
   }
 
@@ -130,9 +129,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(
-                              value
-                                  ? 'Admin panel will open on startup'
-                                  : 'Admin panel will be hidden on startup',
+                              value ? 'Admin panel will open on startup' : 'Admin panel will be hidden on startup',
                             ),
                             duration: const Duration(seconds: 2),
                           ),
@@ -185,8 +182,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             subtitle: const Text('github.com/inventory69/HazeBot-Admin'),
             trailing: const Icon(Icons.open_in_new),
             onTap: () async {
-              final githubUrl = dotenv.env['GITHUB_REPO_URL'] ??
-                  'https://github.com/inventory69/HazeBot-Admin';
+              final githubUrl = dotenv.env['GITHUB_REPO_URL'] ?? 'https://github.com/inventory69/HazeBot-Admin';
               final url = Uri.parse(githubUrl);
               if (await canLaunchUrl(url)) {
                 await launchUrl(url, mode: LaunchMode.externalApplication);

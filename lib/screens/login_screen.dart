@@ -53,10 +53,8 @@ class _LoginScreenState extends State<LoginScreen> {
       if (token != null && token.isNotEmpty) {
         print('DEBUG: Found token in URL: ${token.substring(0, 20)}...');
 
-        final discordAuthService =
-            Provider.of<DiscordAuthService>(context, listen: false);
-        final permissionService =
-            Provider.of<PermissionService>(context, listen: false);
+        final discordAuthService = Provider.of<DiscordAuthService>(context, listen: false);
+        final permissionService = Provider.of<PermissionService>(context, listen: false);
 
         try {
           print('DEBUG: Calling handleTokenFromUrl with token...');
@@ -64,8 +62,7 @@ class _LoginScreenState extends State<LoginScreen> {
           print('DEBUG: handleTokenFromUrl returned: $success');
 
           if (success && discordAuthService.userInfo != null) {
-            print(
-                'DEBUG: Token handled successfully, userInfo: ${discordAuthService.userInfo}');
+            print('DEBUG: Token handled successfully, userInfo: ${discordAuthService.userInfo}');
 
             // Update permission service
             permissionService.updatePermissions(
@@ -82,8 +79,7 @@ class _LoginScreenState extends State<LoginScreen> {
               // Show success message
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(
-                      'Discord login successful! Welcome ${discordAuthService.userInfo?['username']}'),
+                  content: Text('Discord login successful! Welcome ${discordAuthService.userInfo?['username']}'),
                   backgroundColor: Colors.green,
                   duration: Duration(seconds: 3),
                 ),
@@ -150,8 +146,7 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     final authService = Provider.of<AuthService>(context, listen: false);
-    final permissionService =
-        Provider.of<PermissionService>(context, listen: false);
+    final permissionService = Provider.of<PermissionService>(context, listen: false);
 
     final success = await authService.login(
       _usernameController.text,
@@ -181,8 +176,7 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      final discordAuthService =
-          Provider.of<DiscordAuthService>(context, listen: false);
+      final discordAuthService = Provider.of<DiscordAuthService>(context, listen: false);
 
       // Get the auth URL
       final authUrl = await discordAuthService.getDiscordAuthUrl();
@@ -220,8 +214,8 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     // Monet/normal mode card color logic (match other screens)
-    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh !=
-        ThemeData.light().colorScheme.surfaceContainerHigh;
+    final isMonet =
+        Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
     final cardColor = isMonet
         ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
         : Theme.of(context).colorScheme.surface;
@@ -255,10 +249,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 16),
                         Text(
                           AppConfig.appName,
-                          style: Theme.of(context)
-                              .textTheme
-                              .headlineMedium
-                              ?.copyWith(
+                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                                 fontWeight: FontWeight.bold,
                               ),
                           textAlign: TextAlign.center,
@@ -266,10 +257,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 8),
                         Text(
                           'Configuration Interface',
-                          style:
-                              Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                    color: Colors.grey,
-                                  ),
+                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                color: Colors.grey,
+                              ),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 32),
@@ -297,9 +287,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             prefixIcon: const Icon(Icons.lock),
                             suffixIcon: IconButton(
                               icon: Icon(
-                                _obscurePassword
-                                    ? Icons.visibility
-                                    : Icons.visibility_off,
+                                _obscurePassword ? Icons.visibility : Icons.visibility_off,
                               ),
                               onPressed: () {
                                 setState(() {
@@ -331,14 +319,12 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             child: Row(
                               children: [
-                                Icon(Icons.error_outline,
-                                    color: Colors.red.shade700),
+                                Icon(Icons.error_outline, color: Colors.red.shade700),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
                                     _errorMessage!,
-                                    style:
-                                        TextStyle(color: Colors.red.shade700),
+                                    style: TextStyle(color: Colors.red.shade700),
                                   ),
                                 ),
                               ],
@@ -355,8 +341,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ? const SizedBox(
                                   height: 20,
                                   width: 20,
-                                  child:
-                                      CircularProgressIndicator(strokeWidth: 2),
+                                  child: CircularProgressIndicator(strokeWidth: 2),
                                 )
                               : const Text('Login'),
                         ),
@@ -365,14 +350,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           children: [
                             Expanded(child: Divider()),
                             Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 16),
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
                               child: Text(
                                 'OR',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
-                                    ?.copyWith(
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                       color: Colors.grey,
                                     ),
                               ),
@@ -382,8 +363,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(height: 16),
                         OutlinedButton.icon(
-                          onPressed:
-                              _isDiscordLoading ? null : _loginWithDiscord,
+                          onPressed: _isDiscordLoading ? null : _loginWithDiscord,
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             side: BorderSide(
@@ -395,8 +375,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ? const SizedBox(
                                   height: 20,
                                   width: 20,
-                                  child:
-                                      CircularProgressIndicator(strokeWidth: 2),
+                                  child: CircularProgressIndicator(strokeWidth: 2),
                                 )
                               : Icon(
                                   Icons.chat_bubble,
@@ -412,11 +391,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 16),
                         Text(
                           'Discord login grants role-based access',
-                          style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: Colors.grey,
-                                    fontStyle: FontStyle.italic,
-                                  ),
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: Colors.grey,
+                                fontStyle: FontStyle.italic,
+                              ),
                           textAlign: TextAlign.center,
                         ),
                       ],

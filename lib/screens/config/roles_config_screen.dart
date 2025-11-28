@@ -99,14 +99,10 @@ class _RolesConfigScreenState extends State<RolesConfigScreen> {
 
       final config = {
         'admin_role_id': _adminRoleId != null ? int.parse(_adminRoleId!) : null,
-        'moderator_role_id':
-            _moderatorRoleId != null ? int.parse(_moderatorRoleId!) : null,
-        'normal_role_id':
-            _normalRoleId != null ? int.parse(_normalRoleId!) : null,
-        'member_role_id':
-            _memberRoleId != null ? int.parse(_memberRoleId!) : null,
-        'changelog_role_id':
-            _changelogRoleId != null ? int.parse(_changelogRoleId!) : null,
+        'moderator_role_id': _moderatorRoleId != null ? int.parse(_moderatorRoleId!) : null,
+        'normal_role_id': _normalRoleId != null ? int.parse(_normalRoleId!) : null,
+        'member_role_id': _memberRoleId != null ? int.parse(_memberRoleId!) : null,
+        'changelog_role_id': _changelogRoleId != null ? int.parse(_changelogRoleId!) : null,
         'meme_role_id': _memeRoleId != null ? int.parse(_memeRoleId!) : null,
       };
 
@@ -201,34 +197,27 @@ class _RolesConfigScreenState extends State<RolesConfigScreen> {
         hintText: hint,
         hintStyle: TextStyle(fontSize: isMobile ? 12 : null),
         border: const OutlineInputBorder(),
-        prefixIcon:
-            icon != null ? Icon(icon, size: isMobile ? 20 : null) : null,
+        prefixIcon: icon != null ? Icon(icon, size: isMobile ? 20 : null) : null,
         isDense: isMobile,
       ),
       items: [
         if (!required)
           const DropdownMenuItem<String>(
             value: null,
-            child: SizedBox(
-                width: 200,
-                child:
-                    Text('None', maxLines: 1, overflow: TextOverflow.ellipsis)),
+            child: SizedBox(width: 200, child: Text('None', maxLines: 1, overflow: TextOverflow.ellipsis)),
           ),
         ..._roles.map((role) {
           return DropdownMenuItem<String>(
             value: role['id'],
             child: SizedBox(
               width: 200,
-              child: Text('@${role['name']}',
-                  maxLines: 1, overflow: TextOverflow.ellipsis),
+              child: Text('@${role['name']}', maxLines: 1, overflow: TextOverflow.ellipsis),
             ),
           );
         }),
       ],
       onChanged: onChanged,
-      validator: required
-          ? (value) => value == null ? 'This field is required' : null
-          : null,
+      validator: required ? (value) => value == null ? 'This field is required' : null : null,
     );
   }
 
@@ -238,29 +227,23 @@ class _RolesConfigScreenState extends State<RolesConfigScreen> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh !=
-        ThemeData.light().colorScheme.surfaceContainerHigh;
+    final isMonet =
+        Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
     final cardColor = isMonet
         ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
         : Theme.of(context).colorScheme.surface;
-    final infoBoxBlue = isMonet
-        ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.10)
-        : Colors.blue.withOpacity(0.1);
-    final infoBoxBlueBorder = isMonet
-        ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.30)
-        : Colors.blue.withOpacity(0.3);
-    final infoBoxOrange = isMonet
-        ? Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.10)
-        : Colors.orange.withOpacity(0.1);
-    final infoBoxOrangeBorder = isMonet
-        ? Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.30)
-        : Colors.orange.withOpacity(0.3);
-    final infoBoxGreen = isMonet
-        ? Theme.of(context).colorScheme.tertiaryContainer.withOpacity(0.10)
-        : Colors.green.withOpacity(0.1);
-    final infoBoxGreenBorder = isMonet
-        ? Theme.of(context).colorScheme.tertiaryContainer.withOpacity(0.30)
-        : Colors.green.withOpacity(0.3);
+    final infoBoxBlue =
+        isMonet ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.10) : Colors.blue.withOpacity(0.1);
+    final infoBoxBlueBorder =
+        isMonet ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.30) : Colors.blue.withOpacity(0.3);
+    final infoBoxOrange =
+        isMonet ? Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.10) : Colors.orange.withOpacity(0.1);
+    final infoBoxOrangeBorder =
+        isMonet ? Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.30) : Colors.orange.withOpacity(0.3);
+    final infoBoxGreen =
+        isMonet ? Theme.of(context).colorScheme.tertiaryContainer.withOpacity(0.10) : Colors.green.withOpacity(0.1);
+    final infoBoxGreenBorder =
+        isMonet ? Theme.of(context).colorScheme.tertiaryContainer.withOpacity(0.30) : Colors.green.withOpacity(0.3);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -303,8 +286,7 @@ class _RolesConfigScreenState extends State<RolesConfigScreen> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.info_outline,
-                          size: isMobile ? 18 : 20, color: Colors.blue[700]),
+                      Icon(Icons.info_outline, size: isMobile ? 18 : 20, color: Colors.blue[700]),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -324,8 +306,7 @@ class _RolesConfigScreenState extends State<RolesConfigScreen> {
                 Card(
                   color: cardColor,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: EdgeInsets.all(cardPadding),
                     child: Column(
@@ -333,16 +314,12 @@ class _RolesConfigScreenState extends State<RolesConfigScreen> {
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.security,
-                                color: Colors.red, size: isMobile ? 20 : 24),
+                            Icon(Icons.security, color: Colors.red, size: isMobile ? 20 : 24),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 'Permission Roles',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleLarge
-                                    ?.copyWith(
+                                style: Theme.of(context).textTheme.titleLarge?.copyWith(
                                       fontSize: isMobile ? 18 : null,
                                     ),
                               ),
@@ -353,8 +330,7 @@ class _RolesConfigScreenState extends State<RolesConfigScreen> {
                         _buildRoleDropdown(
                           label: 'Admin Role',
                           value: _adminRoleId,
-                          onChanged: (value) =>
-                              setState(() => _adminRoleId = value),
+                          onChanged: (value) => setState(() => _adminRoleId = value),
                           hint: 'Full bot administration access',
                           icon: Icons.admin_panel_settings,
                           required: true,
@@ -364,8 +340,7 @@ class _RolesConfigScreenState extends State<RolesConfigScreen> {
                         _buildRoleDropdown(
                           label: 'Moderator Role',
                           value: _moderatorRoleId,
-                          onChanged: (value) =>
-                              setState(() => _moderatorRoleId = value),
+                          onChanged: (value) => setState(() => _moderatorRoleId = value),
                           hint: 'Moderation commands access',
                           icon: Icons.shield,
                           required: true,
@@ -375,8 +350,7 @@ class _RolesConfigScreenState extends State<RolesConfigScreen> {
                         _buildRoleDropdown(
                           label: 'Normal Role',
                           value: _normalRoleId,
-                          onChanged: (value) =>
-                              setState(() => _normalRoleId = value),
+                          onChanged: (value) => setState(() => _normalRoleId = value),
                           hint: 'Default user role',
                           icon: Icons.person,
                           required: true,
@@ -386,8 +360,7 @@ class _RolesConfigScreenState extends State<RolesConfigScreen> {
                         _buildRoleDropdown(
                           label: 'Member Role',
                           value: _memberRoleId,
-                          onChanged: (value) =>
-                              setState(() => _memberRoleId = value),
+                          onChanged: (value) => setState(() => _memberRoleId = value),
                           hint: 'Verified member role',
                           icon: Icons.verified_user,
                           required: true,
@@ -405,9 +378,7 @@ class _RolesConfigScreenState extends State<RolesConfigScreen> {
                           ),
                           child: Row(
                             children: [
-                              Icon(Icons.info_outline,
-                                  size: isMobile ? 18 : 20,
-                                  color: Colors.orange[700]),
+                              Icon(Icons.info_outline, size: isMobile ? 18 : 20, color: Colors.orange[700]),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
@@ -431,8 +402,7 @@ class _RolesConfigScreenState extends State<RolesConfigScreen> {
                 Card(
                   color: cardColor,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: EdgeInsets.all(cardPadding),
                     child: Column(
@@ -440,16 +410,12 @@ class _RolesConfigScreenState extends State<RolesConfigScreen> {
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.notifications_active,
-                                color: Colors.purple, size: isMobile ? 20 : 24),
+                            Icon(Icons.notifications_active, color: Colors.purple, size: isMobile ? 20 : 24),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 'Feature Roles',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleLarge
-                                    ?.copyWith(
+                                style: Theme.of(context).textTheme.titleLarge?.copyWith(
                                       fontSize: isMobile ? 18 : null,
                                     ),
                               ),
@@ -460,8 +426,7 @@ class _RolesConfigScreenState extends State<RolesConfigScreen> {
                         _buildRoleDropdown(
                           label: 'Changelog Role',
                           value: _changelogRoleId,
-                          onChanged: (value) =>
-                              setState(() => _changelogRoleId = value),
+                          onChanged: (value) => setState(() => _changelogRoleId = value),
                           hint: 'Pinged for bot updates',
                           icon: Icons.update,
                           isMobile: isMobile,
@@ -470,8 +435,7 @@ class _RolesConfigScreenState extends State<RolesConfigScreen> {
                         _buildRoleDropdown(
                           label: 'Meme Role',
                           value: _memeRoleId,
-                          onChanged: (value) =>
-                              setState(() => _memeRoleId = value),
+                          onChanged: (value) => setState(() => _memeRoleId = value),
                           hint: 'Pinged for daily memes',
                           icon: Icons.image,
                           isMobile: isMobile,
@@ -488,9 +452,7 @@ class _RolesConfigScreenState extends State<RolesConfigScreen> {
                           ),
                           child: Row(
                             children: [
-                              Icon(Icons.info_outline,
-                                  size: isMobile ? 18 : 20,
-                                  color: Colors.green[700]),
+                              Icon(Icons.info_outline, size: isMobile ? 18 : 20, color: Colors.green[700]),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
@@ -519,8 +481,7 @@ class _RolesConfigScreenState extends State<RolesConfigScreen> {
                         child: OutlinedButton.icon(
                           onPressed: _isLoading ? null : _resetToDefaults,
                           icon: const Icon(Icons.restore, size: 20),
-                          label: const Text('Reset to Defaults',
-                              style: TextStyle(fontSize: 14)),
+                          label: const Text('Reset to Defaults', style: TextStyle(fontSize: 14)),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: Colors.orange,
                             padding: const EdgeInsets.all(14),
@@ -536,12 +497,10 @@ class _RolesConfigScreenState extends State<RolesConfigScreen> {
                               ? const SizedBox(
                                   width: 14,
                                   height: 14,
-                                  child:
-                                      CircularProgressIndicator(strokeWidth: 2),
+                                  child: CircularProgressIndicator(strokeWidth: 2),
                                 )
                               : const Icon(Icons.save, size: 20),
-                          label: const Text('Save Configuration',
-                              style: TextStyle(fontSize: 14)),
+                          label: const Text('Save Configuration', style: TextStyle(fontSize: 14)),
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.all(14),
                           ),
@@ -571,8 +530,7 @@ class _RolesConfigScreenState extends State<RolesConfigScreen> {
                               ? const SizedBox(
                                   width: 20,
                                   height: 20,
-                                  child:
-                                      CircularProgressIndicator(strokeWidth: 2),
+                                  child: CircularProgressIndicator(strokeWidth: 2),
                                 )
                               : const Icon(Icons.save),
                           label: const Text('Save Configuration'),

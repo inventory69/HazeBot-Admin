@@ -44,10 +44,7 @@ class Cog {
       description: json['description'] as String?,
       icon: json['icon'] as String?,
       category: json['category'] as String?,
-      features: (json['features'] as List<dynamic>?)
-              ?.map((e) => e.toString())
-              .toList() ??
-          [],
+      features: (json['features'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
       status: _parseStatus(json['status'] as String),
       canLoad: json['can_load'] as bool? ?? false,
       canUnload: json['can_unload'] as bool? ?? false,
@@ -173,8 +170,7 @@ class Cog {
     return category
             ?.replaceAll('_', ' ')
             .split(' ')
-            .map((word) =>
-                word.isEmpty ? '' : word[0].toUpperCase() + word.substring(1))
+            .map((word) => word.isEmpty ? '' : word[0].toUpperCase() + word.substring(1))
             .join(' ') ??
         'Other';
   }

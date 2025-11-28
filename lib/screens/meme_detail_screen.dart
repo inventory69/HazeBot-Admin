@@ -43,11 +43,9 @@ class _MemeDetailScreenState extends State<MemeDetailScreen> {
         setState(() {
           _upvotes = response['upvotes'] as int? ?? 0;
           _hasUpvoted = response['has_upvoted'] as bool? ?? false;
-          _hasDiscordUpvoted =
-              response['has_discord_upvoted'] as bool? ?? false;
+          _hasDiscordUpvoted = response['has_discord_upvoted'] as bool? ?? false;
           _isLoadingReactions = false;
-          print(
-              'Set _hasUpvoted to: $_hasUpvoted, _hasDiscordUpvoted: $_hasDiscordUpvoted'); // Debug
+          print('Set _hasUpvoted to: $_hasUpvoted, _hasDiscordUpvoted: $_hasDiscordUpvoted'); // Debug
         });
       }
     } catch (e) {
@@ -74,8 +72,7 @@ class _MemeDetailScreenState extends State<MemeDetailScreen> {
         final action = response['action'] as String?;
 
         // After toggling, fetch the FULL reaction count (custom + Discord)
-        final reactionsResponse =
-            await ApiService().getMemeReactions(messageId);
+        final reactionsResponse = await ApiService().getMemeReactions(messageId);
         if (reactionsResponse['success'] == true) {
           final newUpvotes = reactionsResponse['upvotes'] as int? ?? 0;
 
@@ -86,8 +83,7 @@ class _MemeDetailScreenState extends State<MemeDetailScreen> {
 
           // Update the cache immediately with 60s override window
           if (mounted) {
-            final cacheProvider =
-                Provider.of<DataCacheProvider>(context, listen: false);
+            final cacheProvider = Provider.of<DataCacheProvider>(context, listen: false);
             cacheProvider.updateMemeUpvotes(
               messageId,
               newUpvotes,
@@ -99,8 +95,7 @@ class _MemeDetailScreenState extends State<MemeDetailScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content:
-                  Text(action == 'added' ? 'Upvoted! 👍' : 'Upvote removed'),
+              content: Text(action == 'added' ? 'Upvoted! 👍' : 'Upvote removed'),
               duration: const Duration(seconds: 1),
             ),
           );
@@ -190,8 +185,7 @@ class _MemeDetailScreenState extends State<MemeDetailScreen> {
                           height: 300,
                           color: Colors.grey[300],
                           child: const Center(
-                            child: Icon(Icons.broken_image,
-                                size: 64, color: Colors.grey),
+                            child: Icon(Icons.broken_image, size: 64, color: Colors.grey),
                           ),
                         );
                       },
@@ -203,8 +197,7 @@ class _MemeDetailScreenState extends State<MemeDetailScreen> {
                   height: 300,
                   color: Colors.grey[300],
                   child: const Center(
-                    child: Icon(Icons.image_not_supported,
-                        size: 64, color: Colors.grey),
+                    child: Icon(Icons.image_not_supported, size: 64, color: Colors.grey),
                   ),
                 ),
 
@@ -217,10 +210,9 @@ class _MemeDetailScreenState extends State<MemeDetailScreen> {
                     // Title
                     Text(
                       title,
-                      style:
-                          Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
                     const SizedBox(height: 16),
 
@@ -231,19 +223,14 @@ class _MemeDetailScreenState extends State<MemeDetailScreen> {
                         child: Column(
                           children: [
                             _InfoRow(
-                              icon: isCustom
-                                  ? Icons.person
-                                  : Icons.account_circle,
+                              icon: isCustom ? Icons.person : Icons.account_circle,
                               label: isCustom ? 'Created by' : 'Author',
                               value: author,
                             ),
-                            if (isDaily ||
-                                (requester != null &&
-                                    requester.isNotEmpty)) ...[
+                            if (isDaily || (requester != null && requester.isNotEmpty)) ...[
                               const Divider(height: 24),
                               _InfoRow(
-                                icon:
-                                    isDaily ? Icons.calendar_today : Icons.send,
+                                icon: isDaily ? Icons.calendar_today : Icons.send,
                                 label: isDaily ? 'Daily Meme' : 'Requested by',
                                 value: isDaily ? 'Automated Post' : requester!,
                               ),
@@ -289,41 +276,28 @@ class _MemeDetailScreenState extends State<MemeDetailScreen> {
                                     ? 'Du hast bereits über Discord upgevotet'
                                     : '',
                             child: ElevatedButton.icon(
-                              onPressed: (_isUpvoting ||
-                                      _isLoadingReactions ||
-                                      _hasDiscordUpvoted ||
-                                      messageId == null)
+                              onPressed: (_isUpvoting || _isLoadingReactions || _hasDiscordUpvoted || messageId == null)
                                   ? null
                                   : _toggleUpvote,
                               icon: (_isUpvoting || _isLoadingReactions)
                                   ? const SizedBox(
                                       width: 16,
                                       height: 16,
-                                      child: CircularProgressIndicator(
-                                          strokeWidth: 2),
+                                      child: CircularProgressIndicator(strokeWidth: 2),
                                     )
                                   : Icon(
-                                      _hasUpvoted
-                                          ? Icons.thumb_up
-                                          : Icons.thumb_up_outlined,
+                                      _hasUpvoted ? Icons.thumb_up : Icons.thumb_up_outlined,
                                     ),
                               label: Text('$_upvotes'),
                               style: ElevatedButton.styleFrom(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 16),
+                                padding: const EdgeInsets.symmetric(vertical: 16),
                                 // Only apply upvoted style after loading is complete
-                                backgroundColor:
-                                    (!_isLoadingReactions && _hasUpvoted)
-                                        ? Theme.of(context)
-                                            .colorScheme
-                                            .primaryContainer
-                                        : null,
-                                foregroundColor:
-                                    (!_isLoadingReactions && _hasUpvoted)
-                                        ? Theme.of(context)
-                                            .colorScheme
-                                            .onPrimaryContainer
-                                        : null,
+                                backgroundColor: (!_isLoadingReactions && _hasUpvoted)
+                                    ? Theme.of(context).colorScheme.primaryContainer
+                                    : null,
+                                foregroundColor: (!_isLoadingReactions && _hasUpvoted)
+                                    ? Theme.of(context).colorScheme.onPrimaryContainer
+                                    : null,
                               ),
                             ),
                           ),
@@ -335,15 +309,13 @@ class _MemeDetailScreenState extends State<MemeDetailScreen> {
                               onPressed: () async {
                                 final uri = Uri.parse(url);
                                 if (await canLaunchUrl(uri)) {
-                                  await launchUrl(uri,
-                                      mode: LaunchMode.externalApplication);
+                                  await launchUrl(uri, mode: LaunchMode.externalApplication);
                                 }
                               },
                               icon: const Icon(Icons.open_in_new),
                               label: const Text('Original'),
                               style: ElevatedButton.styleFrom(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 16),
+                                padding: const EdgeInsets.symmetric(vertical: 16),
                               ),
                             ),
                           ),

@@ -26,15 +26,13 @@ class ApiService {
   factory ApiService() => _instance;
   ApiService._internal();
 
-  static String get _staticBaseUrl =>
-      dotenv.env['API_BASE_URL'] ?? 'http://localhost:5070/api';
+  static String get _staticBaseUrl => dotenv.env['API_BASE_URL'] ?? 'http://localhost:5070/api';
 
   String get baseUrl => _staticBaseUrl;
 
   String? _token;
   bool _isRefreshing = false;
-  Completer<bool>?
-      _refreshCompleter; // For parallel refresh requests - signals completion
+  Completer<bool>? _refreshCompleter; // For parallel refresh requests - signals completion
 
   // Callback to update user info after token refresh (without extra API call)
   Function(Map<String, dynamic>)? onUserInfoUpdated;
@@ -158,8 +156,7 @@ class ApiService {
         await _refreshCompleter!.future;
         // CRITICAL: Small delay to ensure token is fully propagated in all closures
         await Future.delayed(const Duration(milliseconds: 50));
-        debugPrint(
-            '✅ Refresh completed by other request, retrying with fresh token...');
+        debugPrint('✅ Refresh completed by other request, retrying with fresh token...');
       } else {
         // Refresh token
         await refreshToken();
@@ -168,8 +165,7 @@ class ApiService {
 
       // CRITICAL: Call requestBuilder AGAIN to get FRESH headers with NEW token!
       // This is why we pass a builder function instead of a Response directly
-      final retryResponse =
-          await _requestWithRetry(requestBuilder, maxRetries: maxRetries - 1);
+      final retryResponse = await _requestWithRetry(requestBuilder, maxRetries: maxRetries - 1);
       if (retryResponse.statusCode != 401) {
         debugPrint('✅ Retry successful (${retryResponse.statusCode})');
       }
@@ -181,7 +177,7 @@ class ApiService {
 
   /// HTTP GET with automatic token refresh and timeout handling
   /// IMPORTANT: Headers are computed inside the lambda to get fresh token after refresh
-  Future<http.Response> _get(String url, {Map<String, String>? headers}) async {
+  Future<http.Response> _get(String url, {Map<String, String>? headers, int timeoutSeconds = 15}) async {
     // CRITICAL: Return a builder function that reads _token FRESH each time it's called!
     // This ensures retry after refresh uses the NEW token, not the old one
     try {
@@ -198,7 +194,7 @@ class ApiService {
         };
 
         return await http.get(Uri.parse(url), headers: freshHeaders).timeout(
-              const Duration(seconds: 15),
+              Duration(seconds: timeoutSeconds),
               onTimeout: () => throw ApiTimeoutException(),
             );
       });
@@ -211,8 +207,7 @@ class ApiService {
 
   /// HTTP POST with automatic token refresh and timeout handling
   /// IMPORTANT: Headers are computed inside the lambda to get fresh token after refresh
-  Future<http.Response> _post(String url,
-      {Map<String, String>? headers, Object? body, int timeout = 15}) async {
+  Future<http.Response> _post(String url, {Map<String, String>? headers, Object? body, int timeout = 15}) async {
     try {
       return await _requestWithRetry(() async {
         // Read token FRESH from instance variable
@@ -225,9 +220,7 @@ class ApiService {
           ...?headers,
         };
 
-        return await http
-            .post(Uri.parse(url), headers: freshHeaders, body: body)
-            .timeout(
+        return await http.post(Uri.parse(url), headers: freshHeaders, body: body).timeout(
               Duration(seconds: timeout),
               onTimeout: () => throw ApiTimeoutException(),
             );
@@ -241,8 +234,7 @@ class ApiService {
 
   /// HTTP PUT with automatic token refresh and timeout handling
   /// IMPORTANT: Headers are computed inside the lambda to get fresh token after refresh
-  Future<http.Response> _put(String url,
-      {Map<String, String>? headers, Object? body}) async {
+  Future<http.Response> _put(String url, {Map<String, String>? headers, Object? body}) async {
     try {
       return await _requestWithRetry(() async {
         // Read token FRESH from instance variable
@@ -255,9 +247,7 @@ class ApiService {
           ...?headers,
         };
 
-        return await http
-            .put(Uri.parse(url), headers: freshHeaders, body: body)
-            .timeout(
+        return await http.put(Uri.parse(url), headers: freshHeaders, body: body).timeout(
               const Duration(seconds: 15),
               onTimeout: () => throw ApiTimeoutException(),
             );
@@ -271,8 +261,7 @@ class ApiService {
 
   /// HTTP DELETE with automatic token refresh and timeout handling
   /// IMPORTANT: Headers are computed inside the lambda to get fresh token after refresh
-  Future<http.Response> _delete(String url,
-      {Map<String, String>? headers}) async {
+  Future<http.Response> _delete(String url, {Map<String, String>? headers}) async {
     try {
       return await _requestWithRetry(() async {
         // Read token FRESH from instance variable
@@ -300,9 +289,7 @@ class ApiService {
   String get _userAgent {
     // Detect platform and create appropriate user agent
     // Use environment-based app name (Chillventory for prod, Testventory for dev)
-    final appName = dotenv.env['PROD_MODE']?.toLowerCase() == 'true'
-        ? 'Chillventory'
-        : 'Testventory';
+    final appName = dotenv.env['PROD_MODE']?.toLowerCase() == 'true' ? 'Chillventory' : 'Testventory';
 
     if (kIsWeb) {
       return '$appName/1.0 (Web; Flutter)';
@@ -440,8 +427,7 @@ class ApiService {
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
-        throw Exception(
-            'Failed to load configuration. Status: ${response.statusCode}, Body: ${response.body}');
+        throw Exception('Failed to load configuration. Status: ${response.statusCode}, Body: ${response.body}');
       }
     } catch (e) {
       debugPrint('Exception in getConfig: $e');
@@ -563,8 +549,7 @@ class ApiService {
     debugPrint('Daily meme config response body: ${response.body}');
 
     if (response.statusCode != 200) {
-      throw Exception(
-          'Failed to update daily meme configuration: ${response.body}');
+      throw Exception('Failed to update daily meme configuration: ${response.body}');
     }
   }
 
@@ -634,10 +619,9 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> getRocketLeagueStats(
-      String platform, String username) async {
-    final response =
-        await _get('$baseUrl/rocket-league/stats/$platform/$username');
+  Future<Map<String, dynamic>> getRocketLeagueStats(String platform, String username) async {
+    // Rocket League API can take 30+ seconds on first fetch (no cache)
+    final response = await _get('$baseUrl/rocket-league/stats/$platform/$username', timeoutSeconds: 45);
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -656,10 +640,9 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> getRLStats(
-      String platform, String username) async {
-    final response =
-        await _get('$baseUrl/rocket-league/stats/$platform/$username');
+  Future<Map<String, dynamic>> getRLStats(String platform, String username) async {
+    // Rocket League API can take 30+ seconds on first fetch (no cache)
+    final response = await _get('$baseUrl/rocket-league/stats/$platform/$username', timeoutSeconds: 45);
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -669,8 +652,7 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> linkUserRLAccount(
-      String platform, String username) async {
+  Future<Map<String, dynamic>> linkUserRLAccount(String platform, String username) async {
     final response = await _post(
       '$baseUrl/user/rocket-league/link',
       body: jsonEncode({'platform': platform, 'username': username}),
@@ -708,8 +690,7 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> updateUserPreferences(
-      Map<String, dynamic> preferences) async {
+  Future<Map<String, dynamic>> updateUserPreferences(Map<String, dynamic> preferences) async {
     final response = await _put(
       '$baseUrl/user/preferences',
       body: jsonEncode(preferences),
@@ -829,8 +810,7 @@ class ApiService {
     }
   }
 
-  Future<void> updateRocketLeagueTextsConfig(
-      Map<String, dynamic> config) async {
+  Future<void> updateRocketLeagueTextsConfig(Map<String, dynamic> config) async {
     final response = await _put(
       '$baseUrl/config/rocket_league_texts',
       body: jsonEncode(config),
@@ -884,8 +864,7 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> getMemeFromSource(String source) async {
-    final response = await _get(
-        '$baseUrl/test/meme-from-source?source=${Uri.encodeComponent(source)}');
+    final response = await _get('$baseUrl/test/meme-from-source?source=${Uri.encodeComponent(source)}');
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -916,8 +895,7 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> generateMeme(
-      String templateId, List<String> texts) async {
+  Future<Map<String, dynamic>> generateMeme(String templateId, List<String> texts) async {
     final response = await _post(
       '$baseUrl/meme-generator/generate',
       body: jsonEncode({
@@ -971,8 +949,7 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> sendMemeToDiscord(
-      Map<String, dynamic> meme) async {
+  Future<Map<String, dynamic>> sendMemeToDiscord(Map<String, dynamic> meme) async {
     final response = await _post(
       '$baseUrl/test/send-meme',
       body: jsonEncode({'meme': meme}),
@@ -1038,9 +1015,7 @@ class ApiService {
     if (level != null) params['level'] = level;
     if (search != null && search.isNotEmpty) params['search'] = search;
 
-    final queryString = params.entries
-        .map((e) => '${e.key}=${Uri.encodeComponent(e.value)}')
-        .join('&');
+    final queryString = params.entries.map((e) => '${e.key}=${Uri.encodeComponent(e.value)}').join('&');
 
     final response = await _get('$baseUrl/logs?$queryString');
 
@@ -1080,8 +1055,7 @@ class ApiService {
     } else if (response.statusCode == 403) {
       throw Exception('Forbidden: Insufficient permissions');
     } else {
-      throw Exception(
-          'Failed to fetch active sessions: ${response.statusCode}');
+      throw Exception('Failed to fetch active sessions: ${response.statusCode}');
     }
   }
 
@@ -1170,10 +1144,8 @@ class ApiService {
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      final cogs = (data['cogs'] as List<dynamic>?)
-              ?.map((cog) => Cog.fromJson(cog as Map<String, dynamic>))
-              .toList() ??
-          [];
+      final cogs =
+          (data['cogs'] as List<dynamic>?)?.map((cog) => Cog.fromJson(cog as Map<String, dynamic>)).toList() ?? [];
       return cogs;
     } else {
       throw Exception('Failed to load cogs: ${response.body}');
@@ -1213,10 +1185,7 @@ class ApiService {
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      final logs = (data['logs'] as List<dynamic>?)
-              ?.map((log) => CogLog.fromJson(log))
-              .toList() ??
-          [];
+      final logs = (data['logs'] as List<dynamic>?)?.map((log) => CogLog.fromJson(log)).toList() ?? [];
       return logs;
     } else {
       throw Exception('Failed to load cog logs: ${response.body}');
@@ -1317,8 +1286,7 @@ class ApiService {
     }
   }
 
-  Future<void> updateTicket(
-      String ticketId, Map<String, dynamic> updates) async {
+  Future<void> updateTicket(String ticketId, Map<String, dynamic> updates) async {
     final response = await _put(
       '$baseUrl/tickets/$ticketId',
       body: jsonEncode(updates),
@@ -1434,8 +1402,7 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> sendTicketMessage(
-      String ticketId, String content) async {
+  Future<Map<String, dynamic>> sendTicketMessage(String ticketId, String content) async {
     final response = await _post(
       '$baseUrl/tickets/$ticketId/messages',
       body: jsonEncode({'content': content}),
@@ -1493,8 +1460,7 @@ class ApiService {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
         return data.map((key, value) => MapEntry(key, value as bool));
       } else {
-        debugPrint(
-            '⚠️ Failed to load notification settings: ${response.statusCode}');
+        debugPrint('⚠️ Failed to load notification settings: ${response.statusCode}');
         return null;
       }
     } catch (e) {

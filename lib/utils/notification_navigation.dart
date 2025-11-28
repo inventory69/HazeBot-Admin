@@ -6,8 +6,7 @@ import '../services/api_service.dart';
 import '../models/ticket.dart';
 
 /// Handle notification tap and navigate to the appropriate screen
-Future<void> handleNotificationTap(
-    BuildContext? context, Map<String, dynamic> data) async {
+Future<void> handleNotificationTap(BuildContext? context, Map<String, dynamic> data) async {
   if (context == null || !context.mounted) {
     debugPrint('⚠️ No valid context available for notification navigation');
     return;
@@ -18,8 +17,7 @@ Future<void> handleNotificationTap(
     final notificationType = data['notification_type'] as String?;
     final openTab = data['open_tab'] as String?; // New: which tab to open
 
-    debugPrint(
-        '📱 Handling notification tap: type=$notificationType, ticketId=$ticketId, openTab=$openTab');
+    debugPrint('📱 Handling notification tap: type=$notificationType, ticketId=$ticketId, openTab=$openTab');
 
     if (ticketId == null) {
       debugPrint('⚠️ No ticket_id in notification data');

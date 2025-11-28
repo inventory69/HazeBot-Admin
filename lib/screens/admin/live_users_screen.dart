@@ -11,8 +11,7 @@ class LiveUsersScreen extends StatefulWidget {
   State<LiveUsersScreen> createState() => _LiveUsersScreenState();
 }
 
-class _LiveUsersScreenState extends State<LiveUsersScreen>
-    with WidgetsBindingObserver {
+class _LiveUsersScreenState extends State<LiveUsersScreen> with WidgetsBindingObserver {
   Map<String, dynamic>? _sessionData;
   bool _isLoading = true;
   String? _errorMessage;
@@ -47,8 +46,7 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
     }
   }
 
-  Future<void> _loadActiveSessions(
-      {bool silent = false, int retryCount = 0}) async {
+  Future<void> _loadActiveSessions({bool silent = false, int retryCount = 0}) async {
     if (!silent) {
       setState(() {
         _isLoading = true;
@@ -79,8 +77,7 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
         // Automatic retry for network errors (max 2 retries)
         await Future.delayed(Duration(seconds: 1 + retryCount));
         if (mounted) {
-          return _loadActiveSessions(
-              silent: silent, retryCount: retryCount + 1);
+          return _loadActiveSessions(silent: silent, retryCount: retryCount + 1);
         }
       }
 
@@ -128,8 +125,7 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
         ua.contains('iphone') ||
         ua.contains('ios') ||
         // Flutter on Android typically has "Dart" in user agent
-        (ua.contains('dart') &&
-            (ua.contains('android') || ua.contains('linux'))) ||
+        (ua.contains('dart') && (ua.contains('android') || ua.contains('linux'))) ||
         // Check for Flutter specific patterns
         (ua.contains('flutter') && !ua.contains('web'))) {
       return 'Mobile';
@@ -169,8 +165,8 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
 
   @override
   Widget build(BuildContext context) {
-    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh !=
-        ThemeData.light().colorScheme.surfaceContainerHigh;
+    final isMonet =
+        Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
     final cardColor = isMonet
         ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
         : Theme.of(context).colorScheme.surface;
@@ -267,9 +263,7 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                     // Header
                     Row(
                       children: [
-                        Icon(Icons.people,
-                            size: isMobile ? 28 : 32,
-                            color: Theme.of(context).colorScheme.primary),
+                        Icon(Icons.people, size: isMobile ? 28 : 32, color: Theme.of(context).colorScheme.primary),
                         SizedBox(width: isMobile ? 8 : 12),
                         Expanded(
                           child: Column(
@@ -277,22 +271,14 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                             children: [
                               Text(
                                 'Live Users',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .headlineLarge
-                                    ?.copyWith(
+                                style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                                       fontSize: isMobile ? 24 : null,
                                     ),
                               ),
                               Text(
                                 'Active API sessions in real-time',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium
-                                    ?.copyWith(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurfaceVariant,
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                                       fontSize: isMobile ? 13 : null,
                                     ),
                               ),
@@ -322,8 +308,7 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                     Card(
                       color: cardColor,
                       elevation: 0,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       child: Padding(
                         padding: EdgeInsets.all(isMobile ? 16.0 : 20.0),
                         child: Row(
@@ -331,9 +316,7 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                             Container(
                               padding: EdgeInsets.all(isMobile ? 12 : 16),
                               decoration: BoxDecoration(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .primaryContainer,
+                                color: Theme.of(context).colorScheme.primaryContainer,
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Icon(
@@ -349,44 +332,27 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                                 children: [
                                   Text(
                                     '$totalActive',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .displaySmall
-                                        ?.copyWith(
+                                    style: Theme.of(context).textTheme.displaySmall?.copyWith(
                                           fontSize: isMobile ? 32 : null,
                                           fontWeight: FontWeight.bold,
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .primary,
+                                          color: Theme.of(context).colorScheme.primary,
                                         ),
                                   ),
                                   Text(
-                                    totalActive == 1
-                                        ? 'Active User'
-                                        : 'Active Users',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleMedium
-                                        ?.copyWith(
+                                    totalActive == 1 ? 'Active User' : 'Active Users',
+                                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                           fontSize: isMobile ? 14 : null,
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .onSurfaceVariant,
+                                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                                         ),
                                   ),
                                   if (checkedAt != null) ...[
                                     const SizedBox(height: 4),
                                     Text(
                                       'Updated: ${timeago.format(DateTime.parse(checkedAt).toLocal())}',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodySmall
-                                          ?.copyWith(
+                                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                             fontSize: isMobile ? 11 : null,
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .onSurfaceVariant
-                                                .withValues(alpha: 0.7),
+                                            color:
+                                                Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                                           ),
                                     ),
                                   ],
@@ -416,11 +382,7 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                           padding: const EdgeInsets.all(40.0),
                           child: Column(
                             children: [
-                              Icon(Icons.person_off,
-                                  size: 64,
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant),
+                              Icon(Icons.person_off, size: 64, color: Theme.of(context).colorScheme.onSurfaceVariant),
                               const SizedBox(height: 16),
                               Text(
                                 'No active users',
@@ -447,31 +409,25 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                               final session = sessions[index];
                               final username = session['username'] ?? 'Unknown';
                               final role = session['role'] ?? 'unknown';
-                              final discordId =
-                                  session['discord_id'] ?? 'Unknown';
+                              final discordId = session['discord_id'] ?? 'Unknown';
                               final lastSeen = session['last_seen'] as String?;
                               final secondsAgo = session['seconds_ago'] ?? 0;
                               final ip = session['ip'] ?? 'Unknown';
-                              final userAgent =
-                                  session['user_agent'] ?? 'Unknown';
-                              final lastEndpoint =
-                                  session['last_endpoint'] ?? 'unknown';
+                              final userAgent = session['user_agent'] ?? 'Unknown';
+                              final lastEndpoint = session['last_endpoint'] ?? 'unknown';
 
                               final isRecent = secondsAgo < 30;
 
                               return Card(
-                                margin:
-                                    EdgeInsets.only(bottom: isMobile ? 8 : 12),
+                                margin: EdgeInsets.only(bottom: isMobile ? 8 : 12),
                                 color: cardColor,
                                 elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16)),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                                 child: ExpansionTile(
                                   leading: Stack(
                                     children: [
                                       CircleAvatar(
-                                        backgroundColor: _getRoleColor(role)
-                                            .withValues(alpha: 0.2),
+                                        backgroundColor: _getRoleColor(role).withValues(alpha: 0.2),
                                         child: Icon(
                                           _getRoleIcon(role),
                                           color: _getRoleColor(role),
@@ -489,9 +445,7 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                                               color: Colors.green,
                                               shape: BoxShape.circle,
                                               border: Border.all(
-                                                color: Theme.of(context)
-                                                    .colorScheme
-                                                    .surface,
+                                                color: Theme.of(context).colorScheme.surface,
                                                 width: 2,
                                               ),
                                             ),
@@ -507,20 +461,16 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                                     ),
                                   ),
                                   subtitle: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       const SizedBox(height: 4),
                                       Row(
                                         children: [
                                           Container(
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 8, vertical: 2),
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                             decoration: BoxDecoration(
-                                              color: _getRoleColor(role)
-                                                  .withValues(alpha: 0.2),
-                                              borderRadius:
-                                                  BorderRadius.circular(12),
+                                              color: _getRoleColor(role).withValues(alpha: 0.2),
+                                              borderRadius: BorderRadius.circular(12),
                                             ),
                                             child: Text(
                                               role.toUpperCase(),
@@ -535,18 +485,14 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                                           Icon(
                                             _getDeviceIcon(userAgent),
                                             size: isMobile ? 14 : 16,
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .onSurfaceVariant,
+                                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                                           ),
                                           const SizedBox(width: 4),
                                           Text(
                                             _getDeviceType(userAgent),
                                             style: TextStyle(
                                               fontSize: isMobile ? 11 : 12,
-                                              color: Theme.of(context)
-                                                  .colorScheme
-                                                  .onSurfaceVariant,
+                                              color: Theme.of(context).colorScheme.onSurfaceVariant,
                                             ),
                                           ),
                                         ],
@@ -560,22 +506,16 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                                               size: isMobile ? 14 : 16,
                                               color: isRecent
                                                   ? Colors.green
-                                                  : Theme.of(context)
-                                                      .colorScheme
-                                                      .onSurfaceVariant,
+                                                  : Theme.of(context).colorScheme.onSurfaceVariant,
                                             ),
                                             const SizedBox(width: 4),
                                             Text(
-                                              timeago.format(
-                                                  DateTime.parse(lastSeen)
-                                                      .toLocal()),
+                                              timeago.format(DateTime.parse(lastSeen).toLocal()),
                                               style: TextStyle(
                                                 fontSize: isMobile ? 11 : 12,
                                                 color: isRecent
                                                     ? Colors.green
-                                                    : Theme.of(context)
-                                                        .colorScheme
-                                                        .onSurfaceVariant,
+                                                    : Theme.of(context).colorScheme.onSurfaceVariant,
                                               ),
                                             ),
                                           ],
@@ -585,11 +525,9 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                                   ),
                                   children: [
                                     Padding(
-                                      padding: EdgeInsets.all(
-                                          isMobile ? 12.0 : 16.0),
+                                      padding: EdgeInsets.all(isMobile ? 12.0 : 16.0),
                                       child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
+                                        crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           _buildDetailRow(
                                             context,
@@ -619,9 +557,7 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                                             context,
                                             Icons.devices,
                                             'User Agent',
-                                            userAgent.length > 50
-                                                ? '${userAgent.substring(0, 50)}...'
-                                                : userAgent,
+                                            userAgent.length > 50 ? '${userAgent.substring(0, 50)}...' : userAgent,
                                             isMobile,
                                             monospace: true,
                                           ),
@@ -649,10 +585,9 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
   }
 
   Widget _buildRecentActivity(bool isMobile) {
-    final recentActivity =
-        _sessionData?['recent_activity'] as List<dynamic>? ?? [];
-    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh !=
-        ThemeData.light().colorScheme.surfaceContainerHigh;
+    final recentActivity = _sessionData?['recent_activity'] as List<dynamic>? ?? [];
+    final isMonet =
+        Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
     final cardColor = isMonet
         ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
         : Theme.of(context).colorScheme.surface;
@@ -672,8 +607,7 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
           Card(
             color: cardColor,
             elevation: 0,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Padding(
               padding: EdgeInsets.all(isMobile ? 16 : 24),
               child: Center(
@@ -697,10 +631,7 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                       'Activity will appear here as users interact with the API',
                       style: TextStyle(
                         fontSize: isMobile ? 11 : 12,
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurfaceVariant
-                            .withValues(alpha: 0.7),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -713,13 +644,11 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
           Card(
             color: cardColor,
             elevation: 0,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount:
-                  recentActivity.length > 20 ? 20 : recentActivity.length,
+              itemCount: recentActivity.length > 20 ? 20 : recentActivity.length,
               separatorBuilder: (context, index) => const Divider(height: 1),
               itemBuilder: (context, index) {
                 final activity = recentActivity[index];
@@ -734,11 +663,8 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                   dense: isMobile,
                   leading: CircleAvatar(
                     radius: isMobile ? 16 : 20,
-                    backgroundImage:
-                        avatarUrl != null ? NetworkImage(avatarUrl) : null,
-                    child: avatarUrl == null
-                        ? Icon(Icons.person, size: isMobile ? 16 : 20)
-                        : null,
+                    backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
+                    child: avatarUrl == null ? Icon(Icons.person, size: isMobile ? 16 : 20) : null,
                   ),
                   title: Text(
                     displayName,
@@ -750,8 +676,7 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                   subtitle: Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
                           color: _getActionColor(action).withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(4),
@@ -771,8 +696,7 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                           _formatEndpoint(endpoint),
                           style: TextStyle(
                             fontSize: isMobile ? 11 : 12,
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -784,8 +708,7 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                           timeago.format(DateTime.parse(timestamp).toLocal()),
                           style: TextStyle(
                             fontSize: isMobile ? 10 : 11,
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                         )
                       : null,
@@ -821,9 +744,7 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
         .replaceAll('post ', '')
         .replaceAll('update ', '')
         .split(' ')
-        .map((word) => word.isEmpty
-            ? ''
-            : word[0].toUpperCase() + word.substring(1).toLowerCase())
+        .map((word) => word.isEmpty ? '' : word[0].toUpperCase() + word.substring(1).toLowerCase())
         .join(' ');
   }
 
