@@ -24,7 +24,7 @@ Feature-rich admin panel with hybrid navigation combining user features for comm
 
 💡 **Pro Tip:** Use [Obtainium](https://github.com/ImranR98/Obtainium) for automatic updates!
 
-**[�� Installation Guide](APK_DOWNLOAD.md)** | **[🔧 Setup Checklist](SETUP_CHECKLIST.md)**
+**[📱 Installation Guide](APK_DOWNLOAD.md)** | **[🔧 Setup Checklist](SETUP_CHECKLIST.md)**
 
 ---
 
