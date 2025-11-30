@@ -104,17 +104,19 @@ Future<bool> _isUserAdmin(BuildContext context) async {
 
 /// Navigate to admin dialog for other users' tickets
 void _navigateToAdminDialog(BuildContext context, Ticket ticket) {
-  // Navigate to admin tickets screen first, then show ticket dialog
-  Navigator.of(context)
-      .pushReplacement(
+  // ✅ FIX: Use push instead of pushReplacement to preserve navigation stack
+  // This allows admins to go back to the previous screen after closing the dialog
+  debugPrint('📱 Navigating to admin screen with ticket dialog');
+  
+  Navigator.of(context).push(
     MaterialPageRoute(
       builder: (context) => const TicketsAdminScreen(),
+      settings: const RouteSettings(name: '/admin/tickets'),
     ),
-  )
-      .then((_) {
+  ).then((_) {
     // After navigation, show the ticket dialog
     if (context.mounted) {
-      Future.delayed(const Duration(milliseconds: 200), () {
+      Future.delayed(const Duration(milliseconds: 300), () {
         if (context.mounted) {
           showDialog(
             context: context,

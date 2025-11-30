@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/ticket.dart';
@@ -23,7 +24,7 @@ class TicketChatWidget extends StatefulWidget {
   State<TicketChatWidget> createState() => _TicketChatWidgetState();
 }
 
-class _TicketChatWidgetState extends State<TicketChatWidget> {
+class _TicketChatWidgetState extends State<TicketChatWidget> with WidgetsBindingObserver {
   List<TicketMessage> _messages = [];
   bool _isLoadingMessages = false;
   bool _isSending = false;
@@ -36,21 +37,85 @@ class _TicketChatWidgetState extends State<TicketChatWidget> {
   int _firstNewMessageIndex = -1;
   final GlobalKey _newMessagesDividerKey = GlobalKey(); // For precise scroll position
   String? _currentUserDiscordId; // ✅ Cache current user's Discord ID
+  bool _isUserAtBottom = true; // ✅ Track if user is at bottom (for auto-scroll logic)
+  bool _isKeyboardVisible = false; // ✅ Track keyboard visibility
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this); // ✅ Observe keyboard changes
     _loadCurrentUser(); // ✅ Load current user ID first
     _loadMessages();
     _setupWebSocketListener();
     _dismissNotifications(); // ✅ Dismiss notifications when entering chat
     _setupKeyboardListener(); // ✅ Auto-scroll when keyboard opens
+    _setupScrollListener(); // ✅ Track user's scroll position
   }
 
-  /// Setup keyboard listener (removed auto-scroll - user wants to stay at current position)
+  @override
+  void didChangeMetrics() {
+    // ✅ Web doesn't support View.of() reliably - skip keyboard detection
+    if (kIsWeb) {
+      return;
+    }
+    
+    // ✅ Null-safe check for View (may be null in some contexts)
+    final view = View.maybeOf(context);
+    if (view == null) {
+      debugPrint('⚠️ View.maybeOf returned null, skipping keyboard detection');
+      return;
+    }
+    
+    // ✅ Detect keyboard visibility changes
+    final bottomInset = view.viewInsets.bottom;
+    final isKeyboardVisible = bottomInset > 0;
+    
+    if (isKeyboardVisible != _isKeyboardVisible) {
+      _isKeyboardVisible = isKeyboardVisible;
+      debugPrint('⌨️ Keyboard visibility changed: $_isKeyboardVisible');
+      
+      // ✅ Auto-scroll to bottom when keyboard opens (only if user was at bottom)
+      if (_isKeyboardVisible && _isUserAtBottom) {
+        Future.delayed(const Duration(milliseconds: 300), () {
+          if (mounted) {
+            _scrollToBottom(animate: false);
+          }
+        });
+      }
+    }
+  }
+
+  /// Setup keyboard listener for focus changes
   void _setupKeyboardListener() {
-    // Focus node is still used for keyboard detection elsewhere
-    // But we don't auto-scroll when keyboard opens anymore
+    _messageFocusNode.addListener(() {
+      if (_messageFocusNode.hasFocus && _isUserAtBottom) {
+        // When input field gains focus, scroll to bottom
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (mounted) {
+            _scrollToBottom(animate: true);
+          }
+        });
+      }
+    });
+  }
+
+  /// Setup scroll listener to track if user is at bottom
+  void _setupScrollListener() {
+    _scrollController.addListener(() {
+      if (!_scrollController.hasClients) return;
+      
+      final maxScroll = _scrollController.position.maxScrollExtent;
+      final currentScroll = _scrollController.position.pixels;
+      final threshold = 100.0; // Consider "at bottom" if within 100px
+      
+      final wasAtBottom = _isUserAtBottom;
+      _isUserAtBottom = (maxScroll - currentScroll) < threshold;
+      
+      // Debug only on state change
+      if (wasAtBottom != _isUserAtBottom) {
+        debugPrint('📍 User scroll position: ${_isUserAtBottom ? "AT BOTTOM" : "SCROLLED UP"}');
+      }
+    });
   }
 
   /// Load current user's Discord ID for duplicate message detection
@@ -126,11 +191,15 @@ class _TicketChatWidgetState extends State<TicketChatWidget> {
       }
     });
 
-    // Scroll to new messages
-    if (_firstNewMessageIndex >= 0) {
-      _scrollToNewMessages();
+    // ✅ IMPROVED: Smart scroll behavior based on user position
+    // - If user is at bottom: auto-scroll to new message
+    // - If user scrolled up: don't interrupt their reading
+    if (_isUserAtBottom) {
+      debugPrint('📩 New message arrived, user at bottom → auto-scrolling');
+      _scrollToBottom(animate: true);
     } else {
-      _scrollToBottom();
+      debugPrint('📩 New message arrived, user scrolled up → not auto-scrolling');
+      // Optional: Could show a "New messages" badge here
     }
   }
 
@@ -140,6 +209,7 @@ class _TicketChatWidgetState extends State<TicketChatWidget> {
     final authService = Provider.of<AuthService>(context, listen: false);
     authService.wsService.leaveTicket(widget.ticket.ticketId);
 
+    WidgetsBinding.instance.removeObserver(this); // ✅ Remove observer
     _messageController.dispose();
     _scrollController.dispose();
     _messageFocusNode.dispose(); // ✅ Clean up focus node
@@ -147,40 +217,64 @@ class _TicketChatWidgetState extends State<TicketChatWidget> {
   }
 
   void _scrollToBottom({bool animate = true}) {
-    // ✅ FIX: Improved scroll-to-bottom with longer delay and retry logic
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && _scrollController.hasClients) {
-        // First attempt: Wait for initial layout
-        Future.delayed(const Duration(milliseconds: 300), () {
-          if (mounted && _scrollController.hasClients) {
-            final targetPosition = _scrollController.position.maxScrollExtent;
-            if (animate) {
-              _scrollController.animateTo(
-                targetPosition,
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeOut,
-              );
-            } else {
-              _scrollController.jumpTo(targetPosition);
-            }
+    // ✅ IMPROVED: Instant scroll to bottom with multiple retries for reliability
+    if (!mounted || !_scrollController.hasClients) return;
 
-            // Retry after animation/jump to ensure we're at the bottom
-            // (in case images/avatars loaded after first scroll)
-            Future.delayed(const Duration(milliseconds: 400), () {
-              if (mounted && _scrollController.hasClients) {
-                final newMaxExtent = _scrollController.position.maxScrollExtent;
-                final currentPos = _scrollController.position.pixels;
+    // Immediately update user position tracking
+    _isUserAtBottom = true;
 
-                // If we're not at the bottom, scroll again
-                if ((newMaxExtent - currentPos).abs() > 10) {
-                  debugPrint('🔄 Retry scroll to bottom (delta: ${newMaxExtent - currentPos}px)');
-                  _scrollController.jumpTo(newMaxExtent);
-                }
-              }
-            });
-          }
-        });
+    void performScroll() {
+      if (!mounted || !_scrollController.hasClients) return;
+      
+      final targetPosition = _scrollController.position.maxScrollExtent;
+      
+      if (animate) {
+        _scrollController.animateTo(
+          targetPosition,
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+        );
+      } else {
+        _scrollController.jumpTo(targetPosition);
       }
+    }
+
+    // Immediate first scroll (no delay)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      performScroll();
+      
+      // Retry 1: after 100ms (for fast-loading images)
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (mounted && _scrollController.hasClients) {
+          performScroll();
+          
+          // Retry 2: after 300ms (for slow-loading avatars)
+          Future.delayed(const Duration(milliseconds: 200), () {
+            if (mounted && _scrollController.hasClients) {
+              final maxExtent = _scrollController.position.maxScrollExtent;
+              final currentPos = _scrollController.position.pixels;
+              
+              if ((maxExtent - currentPos).abs() > 10) {
+                debugPrint('🔄 Final scroll correction (delta: ${maxExtent - currentPos}px)');
+                _scrollController.jumpTo(maxExtent);
+                
+                // Retry 3: Extra aggressive retry after 600ms (for initial load on web)
+                Future.delayed(const Duration(milliseconds: 300), () {
+                  if (mounted && _scrollController.hasClients) {
+                    final finalMax = _scrollController.position.maxScrollExtent;
+                    final finalPos = _scrollController.position.pixels;
+                    
+                    if ((finalMax - finalPos).abs() > 10) {
+                      debugPrint('🔄 Extra aggressive scroll correction (delta: ${finalMax - finalPos}px)');
+                      _scrollController.jumpTo(finalMax);
+                    }
+                  }
+                });
+              }
+            }
+          });
+        }
+      });
     });
   }
 
@@ -262,10 +356,28 @@ class _TicketChatWidgetState extends State<TicketChatWidget> {
         });
 
         // Scroll behavior:
-        // - First load: Always scroll to bottom (no animation)
+        // - First load: Always scroll to bottom (no animation) + focus input (desktop/web only)
         // - Updates with new messages: Scroll to divider
         if (isFirstLoad) {
           _scrollToBottom(animate: false);
+          
+          // ✅ Auto-focus textbox on first load (after scroll completes)
+          // Only on desktop/web - mobile should not open keyboard automatically
+          Future.delayed(const Duration(milliseconds: 400), () {
+            if (mounted && !_messageFocusNode.hasFocus) {
+              // ✅ Use platform detection: Web is always treated as desktop
+              // This fixes the issue where Web was incorrectly detected as mobile
+              final mediaQuery = MediaQuery.of(context);
+              final isDesktopOrWeb = kIsWeb || mediaQuery.size.width > 600;
+              
+              if (isDesktopOrWeb) {
+                _messageFocusNode.requestFocus();
+                debugPrint('🎯 Auto-focused message input (desktop/web)');
+              } else {
+                debugPrint('📱 Skipping auto-focus on mobile');
+              }
+            }
+          });
         } else if (hasNewMessages && firstNewIndex >= 0) {
           _scrollToNewMessages();
         }
@@ -310,8 +422,10 @@ class _TicketChatWidgetState extends State<TicketChatWidget> {
           _isSending = false;
         });
 
-        // Scroll to bottom after sending
-        _scrollToBottom();
+        // ✅ IMPROVED: Always scroll to bottom after sending (instant, no animation)
+        // User expects to see their own message immediately
+        _isUserAtBottom = true; // Mark user as at bottom
+        _scrollToBottom(animate: false);
       }
     } catch (e) {
       if (mounted) {

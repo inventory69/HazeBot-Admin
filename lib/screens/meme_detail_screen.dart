@@ -4,6 +4,31 @@ import 'package:url_launcher/url_launcher.dart';
 import '../services/api_service.dart';
 import '../providers/data_cache_provider.dart';
 
+/// Format Lemmy source to user-friendly display
+/// Input: "lemmy:lemmy.world@memes" or "lemmy.world@memes"
+/// Output: "memes@lemmy.world" (community@instance format)
+String formatLemmySource(String source) {
+  // Remove "lemmy:" prefix if present
+  String cleaned = source;
+  if (cleaned.startsWith('lemmy:')) {
+    cleaned = cleaned.substring(6); // Remove "lemmy:"
+  }
+  
+  // Check if it contains @ (Lemmy format)
+  if (cleaned.contains('@')) {
+    final parts = cleaned.split('@');
+    if (parts.length == 2) {
+      final instance = parts[0];
+      final community = parts[1];
+      // Return user-friendly format: community@instance
+      return '$community@$instance';
+    }
+  }
+  
+  // Return as-is if not Lemmy format
+  return source;
+}
+
 class MemeDetailScreen extends StatefulWidget {
   final Map<String, dynamic> meme;
 
@@ -125,7 +150,9 @@ class _MemeDetailScreenState extends State<MemeDetailScreen> {
     final title = widget.meme['title'] as String? ?? 'Untitled Meme';
     final author = widget.meme['author'] as String? ?? 'Unknown';
     final score = widget.meme['score'] as int? ?? 0;
-    final source = widget.meme['source'] as String? ?? 'Unknown';
+    final sourceRaw = widget.meme['source'] as String? ?? 'Unknown';
+    // ✅ Format Lemmy sources to user-friendly display (community@instance)
+    final source = formatLemmySource(sourceRaw);
     final url = widget.meme['url'] as String?;
     final timestamp = widget.meme['timestamp'] as String?;
     final isCustom = widget.meme['is_custom'] as bool? ?? false;

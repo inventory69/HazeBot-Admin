@@ -5,6 +5,22 @@ import '../../services/auth_service.dart';
 import '../../services/discord_auth_service.dart';
 import '../../providers/data_cache_provider.dart';
 
+/// Format Lemmy community to user-friendly display
+/// Input: "lemmy.world@memes" (instance@community)
+/// Output: "memes@lemmy.world" (community@instance)
+String formatLemmyDisplay(String community) {
+  if (community.contains('@')) {
+    final parts = community.split('@');
+    if (parts.length == 2) {
+      final instance = parts[0];
+      final communityName = parts[1];
+      // Return user-friendly format: community@instance
+      return '$communityName@$instance';
+    }
+  }
+  return community;
+}
+
 /// Helper function to proxy external images through our backend to bypass CORS
 String getProxiedImageUrl(String originalUrl) {
   // Proxy external images (Reddit, Imgur, Imgflip)
@@ -208,6 +224,29 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
         _isSendingMeme = false;
       });
     }
+  }
+
+  /// Format source for display (handles both Reddit and Lemmy)
+  String _formatSourceDisplay(String source) {
+    // If it starts with "lemmy:", format it
+    if (source.startsWith('lemmy:')) {
+      final cleaned = source.substring(6); // Remove "lemmy:"
+      if (cleaned.contains('@')) {
+        final parts = cleaned.split('@');
+        if (parts.length == 2) {
+          final instance = parts[0];
+          final community = parts[1];
+          // Return user-friendly format: community@instance
+          return '$community@$instance';
+        }
+      }
+      return cleaned;
+    }
+    // For Reddit, add r/ prefix if not present
+    if (!source.startsWith('r/') && !source.contains('@')) {
+      return 'r/$source';
+    }
+    return source;
   }
 
   @override
@@ -421,7 +460,8 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                                           _buildInfoChip(
                                             context,
                                             icon: Icons.forum,
-                                            label: _randomMemeData!['subreddit'] ?? 'Unknown',
+                                            // ✅ Format source display (handles both Reddit and Lemmy)
+                                            label: _formatSourceDisplay(_randomMemeData!['subreddit'] ?? 'Unknown'),
                                             color: Colors.deepOrange,
                                           ),
                                           _buildInfoChip(
@@ -581,7 +621,8 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                                       children: [
                                         const Icon(Icons.public, size: 16),
                                         const SizedBox(width: 8),
-                                        Text(comm),
+                                        // ✅ Format Lemmy to user-friendly display (community@instance)
+                                        Text(formatLemmyDisplay(comm)),
                                       ],
                                     ),
                                   )),
@@ -693,7 +734,8 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                                           _buildInfoChip(
                                             context,
                                             icon: Icons.forum,
-                                            label: _sourceMemeData!['subreddit'] ?? 'Unknown',
+                                            // ✅ Format source display (handles both Reddit and Lemmy)
+                                            label: _formatSourceDisplay(_sourceMemeData!['subreddit'] ?? 'Unknown'),
                                             color: Colors.deepOrange,
                                           ),
                                           _buildInfoChip(

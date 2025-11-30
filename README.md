@@ -33,7 +33,8 @@ Feature-rich admin panel with hybrid navigation combining user features for comm
 ### Prerequisites
 
 - **Flutter SDK 3.0+** - [Install](https://docs.flutter.dev/get-started/install)
-- **HazeBot API Server** - Running and accessible
+- **HazeBot Bot + API Server** - Running and accessible
+  - 📖 **[HazeBot Setup Guide](https://github.com/inventory69/HazeBot/blob/main/BOT_SETUP.md)** - Complete bot installation instructions
 
 ### Setup
 
