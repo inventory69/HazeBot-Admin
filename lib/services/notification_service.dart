@@ -344,21 +344,15 @@ class NotificationService {
         return;
       }
 
-      // Check when we last registered
-      final prefs = await SharedPreferences.getInstance();
-      final lastRegistered = prefs.getInt('fcm_token_last_registered') ?? 0;
-      final now = DateTime.now().millisecondsSinceEpoch;
-      final hoursSinceLastReg = (now - lastRegistered) / (1000 * 60 * 60);
+      // ✅ FIX: Always re-register on app start (idempotent, prevents token loss)
+      // Backend handles duplicate registrations gracefully
+      debugPrint('🔄 Auto re-registering FCM token on app start (prevents backend token loss)');
+      await _registerTokenWithBackend(_fcmToken!);
 
-      // Re-register if more than 24 hours since last registration
-      if (hoursSinceLastReg > 24) {
-        debugPrint('🔄 Auto re-registering FCM token (last registered ${hoursSinceLastReg.toStringAsFixed(1)}h ago)');
-        await _registerTokenWithBackend(_fcmToken!);
-        await prefs.setInt('fcm_token_last_registered', now);
-      } else {
-        debugPrint(
-            '✓ Token recently registered (${hoursSinceLastReg.toStringAsFixed(1)}h ago), skipping re-registration');
-      }
+      // Update last registration time
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('fcm_token_last_registered', DateTime.now().millisecondsSinceEpoch);
+      debugPrint('✅ Token re-registered successfully');
     } catch (e) {
       debugPrint('❌ Error in auto re-registration: $e');
     }
