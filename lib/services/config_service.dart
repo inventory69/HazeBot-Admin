@@ -39,7 +39,8 @@ class ConfigService extends ChangeNotifier {
     }
   }
 
-  Future<void> updateGeneralConfig(ApiService apiService, Map<String, dynamic> config) async {
+  Future<void> updateGeneralConfig(
+      ApiService apiService, Map<String, dynamic> config) async {
     _isLoading = true;
     notifyListeners();
 
@@ -55,7 +56,8 @@ class ConfigService extends ChangeNotifier {
     }
   }
 
-  Future<void> updateChannelsConfig(ApiService apiService, Map<String, dynamic> config) async {
+  Future<void> updateChannelsConfig(
+      ApiService apiService, Map<String, dynamic> config) async {
     _isLoading = true;
     notifyListeners();
 
@@ -71,7 +73,8 @@ class ConfigService extends ChangeNotifier {
     }
   }
 
-  Future<void> updateRolesConfig(ApiService apiService, Map<String, dynamic> config) async {
+  Future<void> updateRolesConfig(
+      ApiService apiService, Map<String, dynamic> config) async {
     _isLoading = true;
     notifyListeners();
 
@@ -87,7 +90,8 @@ class ConfigService extends ChangeNotifier {
     }
   }
 
-  Future<void> updateMemeConfig(ApiService apiService, Map<String, dynamic> config) async {
+  Future<void> updateMemeConfig(
+      ApiService apiService, Map<String, dynamic> config) async {
     _isLoading = true;
     notifyListeners();
 
@@ -103,7 +107,8 @@ class ConfigService extends ChangeNotifier {
     }
   }
 
-  Future<void> updateRocketLeagueConfig(ApiService apiService, Map<String, dynamic> config) async {
+  Future<void> updateRocketLeagueConfig(
+      ApiService apiService, Map<String, dynamic> config) async {
     _isLoading = true;
     notifyListeners();
 
@@ -119,7 +124,8 @@ class ConfigService extends ChangeNotifier {
     }
   }
 
-  Future<void> updateWelcomeConfig(ApiService apiService, Map<String, dynamic> config) async {
+  Future<void> updateWelcomeConfig(
+      ApiService apiService, Map<String, dynamic> config) async {
     _isLoading = true;
     notifyListeners();
 

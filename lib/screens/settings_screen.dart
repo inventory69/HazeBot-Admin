@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
@@ -30,7 +31,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _loadShowAdminPanelSetting() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _showAdminPanelOnStartup = prefs.getBool('show_admin_panel_on_startup') ?? false;
+      _showAdminPanelOnStartup =
+          prefs.getBool('show_admin_panel_on_startup') ?? false;
     });
   }
 
@@ -43,10 +45,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _loadPackageInfo() async {
-    final packageInfo = await PackageInfo.fromPlatform();
     setState(() {
-      _version = packageInfo.version;
-      _buildNumber = packageInfo.buildNumber;
+      if (kDebugMode) {
+        // In Debug mode: Use current date as version to avoid showing outdated CI build info
+        final now = DateTime.now();
+        final dateStr =
+            '${now.year}.${now.month.toString().padLeft(2, '0')}.${now.day.toString().padLeft(2, '0')}';
+        final timeStr =
+            '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+        _version = '$dateStr-dev';
+        _buildNumber = timeStr;
+      } else {
+        // In Release mode: Load actual build info from CI/CD
+        PackageInfo.fromPlatform().then((packageInfo) {
+          setState(() {
+            _version = packageInfo.version;
+            _buildNumber = packageInfo.buildNumber;
+          });
+        });
+      }
     });
   }
 
@@ -129,7 +146,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(
-                              value ? 'Admin panel will open on startup' : 'Admin panel will be hidden on startup',
+                              value
+                                  ? 'Admin panel will open on startup'
+                                  : 'Admin panel will be hidden on startup',
                             ),
                             duration: const Duration(seconds: 2),
                           ),
@@ -182,7 +201,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             subtitle: const Text('github.com/inventory69/HazeBot-Admin'),
             trailing: const Icon(Icons.open_in_new),
             onTap: () async {
-              final githubUrl = dotenv.env['GITHUB_REPO_URL'] ?? 'https://github.com/inventory69/HazeBot-Admin';
+              final githubUrl = dotenv.env['GITHUB_REPO_URL'] ??
+                  'https://github.com/inventory69/HazeBot-Admin';
               final url = Uri.parse(githubUrl);
               if (await canLaunchUrl(url)) {
                 await launchUrl(url, mode: LaunchMode.externalApplication);

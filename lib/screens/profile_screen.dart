@@ -42,7 +42,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (response['success'] == true && response['profile'] != null) {
         final profile = response['profile'];
         setState(() {
-          _optInRoles = List<Map<String, dynamic>>.from(profile['opt_in_roles'] ?? []);
+          _optInRoles =
+              List<Map<String, dynamic>>.from(profile['opt_in_roles'] ?? []);
           _rlRank = profile['rl_rank'];
           _displayName = profile['display_name'];
           _avatarUrl = profile['avatar_url'];
@@ -161,9 +162,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 // Profile Information Card
                 Card(
-                  color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .primaryContainer
+                      .withOpacity(0.18),
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: EdgeInsets.all(isMobile ? 12 : 16),
                     child: Row(
@@ -182,7 +187,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   width: isMobile ? 56 : 64,
                                   height: isMobile ? 56 : 64,
                                   decoration: BoxDecoration(
-                                    color: _getRoleColor(_role).withValues(alpha: 0.2),
+                                    color: _getRoleColor(_role)
+                                        .withValues(alpha: 0.2),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Icon(
@@ -199,7 +205,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             width: isMobile ? 56 : 64,
                             height: isMobile ? 56 : 64,
                             decoration: BoxDecoration(
-                              color: _getRoleColor(_role).withValues(alpha: 0.2),
+                              color:
+                                  _getRoleColor(_role).withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Icon(
@@ -215,7 +222,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             children: [
                               Text(
                                 _displayName ?? _username ?? 'User',
-                                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.copyWith(
                                       fontWeight: FontWeight.bold,
                                       fontSize: isMobile ? 18 : 22,
                                     ),
@@ -223,9 +233,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ),
                               const SizedBox(height: 8),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 6),
                                 decoration: BoxDecoration(
-                                  color: _getRoleColor(_role).withValues(alpha: 0.2),
+                                  color: _getRoleColor(_role)
+                                      .withValues(alpha: 0.2),
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                                 child: Text(
@@ -241,8 +253,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 const SizedBox(height: 8),
                                 Text(
                                   'Discord ID: $_discordId',
-                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurfaceVariant,
                                       ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -259,9 +276,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 // Rocket League Rank Card (if available)
                 if (_rlRank != null) ...[
                   Card(
-                    color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18),
+                    color: Theme.of(context)
+                        .colorScheme
+                        .primaryContainer
+                        .withOpacity(0.18),
                     elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16)),
                     child: Padding(
                       padding: EdgeInsets.all(isMobile ? 12 : 16),
                       child: Column(
@@ -269,7 +290,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         children: [
                           Text(
                             '🚗 Rocket League',
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 12),
                           Row(
@@ -288,13 +312,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         width: 48,
                                         height: 48,
                                         decoration: BoxDecoration(
-                                          color: Theme.of(context).colorScheme.primaryContainer,
-                                          borderRadius: BorderRadius.circular(8),
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .primaryContainer,
+                                          borderRadius:
+                                              BorderRadius.circular(8),
                                         ),
                                         child: Icon(
                                           Icons.sports_esports,
                                           size: 24,
-                                          color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onPrimaryContainer,
                                         ),
                                       );
                                     },
@@ -310,12 +339,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       style: Theme.of(context)
                                           .textTheme
                                           .titleMedium
-                                          ?.copyWith(fontWeight: FontWeight.bold),
+                                          ?.copyWith(
+                                              fontWeight: FontWeight.bold),
                                     ),
                                     if (_rlRank!['platform'] != null)
                                       Text(
                                         '${_rlRank!['platform']}: ${_rlRank!['username'] ?? 'Unknown'}',
-                                        style: Theme.of(context).textTheme.bodySmall,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall,
                                       ),
                                   ],
                                 ),
@@ -332,9 +364,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 // Activity Stats
                 if (_activity != null) ...[
                   Card(
-                    color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18),
+                    color: Theme.of(context)
+                        .colorScheme
+                        .primaryContainer
+                        .withOpacity(0.18),
                     elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16)),
                     child: Padding(
                       padding: EdgeInsets.all(isMobile ? 12 : 16),
                       child: Column(
@@ -342,7 +378,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         children: [
                           Text(
                             '📊 Activity Stats',
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 12),
                           _StatRow(
@@ -358,12 +397,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           _StatRow(
                             icon: Icons.emoji_emotions,
                             label: 'Memes Requested',
-                            value: _activity!['memes_requested']?.toString() ?? '0',
+                            value: _activity!['memes_requested']?.toString() ??
+                                '0',
                           ),
                           _StatRow(
                             icon: Icons.create,
                             label: 'Memes Generated',
-                            value: _activity!['memes_generated']?.toString() ?? '0',
+                            value: _activity!['memes_generated']?.toString() ??
+                                '0',
                           ),
                         ],
                       ),
@@ -375,9 +416,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 // Custom Stats
                 if (_customStats != null) ...[
                   Card(
-                    color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18),
+                    color: Theme.of(context)
+                        .colorScheme
+                        .primaryContainer
+                        .withOpacity(0.18),
                     elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16)),
                     child: Padding(
                       padding: EdgeInsets.all(isMobile ? 12 : 16),
                       child: Column(
@@ -385,7 +430,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         children: [
                           Text(
                             '⚙️ Custom Stats',
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 12),
                           if (_customStats!['warnings'] != null)
@@ -398,7 +446,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             _StatRow(
                               icon: Icons.check_circle,
                               label: 'Resolved Tickets',
-                              value: _customStats!['resolved_tickets'].toString(),
+                              value:
+                                  _customStats!['resolved_tickets'].toString(),
                             ),
                         ],
                       ),
@@ -417,18 +466,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         children: [
                           Text(
                             '🔔 Notifications',
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 12),
                           _StatRow(
                             icon: Icons.announcement,
                             label: 'Changelog',
-                            value: _notifications!['changelog_opt_in'] == true ? '✅ Enabled' : '❌ Disabled',
+                            value: _notifications!['changelog_opt_in'] == true
+                                ? '✅ Enabled'
+                                : '❌ Disabled',
                           ),
                           _StatRow(
                             icon: Icons.emoji_emotions,
                             label: 'Daily Meme',
-                            value: _notifications!['meme_opt_in'] == true ? '✅ Enabled' : '❌ Disabled',
+                            value: _notifications!['meme_opt_in'] == true
+                                ? '✅ Enabled'
+                                : '❌ Disabled',
                           ),
                         ],
                       ),
@@ -471,7 +527,10 @@ class _StatRow extends StatelessWidget {
           ),
           Text(
             value,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(context)
+                .textTheme
+                .bodyMedium
+                ?.copyWith(fontWeight: FontWeight.bold),
           ),
         ],
       ),

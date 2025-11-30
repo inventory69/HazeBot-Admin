@@ -37,7 +37,8 @@ Future<void> main() async {
 
     debugPrint('✅ Notifications initialized');
   } catch (e) {
-    debugPrint('ℹ️ Notifications not available (Web or Firebase not configured): $e');
+    debugPrint(
+        'ℹ️ Notifications not available (Web or Firebase not configured): $e');
     // Continue without notifications - app still works
   }
 
@@ -51,7 +52,8 @@ class HazeBotAdminApp extends StatefulWidget {
   State<HazeBotAdminApp> createState() => _HazeBotAdminAppState();
 }
 
-class _HazeBotAdminAppState extends State<HazeBotAdminApp> with WidgetsBindingObserver {
+class _HazeBotAdminAppState extends State<HazeBotAdminApp>
+    with WidgetsBindingObserver {
   final DeepLinkService _deepLinkService = DeepLinkService();
   String? _pendingToken; // Store token until Provider is ready
 
@@ -72,9 +74,11 @@ class _HazeBotAdminAppState extends State<HazeBotAdminApp> with WidgetsBindingOb
     final context = navigatorKey.currentContext;
     if (context != null) {
       try {
-        final discordAuthService = Provider.of<DiscordAuthService>(context, listen: false);
+        final discordAuthService =
+            Provider.of<DiscordAuthService>(context, listen: false);
 
-        if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+        if (state == AppLifecycleState.paused ||
+            state == AppLifecycleState.inactive) {
           // App going to background - disconnect WebSocket
           debugPrint('📱 App paused/inactive - disconnecting WebSocket');
           discordAuthService.wsService.disconnect();
@@ -106,7 +110,8 @@ class _HazeBotAdminAppState extends State<HazeBotAdminApp> with WidgetsBindingOb
         final token = uri.queryParameters['token'];
 
         if (token != null) {
-          debugPrint('✅ Token found in deep link: ${token.substring(0, 20)}...');
+          debugPrint(
+              '✅ Token found in deep link: ${token.substring(0, 20)}...');
 
           // Store token to be processed after build
           setState(() {
@@ -117,7 +122,8 @@ class _HazeBotAdminAppState extends State<HazeBotAdminApp> with WidgetsBindingOb
           debugPrint('❌ No token in deep link query parameters');
         }
       } else {
-        debugPrint('❌ Deep link does not match OAuth pattern (expected hazebot://oauth)');
+        debugPrint(
+            '❌ Deep link does not match OAuth pattern (expected hazebot://oauth)');
       }
     });
   }
@@ -148,7 +154,9 @@ class _HazeBotAdminAppState extends State<HazeBotAdminApp> with WidgetsBindingOb
               ColorScheme lightColorScheme;
               ColorScheme darkColorScheme;
 
-              if (themeService.useDynamicColor && lightDynamic != null && darkDynamic != null) {
+              if (themeService.useDynamicColor &&
+                  lightDynamic != null &&
+                  darkDynamic != null) {
                 // Use dynamic colors from system (Material You / Android 16 Monet)
                 // Apply harmonization for color consistency
                 lightColorScheme = lightDynamic.harmonized();
@@ -249,7 +257,8 @@ class _HazeBotAdminAppState extends State<HazeBotAdminApp> with WidgetsBindingOb
                       final token = _pendingToken!;
                       _pendingToken = null; // Clear it immediately
 
-                      debugPrint('🔐 Processing pending token from deep link...');
+                      debugPrint(
+                          '🔐 Processing pending token from deep link...');
                       // Process token after this frame
                       WidgetsBinding.instance.addPostFrameCallback((_) {
                         discordAuthService.setTokenFromDeepLink(token);
@@ -257,9 +266,12 @@ class _HazeBotAdminAppState extends State<HazeBotAdminApp> with WidgetsBindingOb
                     }
 
                     // Update permission service when auth changes
-                    if (discordAuthService.isAuthenticated && discordAuthService.userInfo != null) {
+                    if (discordAuthService.isAuthenticated &&
+                        discordAuthService.userInfo != null) {
                       WidgetsBinding.instance.addPostFrameCallback((_) {
-                        final permissionService = Provider.of<PermissionService>(context, listen: false);
+                        final permissionService =
+                            Provider.of<PermissionService>(context,
+                                listen: false);
                         permissionService.updatePermissions(
                           discordAuthService.role,
                           discordAuthService.permissions,
@@ -267,7 +279,8 @@ class _HazeBotAdminAppState extends State<HazeBotAdminApp> with WidgetsBindingOb
                       });
                     }
 
-                    return authService.isAuthenticated || discordAuthService.isAuthenticated
+                    return authService.isAuthenticated ||
+                            discordAuthService.isAuthenticated
                         ? const HomeScreen()
                         : const LoginScreen();
                   },

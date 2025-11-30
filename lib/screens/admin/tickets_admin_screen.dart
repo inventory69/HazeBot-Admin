@@ -11,7 +11,8 @@ class TicketsAdminScreen extends StatefulWidget {
   State<TicketsAdminScreen> createState() => _TicketsAdminScreenState();
 }
 
-class _TicketsAdminScreenState extends State<TicketsAdminScreen> with SingleTickerProviderStateMixin {
+class _TicketsAdminScreenState extends State<TicketsAdminScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   @override
@@ -41,7 +42,8 @@ class _TicketsAdminScreenState extends State<TicketsAdminScreen> with SingleTick
                   icon: const Icon(Icons.refresh),
                   onPressed: () {
                     // Find the TicketsListTab and refresh it
-                    final state = context.findAncestorStateOfType<_TicketsListTabState>();
+                    final state =
+                        context.findAncestorStateOfType<_TicketsListTabState>();
                     state?._loadTickets();
                   },
                   tooltip: 'Refresh',
@@ -129,7 +131,8 @@ class _TicketsListTabState extends State<TicketsListTab> {
 
     // Filter by status
     if (_statusFilter != 'All') {
-      filtered = filtered.where((ticket) => ticket.status == _statusFilter).toList();
+      filtered =
+          filtered.where((ticket) => ticket.status == _statusFilter).toList();
     }
 
     // Filter by search query
@@ -154,7 +157,8 @@ class _TicketsListTabState extends State<TicketsListTab> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Ticket'),
-        content: Text('Are you sure you want to delete Ticket #${ticket.ticketNum}?\n\nThis action cannot be undone.'),
+        content: Text(
+            'Are you sure you want to delete Ticket #${ticket.ticketNum}?\n\nThis action cannot be undone.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -208,7 +212,8 @@ class _TicketsListTabState extends State<TicketsListTab> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline, size: 64, color: Theme.of(context).colorScheme.error),
+            Icon(Icons.error_outline,
+                size: 64, color: Theme.of(context).colorScheme.error),
             const SizedBox(height: 16),
             Text('Error: $_error'),
             const SizedBox(height: 16),
@@ -298,7 +303,8 @@ class _TicketsListTabState extends State<TicketsListTab> {
                         segments: const [
                           ButtonSegment(value: 'All', label: Text('All')),
                           ButtonSegment(value: 'Open', label: Text('Open')),
-                          ButtonSegment(value: 'Claimed', label: Text('Claimed')),
+                          ButtonSegment(
+                              value: 'Claimed', label: Text('Claimed')),
                           ButtonSegment(value: 'Closed', label: Text('Closed')),
                         ],
                         selected: {_statusFilter},
@@ -340,7 +346,8 @@ class _TicketsListTabState extends State<TicketsListTab> {
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
                       isDense: true,
                     ),
                     onChanged: (value) {
@@ -357,12 +364,16 @@ class _TicketsListTabState extends State<TicketsListTab> {
 
           // Results count - kompakter
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
             child: Row(
               children: [
                 Text(
                   'Showing ${_filteredTickets.length} of ${_tickets.length} tickets',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12),
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodySmall
+                      ?.copyWith(fontSize: 12),
                 ),
               ],
             ),
@@ -374,12 +385,14 @@ class _TicketsListTabState extends State<TicketsListTab> {
                 ? ListView(
                     // Wrap in ListView for pull-to-refresh to work
                     children: [
-                      SizedBox(height: MediaQuery.of(context).size.height * 0.25),
+                      SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.25),
                       Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.confirmation_number_outlined, size: 64, color: Colors.grey[400]),
+                            Icon(Icons.confirmation_number_outlined,
+                                size: 64, color: Colors.grey[400]),
                             const SizedBox(height: 16),
                             Text(
                               'No tickets found',
@@ -457,8 +470,8 @@ class TicketCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Use harmonized accent color for cards (like in dashboard)
-    final isMonet =
-        Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
+    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh !=
+        ThemeData.light().colorScheme.surfaceContainerHigh;
     final cardColor = isMonet
         ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
         : Theme.of(context).colorScheme.surface;
@@ -488,7 +501,8 @@ class TicketCard extends StatelessWidget {
                 children: [
                   // Ticket Number
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: Theme.of(context).colorScheme.primaryContainer,
                       borderRadius: BorderRadius.circular(8),
@@ -505,7 +519,8 @@ class TicketCard extends StatelessWidget {
                   const SizedBox(width: 12),
                   // Status Badge
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
                       color: _getStatusColor(context).withOpacity(0.2),
                       borderRadius: BorderRadius.circular(8),
@@ -537,7 +552,8 @@ class TicketCard extends StatelessWidget {
                   const Spacer(),
                   // Delete Button
                   IconButton(
-                    icon: Icon(Icons.delete, color: Theme.of(context).colorScheme.error),
+                    icon: Icon(Icons.delete,
+                        color: Theme.of(context).colorScheme.error),
                     onPressed: onDelete,
                     tooltip: 'Delete Ticket',
                   ),
@@ -563,12 +579,16 @@ class TicketCard extends StatelessWidget {
                             width: 40,
                             height: 40,
                             decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.primaryContainer,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .primaryContainer,
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
                               Icons.person,
-                              color: Theme.of(context).colorScheme.onPrimaryContainer,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onPrimaryContainer,
                             ),
                           );
                         },
@@ -604,7 +624,8 @@ class TicketCard extends StatelessWidget {
                           '@${ticket.username}',
                           style: TextStyle(
                             fontSize: 13,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ],
@@ -612,9 +633,13 @@ class TicketCard extends StatelessWidget {
                   ),
                   // Type Badge
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.5),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .secondaryContainer
+                          .withOpacity(0.5),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
@@ -622,7 +647,8 @@ class TicketCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: Theme.of(context).colorScheme.onSecondaryContainer,
+                        color:
+                            Theme.of(context).colorScheme.onSecondaryContainer,
                       ),
                     ),
                   ),
@@ -636,7 +662,10 @@ class TicketCard extends StatelessWidget {
                   children: [
                     // Show Assigned To if exists (takes priority over Claimed By)
                     if (ticket.assignedTo != null) ...[
-                      Icon(Icons.assignment_ind, size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                      Icon(Icons.assignment_ind,
+                          size: 16,
+                          color:
+                              Theme.of(context).colorScheme.onSurfaceVariant),
                       const SizedBox(width: 4),
                       Text(
                         'Assigned: ${ticket.assignedToName ?? "Unknown"}',
@@ -647,7 +676,10 @@ class TicketCard extends StatelessWidget {
                       ),
                     ] else if (ticket.claimedBy != null) ...[
                       // Only show Claimed By if NOT assigned
-                      Icon(Icons.person_pin, size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                      Icon(Icons.person_pin,
+                          size: 16,
+                          color:
+                              Theme.of(context).colorScheme.onSurfaceVariant),
                       const SizedBox(width: 4),
                       Text(
                         'Claimed by: ${ticket.claimedByName ?? "Unknown"}',
@@ -666,7 +698,9 @@ class TicketCard extends StatelessWidget {
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    Icon(Icons.access_time, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    Icon(Icons.access_time,
+                        size: 14,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant),
                     const SizedBox(width: 4),
                     Text(
                       'Created: ${_formatDateTime(ticket.createdAt!)}',
@@ -754,7 +788,8 @@ class _TicketsConfigTabState extends State<TicketsConfigTab> {
       setState(() {
         _config = config;
         _emailController.text = config.transcriptEmailAddress;
-        _autoCloseController.text = config.autoDeleteAfterCloseDays?.toString() ?? '';
+        _autoCloseController.text =
+            config.autoDeleteAfterCloseDays?.toString() ?? '';
         _isLoading = false;
         _hasChanges = false;
       });
@@ -805,7 +840,8 @@ class _TicketsConfigTabState extends State<TicketsConfigTab> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Reset Configuration'),
-        content: const Text('Are you sure you want to reset the ticket configuration to defaults?'),
+        content: const Text(
+            'Are you sure you want to reset the ticket configuration to defaults?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -876,8 +912,8 @@ class _TicketsConfigTabState extends State<TicketsConfigTab> {
 
   Color _getCardColor(BuildContext context) {
     // Same color logic as ticket cards
-    final isMonet =
-        Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
+    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh !=
+        ThemeData.light().colorScheme.surfaceContainerHigh;
     return isMonet
         ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
         : Theme.of(context).colorScheme.surface;
@@ -894,7 +930,8 @@ class _TicketsConfigTabState extends State<TicketsConfigTab> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline, size: 64, color: Theme.of(context).colorScheme.error),
+            Icon(Icons.error_outline,
+                size: 64, color: Theme.of(context).colorScheme.error),
             const SizedBox(height: 16),
             Text('Error: $_error'),
             const SizedBox(height: 16),
@@ -926,13 +963,16 @@ class _TicketsConfigTabState extends State<TicketsConfigTab> {
                 padding: const EdgeInsets.all(16.0),
                 child: Row(
                   children: [
-                    Icon(Icons.info_outline, color: Theme.of(context).colorScheme.onPrimaryContainer),
+                    Icon(Icons.info_outline,
+                        color:
+                            Theme.of(context).colorScheme.onPrimaryContainer),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         'You have unsaved changes',
                         style: TextStyle(
-                          color: Theme.of(context).colorScheme.onPrimaryContainer,
+                          color:
+                              Theme.of(context).colorScheme.onPrimaryContainer,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -965,7 +1005,8 @@ class _TicketsConfigTabState extends State<TicketsConfigTab> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.category, color: Theme.of(context).colorScheme.primary),
+                      Icon(Icons.category,
+                          color: Theme.of(context).colorScheme.primary),
                       const SizedBox(width: 8),
                       const Text(
                         'Ticket Categories',
@@ -1035,7 +1076,8 @@ class _TicketsConfigTabState extends State<TicketsConfigTab> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.settings, color: Theme.of(context).colorScheme.primary),
+                      Icon(Icons.settings,
+                          color: Theme.of(context).colorScheme.primary),
                       const SizedBox(width: 8),
                       const Text(
                         'Ticket Management',
@@ -1049,7 +1091,8 @@ class _TicketsConfigTabState extends State<TicketsConfigTab> {
                   const SizedBox(height: 16),
                   SwitchListTile(
                     title: const Text('Require Claim'),
-                    subtitle: const Text('Moderators must claim tickets before responding'),
+                    subtitle: const Text(
+                        'Moderators must claim tickets before responding'),
                     value: _config!.requireClaim,
                     onChanged: (value) {
                       setState(() {
@@ -1085,7 +1128,9 @@ class _TicketsConfigTabState extends State<TicketsConfigTab> {
                             onChanged: (value) {
                               setState(() {
                                 _config = _config!.copyWith(
-                                  autoDeleteAfterCloseDays: value.isEmpty ? null : int.tryParse(value),
+                                  autoDeleteAfterCloseDays: value.isEmpty
+                                      ? null
+                                      : int.tryParse(value),
                                 );
                                 _hasChanges = true;
                               });
@@ -1126,7 +1171,8 @@ class _TicketsConfigTabState extends State<TicketsConfigTab> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.email, color: Theme.of(context).colorScheme.primary),
+                      Icon(Icons.email,
+                          color: Theme.of(context).colorScheme.primary),
                       const SizedBox(width: 8),
                       const Text(
                         'Email Notifications',
@@ -1140,7 +1186,8 @@ class _TicketsConfigTabState extends State<TicketsConfigTab> {
                   const SizedBox(height: 16),
                   SwitchListTile(
                     title: const Text('Send Transcript Email'),
-                    subtitle: const Text('Email transcript when ticket is closed'),
+                    subtitle:
+                        const Text('Email transcript when ticket is closed'),
                     value: _config!.sendTranscriptEmail,
                     onChanged: (value) {
                       setState(() {
@@ -1166,7 +1213,8 @@ class _TicketsConfigTabState extends State<TicketsConfigTab> {
                         keyboardType: TextInputType.emailAddress,
                         onChanged: (value) {
                           setState(() {
-                            _config = _config!.copyWith(transcriptEmailAddress: value);
+                            _config = _config!
+                                .copyWith(transcriptEmailAddress: value);
                             _hasChanges = true;
                           });
                         },
@@ -1190,9 +1238,11 @@ class _TicketsConfigTabState extends State<TicketsConfigTab> {
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton.icon(
-                        onPressed: (_isLoading || _isSaving) ? null : _resetConfig,
+                        onPressed:
+                            (_isLoading || _isSaving) ? null : _resetConfig,
                         icon: const Icon(Icons.restore, size: 20),
-                        label: const Text('Reset to Defaults', style: TextStyle(fontSize: 14)),
+                        label: const Text('Reset to Defaults',
+                            style: TextStyle(fontSize: 14)),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.orange,
                           padding: const EdgeInsets.all(14),
@@ -1203,15 +1253,18 @@ class _TicketsConfigTabState extends State<TicketsConfigTab> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
-                        onPressed: (_isLoading || _isSaving) ? null : _saveConfig,
+                        onPressed:
+                            (_isLoading || _isSaving) ? null : _saveConfig,
                         icon: _isSaving
                             ? const SizedBox(
                                 width: 14,
                                 height: 14,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
                               )
                             : const Icon(Icons.save, size: 20),
-                        label: const Text('Save Configuration', style: TextStyle(fontSize: 14)),
+                        label: const Text('Save Configuration',
+                            style: TextStyle(fontSize: 14)),
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.all(14),
                         ),
@@ -1225,11 +1278,13 @@ class _TicketsConfigTabState extends State<TicketsConfigTab> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     OutlinedButton.icon(
-                      onPressed: (_isLoading || _isSaving) ? null : _resetConfig,
+                      onPressed:
+                          (_isLoading || _isSaving) ? null : _resetConfig,
                       icon: const Icon(Icons.restore),
                       label: const Text('Reset to Defaults'),
                       style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 24, vertical: 16),
                         foregroundColor: Colors.orange,
                       ),
                     ),
@@ -1245,7 +1300,8 @@ class _TicketsConfigTabState extends State<TicketsConfigTab> {
                           : const Icon(Icons.save),
                       label: const Text('Save Configuration'),
                       style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 24, vertical: 16),
                       ),
                     ),
                   ],

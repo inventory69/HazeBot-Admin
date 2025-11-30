@@ -25,7 +25,8 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     final localNotifications = FlutterLocalNotificationsPlugin();
 
     // Initialize if needed
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: false,
       requestBadgePermission: false,
@@ -46,7 +47,8 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
       playSound: true,
     );
     await localNotifications
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(androidChannel);
 
     // Extract notification data from data payload (data-only message)
@@ -196,12 +198,15 @@ class NotificationService {
       await _initializeLocalNotifications();
 
       // Set background message handler
-      FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+      FirebaseMessaging.onBackgroundMessage(
+          _firebaseMessagingBackgroundHandler);
 
       // Check current permission status (without requesting)
-      NotificationSettings settings = await _firebaseMessaging!.getNotificationSettings();
-      _permissionGranted = settings.authorizationStatus == AuthorizationStatus.authorized ||
-          settings.authorizationStatus == AuthorizationStatus.provisional;
+      NotificationSettings settings =
+          await _firebaseMessaging!.getNotificationSettings();
+      _permissionGranted =
+          settings.authorizationStatus == AuthorizationStatus.authorized ||
+              settings.authorizationStatus == AuthorizationStatus.provisional;
 
       if (_permissionGranted) {
         debugPrint('✅ Notification permission already granted');
@@ -210,16 +215,19 @@ class NotificationService {
         // ✅ FIX: Auto re-register token on app start (in case backend lost it)
         await _autoReRegisterTokenOnStartup();
       } else {
-        debugPrint('ℹ️ Notification permission not yet granted (will request later)');
+        debugPrint(
+            'ℹ️ Notification permission not yet granted (will request later)');
       }
 
       // Handle notification tap when app is in background/terminated
       FirebaseMessaging.onMessageOpenedApp.listen(_handleNotificationTap);
 
       // Check if app was opened from a notification
-      RemoteMessage? initialMessage = await _firebaseMessaging!.getInitialMessage();
+      RemoteMessage? initialMessage =
+          await _firebaseMessaging!.getInitialMessage();
       if (initialMessage != null) {
-        debugPrint('� App opened from notification: ${initialMessage.messageId}');
+        debugPrint(
+            '� App opened from notification: ${initialMessage.messageId}');
         _handleNotificationTap(initialMessage);
       }
 
@@ -253,22 +261,25 @@ class NotificationService {
       debugPrint('📱 Requesting notification permission...');
 
       // Request permission
-      NotificationSettings settings = await _firebaseMessaging!.requestPermission(
+      NotificationSettings settings =
+          await _firebaseMessaging!.requestPermission(
         alert: true,
         badge: true,
         sound: true,
         provisional: false,
       );
 
-      _permissionGranted = settings.authorizationStatus == AuthorizationStatus.authorized ||
-          settings.authorizationStatus == AuthorizationStatus.provisional;
+      _permissionGranted =
+          settings.authorizationStatus == AuthorizationStatus.authorized ||
+              settings.authorizationStatus == AuthorizationStatus.provisional;
 
       if (!_permissionGranted) {
         debugPrint('❌ Notification permission denied by user');
         return false;
       }
 
-      debugPrint('✅ Notification permission granted: ${settings.authorizationStatus}');
+      debugPrint(
+          '✅ Notification permission granted: ${settings.authorizationStatus}');
 
       // Setup messaging with token
       await _setupMessaging();
@@ -346,12 +357,14 @@ class NotificationService {
 
       // ✅ FIX: Always re-register on app start (idempotent, prevents token loss)
       // Backend handles duplicate registrations gracefully
-      debugPrint('🔄 Auto re-registering FCM token on app start (prevents backend token loss)');
+      debugPrint(
+          '🔄 Auto re-registering FCM token on app start (prevents backend token loss)');
       await _registerTokenWithBackend(_fcmToken!);
 
       // Update last registration time
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setInt('fcm_token_last_registered', DateTime.now().millisecondsSinceEpoch);
+      await prefs.setInt(
+          'fcm_token_last_registered', DateTime.now().millisecondsSinceEpoch);
       debugPrint('✅ Token re-registered successfully');
     } catch (e) {
       debugPrint('❌ Error in auto re-registration: $e');
@@ -360,7 +373,8 @@ class NotificationService {
 
   /// Initialize local notifications for foreground display
   Future<void> _initializeLocalNotifications() async {
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: false,
       requestBadgePermission: false,
@@ -387,7 +401,8 @@ class NotificationService {
     );
 
     await _localNotifications!
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(androidChannel);
 
     debugPrint('✅ Local notifications initialized');
@@ -564,7 +579,8 @@ class NotificationService {
     return _registerTokenWithBackend(_fcmToken!, apiService: apiService);
   }
 
-  Future<bool> _registerTokenWithBackend(String token, {ApiService? apiService}) async {
+  Future<bool> _registerTokenWithBackend(String token,
+      {ApiService? apiService}) async {
     try {
       final api = apiService ?? ApiService();
 
@@ -578,7 +594,8 @@ class NotificationService {
 
         // Save registration timestamp
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setInt('fcm_token_last_registered', DateTime.now().millisecondsSinceEpoch);
+        await prefs.setInt(
+            'fcm_token_last_registered', DateTime.now().millisecondsSinceEpoch);
       } else {
         debugPrint('⚠️ Failed to register FCM token');
       }
@@ -627,7 +644,8 @@ class NotificationService {
   }
 
   /// Get notification settings from backend
-  Future<Map<String, bool>?> getNotificationSettings(ApiService apiService) async {
+  Future<Map<String, bool>?> getNotificationSettings(
+      ApiService apiService) async {
     try {
       return await apiService.getNotificationSettings();
     } catch (e) {

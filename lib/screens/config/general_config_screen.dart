@@ -101,10 +101,13 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
       final config = {
         'bot_name': _controllers['bot_name']!.text,
         'command_prefix': _controllers['command_prefix']!.text,
-        'presence_update_interval': int.parse(_controllers['presence_update_interval']!.text),
+        'presence_update_interval':
+            int.parse(_controllers['presence_update_interval']!.text),
         'message_cooldown': int.parse(_controllers['message_cooldown']!.text),
-        'fuzzy_matching_threshold': double.parse(_controllers['fuzzy_matching_threshold']!.text),
-        'pink_color': _pinkColor.value & 0xFFFFFF, // Remove alpha channel (RGB only)
+        'fuzzy_matching_threshold':
+            double.parse(_controllers['fuzzy_matching_threshold']!.text),
+        'pink_color':
+            _pinkColor.value & 0xFFFFFF, // Remove alpha channel (RGB only)
         'embed_footer_text': _controllers['embed_footer_text']!.text,
         'role_names': _roleNames,
       };
@@ -227,7 +230,8 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
           ),
           TextButton(
             onPressed: () {
-              if (keyController.text.isNotEmpty && valueController.text.isNotEmpty) {
+              if (keyController.text.isNotEmpty &&
+                  valueController.text.isNotEmpty) {
                 Navigator.pop(context, {
                   'key': keyController.text.trim(),
                   'value': valueController.text.trim(),
@@ -295,29 +299,38 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    final isMonet =
-        Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
+    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh !=
+        ThemeData.light().colorScheme.surfaceContainerHigh;
     final cardColor = isMonet
         ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
         : Theme.of(context).colorScheme.surface;
-    final infoBoxBlue =
-        isMonet ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.10) : Colors.blue.withOpacity(0.1);
-    final infoBoxBlueBorder =
-        isMonet ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.30) : Colors.blue.withOpacity(0.3);
-    final infoBoxGreen =
-        isMonet ? Theme.of(context).colorScheme.tertiaryContainer.withOpacity(0.10) : Colors.green.withOpacity(0.1);
-    final infoBoxGreenBorder =
-        isMonet ? Theme.of(context).colorScheme.tertiaryContainer.withOpacity(0.30) : Colors.green.withOpacity(0.3);
-    final infoBoxPurple =
-        isMonet ? Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.10) : Colors.purple.withOpacity(0.1);
-    final infoBoxPurpleBorder =
-        isMonet ? Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.30) : Colors.purple.withOpacity(0.3);
-    final infoBoxTeal =
-        isMonet ? Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.10) : Colors.teal.withOpacity(0.1);
-    final infoBoxTealBorder =
-        isMonet ? Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.30) : Colors.teal.withOpacity(0.3);
-    final infoBoxGrey =
-        isMonet ? Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.10) : Colors.grey.withOpacity(0.1);
+    final infoBoxBlue = isMonet
+        ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.10)
+        : Colors.blue.withOpacity(0.1);
+    final infoBoxBlueBorder = isMonet
+        ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.30)
+        : Colors.blue.withOpacity(0.3);
+    final infoBoxGreen = isMonet
+        ? Theme.of(context).colorScheme.tertiaryContainer.withOpacity(0.10)
+        : Colors.green.withOpacity(0.1);
+    final infoBoxGreenBorder = isMonet
+        ? Theme.of(context).colorScheme.tertiaryContainer.withOpacity(0.30)
+        : Colors.green.withOpacity(0.3);
+    final infoBoxPurple = isMonet
+        ? Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.10)
+        : Colors.purple.withOpacity(0.1);
+    final infoBoxPurpleBorder = isMonet
+        ? Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.30)
+        : Colors.purple.withOpacity(0.3);
+    final infoBoxTeal = isMonet
+        ? Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.10)
+        : Colors.teal.withOpacity(0.1);
+    final infoBoxTealBorder = isMonet
+        ? Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.30)
+        : Colors.teal.withOpacity(0.3);
+    final infoBoxGrey = isMonet
+        ? Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.10)
+        : Colors.grey.withOpacity(0.1);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -352,7 +365,8 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
                 Card(
                   color: cardColor,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: EdgeInsets.all(cardPadding),
                     child: Column(
@@ -360,12 +374,16 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.smart_toy, color: Colors.blue, size: isMobile ? 20 : 24),
+                            Icon(Icons.smart_toy,
+                                color: Colors.blue, size: isMobile ? 20 : 24),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 'Bot Settings',
-                                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.copyWith(
                                       fontSize: isMobile ? 18 : null,
                                     ),
                               ),
@@ -418,7 +436,9 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
                           ),
                           child: Row(
                             children: [
-                              Icon(Icons.info_outline, size: isMobile ? 18 : 20, color: Colors.blue[700]),
+                              Icon(Icons.info_outline,
+                                  size: isMobile ? 18 : 20,
+                                  color: Colors.blue[700]),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
@@ -443,7 +463,8 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
                 Card(
                   color: cardColor,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: EdgeInsets.all(cardPadding),
                     child: Column(
@@ -451,12 +472,16 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.speed, color: Colors.green, size: isMobile ? 20 : 24),
+                            Icon(Icons.speed,
+                                color: Colors.green, size: isMobile ? 20 : 24),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 'Performance Settings',
-                                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.copyWith(
                                       fontSize: isMobile ? 18 : null,
                                     ),
                               ),
@@ -468,7 +493,8 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
                           controller: _controllers['presence_update_interval'],
                           decoration: InputDecoration(
                             labelText: 'Presence Update Interval (seconds)',
-                            helperText: 'How often to update the bot\'s presence status',
+                            helperText:
+                                'How often to update the bot\'s presence status',
                             helperMaxLines: isMobile ? 2 : 1,
                             border: const OutlineInputBorder(),
                             prefixIcon: const Icon(Icons.timer),
@@ -513,13 +539,15 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
                           controller: _controllers['fuzzy_matching_threshold'],
                           decoration: InputDecoration(
                             labelText: 'Fuzzy Matching Threshold',
-                            helperText: 'Similarity threshold for command matching (0.0-1.0)',
+                            helperText:
+                                'Similarity threshold for command matching (0.0-1.0)',
                             helperMaxLines: isMobile ? 2 : 1,
                             border: const OutlineInputBorder(),
                             prefixIcon: const Icon(Icons.find_in_page),
                             isDense: isMobile,
                           ),
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return 'Please enter a threshold';
@@ -543,7 +571,9 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
                           ),
                           child: Row(
                             children: [
-                              Icon(Icons.info_outline, size: isMobile ? 18 : 20, color: Colors.green[700]),
+                              Icon(Icons.info_outline,
+                                  size: isMobile ? 18 : 20,
+                                  color: Colors.green[700]),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
@@ -569,7 +599,8 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
                 Card(
                   color: cardColor,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: EdgeInsets.all(cardPadding),
                     child: Column(
@@ -577,12 +608,16 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.palette, color: Colors.purple, size: isMobile ? 20 : 24),
+                            Icon(Icons.palette,
+                                color: Colors.purple, size: isMobile ? 20 : 24),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 'Color Scheme',
-                                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.copyWith(
                                       fontSize: isMobile ? 18 : null,
                                     ),
                               ),
@@ -601,17 +636,21 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
                               border: Border.all(color: Colors.grey.shade300),
                             ),
                           ),
-                          title: Text('Primary Pink Color', style: TextStyle(fontSize: isMobile ? 14 : null)),
+                          title: Text('Primary Pink Color',
+                              style: TextStyle(fontSize: isMobile ? 14 : null)),
                           subtitle: Text(
                             '#${_pinkColor.value.toRadixString(16).substring(2).toUpperCase()}',
                             style: TextStyle(fontSize: isMobile ? 12 : null),
                           ),
                           trailing: ElevatedButton.icon(
                             onPressed: () async {
-                              final Color? newColor = await showColorPickerDialog(
+                              final Color? newColor =
+                                  await showColorPickerDialog(
                                 context,
                                 _pinkColor,
-                                title: Text('Select Pink Color', style: Theme.of(context).textTheme.titleLarge),
+                                title: Text('Select Pink Color',
+                                    style:
+                                        Theme.of(context).textTheme.titleLarge),
                                 width: 40,
                                 height: 40,
                                 spacing: 0,
@@ -633,8 +672,11 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
                                 setState(() => _pinkColor = newColor);
                               }
                             },
-                            icon: Icon(Icons.colorize, size: isMobile ? 18 : null),
-                            label: Text('Pick Color', style: TextStyle(fontSize: isMobile ? 13 : null)),
+                            icon: Icon(Icons.colorize,
+                                size: isMobile ? 18 : null),
+                            label: Text('Pick Color',
+                                style:
+                                    TextStyle(fontSize: isMobile ? 13 : null)),
                           ),
                         ),
                         SizedBox(height: isMobile ? 8 : 12),
@@ -649,7 +691,9 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
                           ),
                           child: Row(
                             children: [
-                              Icon(Icons.info_outline, size: isMobile ? 18 : 20, color: Colors.purple[700]),
+                              Icon(Icons.info_outline,
+                                  size: isMobile ? 18 : 20,
+                                  color: Colors.purple[700]),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
@@ -673,7 +717,8 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
                 Card(
                   color: cardColor,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: EdgeInsets.all(cardPadding),
                     child: Column(
@@ -681,12 +726,16 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.text_fields, color: Colors.teal, size: isMobile ? 20 : 24),
+                            Icon(Icons.text_fields,
+                                color: Colors.teal, size: isMobile ? 20 : 24),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 'Embed Footer Text',
-                                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.copyWith(
                                       fontSize: isMobile ? 18 : null,
                                     ),
                               ),
@@ -720,7 +769,9 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
                           ),
                           child: Row(
                             children: [
-                              Icon(Icons.info_outline, size: isMobile ? 18 : 20, color: Colors.teal[700]),
+                              Icon(Icons.info_outline,
+                                  size: isMobile ? 18 : 20,
+                                  color: Colors.teal[700]),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
@@ -744,7 +795,8 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
                 Card(
                   color: cardColor,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: EdgeInsets.all(cardPadding),
                     child: Column(
@@ -756,12 +808,17 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
                             Expanded(
                               child: Row(
                                 children: [
-                                  Icon(Icons.label, color: Colors.orange, size: isMobile ? 20 : 24),
+                                  Icon(Icons.label,
+                                      color: Colors.orange,
+                                      size: isMobile ? 20 : 24),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
                                       'Role Display Names',
-                                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleLarge
+                                          ?.copyWith(
                                             fontSize: isMobile ? 18 : null,
                                           ),
                                     ),
@@ -786,7 +843,9 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
                             ),
                             child: Row(
                               children: [
-                                Icon(Icons.info_outline, color: Colors.grey, size: isMobile ? 20 : 24),
+                                Icon(Icons.info_outline,
+                                    color: Colors.grey,
+                                    size: isMobile ? 20 : 24),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
@@ -804,20 +863,29 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
                         else
                           ..._roleNames.entries
                               .map((entry) => ListTile(
-                                    contentPadding: isMobile ? const EdgeInsets.symmetric(horizontal: 4) : null,
-                                    leading: Icon(Icons.label, size: isMobile ? 20 : 24),
-                                    title: Text(entry.value, style: TextStyle(fontSize: isMobile ? 14 : null)),
-                                    subtitle:
-                                        Text('Key: ${entry.key}', style: TextStyle(fontSize: isMobile ? 12 : null)),
+                                    contentPadding: isMobile
+                                        ? const EdgeInsets.symmetric(
+                                            horizontal: 4)
+                                        : null,
+                                    leading: Icon(Icons.label,
+                                        size: isMobile ? 20 : 24),
+                                    title: Text(entry.value,
+                                        style: TextStyle(
+                                            fontSize: isMobile ? 14 : null)),
+                                    subtitle: Text('Key: ${entry.key}',
+                                        style: TextStyle(
+                                            fontSize: isMobile ? 12 : null)),
                                     trailing: IconButton(
-                                      icon: Icon(Icons.delete, size: isMobile ? 20 : 24),
+                                      icon: Icon(Icons.delete,
+                                          size: isMobile ? 20 : 24),
                                       onPressed: () {
                                         setState(() {
                                           _roleNames.remove(entry.key);
                                         });
                                       },
                                     ),
-                                    onTap: () => _editRoleName(entry.key, entry.value),
+                                    onTap: () =>
+                                        _editRoleName(entry.key, entry.value),
                                   ))
                               .toList(),
                       ],
@@ -835,7 +903,8 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
                         child: OutlinedButton.icon(
                           onPressed: _isLoading ? null : _resetToDefaults,
                           icon: const Icon(Icons.restore, size: 20),
-                          label: const Text('Reset to Defaults', style: TextStyle(fontSize: 14)),
+                          label: const Text('Reset to Defaults',
+                              style: TextStyle(fontSize: 14)),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: Colors.orange,
                             padding: const EdgeInsets.all(14),
@@ -851,10 +920,12 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
                               ? const SizedBox(
                                   width: 14,
                                   height: 14,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                  child:
+                                      CircularProgressIndicator(strokeWidth: 2),
                                 )
                               : const Icon(Icons.save, size: 20),
-                          label: const Text('Save Configuration', style: TextStyle(fontSize: 14)),
+                          label: const Text('Save Configuration',
+                              style: TextStyle(fontSize: 14)),
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.all(14),
                           ),
@@ -871,7 +942,8 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
                         icon: const Icon(Icons.restore),
                         label: const Text('Reset to Defaults'),
                         style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 24, vertical: 16),
                           foregroundColor: Colors.orange,
                         ),
                       ),
@@ -882,12 +954,14 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
                             ? const SizedBox(
                                 width: 20,
                                 height: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
                               )
                             : const Icon(Icons.save),
                         label: const Text('Save Configuration'),
                         style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 24, vertical: 16),
                         ),
                       ),
                     ],

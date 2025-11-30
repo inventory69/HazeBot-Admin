@@ -7,10 +7,12 @@ class DailyMemePreferencesScreen extends StatefulWidget {
   const DailyMemePreferencesScreen({super.key});
 
   @override
-  State<DailyMemePreferencesScreen> createState() => _DailyMemePreferencesScreenState();
+  State<DailyMemePreferencesScreen> createState() =>
+      _DailyMemePreferencesScreenState();
 }
 
-class _DailyMemePreferencesScreenState extends State<DailyMemePreferencesScreen> {
+class _DailyMemePreferencesScreenState
+    extends State<DailyMemePreferencesScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
 
@@ -51,7 +53,8 @@ class _DailyMemePreferencesScreenState extends State<DailyMemePreferencesScreen>
         _poolSizeController.text = (config['pool_size'] ?? 50).toString();
 
         // Load available sources
-        _availableSubreddits = List<String>.from(config['available_subreddits'] ?? []);
+        _availableSubreddits =
+            List<String>.from(config['available_subreddits'] ?? []);
         _availableLemmy = List<String>.from(config['available_lemmy'] ?? []);
 
         // Load selected sources
@@ -92,7 +95,8 @@ class _DailyMemePreferencesScreenState extends State<DailyMemePreferencesScreen>
     if (_selectedSubreddits.isEmpty && _selectedLemmy.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('At least one source (Reddit or Lemmy) must be selected'),
+          content:
+              Text('At least one source (Reddit or Lemmy) must be selected'),
           backgroundColor: Colors.orange,
         ),
       );
@@ -189,8 +193,11 @@ class _DailyMemePreferencesScreenState extends State<DailyMemePreferencesScreen>
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final isMonet = colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
-    final cardColor = isMonet ? colorScheme.primaryContainer.withOpacity(0.18) : colorScheme.surface;
+    final isMonet = colorScheme.surfaceContainerHigh !=
+        ThemeData.light().colorScheme.surfaceContainerHigh;
+    final cardColor = isMonet
+        ? colorScheme.primaryContainer.withOpacity(0.18)
+        : colorScheme.surface;
 
     return _isLoading
         ? const Center(child: CircularProgressIndicator())
@@ -209,7 +216,9 @@ class _DailyMemePreferencesScreenState extends State<DailyMemePreferencesScreen>
                       // Header
                       Row(
                         children: [
-                          Icon(Icons.tune, size: isMobile ? 28 : 32, color: colorScheme.primary),
+                          Icon(Icons.tune,
+                              size: isMobile ? 28 : 32,
+                              color: colorScheme.primary),
                           SizedBox(width: isMobile ? 8 : 12),
                           Expanded(
                             child: Column(
@@ -217,13 +226,19 @@ class _DailyMemePreferencesScreenState extends State<DailyMemePreferencesScreen>
                               children: [
                                 Text(
                                   'Daily Meme Preferences',
-                                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineLarge
+                                      ?.copyWith(
                                         fontSize: isMobile ? 24 : null,
                                       ),
                                 ),
                                 Text(
                                   'Fine-tune meme selection criteria and choose which sources to use',
-                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(
                                         color: colorScheme.onSurfaceVariant,
                                         fontSize: isMobile ? 13 : null,
                                       ),
@@ -244,20 +259,27 @@ class _DailyMemePreferencesScreenState extends State<DailyMemePreferencesScreen>
                               : Colors.blue.withOpacity(0.08),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color: isMonet ? colorScheme.secondary.withOpacity(0.25) : Colors.blue.withOpacity(0.18),
+                            color: isMonet
+                                ? colorScheme.secondary.withOpacity(0.25)
+                                : Colors.blue.withOpacity(0.18),
                           ),
                         ),
                         child: Row(
                           children: [
                             Icon(Icons.info_outline,
-                                size: isMobile ? 18 : 20, color: isMonet ? colorScheme.secondary : Colors.blue[700]),
+                                size: isMobile ? 18 : 20,
+                                color: isMonet
+                                    ? colorScheme.secondary
+                                    : Colors.blue[700]),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 'Configure how memes are selected and which sources are used.',
                                 style: TextStyle(
                                   fontSize: isMobile ? 11 : 12,
-                                  color: isMonet ? colorScheme.secondary : Colors.blue[700],
+                                  color: isMonet
+                                      ? colorScheme.secondary
+                                      : Colors.blue[700],
                                 ),
                               ),
                             ),
@@ -280,13 +302,18 @@ class _DailyMemePreferencesScreenState extends State<DailyMemePreferencesScreen>
                             children: [
                               Row(
                                 children: [
-                                  Icon(Icons.tune, color: Colors.green, size: isMobile ? 20 : 24),
+                                  Icon(Icons.tune,
+                                      color: Colors.green,
+                                      size: isMobile ? 20 : 24),
                                   const SizedBox(width: 8),
                                   Flexible(
                                     child: Text(
                                       'Selection Criteria',
                                       overflow: TextOverflow.ellipsis,
-                                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium
+                                          ?.copyWith(
                                             fontSize: isMobile ? 16 : null,
                                           ),
                                     ),
@@ -301,13 +328,18 @@ class _DailyMemePreferencesScreenState extends State<DailyMemePreferencesScreen>
                                 children: [
                                   Text(
                                     'Minimum Score: ${_minScore.toInt()}',
-                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
                                           fontSize: isMobile ? 13 : null,
                                         ),
                                   ),
                                   Text(
                                     'Minimum upvotes required for a meme',
-                                    style: TextStyle(fontSize: isMobile ? 11 : 12, color: Colors.grey),
+                                    style: TextStyle(
+                                        fontSize: isMobile ? 11 : 12,
+                                        color: Colors.grey),
                                   ),
                                   Slider(
                                     value: _minScore,
@@ -315,7 +347,8 @@ class _DailyMemePreferencesScreenState extends State<DailyMemePreferencesScreen>
                                     max: 10000,
                                     divisions: 100,
                                     label: _minScore.toInt().toString(),
-                                    onChanged: (value) => setState(() => _minScore = value),
+                                    onChanged: (value) =>
+                                        setState(() => _minScore = value),
                                   ),
                                 ],
                               ),
@@ -327,7 +360,8 @@ class _DailyMemePreferencesScreenState extends State<DailyMemePreferencesScreen>
                                 decoration: InputDecoration(
                                   labelText: 'Max Sources',
                                   hintText: 'Number of sources to fetch from',
-                                  helperText: 'How many subreddits/communities to use',
+                                  helperText:
+                                      'How many subreddits/communities to use',
                                   border: const OutlineInputBorder(),
                                   prefixIcon: const Icon(Icons.source),
                                   isDense: isMobile,
@@ -395,27 +429,37 @@ class _DailyMemePreferencesScreenState extends State<DailyMemePreferencesScreen>
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     Expanded(
                                       child: Row(
                                         children: [
-                                          Icon(Icons.reddit, color: Colors.deepOrange, size: isMobile ? 20 : 24),
+                                          Icon(Icons.reddit,
+                                              color: Colors.deepOrange,
+                                              size: isMobile ? 20 : 24),
                                           const SizedBox(width: 8),
                                           Flexible(
                                             child: Text(
                                               'Reddit Sources',
                                               overflow: TextOverflow.ellipsis,
-                                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                                    fontSize: isMobile ? 16 : null,
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .titleMedium
+                                                  ?.copyWith(
+                                                    fontSize:
+                                                        isMobile ? 16 : null,
                                                   ),
                                             ),
                                           ),
                                           Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 8, vertical: 4),
                                             decoration: BoxDecoration(
-                                              color: Colors.deepOrange.withOpacity(0.08),
-                                              borderRadius: BorderRadius.circular(12),
+                                              color: Colors.deepOrange
+                                                  .withOpacity(0.08),
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
                                             ),
                                             child: Text(
                                               '${_selectedSubreddits.length}/${_availableSubreddits.length}',
@@ -432,52 +476,66 @@ class _DailyMemePreferencesScreenState extends State<DailyMemePreferencesScreen>
                                     TextButton(
                                       onPressed: () {
                                         setState(() {
-                                          if (_selectedSubreddits.length == _availableSubreddits.length) {
+                                          if (_selectedSubreddits.length ==
+                                              _availableSubreddits.length) {
                                             _selectedSubreddits.clear();
                                           } else {
-                                            _selectedSubreddits = List.from(_availableSubreddits);
+                                            _selectedSubreddits =
+                                                List.from(_availableSubreddits);
                                           }
                                         });
                                       },
                                       child: Text(
-                                        _selectedSubreddits.length == _availableSubreddits.length
+                                        _selectedSubreddits.length ==
+                                                _availableSubreddits.length
                                             ? 'Deselect All'
                                             : 'Select All',
-                                        style: TextStyle(fontSize: isMobile ? 12 : null),
+                                        style: TextStyle(
+                                            fontSize: isMobile ? 12 : null),
                                       ),
                                     ),
                                   ],
                                 ),
                                 const Divider(),
-                                ..._availableSubreddits.map((subreddit) => CheckboxListTile(
-                                      title: Text(
-                                        'r/$subreddit',
-                                        overflow: TextOverflow.ellipsis,
-                                        maxLines: 1,
-                                        style: TextStyle(fontSize: isMobile ? 13 : null),
-                                      ),
-                                      value: _selectedSubreddits.contains(subreddit),
-                                      onChanged: (checked) {
-                                        setState(() {
-                                          if (checked == true) {
-                                            _selectedSubreddits.add(subreddit);
-                                          } else {
-                                            // Don't allow deselecting if it's the last source
-                                            if (_selectedSubreddits.length > 1 || _selectedLemmy.isNotEmpty) {
-                                              _selectedSubreddits.remove(subreddit);
-                                            } else {
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                const SnackBar(
-                                                  content: Text('At least one source must be selected'),
-                                                  duration: Duration(seconds: 2),
-                                                ),
-                                              );
-                                            }
-                                          }
-                                        });
-                                      },
-                                      dense: true,
-                                    )),
+                                ..._availableSubreddits
+                                    .map((subreddit) => CheckboxListTile(
+                                          title: Text(
+                                            'r/$subreddit',
+                                            overflow: TextOverflow.ellipsis,
+                                            maxLines: 1,
+                                            style: TextStyle(
+                                                fontSize: isMobile ? 13 : null),
+                                          ),
+                                          value: _selectedSubreddits
+                                              .contains(subreddit),
+                                          onChanged: (checked) {
+                                            setState(() {
+                                              if (checked == true) {
+                                                _selectedSubreddits
+                                                    .add(subreddit);
+                                              } else {
+                                                // Don't allow deselecting if it's the last source
+                                                if (_selectedSubreddits.length >
+                                                        1 ||
+                                                    _selectedLemmy.isNotEmpty) {
+                                                  _selectedSubreddits
+                                                      .remove(subreddit);
+                                                } else {
+                                                  ScaffoldMessenger.of(context)
+                                                      .showSnackBar(
+                                                    const SnackBar(
+                                                      content: Text(
+                                                          'At least one source must be selected'),
+                                                      duration:
+                                                          Duration(seconds: 2),
+                                                    ),
+                                                  );
+                                                }
+                                              }
+                                            });
+                                          },
+                                          dense: true,
+                                        )),
                               ],
                             ),
                           ),
@@ -499,27 +557,37 @@ class _DailyMemePreferencesScreenState extends State<DailyMemePreferencesScreen>
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     Expanded(
                                       child: Row(
                                         children: [
-                                          Icon(Icons.group, color: Colors.teal, size: isMobile ? 20 : 24),
+                                          Icon(Icons.group,
+                                              color: Colors.teal,
+                                              size: isMobile ? 20 : 24),
                                           const SizedBox(width: 8),
                                           Flexible(
                                             child: Text(
                                               'Lemmy Sources',
                                               overflow: TextOverflow.ellipsis,
-                                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                                    fontSize: isMobile ? 16 : null,
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .titleMedium
+                                                  ?.copyWith(
+                                                    fontSize:
+                                                        isMobile ? 16 : null,
                                                   ),
                                             ),
                                           ),
                                           Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 8, vertical: 4),
                                             decoration: BoxDecoration(
-                                              color: Colors.teal.withOpacity(0.08),
-                                              borderRadius: BorderRadius.circular(12),
+                                              color:
+                                                  Colors.teal.withOpacity(0.08),
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
                                             ),
                                             child: Text(
                                               '${_selectedLemmy.length}/${_availableLemmy.length}',
@@ -536,27 +604,35 @@ class _DailyMemePreferencesScreenState extends State<DailyMemePreferencesScreen>
                                     TextButton(
                                       onPressed: () {
                                         setState(() {
-                                          if (_selectedLemmy.length == _availableLemmy.length) {
+                                          if (_selectedLemmy.length ==
+                                              _availableLemmy.length) {
                                             _selectedLemmy.clear();
                                           } else {
-                                            _selectedLemmy = List.from(_availableLemmy);
+                                            _selectedLemmy =
+                                                List.from(_availableLemmy);
                                           }
                                         });
                                       },
                                       child: Text(
-                                        _selectedLemmy.length == _availableLemmy.length ? 'Deselect All' : 'Select All',
-                                        style: TextStyle(fontSize: isMobile ? 12 : null),
+                                        _selectedLemmy.length ==
+                                                _availableLemmy.length
+                                            ? 'Deselect All'
+                                            : 'Select All',
+                                        style: TextStyle(
+                                            fontSize: isMobile ? 12 : null),
                                       ),
                                     ),
                                   ],
                                 ),
                                 const Divider(),
-                                ..._availableLemmy.map((community) => CheckboxListTile(
+                                ..._availableLemmy.map((community) =>
+                                    CheckboxListTile(
                                       title: Text(
                                         community,
                                         overflow: TextOverflow.ellipsis,
                                         maxLines: 1,
-                                        style: TextStyle(fontSize: isMobile ? 13 : null),
+                                        style: TextStyle(
+                                            fontSize: isMobile ? 13 : null),
                                       ),
                                       value: _selectedLemmy.contains(community),
                                       onChanged: (checked) {
@@ -565,13 +641,18 @@ class _DailyMemePreferencesScreenState extends State<DailyMemePreferencesScreen>
                                             _selectedLemmy.add(community);
                                           } else {
                                             // Don't allow deselecting if it's the last source
-                                            if (_selectedLemmy.length > 1 || _selectedSubreddits.isNotEmpty) {
+                                            if (_selectedLemmy.length > 1 ||
+                                                _selectedSubreddits
+                                                    .isNotEmpty) {
                                               _selectedLemmy.remove(community);
                                             } else {
-                                              ScaffoldMessenger.of(context).showSnackBar(
+                                              ScaffoldMessenger.of(context)
+                                                  .showSnackBar(
                                                 const SnackBar(
-                                                  content: Text('At least one source must be selected'),
-                                                  duration: Duration(seconds: 2),
+                                                  content: Text(
+                                                      'At least one source must be selected'),
+                                                  duration:
+                                                      Duration(seconds: 2),
                                                 ),
                                               );
                                             }
@@ -614,11 +695,15 @@ class _DailyMemePreferencesScreenState extends State<DailyMemePreferencesScreen>
                                         height: 16,
                                         child: CircularProgressIndicator(
                                           strokeWidth: 2,
-                                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                                  Colors.white),
                                         ),
                                       )
                                     : const Icon(Icons.save),
-                                label: Text(_isLoading ? 'Saving...' : 'Save Preferences'),
+                                label: Text(_isLoading
+                                    ? 'Saving...'
+                                    : 'Save Preferences'),
                                 style: ElevatedButton.styleFrom(
                                   padding: const EdgeInsets.all(14),
                                 ),
@@ -650,11 +735,15 @@ class _DailyMemePreferencesScreenState extends State<DailyMemePreferencesScreen>
                                         height: 20,
                                         child: CircularProgressIndicator(
                                           strokeWidth: 2,
-                                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                                  Colors.white),
                                         ),
                                       )
                                     : const Icon(Icons.save),
-                                label: Text(_isLoading ? 'Saving...' : 'Save Preferences'),
+                                label: Text(_isLoading
+                                    ? 'Saving...'
+                                    : 'Save Preferences'),
                                 style: ElevatedButton.styleFrom(
                                   padding: const EdgeInsets.all(16),
                                 ),

@@ -8,10 +8,12 @@ class NotificationSettingsScreen extends StatefulWidget {
   const NotificationSettingsScreen({super.key});
 
   @override
-  State<NotificationSettingsScreen> createState() => _NotificationSettingsScreenState();
+  State<NotificationSettingsScreen> createState() =>
+      _NotificationSettingsScreenState();
 }
 
-class _NotificationSettingsScreenState extends State<NotificationSettingsScreen> {
+class _NotificationSettingsScreenState
+    extends State<NotificationSettingsScreen> {
   bool _isLoading = true;
   bool _isSaving = false;
   String? _errorMessage;
@@ -26,6 +28,10 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
   bool _ticketCreated = true;
   bool _ticketAssigned = true;
 
+  // Discord Role Notifications
+  bool _changelogOptIn = false;
+  bool _memeOptIn = false;
+
   bool _isAdmin = false;
   bool _isModerator = false;
 
@@ -36,7 +42,8 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
 
     // Delay to ensure context is fully available
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      debugPrint('🎬 [NotificationSettings] PostFrameCallback - calling _loadSettings()');
+      debugPrint(
+          '🎬 [NotificationSettings] PostFrameCallback - calling _loadSettings()');
       _loadSettings();
     });
   }
@@ -56,7 +63,8 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
     debugPrint('🔧 [NotificationSettings] Loading state set');
 
     try {
-      debugPrint('🔧 [NotificationSettings] Getting DiscordAuthService from context...');
+      debugPrint(
+          '🔧 [NotificationSettings] Getting DiscordAuthService from context...');
       final authService = context.read<DiscordAuthService>();
       debugPrint('✅ [NotificationSettings] Got DiscordAuthService');
 
@@ -68,31 +76,55 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
       final userInfo = authService.userInfo;
       _isAdmin = userInfo?['roles']?.contains('admin') ?? false;
       _isModerator = userInfo?['roles']?.contains('moderator') ?? false;
-      debugPrint('✅ [NotificationSettings] User role: admin=$_isAdmin, moderator=$_isModerator');
+      debugPrint(
+          '✅ [NotificationSettings] User role: admin=$_isAdmin, moderator=$_isModerator');
 
       // Check if permission already granted
       final hasPermission = notificationService.hasPermission;
       if (!hasPermission) {
-        debugPrint('📱 [NotificationSettings] Notification permission not granted yet');
+        debugPrint(
+            '📱 [NotificationSettings] Notification permission not granted yet');
       }
 
       debugPrint('🔧 [NotificationSettings] Loading settings from backend...');
-      final settings = await notificationService.getNotificationSettings(authService.apiService);
-      debugPrint('✅ [NotificationSettings] Got settings from backend: $settings');
+      final settings = await notificationService
+          .getNotificationSettings(authService.apiService);
+      debugPrint(
+          '✅ [NotificationSettings] Got settings from backend: $settings');
 
       if (settings != null) {
         if (!mounted) {
-          debugPrint('⚠️ [NotificationSettings] Widget unmounted after loading, aborting setState');
+          debugPrint(
+              '⚠️ [NotificationSettings] Widget unmounted after loading, aborting setState');
           return;
         }
 
+        // Load Discord preferences
+        debugPrint('🔧 [NotificationSettings] Loading Discord preferences...');
+        final preferences = await authService.apiService.getUserProfile();
+        debugPrint(
+            '✅ [NotificationSettings] Got user preferences: $preferences');
+
+        // Extract notifications from nested structure: profile.notifications
+        final profileData = preferences?['profile'] as Map<String, dynamic>?;
+        final notificationsData =
+            profileData?['notifications'] as Map<String, dynamic>?;
+        debugPrint(
+            '🔍 [NotificationSettings] Extracted notifications: $notificationsData');
+
         setState(() {
           // ✅ FIX: Only enable if permission granted AND backend says enabled
-          _notificationsEnabled = hasPermission && (settings['notifications_enabled'] ?? true);
+          _notificationsEnabled =
+              hasPermission && (settings['notifications_enabled'] ?? true);
           _ticketNewMessages = settings['ticket_new_messages'] ?? true;
           _ticketMentions = settings['ticket_mentions'] ?? true;
           _ticketCreated = settings['ticket_created'] ?? true;
           _ticketAssigned = settings['ticket_assigned'] ?? true;
+
+          // Discord Role Notifications - from profile.notifications
+          _changelogOptIn = notificationsData?['changelog_opt_in'] ?? false;
+          _memeOptIn = notificationsData?['meme_opt_in'] ?? false;
+
           _isLoading = false;
         });
         debugPrint('✅ [NotificationSettings] Settings loaded successfully');
@@ -102,7 +134,8 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
           _errorMessage = 'Failed to load notification settings';
           _isLoading = false;
         });
-        debugPrint('⚠️ [NotificationSettings] No settings returned from backend');
+        debugPrint(
+            '⚠️ [NotificationSettings] No settings returned from backend');
       }
     } catch (e, stackTrace) {
       debugPrint('❌ [NotificationSettings] Error loading settings: $e');
@@ -113,6 +146,94 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
         _errorMessage = 'Error loading settings: $e';
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _toggleChangelog(bool value) async {
+    setState(() {
+      _changelogOptIn = value;
+      _isSaving = true;
+    });
+
+    try {
+      final authService = context.read<DiscordAuthService>();
+      await authService.apiService.updateUserPreferences({
+        'changelog_opt_in': value,
+      });
+
+      setState(() {
+        _isSaving = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              value
+                  ? '✅ You will now receive changelog notifications'
+                  : '❌ Changelog notifications disabled',
+            ),
+            backgroundColor: value ? Colors.green : Colors.orange,
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _changelogOptIn = !value;
+        _isSaving = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error updating preferences: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _toggleMeme(bool value) async {
+    setState(() {
+      _memeOptIn = value;
+      _isSaving = true;
+    });
+
+    try {
+      final authService = context.read<DiscordAuthService>();
+      await authService.apiService.updateUserPreferences({
+        'meme_opt_in': value,
+      });
+
+      setState(() {
+        _isSaving = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              value
+                  ? '✅ You will now receive daily meme notifications'
+                  : '❌ Daily meme notifications disabled',
+            ),
+            backgroundColor: value ? Colors.green : Colors.orange,
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _memeOptIn = !value;
+        _isSaving = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error updating preferences: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -131,25 +252,32 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
       // Handle master toggle for notifications
       if (_notificationsEnabled) {
         // User wants notifications - check if any notification is enabled
-        final anyEnabled = _ticketNewMessages || _ticketMentions || _ticketCreated || _ticketAssigned;
+        final anyEnabled = _ticketNewMessages ||
+            _ticketMentions ||
+            _ticketCreated ||
+            _ticketAssigned;
 
         // Request permission if not granted and user wants notifications
         if (anyEnabled && !notificationService.hasPermission) {
-          debugPrint('📱 User enabling notifications, requesting permission...');
+          debugPrint(
+              '📱 User enabling notifications, requesting permission...');
 
-          final permissionGranted = await notificationService.requestPermissionAndRegister();
+          final permissionGranted =
+              await notificationService.requestPermissionAndRegister();
 
           if (!permissionGranted) {
             setState(() {
               _isSaving = false;
-              _errorMessage = 'Notification permission denied. Please enable notifications in system settings.';
+              _errorMessage =
+                  'Notification permission denied. Please enable notifications in system settings.';
             });
             return;
           }
         }
 
         // Register/Re-register token with backend
-        if (notificationService.hasPermission && notificationService.fcmToken != null) {
+        if (notificationService.hasPermission &&
+            notificationService.fcmToken != null) {
           debugPrint('📱 Registering FCM token with backend...');
           await notificationService.registerWithBackend(authService.apiService);
         }
@@ -200,14 +328,18 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
 
   @override
   Widget build(BuildContext context) {
-    debugPrint('🎨 [NotificationSettings] build() called - isLoading=$_isLoading, error=$_errorMessage');
+    debugPrint(
+        '🎨 [NotificationSettings] build() called - isLoading=$_isLoading, error=$_errorMessage');
 
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
     // Use harmonized accent color for cards (same as tickets screen)
-    final isMonet = colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
-    final cardColor = isMonet ? colorScheme.primaryContainer.withOpacity(0.18) : colorScheme.surface;
+    final isMonet = colorScheme.surfaceContainerHigh !=
+        ThemeData.light().colorScheme.surfaceContainerHigh;
+    final cardColor = isMonet
+        ? colorScheme.primaryContainer.withOpacity(0.18)
+        : colorScheme.surface;
 
     return Scaffold(
       appBar: AppBar(
@@ -343,8 +475,12 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                         ),
                       ),
                       secondary: Icon(
-                        _notificationsEnabled ? Icons.notifications_active : Icons.notifications_off,
-                        color: _notificationsEnabled ? colorScheme.primary : colorScheme.onSurfaceVariant,
+                        _notificationsEnabled
+                            ? Icons.notifications_active
+                            : Icons.notifications_off,
+                        color: _notificationsEnabled
+                            ? colorScheme.primary
+                            : colorScheme.onSurfaceVariant,
                         size: 32,
                       ),
                     ),
@@ -477,6 +613,204 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                       secondary: Icon(
                         Icons.assignment_outlined,
                         color: colorScheme.primary,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  // ============================================
+                  // Discord Role Notifications Section
+                  // ============================================
+                  const Divider(thickness: 2),
+
+                  const SizedBox(height: 16),
+
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.discord,
+                          color: const Color(0xFF5865F2),
+                          size: 28,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Discord Role Notifications',
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  // Info Card für Discord Notifications
+                  Card(
+                    elevation: 0,
+                    color: const Color(0xFF5865F2).withOpacity(0.1),
+                    margin: const EdgeInsets.only(bottom: 16),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.info_outline,
+                            color: const Color(0xFF5865F2),
+                            size: 20,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'These settings control Discord role assignments that trigger notifications in Discord channels.',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // Changelog Notifications
+                  Card(
+                    elevation: 0,
+                    color: cardColor,
+                    margin: const EdgeInsets.only(bottom: 8),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.update,
+                                color: Colors.blue,
+                                size: 24,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  'Changelog Notifications',
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              Switch(
+                                value: _changelogOptIn,
+                                onChanged: _isSaving ? null : _toggleChangelog,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: Colors.blue.withOpacity(0.3),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.info_outline,
+                                  size: 20,
+                                  color: Colors.blue[700],
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    _changelogOptIn
+                                        ? '✅ You will be notified about bot updates and new features.'
+                                        : '❌ You will not receive changelog notifications.',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.blue[700],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // Daily Meme Notifications
+                  Card(
+                    elevation: 0,
+                    color: cardColor,
+                    margin: const EdgeInsets.only(bottom: 8),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.image,
+                                color: Colors.purple,
+                                size: 24,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  'Daily Meme Notifications',
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              Switch(
+                                value: _memeOptIn,
+                                onChanged: _isSaving ? null : _toggleMeme,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.purple.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: Colors.purple.withOpacity(0.3),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.info_outline,
+                                  size: 20,
+                                  color: Colors.purple[700],
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    _memeOptIn
+                                        ? '✅ You will be pinged when the daily meme is posted at 12:00 PM.'
+                                        : '❌ You will not receive daily meme notifications.',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.purple[700],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),

@@ -20,7 +20,8 @@ class TicketDetailDialog extends StatefulWidget {
   State<TicketDetailDialog> createState() => _TicketDetailDialogState();
 }
 
-class _TicketDetailDialogState extends State<TicketDetailDialog> with SingleTickerProviderStateMixin {
+class _TicketDetailDialogState extends State<TicketDetailDialog>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   List<TicketMessage> _messages = [];
   bool _isLoadingMessages = false;
@@ -31,6 +32,9 @@ class _TicketDetailDialogState extends State<TicketDetailDialog> with SingleTick
   int _previousMessageCount = 0;
   Set<String> _seenMessageIds = {};
   int _firstNewMessageIndex = -1; // Index of first new message for divider
+  
+  // Store AuthService reference to avoid accessing context in dispose
+  late AuthService _authService;
 
   @override
   void initState() {
@@ -54,8 +58,8 @@ class _TicketDetailDialogState extends State<TicketDetailDialog> with SingleTick
   }
 
   void _setupWebSocketListener() {
-    final authService = Provider.of<AuthService>(context, listen: false);
-    final wsService = authService.wsService;
+    _authService = Provider.of<AuthService>(context, listen: false);
+    final wsService = _authService.wsService;
 
     // Join ticket room
     wsService.joinTicket(widget.ticket.ticketId);
@@ -112,9 +116,8 @@ class _TicketDetailDialogState extends State<TicketDetailDialog> with SingleTick
 
   @override
   void dispose() {
-    // Leave WebSocket ticket room
-    final authService = Provider.of<AuthService>(context, listen: false);
-    authService.wsService.leaveTicket(widget.ticket.ticketId);
+    // Leave WebSocket ticket room using stored reference
+    _authService.wsService.leaveTicket(widget.ticket.ticketId);
 
     _tabController.dispose();
     _messageController.dispose();
@@ -149,7 +152,9 @@ class _TicketDetailDialogState extends State<TicketDetailDialog> with SingleTick
   void _scrollToNewMessages() {
     // Scroll to show the "New Messages" divider
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && _scrollController.hasClients && _firstNewMessageIndex > 0) {
+      if (mounted &&
+          _scrollController.hasClients &&
+          _firstNewMessageIndex > 0) {
         // Add delay to ensure layout is fully complete (200ms for reliable rendering)
         Future.delayed(const Duration(milliseconds: 200), () {
           if (mounted && _scrollController.hasClients) {
@@ -176,18 +181,22 @@ class _TicketDetailDialogState extends State<TicketDetailDialog> with SingleTick
     });
 
     try {
-      final messagesData = await ApiService().getTicketMessages(widget.ticket.ticketId);
+      final messagesData =
+          await ApiService().getTicketMessages(widget.ticket.ticketId);
 
       final newMessageCount = messagesData.length;
       final hasNewMessages = newMessageCount > _previousMessageCount;
       final isFirstLoad = _previousMessageCount == 0;
 
       setState(() {
-        _messages = messagesData.map((json) => TicketMessage.fromJson(json as Map<String, dynamic>)).toList();
+        _messages = messagesData
+            .map((json) => TicketMessage.fromJson(json as Map<String, dynamic>))
+            .toList();
 
         // Find first new message index
         if (hasNewMessages && !isFirstLoad) {
-          _firstNewMessageIndex = _previousMessageCount; // Messages after this index are new
+          _firstNewMessageIndex =
+              _previousMessageCount; // Messages after this index are new
         } else {
           _firstNewMessageIndex = -1; // No new messages
         }
@@ -206,7 +215,8 @@ class _TicketDetailDialogState extends State<TicketDetailDialog> with SingleTick
       // - Updates with new messages: Scroll to divider
       // - Updates without new messages: Do nothing (stay at current position)
       if (isFirstLoad) {
-        _scrollToBottom(animate: false); // Jump instantly to bottom on first load
+        _scrollToBottom(
+            animate: false); // Jump instantly to bottom on first load
       } else if (hasNewMessages && _firstNewMessageIndex >= 0) {
         _scrollToNewMessages(); // Scroll to new messages divider
       }
@@ -467,7 +477,8 @@ class _TicketDetailDialogState extends State<TicketDetailDialog> with SingleTick
       child: LayoutBuilder(
         builder: (context, constraints) {
           final isCompact = constraints.maxWidth < 700;
-          final dialogWidth = isCompact ? constraints.maxWidth : constraints.maxWidth * 0.8;
+          final dialogWidth =
+              isCompact ? constraints.maxWidth : constraints.maxWidth * 0.8;
           final dialogHeight = constraints.maxHeight * 0.9;
 
           return Container(
@@ -479,12 +490,15 @@ class _TicketDetailDialogState extends State<TicketDetailDialog> with SingleTick
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                    color:
+                        Theme.of(context).colorScheme.surfaceContainerHighest,
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(28)),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.confirmation_number, color: Theme.of(context).colorScheme.primary),
+                      Icon(Icons.confirmation_number,
+                          color: Theme.of(context).colorScheme.primary),
                       const SizedBox(width: 12),
                       Text(
                         'Ticket #${widget.ticket.ticketNum}',
@@ -507,7 +521,9 @@ class _TicketDetailDialogState extends State<TicketDetailDialog> with SingleTick
                   controller: _tabController,
                   tabs: const [
                     Tab(text: 'Details', icon: Icon(Icons.info_outline)),
-                    Tab(text: 'Messages', icon: Icon(Icons.chat_bubble_outline)),
+                    Tab(
+                        text: 'Messages',
+                        icon: Icon(Icons.chat_bubble_outline)),
                   ],
                 ),
 
@@ -538,7 +554,10 @@ class _TicketDetailDialogState extends State<TicketDetailDialog> with SingleTick
           // Status & Type Card
           Card(
             elevation: 0,
-            color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18),
+            color: Theme.of(context)
+                .colorScheme
+                .primaryContainer
+                .withOpacity(0.18),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -558,7 +577,8 @@ class _TicketDetailDialogState extends State<TicketDetailDialog> with SingleTick
                             ),
                             const SizedBox(height: 4),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 4),
                               decoration: BoxDecoration(
                                 color: _getStatusColor(),
                                 borderRadius: BorderRadius.circular(12),
@@ -608,7 +628,10 @@ class _TicketDetailDialogState extends State<TicketDetailDialog> with SingleTick
           // Creator Card
           Card(
             elevation: 0,
-            color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18),
+            color: Theme.of(context)
+                .colorScheme
+                .primaryContainer
+                .withOpacity(0.18),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -626,10 +649,13 @@ class _TicketDetailDialogState extends State<TicketDetailDialog> with SingleTick
                     children: [
                       CircleAvatar(
                         radius: 18,
-                        backgroundImage:
-                            widget.ticket.avatarUrl != null ? NetworkImage(widget.ticket.avatarUrl!) : null,
+                        backgroundImage: widget.ticket.avatarUrl != null
+                            ? NetworkImage(widget.ticket.avatarUrl!)
+                            : null,
                         child: widget.ticket.avatarUrl == null
-                            ? Icon(Icons.person, size: 20, color: Theme.of(context).colorScheme.primary)
+                            ? Icon(Icons.person,
+                                size: 20,
+                                color: Theme.of(context).colorScheme.primary)
                             : null,
                       ),
                       const SizedBox(width: 12),
@@ -664,10 +690,14 @@ class _TicketDetailDialogState extends State<TicketDetailDialog> with SingleTick
           const SizedBox(height: 16),
 
           // Assignment Card - Show assigned OR claimed (assigned takes priority)
-          if (widget.ticket.assignedTo != null || widget.ticket.claimedBy != null)
+          if (widget.ticket.assignedTo != null ||
+              widget.ticket.claimedBy != null)
             Card(
               elevation: 0,
-              color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18),
+              color: Theme.of(context)
+                  .colorScheme
+                  .primaryContainer
+                  .withOpacity(0.18),
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -687,11 +717,15 @@ class _TicketDetailDialogState extends State<TicketDetailDialog> with SingleTick
                         children: [
                           CircleAvatar(
                             radius: 18,
-                            backgroundImage: widget.ticket.assignedToAvatar != null
+                            backgroundImage: widget.ticket.assignedToAvatar !=
+                                    null
                                 ? NetworkImage(widget.ticket.assignedToAvatar!)
                                 : null,
                             child: widget.ticket.assignedToAvatar == null
-                                ? Icon(Icons.person, size: 20, color: Theme.of(context).colorScheme.primary)
+                                ? Icon(Icons.person,
+                                    size: 20,
+                                    color:
+                                        Theme.of(context).colorScheme.primary)
                                 : null,
                           ),
                           const SizedBox(width: 12),
@@ -720,11 +754,15 @@ class _TicketDetailDialogState extends State<TicketDetailDialog> with SingleTick
                         children: [
                           CircleAvatar(
                             radius: 18,
-                            backgroundImage: widget.ticket.claimedByAvatar != null
+                            backgroundImage: widget.ticket.claimedByAvatar !=
+                                    null
                                 ? NetworkImage(widget.ticket.claimedByAvatar!)
                                 : null,
                             child: widget.ticket.claimedByAvatar == null
-                                ? Icon(Icons.person, size: 20, color: Theme.of(context).colorScheme.primary)
+                                ? Icon(Icons.person,
+                                    size: 20,
+                                    color:
+                                        Theme.of(context).colorScheme.primary)
                                 : null,
                           ),
                           const SizedBox(width: 12),
@@ -770,7 +808,8 @@ class _TicketDetailDialogState extends State<TicketDetailDialog> with SingleTick
             ),
           ] else ...[
             // Show Claim OR Assign buttons (mutually exclusive)
-            if (widget.ticket.claimedBy == null && widget.ticket.assignedTo == null) ...[
+            if (widget.ticket.claimedBy == null &&
+                widget.ticket.assignedTo == null) ...[
               SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
@@ -791,7 +830,8 @@ class _TicketDetailDialogState extends State<TicketDetailDialog> with SingleTick
                   ),
                 ),
               ),
-            ] else if (widget.ticket.claimedBy != null && widget.ticket.assignedTo == null) ...[
+            ] else if (widget.ticket.claimedBy != null &&
+                widget.ticket.assignedTo == null) ...[
               // Already claimed - only show Assign option
               SizedBox(
                 width: double.infinity,
@@ -858,10 +898,12 @@ class _MessageCard extends StatelessWidget {
 
   const _MessageCard({required this.message, this.isNew = false});
 
-  bool get _isAdminMessage => message.isAdmin || message.content.contains('[Admin Panel');
+  bool get _isAdminMessage =>
+      message.isAdmin || message.content.contains('[Admin Panel');
   bool get _isInitialMessage => message.content.contains('**Initial details');
   bool get _isClosingMessage =>
-      message.content.contains('Ticket successfully closed') || message.content.contains('**Closing Message:**');
+      message.content.contains('Ticket successfully closed') ||
+      message.content.contains('**Closing Message:**');
 
   String get _cleanContent {
     String content = message.content;
@@ -871,7 +913,8 @@ class _MessageCard extends StatelessWidget {
 
     // Extract actual message from admin panel format
     if (_isAdminMessage) {
-      final match = RegExp(r'\[Admin Panel - [^\]]+\]:\s*(.+)', dotAll: true).firstMatch(content);
+      final match = RegExp(r'\[Admin Panel - [^\]]+\]:\s*(.+)', dotAll: true)
+          .firstMatch(content);
       if (match != null) {
         return match.group(1) ?? content;
       }
@@ -879,7 +922,8 @@ class _MessageCard extends StatelessWidget {
 
     // Extract actual message from initial details format
     if (_isInitialMessage) {
-      final match = RegExp(r'Initial details from [^:]+:\s*(.+)', dotAll: true).firstMatch(content);
+      final match = RegExp(r'Initial details from [^:]+:\s*(.+)', dotAll: true)
+          .firstMatch(content);
       if (match != null) {
         return match.group(1) ?? content;
       }
@@ -890,7 +934,8 @@ class _MessageCard extends StatelessWidget {
 
   String get _displayName {
     if (_isAdminMessage) {
-      final match = RegExp(r'\[Admin Panel - ([^\]]+)\]').firstMatch(message.content);
+      final match =
+          RegExp(r'\[Admin Panel - ([^\]]+)\]').firstMatch(message.content);
       if (match != null) {
         return match.group(1) ?? message.authorName;
       }
@@ -910,7 +955,9 @@ class _MessageCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Avatar
-              (message.authorAvatar != null && message.authorAvatar!.isNotEmpty && !_isClosingMessage)
+              (message.authorAvatar != null &&
+                      message.authorAvatar!.isNotEmpty &&
+                      !_isClosingMessage)
                   ? Container(
                       width: 36,
                       height: 36,
@@ -927,9 +974,13 @@ class _MessageCard extends StatelessWidget {
                           errorBuilder: (context, error, stackTrace) {
                             return Center(
                               child: Icon(
-                                _isAdminMessage ? Icons.admin_panel_settings : Icons.person,
+                                _isAdminMessage
+                                    ? Icons.admin_panel_settings
+                                    : Icons.person,
                                 size: 20,
-                                color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onPrimaryContainer,
                               ),
                             );
                           },
@@ -938,8 +989,10 @@ class _MessageCard extends StatelessWidget {
                             return Center(
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                value: loadingProgress.expectedTotalBytes != null
-                                    ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                                value: loadingProgress.expectedTotalBytes !=
+                                        null
+                                    ? loadingProgress.cumulativeBytesLoaded /
+                                        loadingProgress.expectedTotalBytes!
                                     : null,
                               ),
                             );
@@ -954,8 +1007,12 @@ class _MessageCard extends StatelessWidget {
                           : _isAdminMessage
                               ? Theme.of(context).colorScheme.primaryContainer
                               : isSystem
-                                  ? Theme.of(context).colorScheme.surfaceContainerHighest
-                                  : Theme.of(context).colorScheme.secondaryContainer,
+                                  ? Theme.of(context)
+                                      .colorScheme
+                                      .surfaceContainerHighest
+                                  : Theme.of(context)
+                                      .colorScheme
+                                      .secondaryContainer,
                       child: Icon(
                         _isClosingMessage
                             ? Icons.check_circle
@@ -968,10 +1025,16 @@ class _MessageCard extends StatelessWidget {
                         color: _isClosingMessage
                             ? Colors.green
                             : _isAdminMessage
-                                ? Theme.of(context).colorScheme.onPrimaryContainer
+                                ? Theme.of(context)
+                                    .colorScheme
+                                    .onPrimaryContainer
                                 : isSystem
-                                    ? Theme.of(context).colorScheme.onSurfaceVariant
-                                    : Theme.of(context).colorScheme.onSecondaryContainer,
+                                    ? Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant
+                                    : Theme.of(context)
+                                        .colorScheme
+                                        .onSecondaryContainer,
                       ),
                     ),
               const SizedBox(width: 12),
@@ -989,7 +1052,9 @@ class _MessageCard extends StatelessWidget {
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 14,
-                              color: _isAdminMessage ? Theme.of(context).colorScheme.primary : null,
+                              color: _isAdminMessage
+                                  ? Theme.of(context).colorScheme.primary
+                                  : null,
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -997,11 +1062,14 @@ class _MessageCard extends StatelessWidget {
                         if (_isAdminMessage) ...[
                           const SizedBox(width: 6),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
                               color: message.role == 'moderator'
                                   ? Colors.blue.withOpacity(0.2)
-                                  : Theme.of(context).colorScheme.primaryContainer,
+                                  : Theme.of(context)
+                                      .colorScheme
+                                      .primaryContainer,
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
@@ -1009,8 +1077,9 @@ class _MessageCard extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
-                                color:
-                                    message.role == 'moderator' ? Colors.blue : Theme.of(context).colorScheme.primary,
+                                color: message.role == 'moderator'
+                                    ? Colors.blue
+                                    : Theme.of(context).colorScheme.primary,
                               ),
                             ),
                           ),
@@ -1018,7 +1087,8 @@ class _MessageCard extends StatelessWidget {
                         if (_isClosingMessage) ...[
                           const SizedBox(width: 6),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
                               color: Colors.green.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(4),
@@ -1046,15 +1116,25 @@ class _MessageCard extends StatelessWidget {
                     const SizedBox(height: 6),
                     // Message bubble
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
                       decoration: BoxDecoration(
                         color: _isClosingMessage
                             ? Colors.green.withOpacity(0.1)
                             : _isAdminMessage
-                                ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3)
+                                ? Theme.of(context)
+                                    .colorScheme
+                                    .primaryContainer
+                                    .withOpacity(0.3)
                                 : isSystem
-                                    ? Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5)
-                                    : Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.6),
+                                    ? Theme.of(context)
+                                        .colorScheme
+                                        .surfaceContainerHighest
+                                        .withOpacity(0.5)
+                                    : Theme.of(context)
+                                        .colorScheme
+                                        .secondaryContainer
+                                        .withOpacity(0.6),
                         borderRadius: BorderRadius.circular(12),
                         border: _isClosingMessage
                             ? Border.all(
@@ -1063,12 +1143,18 @@ class _MessageCard extends StatelessWidget {
                               )
                             : _isAdminMessage
                                 ? Border.all(
-                                    color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .primary
+                                        .withOpacity(0.3),
                                     width: 1,
                                   )
                                 : !message.isBot
                                     ? Border.all(
-                                        color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .outline
+                                            .withOpacity(0.3),
                                         width: 1,
                                       )
                                     : null,
@@ -1142,7 +1228,8 @@ class _UserSelectionDialogState extends State<_UserSelectionDialog> {
     }
     return widget.members.where((member) {
       final name = (member['name'] as String? ?? '').toLowerCase();
-      final displayName = (member['display_name'] as String? ?? '').toLowerCase();
+      final displayName =
+          (member['display_name'] as String? ?? '').toLowerCase();
       final query = _searchQuery.toLowerCase();
       return name.contains(query) || displayName.contains(query);
     }).toList();
@@ -1169,7 +1256,8 @@ class _UserSelectionDialogState extends State<_UserSelectionDialog> {
             // Header
             Row(
               children: [
-                Icon(Icons.person_add, color: Theme.of(context).colorScheme.primary),
+                Icon(Icons.person_add,
+                    color: Theme.of(context).colorScheme.primary),
                 const SizedBox(width: 12),
                 const Text(
                   'Assign to User',
@@ -1217,7 +1305,8 @@ class _UserSelectionDialogState extends State<_UserSelectionDialog> {
                         final member = filteredMembers[index];
                         final id = member['id'] as String;
                         final name = member['name'] as String? ?? 'Unknown';
-                        final displayName = member['display_name'] as String? ?? name;
+                        final displayName =
+                            member['display_name'] as String? ?? name;
                         final avatar = member['avatar_url'] as String?;
                         final status = member['status'] as String?;
 
@@ -1232,8 +1321,12 @@ class _UserSelectionDialogState extends State<_UserSelectionDialog> {
                             leading: Stack(
                               children: [
                                 CircleAvatar(
-                                  backgroundImage: avatar != null ? NetworkImage(avatar) : null,
-                                  child: avatar == null ? const Icon(Icons.person) : null,
+                                  backgroundImage: avatar != null
+                                      ? NetworkImage(avatar)
+                                      : null,
+                                  child: avatar == null
+                                      ? const Icon(Icons.person)
+                                      : null,
                                 ),
                                 Positioned(
                                   right: 0,
@@ -1244,7 +1337,8 @@ class _UserSelectionDialogState extends State<_UserSelectionDialog> {
                                     decoration: BoxDecoration(
                                       color: statusColor,
                                       shape: BoxShape.circle,
-                                      border: Border.all(color: Colors.white, width: 2),
+                                      border: Border.all(
+                                          color: Colors.white, width: 2),
                                     ),
                                   ),
                                 ),
@@ -1252,7 +1346,8 @@ class _UserSelectionDialogState extends State<_UserSelectionDialog> {
                             ),
                             title: Text(
                               displayName,
-                              style: const TextStyle(fontWeight: FontWeight.bold),
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold),
                             ),
                             subtitle: Text('@$name'),
                             onTap: () => Navigator.pop(
@@ -1293,7 +1388,8 @@ class _CloseMessageDialog extends StatelessWidget {
           TextField(
             controller: _controller,
             decoration: const InputDecoration(
-              hintText: 'e.g., Issue resolved, let me know if you need more help.',
+              hintText:
+                  'e.g., Issue resolved, let me know if you need more help.',
               border: OutlineInputBorder(),
             ),
             maxLines: 3,

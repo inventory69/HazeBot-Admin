@@ -34,7 +34,8 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
 
       if (mounted) {
         final profile = response['profile'] as Map<String, dynamic>?;
-        final notifications = profile?['notifications'] as Map<String, dynamic>?;
+        final notifications =
+            profile?['notifications'] as Map<String, dynamic>?;
         setState(() {
           _changelogOptIn = notifications?['changelog_opt_in'] ?? false;
           _memeOptIn = notifications?['meme_opt_in'] ?? false;
@@ -71,7 +72,9 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  value ? '🔔 Changelog notifications enabled!' : '🔕 Changelog notifications disabled',
+                  value
+                      ? '🔔 Changelog notifications enabled!'
+                      : '🔕 Changelog notifications disabled',
                 ),
               ],
             ),
@@ -114,7 +117,9 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  value ? '🎭 Daily Meme notifications enabled!' : '🔕 Daily Meme notifications disabled',
+                  value
+                      ? '🎭 Daily Meme notifications enabled!'
+                      : '🔕 Daily Meme notifications disabled',
                 ),
               ],
             ),
@@ -150,9 +155,11 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                      const Icon(Icons.error_outline,
+                          size: 64, color: Colors.red),
                       const SizedBox(height: 16),
-                      Text(_errorMessage!, style: const TextStyle(fontSize: 16)),
+                      Text(_errorMessage!,
+                          style: const TextStyle(fontSize: 16)),
                       const SizedBox(height: 16),
                       ElevatedButton.icon(
                         onPressed: _loadPreferences,
@@ -177,14 +184,20 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
                           children: [
                             Text(
                               'Preferences',
-                              style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .headlineLarge
+                                  ?.copyWith(
                                     fontSize: isMobile ? 24 : null,
                                   ),
                             ),
                             const SizedBox(height: 8),
                             Text(
                               'Customize your notification preferences',
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
                                     color: Colors.grey[600],
                                     fontSize: isMobile ? 13 : null,
                                   ),
@@ -209,8 +222,12 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
                                         Expanded(
                                           child: Text(
                                             'Changelog Notifications',
-                                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                                  fontSize: isMobile ? 18 : null,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .titleLarge
+                                                ?.copyWith(
+                                                  fontSize:
+                                                      isMobile ? 18 : null,
                                                 ),
                                           ),
                                         ),
@@ -222,17 +239,22 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
                                     ),
                                     SizedBox(height: isMobile ? 8 : 12),
                                     Container(
-                                      padding: EdgeInsets.all(isMobile ? 10 : 12),
+                                      padding:
+                                          EdgeInsets.all(isMobile ? 10 : 12),
                                       decoration: BoxDecoration(
-                                        color: Colors.blue.withValues(alpha: 0.1),
+                                        color:
+                                            Colors.blue.withValues(alpha: 0.1),
                                         borderRadius: BorderRadius.circular(8),
                                         border: Border.all(
-                                          color: Colors.blue.withValues(alpha: 0.3),
+                                          color: Colors.blue
+                                              .withValues(alpha: 0.3),
                                         ),
                                       ),
                                       child: Row(
                                         children: [
-                                          Icon(Icons.info_outline, size: isMobile ? 18 : 20, color: Colors.blue[700]),
+                                          Icon(Icons.info_outline,
+                                              size: isMobile ? 18 : 20,
+                                              color: Colors.blue[700]),
                                           const SizedBox(width: 8),
                                           Expanded(
                                             child: Text(
@@ -272,8 +294,12 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
                                         Expanded(
                                           child: Text(
                                             'Daily Meme Notifications',
-                                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                                  fontSize: isMobile ? 18 : null,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .titleLarge
+                                                ?.copyWith(
+                                                  fontSize:
+                                                      isMobile ? 18 : null,
                                                 ),
                                           ),
                                         ),
@@ -285,17 +311,22 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
                                     ),
                                     SizedBox(height: isMobile ? 8 : 12),
                                     Container(
-                                      padding: EdgeInsets.all(isMobile ? 10 : 12),
+                                      padding:
+                                          EdgeInsets.all(isMobile ? 10 : 12),
                                       decoration: BoxDecoration(
-                                        color: Colors.purple.withValues(alpha: 0.1),
+                                        color: Colors.purple
+                                            .withValues(alpha: 0.1),
                                         borderRadius: BorderRadius.circular(8),
                                         border: Border.all(
-                                          color: Colors.purple.withValues(alpha: 0.3),
+                                          color: Colors.purple
+                                              .withValues(alpha: 0.3),
                                         ),
                                       ),
                                       child: Row(
                                         children: [
-                                          Icon(Icons.info_outline, size: isMobile ? 18 : 20, color: Colors.purple[700]),
+                                          Icon(Icons.info_outline,
+                                              size: isMobile ? 18 : 20,
+                                              color: Colors.purple[700]),
                                           const SizedBox(width: 8),
                                           Expanded(
                                             child: Text(

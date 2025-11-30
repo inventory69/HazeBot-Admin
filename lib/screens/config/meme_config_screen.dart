@@ -30,7 +30,8 @@ String getProxiedImageUrl(String originalUrl) {
       originalUrl.contains('external-preview.redd.it') ||
       originalUrl.contains('imgflip.com')) {
     // Use our backend proxy from environment
-    final proxyUrl = dotenv.env['IMAGE_PROXY_URL'] ?? '${dotenv.env['API_BASE_URL']}/proxy/image';
+    final proxyUrl = dotenv.env['IMAGE_PROXY_URL'] ??
+        '${dotenv.env['API_BASE_URL']}/proxy/image';
     final encodedUrl = Uri.encodeComponent(originalUrl);
     return '$proxyUrl?url=$encodedUrl';
   }
@@ -150,7 +151,8 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
     }
   }
 
-  Future<void> _sendMemeToDiscord(Map<String, dynamic> memeData, {bool isRandomMeme = false}) async {
+  Future<void> _sendMemeToDiscord(Map<String, dynamic> memeData,
+      {bool isRandomMeme = false}) async {
     setState(() {
       _isSendingMeme = true;
       _errorMessage = null;
@@ -196,13 +198,16 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
       // Optimistically add meme to dashboard cache for immediate display
       if (mounted) {
         debugPrint('🎨 Adding meme to dashboard cache...');
-        final cacheProvider = Provider.of<DataCacheProvider>(context, listen: false);
-        final discordAuth = Provider.of<DiscordAuthService>(context, listen: false);
+        final cacheProvider =
+            Provider.of<DataCacheProvider>(context, listen: false);
+        final discordAuth =
+            Provider.of<DiscordAuthService>(context, listen: false);
 
         // Use the memeData that was sent (already contains all necessary info)
         // Note: Random memes use 'url' field for image, while cached memes use 'image_url'
         final optimisticData = {
-          'image_url': memeData['image_url'] ?? memeData['url'], // Try image_url first, fallback to url
+          'image_url': memeData['image_url'] ??
+              memeData['url'], // Try image_url first, fallback to url
           'title': memeData['title'] ?? 'Meme',
           'author': memeData['author'] ?? 'Unknown',
           'score': memeData['score'] ?? 0,
@@ -216,7 +221,8 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
         };
         debugPrint('🎨 Meme data: $optimisticData');
         cacheProvider.addMemeOptimistically(optimisticData);
-        debugPrint('🎨 Meme added to cache, notifyListeners should have been called');
+        debugPrint(
+            '🎨 Meme added to cache, notifyListeners should have been called');
       }
     } catch (e) {
       setState(() {
@@ -255,8 +261,8 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
       builder: (context, constraints) {
         final isMobile = constraints.maxWidth < 600;
         final padding = isMobile ? 12.0 : 24.0;
-        final isMonet =
-            Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
+        final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh !=
+            ThemeData.light().colorScheme.surfaceContainerHigh;
         final cardColor = isMonet
             ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
             : Theme.of(context).colorScheme.surface;
@@ -295,7 +301,8 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.info_outline, size: isMobile ? 18 : 20, color: Colors.blue[700]),
+                      Icon(Icons.info_outline,
+                          size: isMobile ? 18 : 20, color: Colors.blue[700]),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -315,7 +322,8 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                 Card(
                   color: cardColor,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: EdgeInsets.all(isMobile ? 16.0 : 24.0),
                     child: Column(
@@ -342,7 +350,10 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                                 children: [
                                   Text(
                                     'Random Meme',
-                                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleLarge
+                                        ?.copyWith(
                                           fontWeight: FontWeight.bold,
                                           fontSize: isMobile ? 18 : null,
                                         ),
@@ -350,8 +361,13 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                                   SizedBox(height: isMobile ? 2 : 4),
                                   Text(
                                     'Get a random meme from configured Reddit and Lemmy sources',
-                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurfaceVariant,
                                           fontSize: isMobile ? 12 : null,
                                         ),
                                   ),
@@ -362,7 +378,8 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                         ),
                         const SizedBox(height: 24),
                         FilledButton.icon(
-                          onPressed: _isLoadingRandomMeme ? null : _getRandomMeme,
+                          onPressed:
+                              _isLoadingRandomMeme ? null : _getRandomMeme,
                           icon: _isLoadingRandomMeme
                               ? const SizedBox(
                                   width: 20,
@@ -373,9 +390,12 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                                   ),
                                 )
                               : const Icon(Icons.casino),
-                          label: Text(_isLoadingRandomMeme ? 'Fetching Meme...' : 'Get Random Meme'),
+                          label: Text(_isLoadingRandomMeme
+                              ? 'Fetching Meme...'
+                              : 'Get Random Meme'),
                           style: FilledButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 24, vertical: 16),
                           ),
                         ),
                         if (_randomMemeData != null) ...[
@@ -386,7 +406,10 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .outline
+                                    .withValues(alpha: 0.2),
                               ),
                             ),
                             clipBehavior: Clip.antiAlias,
@@ -398,16 +421,23 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                                   getProxiedImageUrl(_randomMemeData!['url']),
                                   width: double.infinity,
                                   fit: BoxFit.contain,
-                                  loadingBuilder: (context, child, loadingProgress) {
+                                  loadingBuilder:
+                                      (context, child, loadingProgress) {
                                     if (loadingProgress == null) return child;
                                     return Container(
                                       height: 200,
-                                      color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .surfaceContainerHigh,
                                       child: Center(
                                         child: CircularProgressIndicator(
-                                          value: loadingProgress.expectedTotalBytes != null
-                                              ? loadingProgress.cumulativeBytesLoaded /
-                                                  loadingProgress.expectedTotalBytes!
+                                          value: loadingProgress
+                                                      .expectedTotalBytes !=
+                                                  null
+                                              ? loadingProgress
+                                                      .cumulativeBytesLoaded /
+                                                  loadingProgress
+                                                      .expectedTotalBytes!
                                               : null,
                                         ),
                                       ),
@@ -416,18 +446,26 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                                   errorBuilder: (context, error, stackTrace) {
                                     return Container(
                                       height: 200,
-                                      color: Theme.of(context).colorScheme.errorContainer,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .errorContainer,
                                       child: Center(
                                         child: Column(
-                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
                                           children: [
                                             Icon(Icons.broken_image,
-                                                size: 48, color: Theme.of(context).colorScheme.error),
+                                                size: 48,
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .error),
                                             const SizedBox(height: 8),
                                             Text(
                                               'Failed to load image',
                                               style: TextStyle(
-                                                color: Theme.of(context).colorScheme.onErrorContainer,
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .onErrorContainer,
                                               ),
                                             ),
                                           ],
@@ -440,13 +478,19 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                                 Container(
                                   width: double.infinity,
                                   padding: const EdgeInsets.all(20),
-                                  color: Theme.of(context).colorScheme.surfaceVariant,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .surfaceVariant,
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         _randomMemeData!['title'] ?? 'Untitled',
-                                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleLarge
+                                            ?.copyWith(
                                               fontWeight: FontWeight.bold,
                                             ),
                                         maxLines: 3,
@@ -461,19 +505,23 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                                             context,
                                             icon: Icons.forum,
                                             // ✅ Format source display (handles both Reddit and Lemmy)
-                                            label: _formatSourceDisplay(_randomMemeData!['subreddit'] ?? 'Unknown'),
+                                            label: _formatSourceDisplay(
+                                                _randomMemeData!['subreddit'] ??
+                                                    'Unknown'),
                                             color: Colors.deepOrange,
                                           ),
                                           _buildInfoChip(
                                             context,
                                             icon: Icons.person,
-                                            label: 'u/${_randomMemeData!['author'] ?? 'Unknown'}',
+                                            label:
+                                                'u/${_randomMemeData!['author'] ?? 'Unknown'}',
                                             color: Colors.blue,
                                           ),
                                           _buildInfoChip(
                                             context,
                                             icon: Icons.arrow_upward,
-                                            label: '${_randomMemeData!['score'] ?? 0} upvotes',
+                                            label:
+                                                '${_randomMemeData!['score'] ?? 0} upvotes',
                                             color: Colors.green,
                                           ),
                                           if (_randomMemeData!['nsfw'] == true)
@@ -490,20 +538,25 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                                         children: [
                                           Expanded(
                                             child: FilledButton.icon(
-                                              onPressed: (_isSendingMeme || _randomMemeSent)
+                                              onPressed: (_isSendingMeme ||
+                                                      _randomMemeSent)
                                                   ? null
-                                                  : () => _sendMemeToDiscord(_randomMemeData!, isRandomMeme: true),
+                                                  : () => _sendMemeToDiscord(
+                                                      _randomMemeData!,
+                                                      isRandomMeme: true),
                                               icon: _isSendingMeme
                                                   ? const SizedBox(
                                                       width: 20,
                                                       height: 20,
-                                                      child: CircularProgressIndicator(
+                                                      child:
+                                                          CircularProgressIndicator(
                                                         strokeWidth: 2,
                                                         color: Colors.white,
                                                       ),
                                                     )
                                                   : _randomMemeSent
-                                                      ? const Icon(Icons.check_circle)
+                                                      ? const Icon(
+                                                          Icons.check_circle)
                                                       : const Icon(Icons.send),
                                               label: Text(_isSendingMeme
                                                   ? 'Sending...'
@@ -511,7 +564,9 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                                                       ? 'Sent to Discord'
                                                       : 'Send to Discord'),
                                               style: FilledButton.styleFrom(
-                                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        vertical: 14),
                                               ),
                                             ),
                                           ),
@@ -521,7 +576,10 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                                             icon: const Icon(Icons.refresh),
                                             label: const Text('New Meme'),
                                             style: FilledButton.styleFrom(
-                                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 20,
+                                                      vertical: 14),
                                             ),
                                           ),
                                         ],
@@ -543,7 +601,8 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                 Card(
                   color: cardColor,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: EdgeInsets.all(isMobile ? 16.0 : 24.0),
                     child: Column(
@@ -570,7 +629,10 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                                 children: [
                                   Text(
                                     'Meme from Source',
-                                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleLarge
+                                        ?.copyWith(
                                           fontWeight: FontWeight.bold,
                                           fontSize: isMobile ? 18 : null,
                                         ),
@@ -578,8 +640,13 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                                   SizedBox(height: isMobile ? 2 : 4),
                                   Text(
                                     'Fetch a meme from a specific subreddit or Lemmy community',
-                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurfaceVariant,
                                           fontSize: isMobile ? 12 : null,
                                         ),
                                   ),
@@ -602,7 +669,8 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                               labelText: 'Select Source',
                               prefixIcon: Icon(Icons.list),
                               border: OutlineInputBorder(),
-                              helperText: 'Choose from available subreddits and Lemmy communities',
+                              helperText:
+                                  'Choose from available subreddits and Lemmy communities',
                             ),
                             items: [
                               ..._subreddits.map((sub) => DropdownMenuItem(
@@ -615,17 +683,18 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                                       ],
                                     ),
                                   )),
-                              ..._lemmyCommunities.map((comm) => DropdownMenuItem(
-                                    value: comm,
-                                    child: Row(
-                                      children: [
-                                        const Icon(Icons.public, size: 16),
-                                        const SizedBox(width: 8),
-                                        // ✅ Format Lemmy to user-friendly display (community@instance)
-                                        Text(formatLemmyDisplay(comm)),
-                                      ],
-                                    ),
-                                  )),
+                              ..._lemmyCommunities
+                                  .map((comm) => DropdownMenuItem(
+                                        value: comm,
+                                        child: Row(
+                                          children: [
+                                            const Icon(Icons.public, size: 16),
+                                            const SizedBox(width: 8),
+                                            // ✅ Format Lemmy to user-friendly display (community@instance)
+                                            Text(formatLemmyDisplay(comm)),
+                                          ],
+                                        ),
+                                      )),
                             ],
                             onChanged: (value) {
                               if (value != null) {
@@ -637,7 +706,9 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                           ),
                           const SizedBox(height: 16),
                           FilledButton.icon(
-                            onPressed: _isLoadingSourceMeme ? null : _getMemeFromSource,
+                            onPressed: _isLoadingSourceMeme
+                                ? null
+                                : _getMemeFromSource,
                             icon: _isLoadingSourceMeme
                                 ? const SizedBox(
                                     width: 20,
@@ -648,9 +719,12 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                                     ),
                                   )
                                 : const Icon(Icons.download),
-                            label: Text(_isLoadingSourceMeme ? 'Fetching...' : 'Fetch Meme'),
+                            label: Text(_isLoadingSourceMeme
+                                ? 'Fetching...'
+                                : 'Fetch Meme'),
                             style: FilledButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 24, vertical: 16),
                             ),
                           ),
                         ],
@@ -662,7 +736,10 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .outline
+                                    .withValues(alpha: 0.2),
                               ),
                             ),
                             clipBehavior: Clip.antiAlias,
@@ -673,16 +750,23 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                                   getProxiedImageUrl(_sourceMemeData!['url']),
                                   width: double.infinity,
                                   fit: BoxFit.contain,
-                                  loadingBuilder: (context, child, loadingProgress) {
+                                  loadingBuilder:
+                                      (context, child, loadingProgress) {
                                     if (loadingProgress == null) return child;
                                     return Container(
                                       height: 200,
-                                      color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .surfaceContainerHigh,
                                       child: Center(
                                         child: CircularProgressIndicator(
-                                          value: loadingProgress.expectedTotalBytes != null
-                                              ? loadingProgress.cumulativeBytesLoaded /
-                                                  loadingProgress.expectedTotalBytes!
+                                          value: loadingProgress
+                                                      .expectedTotalBytes !=
+                                                  null
+                                              ? loadingProgress
+                                                      .cumulativeBytesLoaded /
+                                                  loadingProgress
+                                                      .expectedTotalBytes!
                                               : null,
                                         ),
                                       ),
@@ -691,18 +775,26 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                                   errorBuilder: (context, error, stackTrace) {
                                     return Container(
                                       height: 200,
-                                      color: Theme.of(context).colorScheme.errorContainer,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .errorContainer,
                                       child: Center(
                                         child: Column(
-                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
                                           children: [
                                             Icon(Icons.broken_image,
-                                                size: 48, color: Theme.of(context).colorScheme.error),
+                                                size: 48,
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .error),
                                             const SizedBox(height: 8),
                                             Text(
                                               'Failed to load image',
                                               style: TextStyle(
-                                                color: Theme.of(context).colorScheme.onErrorContainer,
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .onErrorContainer,
                                               ),
                                             ),
                                           ],
@@ -714,13 +806,19 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                                 Container(
                                   width: double.infinity,
                                   padding: const EdgeInsets.all(20),
-                                  color: Theme.of(context).colorScheme.surfaceVariant,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .surfaceVariant,
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         _sourceMemeData!['title'] ?? 'Untitled',
-                                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleLarge
+                                            ?.copyWith(
                                               fontWeight: FontWeight.bold,
                                             ),
                                         maxLines: 3,
@@ -735,19 +833,23 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                                             context,
                                             icon: Icons.forum,
                                             // ✅ Format source display (handles both Reddit and Lemmy)
-                                            label: _formatSourceDisplay(_sourceMemeData!['subreddit'] ?? 'Unknown'),
+                                            label: _formatSourceDisplay(
+                                                _sourceMemeData!['subreddit'] ??
+                                                    'Unknown'),
                                             color: Colors.deepOrange,
                                           ),
                                           _buildInfoChip(
                                             context,
                                             icon: Icons.person,
-                                            label: 'u/${_sourceMemeData!['author'] ?? 'Unknown'}',
+                                            label:
+                                                'u/${_sourceMemeData!['author'] ?? 'Unknown'}',
                                             color: Colors.blue,
                                           ),
                                           _buildInfoChip(
                                             context,
                                             icon: Icons.arrow_upward,
-                                            label: '${_sourceMemeData!['score'] ?? 0} upvotes',
+                                            label:
+                                                '${_sourceMemeData!['score'] ?? 0} upvotes',
                                             color: Colors.green,
                                           ),
                                           if (_sourceMemeData!['nsfw'] == true)
@@ -764,20 +866,25 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                                         children: [
                                           Expanded(
                                             child: FilledButton.icon(
-                                              onPressed: (_isSendingMeme || _sourceMemeSent)
+                                              onPressed: (_isSendingMeme ||
+                                                      _sourceMemeSent)
                                                   ? null
-                                                  : () => _sendMemeToDiscord(_sourceMemeData!, isRandomMeme: false),
+                                                  : () => _sendMemeToDiscord(
+                                                      _sourceMemeData!,
+                                                      isRandomMeme: false),
                                               icon: _isSendingMeme
                                                   ? const SizedBox(
                                                       width: 20,
                                                       height: 20,
-                                                      child: CircularProgressIndicator(
+                                                      child:
+                                                          CircularProgressIndicator(
                                                         strokeWidth: 2,
                                                         color: Colors.white,
                                                       ),
                                                     )
                                                   : _sourceMemeSent
-                                                      ? const Icon(Icons.check_circle)
+                                                      ? const Icon(
+                                                          Icons.check_circle)
                                                       : const Icon(Icons.send),
                                               label: Text(_isSendingMeme
                                                   ? 'Sending...'
@@ -785,7 +892,9 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                                                       ? 'Sent to Discord'
                                                       : 'Send to Discord'),
                                               style: FilledButton.styleFrom(
-                                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        vertical: 14),
                                               ),
                                             ),
                                           ),
@@ -795,7 +904,10 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                                             icon: const Icon(Icons.refresh),
                                             label: const Text('New Meme'),
                                             style: FilledButton.styleFrom(
-                                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 20,
+                                                      vertical: 14),
                                             ),
                                           ),
                                         ],
@@ -819,7 +931,8 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                   Card(
                     color: Theme.of(context).colorScheme.errorContainer,
                     elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16)),
                     child: Padding(
                       padding: const EdgeInsets.all(20.0),
                       child: Row(
@@ -836,8 +949,13 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                               children: [
                                 Text(
                                   'Error',
-                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                        color: Theme.of(context).colorScheme.onErrorContainer,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleMedium
+                                      ?.copyWith(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onErrorContainer,
                                         fontWeight: FontWeight.bold,
                                       ),
                                 ),
@@ -845,7 +963,9 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                                 Text(
                                   _errorMessage!,
                                   style: TextStyle(
-                                    color: Theme.of(context).colorScheme.onErrorContainer,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onErrorContainer,
                                   ),
                                 ),
                               ],
@@ -853,7 +973,8 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                           ),
                           IconButton(
                             icon: const Icon(Icons.close),
-                            color: Theme.of(context).colorScheme.onErrorContainer,
+                            color:
+                                Theme.of(context).colorScheme.onErrorContainer,
                             onPressed: () {
                               setState(() {
                                 _errorMessage = null;
@@ -872,7 +993,8 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                 Card(
                   color: cardColor,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: const EdgeInsets.all(20.0),
                     child: Column(
@@ -888,7 +1010,10 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                             const SizedBox(width: 12),
                             Text(
                               'Information',
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleMedium
+                                  ?.copyWith(
                                     fontWeight: FontWeight.bold,
                                   ),
                             ),
@@ -898,7 +1023,8 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                         _buildInfoRow(
                           context,
                           icon: Icons.explore,
-                          text: 'Meme from Source lets you test fetching from a specific subreddit or Lemmy community',
+                          text:
+                              'Meme from Source lets you test fetching from a specific subreddit or Lemmy community',
                         ),
                         const SizedBox(height: 12),
                         _buildInfoRow(
@@ -918,7 +1044,8 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                         _buildInfoRow(
                           context,
                           icon: Icons.send,
-                          text: 'Sending a meme posts it to your Discord meme channel with full embed information',
+                          text:
+                              'Sending a meme posts it to your Discord meme channel with full embed information',
                         ),
                         const SizedBox(height: 16),
                         Container(
@@ -941,7 +1068,10 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                               Expanded(
                                 child: Text(
                                   'These functions interact with your live Discord bot. Use with caution in production mode.',
-                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(
                                         fontWeight: FontWeight.w500,
                                         color: Colors.amber[900],
                                       ),
@@ -962,7 +1092,8 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
     );
   }
 
-  Widget _buildInfoChip(BuildContext context, {required IconData icon, required String label, required Color color}) {
+  Widget _buildInfoChip(BuildContext context,
+      {required IconData icon, required String label, required Color color}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
@@ -988,7 +1119,8 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
     );
   }
 
-  Widget _buildInfoRow(BuildContext context, {required IconData icon, required String text}) {
+  Widget _buildInfoRow(BuildContext context,
+      {required IconData icon, required String text}) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

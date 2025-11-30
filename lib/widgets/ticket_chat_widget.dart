@@ -1,10 +1,12 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
 import '../models/ticket.dart';
 import '../models/ticket_message.dart';
 import '../services/auth_service.dart';
 import '../services/notification_service.dart';
+import '../services/message_cache_service.dart';
 
 /// Shared chat widget for ticket conversations
 /// Used in both Admin Dialog (embedded) and User Screen (full-screen)
@@ -24,7 +26,8 @@ class TicketChatWidget extends StatefulWidget {
   State<TicketChatWidget> createState() => _TicketChatWidgetState();
 }
 
-class _TicketChatWidgetState extends State<TicketChatWidget> with WidgetsBindingObserver {
+class _TicketChatWidgetState extends State<TicketChatWidget>
+    with WidgetsBindingObserver {
   List<TicketMessage> _messages = [];
   bool _isLoadingMessages = false;
   bool _isSending = false;
@@ -35,53 +38,95 @@ class _TicketChatWidgetState extends State<TicketChatWidget> with WidgetsBinding
   int _previousMessageCount = 0;
   final Set<String> _seenMessageIds = {}; // Prevent duplicates
   int _firstNewMessageIndex = -1;
-  final GlobalKey _newMessagesDividerKey = GlobalKey(); // For precise scroll position
+  final GlobalKey _newMessagesDividerKey =
+      GlobalKey(); // For precise scroll position
   String? _currentUserDiscordId; // ✅ Cache current user's Discord ID
-  bool _isUserAtBottom = true; // ✅ Track if user is at bottom (for auto-scroll logic)
+  bool _isUserAtBottom =
+      true; // ✅ Track if user is at bottom (for auto-scroll logic)
   bool _isKeyboardVisible = false; // ✅ Track keyboard visibility
+
+  // ✅ Telegram-Style Scroll
+  static const double _estimatedMessageHeight =
+      85.0; // Average message height for pre-scroll
+  bool _hasScrolledToInitialPosition =
+      false; // Prevent duplicate initial scrolls
+
+  // ✅ Message Cache Service
+  final MessageCacheService _cacheService = MessageCacheService();
+
+  // ✅ Store AuthService reference to avoid context access in dispose
+  AuthService? _authService;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this); // ✅ Observe keyboard changes
-    _loadCurrentUser(); // ✅ Load current user ID first
-    _loadMessages();
+
+    // ✅ 1. Initialize cache service
+    _cacheService.ensureInitialized();
+
+    // ✅ 2. Load current user ID first
+    _loadCurrentUser();
+
+    // ✅ 3. Try cache FIRST (synchronous, instant render)
+    _loadCachedMessagesSync();
+
+    // ✅ 4. Setup WebSocket (before API call)
     _setupWebSocketListener();
-    _dismissNotifications(); // ✅ Dismiss notifications when entering chat
-    _setupKeyboardListener(); // ✅ Auto-scroll when keyboard opens
-    _setupScrollListener(); // ✅ Track user's scroll position
+
+    // ✅ 5. Dismiss notifications
+    _dismissNotifications();
+
+    // ✅ 6. Setup listeners
+    _setupKeyboardListener();
+    _setupScrollListener();
+
+    // ✅ 7. INSTANT PRE-SCROLL (Telegram-style estimated position)
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      _performInitialScroll();
+    });
+
+    // ✅ 8. Load from API (in background, updates cache)
+    _loadMessages();
   }
 
   @override
   void didChangeMetrics() {
+    // ✅ CRITICAL: Check if widget is still in tree before accessing context
+    if (!mounted) {
+      return;
+    }
+
     // ✅ Web doesn't support View.of() reliably - skip keyboard detection
     if (kIsWeb) {
       return;
     }
-    
-    // ✅ Null-safe check for View (may be null in some contexts)
-    final view = View.maybeOf(context);
-    if (view == null) {
-      debugPrint('⚠️ View.maybeOf returned null, skipping keyboard detection');
-      return;
-    }
-    
-    // ✅ Detect keyboard visibility changes
-    final bottomInset = view.viewInsets.bottom;
-    final isKeyboardVisible = bottomInset > 0;
-    
-    if (isKeyboardVisible != _isKeyboardVisible) {
-      _isKeyboardVisible = isKeyboardVisible;
-      debugPrint('⌨️ Keyboard visibility changed: $_isKeyboardVisible');
-      
-      // ✅ Auto-scroll to bottom when keyboard opens (only if user was at bottom)
-      if (_isKeyboardVisible && _isUserAtBottom) {
-        Future.delayed(const Duration(milliseconds: 300), () {
-          if (mounted) {
-            _scrollToBottom(animate: false);
-          }
-        });
+
+    // ✅ Try-catch to prevent crashes when widget is being disposed
+    try {
+      // Use PlatformDispatcher for direct keyboard detection (fastest)
+      final window = WidgetsBinding.instance.platformDispatcher.views.first;
+      final bottomInset = window.viewInsets.bottom / window.devicePixelRatio;
+      final isKeyboardVisible = bottomInset > 0;
+
+      if (isKeyboardVisible != _isKeyboardVisible) {
+        _isKeyboardVisible = isKeyboardVisible;
+        debugPrint('⌨️ Keyboard visibility changed: $_isKeyboardVisible');
+
+        // ✅ Auto-scroll to bottom when keyboard opens (only if user was at bottom)
+        // Longer delay for Android keyboard animation
+        if (_isKeyboardVisible && _isUserAtBottom) {
+          Future.delayed(const Duration(milliseconds: 400), () {
+            if (mounted && _scrollController.hasClients) {
+              _scrollController
+                  .jumpTo(_scrollController.position.maxScrollExtent);
+            }
+          });
+        }
       }
+    } catch (e) {
+      // Widget was disposed during execution - safe to ignore
+      return;
     }
   }
 
@@ -103,17 +148,18 @@ class _TicketChatWidgetState extends State<TicketChatWidget> with WidgetsBinding
   void _setupScrollListener() {
     _scrollController.addListener(() {
       if (!_scrollController.hasClients) return;
-      
+
       final maxScroll = _scrollController.position.maxScrollExtent;
       final currentScroll = _scrollController.position.pixels;
-      final threshold = 100.0; // Consider "at bottom" if within 100px
-      
+      const threshold = 100.0; // Consider "at bottom" if within 100px
+
       final wasAtBottom = _isUserAtBottom;
       _isUserAtBottom = (maxScroll - currentScroll) < threshold;
-      
+
       // Debug only on state change
       if (wasAtBottom != _isUserAtBottom) {
-        debugPrint('📍 User scroll position: ${_isUserAtBottom ? "AT BOTTOM" : "SCROLLED UP"}');
+        debugPrint(
+            '📍 User scroll position: ${_isUserAtBottom ? "AT BOTTOM" : "SCROLLED UP"}');
       }
     });
   }
@@ -130,6 +176,73 @@ class _TicketChatWidgetState extends State<TicketChatWidget> with WidgetsBinding
     }
   }
 
+  /// Load cached messages synchronously (Telegram-style instant render)
+  void _loadCachedMessagesSync() {
+    final cachedMessages =
+        _cacheService.getCachedMessages(widget.ticket.ticketId);
+
+    if (cachedMessages != null && cachedMessages.isNotEmpty) {
+      setState(() {
+        _messages = cachedMessages;
+        _previousMessageCount = cachedMessages.length;
+
+        // Mark all as seen
+        for (final msg in cachedMessages) {
+          _seenMessageIds.add(msg.id);
+        }
+      });
+    } else {
+      debugPrint(
+          '📭 No cached messages for ticket ${widget.ticket.ticketId.substring(0, 8)}...');
+    }
+  }
+
+  /// Perform initial scroll to bottom (Telegram-style with triple strategy)
+  void _performInitialScroll() {
+    if (!mounted || _hasScrolledToInitialPosition) return;
+
+    if (!_scrollController.hasClients) {
+      // Retry if ListView not ready yet
+      Future.delayed(const Duration(milliseconds: 50), _performInitialScroll);
+      return;
+    }
+
+    _hasScrolledToInitialPosition = true;
+
+    // ✅ STRATEGY 1: Estimated scroll (instant, no flicker)
+    if (_messages.isNotEmpty) {
+      final estimatedMax = _messages.length * _estimatedMessageHeight;
+      _scrollController.jumpTo(estimatedMax);
+      debugPrint(
+          '📍 Pre-scrolled to ESTIMATED position: ${estimatedMax.toInt()}px (${_messages.length} msgs)');
+    }
+
+    // ✅ STRATEGY 2: Correction scroll after render
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _scrollController.hasClients) {
+        final actualMax = _scrollController.position.maxScrollExtent;
+        _scrollController.jumpTo(actualMax);
+        debugPrint('📍 Corrected to ACTUAL max: ${actualMax.toInt()}px');
+
+        // ✅ STRATEGY 3: Final safety net (after images/avatars load)
+        Future.delayed(const Duration(milliseconds: 200), () {
+          if (mounted && _scrollController.hasClients) {
+            final finalMax = _scrollController.position.maxScrollExtent;
+            final currentPos = _scrollController.position.pixels;
+
+            if ((finalMax - currentPos).abs() > 5) {
+              _scrollController.jumpTo(finalMax);
+              debugPrint(
+                  '🎯 Final correction: ${finalMax.toInt()}px (was ${currentPos.toInt()}px)');
+            } else {
+              debugPrint('✅ Already at bottom: ${currentPos.toInt()}px');
+            }
+          }
+        });
+      }
+    });
+  }
+
   /// Dismiss ticket notifications when user enters the chat
   void _dismissNotifications() {
     // Get singleton instance of NotificationService
@@ -137,12 +250,14 @@ class _TicketChatWidgetState extends State<TicketChatWidget> with WidgetsBinding
 
     // Dismiss all notifications for this ticket
     notificationService.dismissTicketNotifications(widget.ticket.ticketId);
-    debugPrint('🔕 Dismissed notifications for ticket ${widget.ticket.ticketId}');
+    debugPrint(
+        '🔕 Dismissed notifications for ticket ${widget.ticket.ticketId}');
   }
 
   void _setupWebSocketListener() {
-    final authService = Provider.of<AuthService>(context, listen: false);
-    final wsService = authService.wsService;
+    // Store AuthService reference for use in dispose()
+    _authService = Provider.of<AuthService>(context, listen: false);
+    final wsService = _authService!.wsService;
 
     // Join ticket room
     wsService.joinTicket(widget.ticket.ticketId);
@@ -173,8 +288,10 @@ class _TicketChatWidgetState extends State<TicketChatWidget> with WidgetsBinding
 
     // ✅ FIX: Skip own messages from WebSocket (already added optimistically)
     // This prevents duplicate messages when user sends a message
-    if (_currentUserDiscordId != null && newMessage.authorId == _currentUserDiscordId) {
-      debugPrint('⏭️ Skipping own message from WebSocket: ${newMessage.id} (already added optimistically)');
+    if (_currentUserDiscordId != null &&
+        newMessage.authorId == _currentUserDiscordId) {
+      debugPrint(
+          '⏭️ Skipping own message from WebSocket: ${newMessage.id} (already added optimistically)');
       return;
     }
 
@@ -191,6 +308,9 @@ class _TicketChatWidgetState extends State<TicketChatWidget> with WidgetsBinding
       }
     });
 
+    // ✅ Update cache (fire-and-forget)
+    _cacheService.appendMessage(widget.ticket.ticketId, newMessage);
+
     // ✅ IMPROVED: Smart scroll behavior based on user position
     // - If user is at bottom: auto-scroll to new message
     // - If user scrolled up: don't interrupt their reading
@@ -198,16 +318,16 @@ class _TicketChatWidgetState extends State<TicketChatWidget> with WidgetsBinding
       debugPrint('📩 New message arrived, user at bottom → auto-scrolling');
       _scrollToBottom(animate: true);
     } else {
-      debugPrint('📩 New message arrived, user scrolled up → not auto-scrolling');
+      debugPrint(
+          '📩 New message arrived, user scrolled up → not auto-scrolling');
       // Optional: Could show a "New messages" badge here
     }
   }
 
   @override
   void dispose() {
-    // Leave WebSocket ticket room
-    final authService = Provider.of<AuthService>(context, listen: false);
-    authService.wsService.leaveTicket(widget.ticket.ticketId);
+    // Leave WebSocket ticket room (use stored reference to avoid context access)
+    _authService?.wsService.leaveTicket(widget.ticket.ticketId);
 
     WidgetsBinding.instance.removeObserver(this); // ✅ Remove observer
     _messageController.dispose();
@@ -225,9 +345,9 @@ class _TicketChatWidgetState extends State<TicketChatWidget> with WidgetsBinding
 
     void performScroll() {
       if (!mounted || !_scrollController.hasClients) return;
-      
+
       final targetPosition = _scrollController.position.maxScrollExtent;
-      
+
       if (animate) {
         _scrollController.animateTo(
           targetPosition,
@@ -242,30 +362,32 @@ class _TicketChatWidgetState extends State<TicketChatWidget> with WidgetsBinding
     // Immediate first scroll (no delay)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       performScroll();
-      
+
       // Retry 1: after 100ms (for fast-loading images)
       Future.delayed(const Duration(milliseconds: 100), () {
         if (mounted && _scrollController.hasClients) {
           performScroll();
-          
+
           // Retry 2: after 300ms (for slow-loading avatars)
           Future.delayed(const Duration(milliseconds: 200), () {
             if (mounted && _scrollController.hasClients) {
               final maxExtent = _scrollController.position.maxScrollExtent;
               final currentPos = _scrollController.position.pixels;
-              
+
               if ((maxExtent - currentPos).abs() > 10) {
-                debugPrint('🔄 Final scroll correction (delta: ${maxExtent - currentPos}px)');
+                debugPrint(
+                    '🔄 Final scroll correction (delta: ${maxExtent - currentPos}px)');
                 _scrollController.jumpTo(maxExtent);
-                
+
                 // Retry 3: Extra aggressive retry after 600ms (for initial load on web)
                 Future.delayed(const Duration(milliseconds: 300), () {
                   if (mounted && _scrollController.hasClients) {
                     final finalMax = _scrollController.position.maxScrollExtent;
                     final finalPos = _scrollController.position.pixels;
-                    
+
                     if ((finalMax - finalPos).abs() > 10) {
-                      debugPrint('🔄 Extra aggressive scroll correction (delta: ${finalMax - finalPos}px)');
+                      debugPrint(
+                          '🔄 Extra aggressive scroll correction (delta: ${finalMax - finalPos}px)');
                       _scrollController.jumpTo(finalMax);
                     }
                   }
@@ -281,7 +403,9 @@ class _TicketChatWidgetState extends State<TicketChatWidget> with WidgetsBinding
   void _scrollToNewMessages() {
     // ✅ FIX: Discord-style scroll to "New Messages" divider with precise positioning
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && _scrollController.hasClients && _firstNewMessageIndex >= 0) {
+      if (mounted &&
+          _scrollController.hasClients &&
+          _firstNewMessageIndex >= 0) {
         Future.delayed(const Duration(milliseconds: 300), () {
           if (mounted && _scrollController.hasClients) {
             // Try to use GlobalKey for exact position
@@ -294,23 +418,28 @@ class _TicketChatWidgetState extends State<TicketChatWidget> with WidgetsBinding
                 curve: Curves.easeOut,
                 alignment: 0.2, // Scroll to 20% from top (like Discord)
               );
-              debugPrint('✅ Scrolled to New Messages divider (precise position)');
+              debugPrint(
+                  '✅ Scrolled to New Messages divider (precise position)');
             } else {
               // Fallback: Estimate position (better than before)
               final maxScroll = _scrollController.position.maxScrollExtent;
-              final viewportHeight = _scrollController.position.viewportDimension;
+              final viewportHeight =
+                  _scrollController.position.viewportDimension;
               final estimatedMessageHeight = maxScroll / _messages.length;
-              final dividerOffset = _firstNewMessageIndex * estimatedMessageHeight;
+              final dividerOffset =
+                  _firstNewMessageIndex * estimatedMessageHeight;
 
               // Scroll to show divider near top (20% from top like Discord)
-              final targetPosition = (dividerOffset - (viewportHeight * 0.2)).clamp(0.0, maxScroll);
+              final targetPosition = (dividerOffset - (viewportHeight * 0.2))
+                  .clamp(0.0, maxScroll);
 
               _scrollController.animateTo(
                 targetPosition,
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.easeOut,
               );
-              debugPrint('⚠️ Scrolled to New Messages divider (estimated position)');
+              debugPrint(
+                  '⚠️ Scrolled to New Messages divider (estimated position)');
             }
           }
         });
@@ -320,34 +449,36 @@ class _TicketChatWidgetState extends State<TicketChatWidget> with WidgetsBinding
 
   Future<void> _loadMessages() async {
     if (!mounted) return;
-    setState(() {
-      _isLoadingMessages = true;
-      _messageError = null;
-    });
+
+    // ✅ Only show loading if we have NO cached messages
+    final showLoading = _messages.isEmpty;
+
+    if (showLoading) {
+      setState(() {
+        _isLoadingMessages = true;
+        _messageError = null;
+      });
+    }
 
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
-      final messagesData = await authService.apiService.getTicketMessages(widget.ticket.ticketId);
+      final messagesData = await authService.apiService
+          .getTicketMessages(widget.ticket.ticketId);
 
       if (mounted) {
         // Convert List<dynamic> to List<TicketMessage>
-        final messages = messagesData.map((json) => TicketMessage.fromJson(json as Map<String, dynamic>)).toList();
+        final messages = messagesData
+            .map((json) => TicketMessage.fromJson(json as Map<String, dynamic>))
+            .toList();
 
-        final newMessageCount = messages.length;
-        final hasNewMessages = newMessageCount > _previousMessageCount;
-        final isFirstLoad = _previousMessageCount == 0;
-
-        // Find first new message index for divider (only for updates, not first load)
-        int firstNewIndex = -1;
-        if (hasNewMessages && !isFirstLoad) {
-          firstNewIndex = _previousMessageCount;
-        }
+        // ✅ Detect if we have NEW messages (vs. cached)
+        final hasNewMessages = messages.length > _previousMessageCount;
+        final isUpdate = _previousMessageCount > 0; // We had cache
 
         setState(() {
           _messages = messages;
-          _previousMessageCount = newMessageCount;
+          _previousMessageCount = messages.length;
           _isLoadingMessages = false;
-          _firstNewMessageIndex = firstNewIndex;
 
           // Mark all messages as seen
           for (final msg in messages) {
@@ -355,21 +486,28 @@ class _TicketChatWidgetState extends State<TicketChatWidget> with WidgetsBinding
           }
         });
 
-        // Scroll behavior:
-        // - First load: Always scroll to bottom (no animation) + focus input (desktop/web only)
-        // - Updates with new messages: Scroll to divider
-        if (isFirstLoad) {
-          _scrollToBottom(animate: false);
-          
-          // ✅ Auto-focus textbox on first load (after scroll completes)
-          // Only on desktop/web - mobile should not open keyboard automatically
+        // ✅ Update cache (fire-and-forget)
+        _cacheService.cacheMessages(widget.ticket.ticketId, messages);
+
+        // ✅ Scroll behavior:
+        // - First load WITH cache: Already scrolled by _performInitialScroll()
+        // - First load NO cache: _performInitialScroll() handles it
+        // - Update with new messages: Scroll to bottom (if user was there)
+        if (isUpdate && hasNewMessages && _isUserAtBottom) {
+          debugPrint('📩 New messages loaded from API, scrolling to bottom');
+          _scrollToBottom(animate: true);
+        } else if (!_hasScrolledToInitialPosition) {
+          // Fallback: Initial scroll if _performInitialScroll() hasn't run yet
+          _performInitialScroll();
+        }
+
+        // ✅ Auto-focus textbox on desktop/web (only on first load)
+        if (!isUpdate) {
           Future.delayed(const Duration(milliseconds: 400), () {
             if (mounted && !_messageFocusNode.hasFocus) {
-              // ✅ Use platform detection: Web is always treated as desktop
-              // This fixes the issue where Web was incorrectly detected as mobile
               final mediaQuery = MediaQuery.of(context);
               final isDesktopOrWeb = kIsWeb || mediaQuery.size.width > 600;
-              
+
               if (isDesktopOrWeb) {
                 _messageFocusNode.requestFocus();
                 debugPrint('🎯 Auto-focused message input (desktop/web)');
@@ -378,8 +516,6 @@ class _TicketChatWidgetState extends State<TicketChatWidget> with WidgetsBinding
               }
             }
           });
-        } else if (hasNewMessages && firstNewIndex >= 0) {
-          _scrollToNewMessages();
         }
       }
     } catch (e) {
@@ -407,10 +543,8 @@ class _TicketChatWidgetState extends State<TicketChatWidget> with WidgetsBinding
       );
 
       if (mounted) {
-        _messageController.clear();
-
         // Convert Map to TicketMessage
-        final newMessage = TicketMessage.fromJson(newMessageData as Map<String, dynamic>);
+        final newMessage = TicketMessage.fromJson(newMessageData);
 
         // ✅ FIX: Add to seen IDs immediately (before WebSocket arrives)
         _seenMessageIds.add(newMessage.id);
@@ -422,10 +556,39 @@ class _TicketChatWidgetState extends State<TicketChatWidget> with WidgetsBinding
           _isSending = false;
         });
 
-        // ✅ IMPROVED: Always scroll to bottom after sending (instant, no animation)
+        // Clear input (will close keyboard on Android - we reopen it below)
+        _messageController.clear();
+
+        // ✅ AGGRESSIVE: Force keyboard to stay open
+        // Android closes keyboard on clear() - we must force it open again
+        if (!kIsWeb && mounted) {
+          // Multiple attempts with increasing delays to ensure keyboard reopens
+          _messageFocusNode.requestFocus();
+          SchedulerBinding.instance.addPostFrameCallback((_) {
+            if (mounted) _messageFocusNode.requestFocus();
+          });
+          Future.delayed(const Duration(milliseconds: 50), () {
+            if (mounted) _messageFocusNode.requestFocus();
+          });
+          Future.delayed(const Duration(milliseconds: 100), () {
+            if (mounted) _messageFocusNode.requestFocus();
+          });
+        }
+
+        // ✅ Update cache (fire-and-forget)
+        _cacheService.appendMessage(widget.ticket.ticketId, newMessage);
+
+        // ✅ IMPROVED: Always scroll to bottom after sending (instant)
         // User expects to see their own message immediately
         _isUserAtBottom = true; // Mark user as at bottom
-        _scrollToBottom(animate: false);
+
+        // Wait for frame to render new message, then scroll
+        SchedulerBinding.instance.addPostFrameCallback((_) {
+          if (mounted && _scrollController.hasClients) {
+            _scrollController
+                .jumpTo(_scrollController.position.maxScrollExtent);
+          }
+        });
       }
     } catch (e) {
       if (mounted) {
@@ -495,9 +658,11 @@ class _TicketChatWidgetState extends State<TicketChatWidget> with WidgetsBinding
                       return Column(
                         children: [
                           // Show "New Messages" divider before first new message
-                          if (index == _firstNewMessageIndex && _firstNewMessageIndex > 0)
+                          if (index == _firstNewMessageIndex &&
+                              _firstNewMessageIndex > 0)
                             Padding(
-                              key: _newMessagesDividerKey, // ✅ GlobalKey for precise scroll
+                              key:
+                                  _newMessagesDividerKey, // ✅ GlobalKey for precise scroll
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               child: Row(
                                 children: [
@@ -508,7 +673,8 @@ class _TicketChatWidgetState extends State<TicketChatWidget> with WidgetsBinding
                                     ),
                                   ),
                                   Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12),
                                     child: Text(
                                       'New Messages',
                                       style: TextStyle(
@@ -537,57 +703,67 @@ class _TicketChatWidgetState extends State<TicketChatWidget> with WidgetsBinding
 
         // Message Input (hidden if ticket closed)
         if (!isClosed)
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: colorScheme.surface,
-              border: Border(
-                top: BorderSide(color: Colors.grey[300]!),
-              ),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _messageController,
-                    focusNode: _messageFocusNode, // ✅ Auto-scroll on keyboard open
-                    decoration: InputDecoration(
-                      hintText: 'Type a message...',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      filled: true,
-                      fillColor: colorScheme.surfaceContainerHighest,
-                    ),
-                    maxLines: null,
-                    textInputAction: TextInputAction.send,
-                    onSubmitted: (_) => _sendMessage(),
-                    enabled: !_isSending,
-                  ),
+          SafeArea(
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: colorScheme.surface,
+                border: Border(
+                  top: BorderSide(color: Colors.grey[300]!),
                 ),
-                const SizedBox(width: 8),
-                IconButton(
-                  onPressed: _isSending ? null : _sendMessage,
-                  icon: _isSending
-                      ? SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: colorScheme.primary,
+              ),
+              child: TextField(
+                controller: _messageController,
+                focusNode: _messageFocusNode,
+                decoration: InputDecoration(
+                  hintText: 'Type a message...',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  filled: true,
+                  fillColor: colorScheme.surfaceContainerHighest,
+                  // ✅ Send button as suffix - using GestureDetector to prevent focus loss
+                  suffixIcon: _isSending
+                      ? Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: colorScheme.primary,
+                            ),
                           ),
                         )
-                      : Icon(Icons.send, color: colorScheme.primary),
-                  style: IconButton.styleFrom(
-                    backgroundColor: colorScheme.primaryContainer,
-                    shape: const CircleBorder(),
-                  ),
+                      : Padding(
+                          padding: const EdgeInsets.all(4),
+                          child: GestureDetector(
+                            onTap: _sendMessage,
+                            // ✅ Prevents TextField from losing focus
+                            behavior: HitTestBehavior.opaque,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: colorScheme.primaryContainer,
+                                shape: BoxShape.circle,
+                              ),
+                              padding: const EdgeInsets.all(8),
+                              child: Icon(
+                                Icons.send,
+                                color: colorScheme.primary,
+                                size: 20,
+                              ),
+                            ),
+                          ),
+                        ),
                 ),
-              ],
+                maxLines: null,
+                textInputAction: TextInputAction.newline,
+                enabled: !_isSending,
+              ),
             ),
           ),
       ],
@@ -598,10 +774,13 @@ class _TicketChatWidgetState extends State<TicketChatWidget> with WidgetsBinding
     final colorScheme = Theme.of(context).colorScheme;
 
     // Check message types
-    final isAdminMessage = message.isAdmin || message.content.contains('[Admin Panel') || message.role != null;
+    final isAdminMessage = message.isAdmin ||
+        message.content.contains('[Admin Panel') ||
+        message.role != null;
     final isInitialMessage = message.content.contains('**Initial details');
     final isClosingMessage =
-        message.content.contains('Ticket successfully closed') || message.content.contains('**Closing Message:**');
+        message.content.contains('Ticket successfully closed') ||
+            message.content.contains('**Closing Message:**');
     final isSystem = message.isBot && !isAdminMessage;
 
     // Clean content
@@ -609,14 +788,16 @@ class _TicketChatWidgetState extends State<TicketChatWidget> with WidgetsBinding
     cleanContent = cleanContent.replaceAll('**', '');
 
     if (isAdminMessage) {
-      final match = RegExp(r'\[Admin Panel - [^\]]+\]:\s*(.+)', dotAll: true).firstMatch(cleanContent);
+      final match = RegExp(r'\[Admin Panel - [^\]]+\]:\s*(.+)', dotAll: true)
+          .firstMatch(cleanContent);
       if (match != null) {
         cleanContent = match.group(1) ?? cleanContent;
       }
     }
 
     if (isInitialMessage) {
-      final match = RegExp(r'Initial details from [^:]+:\s*(.+)', dotAll: true).firstMatch(cleanContent);
+      final match = RegExp(r'Initial details from [^:]+:\s*(.+)', dotAll: true)
+          .firstMatch(cleanContent);
       if (match != null) {
         cleanContent = match.group(1) ?? cleanContent;
       }
@@ -625,7 +806,8 @@ class _TicketChatWidgetState extends State<TicketChatWidget> with WidgetsBinding
     // Get display name
     String displayName = message.authorName;
     if (isAdminMessage) {
-      final match = RegExp(r'\[Admin Panel - ([^\]]+)\]').firstMatch(message.content);
+      final match =
+          RegExp(r'\[Admin Panel - ([^\]]+)\]').firstMatch(message.content);
       if (match != null) {
         displayName = match.group(1) ?? message.authorName;
       }
@@ -729,7 +911,8 @@ class _TicketChatWidgetState extends State<TicketChatWidget> with WidgetsBinding
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
                   value: loadingProgress.expectedTotalBytes != null
-                      ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                      ? loadingProgress.cumulativeBytesLoaded /
+                          loadingProgress.expectedTotalBytes!
                       : null,
                 ),
               );
@@ -793,7 +976,9 @@ class _TicketChatWidgetState extends State<TicketChatWidget> with WidgetsBinding
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
-              color: message.role == 'moderator' ? Colors.blue.withOpacity(0.2) : colorScheme.primaryContainer,
+              color: message.role == 'moderator'
+                  ? Colors.blue.withOpacity(0.2)
+                  : colorScheme.primaryContainer,
               borderRadius: BorderRadius.circular(4),
             ),
             child: Text(
@@ -801,7 +986,9 @@ class _TicketChatWidgetState extends State<TicketChatWidget> with WidgetsBinding
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
-                color: message.role == 'moderator' ? Colors.blue : colorScheme.primary,
+                color: message.role == 'moderator'
+                    ? Colors.blue
+                    : colorScheme.primary,
               ),
             ),
           ),

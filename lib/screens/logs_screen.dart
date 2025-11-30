@@ -65,7 +65,8 @@ class _LogsScreenState extends State<LogsScreen> {
           _logs = List<Map<String, dynamic>>.from(result['logs'] ?? []);
           _logs = _logs.reversed.toList(); // Neueste zuerst
           _availableCogs = List<String>.from(result['available_cogs'] ?? []);
-          debugPrint('Available cogs loaded: $_availableCogs (${_availableCogs.length} cogs)');
+          debugPrint(
+              'Available cogs loaded: $_availableCogs (${_availableCogs.length} cogs)');
         });
       }
     } catch (e) {
@@ -294,15 +295,17 @@ class _LogsScreenState extends State<LogsScreen> {
   @override
   Widget build(BuildContext context) {
     // Monet/normal mode card color logic (match other config screens)
-    final isMonet =
-        Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
+    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh !=
+        ThemeData.light().colorScheme.surfaceContainerHigh;
     final cardColor = isMonet
         ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
         : Theme.of(context).colorScheme.surface;
 
     return Scaffold(
       appBar: AppBar(
-        title: _isSelectionMode ? Text('${_selectedIndices.length} selected') : const Text('Bot Logs'),
+        title: _isSelectionMode
+            ? Text('${_selectedIndices.length} selected')
+            : const Text('Bot Logs'),
         leading: _isSelectionMode
             ? IconButton(
                 icon: const Icon(Icons.close),
@@ -319,7 +322,8 @@ class _LogsScreenState extends State<LogsScreen> {
                 ),
                 IconButton(
                   icon: const Icon(Icons.copy),
-                  onPressed: _selectedIndices.isEmpty ? null : _copySelectedLogs,
+                  onPressed:
+                      _selectedIndices.isEmpty ? null : _copySelectedLogs,
                   tooltip: 'Copy selected',
                 ),
               ]
@@ -327,7 +331,9 @@ class _LogsScreenState extends State<LogsScreen> {
                 IconButton(
                   icon: Icon(_autoRefresh ? Icons.pause : Icons.play_arrow),
                   onPressed: _toggleAutoRefresh,
-                  tooltip: _autoRefresh ? 'Pause auto-refresh' : 'Start auto-refresh',
+                  tooltip: _autoRefresh
+                      ? 'Pause auto-refresh'
+                      : 'Start auto-refresh',
                 ),
                 IconButton(
                   icon: const Icon(Icons.refresh),
@@ -437,10 +443,14 @@ class _LogsScreenState extends State<LogsScreen> {
                                   isDense: true,
                                 ),
                                 items: const [
-                                  DropdownMenuItem(value: 100, child: Text('100')),
-                                  DropdownMenuItem(value: 500, child: Text('500')),
-                                  DropdownMenuItem(value: 1000, child: Text('1000')),
-                                  DropdownMenuItem(value: 2000, child: Text('2000')),
+                                  DropdownMenuItem(
+                                      value: 100, child: Text('100')),
+                                  DropdownMenuItem(
+                                      value: 500, child: Text('500')),
+                                  DropdownMenuItem(
+                                      value: 1000, child: Text('1000')),
+                                  DropdownMenuItem(
+                                      value: 2000, child: Text('2000')),
                                 ],
                                 onChanged: (value) {
                                   if (value != null) {
@@ -468,7 +478,8 @@ class _LogsScreenState extends State<LogsScreen> {
                                 : IconButton(
                                     icon: const Icon(Icons.search),
                                     onPressed: () {
-                                      setState(() => _searchQuery = _searchController.text);
+                                      setState(() => _searchQuery =
+                                          _searchController.text);
                                       _loadLogs();
                                     },
                                     tooltip: 'Search',
@@ -500,13 +511,17 @@ class _LogsScreenState extends State<LogsScreen> {
                                 final level = log['level'] ?? 'INFO';
                                 final timestamp = log['timestamp'] ?? '';
                                 final message = log['message'] ?? '';
-                                final fullLogText = '[$timestamp] $level | $message';
+                                final fullLogText =
+                                    '[$timestamp] $level | $message';
                                 final cogName = _extractCogName(message);
                                 final cogColor = _getCogColor(cogName);
-                                final isSelected = _selectedIndices.contains(index);
+                                final isSelected =
+                                    _selectedIndices.contains(index);
 
                                 return InkWell(
-                                  onTap: _isSelectionMode ? () => _toggleSelection(index) : null,
+                                  onTap: _isSelectionMode
+                                      ? () => _toggleSelection(index)
+                                      : null,
                                   onLongPress: () {
                                     if (_isSelectionMode) {
                                       _toggleSelection(index);
@@ -515,70 +530,97 @@ class _LogsScreenState extends State<LogsScreen> {
                                     }
                                   },
                                   child: Card(
-                                    margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                    margin: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 2),
                                     color: isSelected
-                                        ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.5)
+                                        ? Theme.of(context)
+                                            .colorScheme
+                                            .primaryContainer
+                                            .withOpacity(0.5)
                                         : cardColor,
                                     elevation: 0,
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12),
                                       side: isSelected
                                           ? BorderSide(
-                                              color: Theme.of(context).colorScheme.primary,
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .primary,
                                               width: 2,
                                             )
                                           : BorderSide.none,
                                     ),
                                     child: Padding(
-                                      padding:
-                                          EdgeInsets.symmetric(horizontal: cardPadding, vertical: cardPadding * 0.75),
+                                      padding: EdgeInsets.symmetric(
+                                          horizontal: cardPadding,
+                                          vertical: cardPadding * 0.75),
                                       child: Row(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           // Selection checkbox
                                           if (_isSelectionMode)
                                             Container(
-                                              padding: const EdgeInsets.only(right: 8),
+                                              padding: const EdgeInsets.only(
+                                                  right: 8),
                                               child: Checkbox(
                                                 value: isSelected,
-                                                onChanged: (_) => _toggleSelection(index),
+                                                onChanged: (_) =>
+                                                    _toggleSelection(index),
                                               ),
                                             ),
                                           // Emoji + Icon
                                           Container(
-                                            padding: const EdgeInsets.only(right: 8),
+                                            padding:
+                                                const EdgeInsets.only(right: 8),
                                             child: Row(
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
-                                                Text(_getLevelEmoji(level), style: const TextStyle(fontSize: 16)),
+                                                Text(_getLevelEmoji(level),
+                                                    style: const TextStyle(
+                                                        fontSize: 16)),
                                                 const SizedBox(width: 4),
-                                                Icon(_getLevelIcon(level), color: _getLevelTextColor(level), size: 16),
+                                                Icon(_getLevelIcon(level),
+                                                    color: _getLevelTextColor(
+                                                        level),
+                                                    size: 16),
                                               ],
                                             ),
                                           ),
                                           // Content
                                           Expanded(
                                             child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
                                               children: [
                                                 // Level badge + Timestamp
                                                 Wrap(
                                                   spacing: 8,
-                                                  crossAxisAlignment: WrapCrossAlignment.center,
+                                                  crossAxisAlignment:
+                                                      WrapCrossAlignment.center,
                                                   children: [
                                                     Container(
-                                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                      padding: const EdgeInsets
+                                                          .symmetric(
+                                                          horizontal: 6,
+                                                          vertical: 2),
                                                       decoration: BoxDecoration(
-                                                        color: _getLevelBadgeColor(level),
-                                                        borderRadius: BorderRadius.circular(3),
+                                                        color:
+                                                            _getLevelBadgeColor(
+                                                                level),
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(3),
                                                       ),
                                                       child: Text(
                                                         level.toUpperCase(),
                                                         style: const TextStyle(
                                                           fontSize: 10,
-                                                          fontWeight: FontWeight.bold,
+                                                          fontWeight:
+                                                              FontWeight.bold,
                                                           color: Colors.white,
-                                                          fontFamily: 'monospace',
+                                                          fontFamily:
+                                                              'monospace',
                                                         ),
                                                       ),
                                                     ),
@@ -599,7 +641,11 @@ class _LogsScreenState extends State<LogsScreen> {
                                                   style: TextStyle(
                                                     fontFamily: 'monospace',
                                                     fontSize: 12,
-                                                    color: cogColor ?? Theme.of(context).textTheme.bodyMedium?.color,
+                                                    color: cogColor ??
+                                                        Theme.of(context)
+                                                            .textTheme
+                                                            .bodyMedium
+                                                            ?.color,
                                                   ),
                                                 ),
                                               ],
@@ -608,21 +654,28 @@ class _LogsScreenState extends State<LogsScreen> {
                                           // Copy button (only show when not in selection mode)
                                           if (!_isSelectionMode)
                                             IconButton(
-                                              icon: const Icon(Icons.copy, size: 16),
+                                              icon: const Icon(Icons.copy,
+                                                  size: 16),
                                               color: Colors.grey,
                                               onPressed: () {
-                                                Clipboard.setData(ClipboardData(text: fullLogText));
-                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                Clipboard.setData(ClipboardData(
+                                                    text: fullLogText));
+                                                ScaffoldMessenger.of(context)
+                                                    .showSnackBar(
                                                   const SnackBar(
-                                                    content: Text('Log entry copied'),
-                                                    duration: Duration(seconds: 1),
-                                                    behavior: SnackBarBehavior.floating,
+                                                    content: Text(
+                                                        'Log entry copied'),
+                                                    duration:
+                                                        Duration(seconds: 1),
+                                                    behavior: SnackBarBehavior
+                                                        .floating,
                                                     width: 200,
                                                   ),
                                                 );
                                               },
                                               padding: EdgeInsets.zero,
-                                              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                                              constraints: const BoxConstraints(
+                                                  minWidth: 32, minHeight: 32),
                                               tooltip: 'Copy log entry',
                                             ),
                                         ],
@@ -640,7 +693,8 @@ class _LogsScreenState extends State<LogsScreen> {
                   color: Theme.of(context).colorScheme.surfaceVariant,
                   child: Row(
                     children: [
-                      Icon(Icons.description, size: 16, color: Colors.grey[600]),
+                      Icon(Icons.description,
+                          size: 16, color: Colors.grey[600]),
                       const SizedBox(width: 8),
                       Text(
                         '${_logs.length} logs',
@@ -650,9 +704,12 @@ class _LogsScreenState extends State<LogsScreen> {
                       if (_autoRefresh)
                         Row(
                           children: [
-                            Icon(Icons.autorenew, size: 16, color: Colors.green[600]),
+                            Icon(Icons.autorenew,
+                                size: 16, color: Colors.green[600]),
                             const SizedBox(width: 4),
-                            Text('Auto-refresh: 5s', style: TextStyle(fontSize: 12, color: Colors.green[600])),
+                            Text('Auto-refresh: 5s',
+                                style: TextStyle(
+                                    fontSize: 12, color: Colors.green[600])),
                           ],
                         ),
                     ],

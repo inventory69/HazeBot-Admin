@@ -6,7 +6,8 @@ import '../services/api_service.dart';
 import '../models/ticket.dart';
 
 /// Handle notification tap and navigate to the appropriate screen
-Future<void> handleNotificationTap(BuildContext? context, Map<String, dynamic> data) async {
+Future<void> handleNotificationTap(
+    BuildContext? context, Map<String, dynamic> data) async {
   if (context == null || !context.mounted) {
     debugPrint('⚠️ No valid context available for notification navigation');
     return;
@@ -17,7 +18,8 @@ Future<void> handleNotificationTap(BuildContext? context, Map<String, dynamic> d
     final notificationType = data['notification_type'] as String?;
     final openTab = data['open_tab'] as String?; // New: which tab to open
 
-    debugPrint('📱 Handling notification tap: type=$notificationType, ticketId=$ticketId, openTab=$openTab');
+    debugPrint(
+        '📱 Handling notification tap: type=$notificationType, ticketId=$ticketId, openTab=$openTab');
 
     if (ticketId == null) {
       debugPrint('⚠️ No ticket_id in notification data');
@@ -107,13 +109,15 @@ void _navigateToAdminDialog(BuildContext context, Ticket ticket) {
   // ✅ FIX: Use push instead of pushReplacement to preserve navigation stack
   // This allows admins to go back to the previous screen after closing the dialog
   debugPrint('📱 Navigating to admin screen with ticket dialog');
-  
-  Navigator.of(context).push(
+
+  Navigator.of(context)
+      .push(
     MaterialPageRoute(
       builder: (context) => const TicketsAdminScreen(),
       settings: const RouteSettings(name: '/admin/tickets'),
     ),
-  ).then((_) {
+  )
+      .then((_) {
     // After navigation, show the ticket dialog
     if (context.mounted) {
       Future.delayed(const Duration(milliseconds: 300), () {

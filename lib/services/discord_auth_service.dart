@@ -17,7 +17,8 @@ class DiscordAuthService extends ChangeNotifier {
   String? get token => _token;
   Map<String, dynamic>? get userInfo => _userInfo;
   String? get role => _userInfo?['role'];
-  List<String> get permissions => List<String>.from(_userInfo?['permissions'] ?? []);
+  List<String> get permissions =>
+      List<String>.from(_userInfo?['permissions'] ?? []);
   WebSocketService get wsService => _wsService;
   ApiService get apiService => _apiService;
 
@@ -50,7 +51,8 @@ class DiscordAuthService extends ChangeNotifier {
           'role_name': data['role_name'],
           'permissions': data['permissions'],
           'auth_type': 'discord',
-          'avatar_url': _userInfo?['avatar_url'], // Keep existing avatar from initial login
+          'avatar_url': _userInfo?[
+              'avatar_url'], // Keep existing avatar from initial login
         };
 
         _isAuthenticated = true;
@@ -63,7 +65,8 @@ class DiscordAuthService extends ChangeNotifier {
           debugPrint('⚠️ Failed to cache user info: $e');
         });
 
-        debugPrint('✅ User info updated from refresh - calling notifyListeners()');
+        debugPrint(
+            '✅ User info updated from refresh - calling notifyListeners()');
         notifyListeners();
       }
     } catch (e) {
@@ -83,10 +86,12 @@ class DiscordAuthService extends ChangeNotifier {
       final cachedUserInfoJson = prefs.getString('user_info');
       if (cachedUserInfoJson != null) {
         try {
-          final cachedUserInfo = jsonDecode(cachedUserInfoJson) as Map<String, dynamic>;
+          final cachedUserInfo =
+              jsonDecode(cachedUserInfoJson) as Map<String, dynamic>;
           debugPrint('DEBUG: Loaded cached user info: ${cachedUserInfo.keys}');
 
-          if (cachedUserInfo['auth_type'] == 'discord' && cachedUserInfo['discord_id'] != null) {
+          if (cachedUserInfo['auth_type'] == 'discord' &&
+              cachedUserInfo['discord_id'] != null) {
             _isAuthenticated = true;
             _userInfo = cachedUserInfo;
             notifyListeners();
@@ -101,12 +106,15 @@ class DiscordAuthService extends ChangeNotifier {
       // Fallback: Token will be automatically checked and refreshed by ApiService before each request
       try {
         final userData = await _apiService.getCurrentUser();
-        debugPrint('DEBUG: DiscordAuthService got user data from API: $userData');
+        debugPrint(
+            'DEBUG: DiscordAuthService got user data from API: $userData');
         debugPrint('DEBUG: Auth type: ${userData['auth_type']}');
-        debugPrint('DEBUG: Avatar URL from /auth/me: ${userData['avatar_url']}');
+        debugPrint(
+            'DEBUG: Avatar URL from /auth/me: ${userData['avatar_url']}');
 
         // Only authenticate with Discord if auth_type is "discord" AND has discord_id
-        if (userData['auth_type'] == 'discord' && userData['discord_id'] != null) {
+        if (userData['auth_type'] == 'discord' &&
+            userData['discord_id'] != null) {
           debugPrint('DEBUG: Setting Discord auth as authenticated');
           _isAuthenticated = true;
           _userInfo = userData;
@@ -122,7 +130,8 @@ class DiscordAuthService extends ChangeNotifier {
 
           notifyListeners();
         } else {
-          debugPrint('DEBUG: Legacy auth detected (auth_type: ${userData['auth_type']}), NOT setting Discord auth');
+          debugPrint(
+              'DEBUG: Legacy auth detected (auth_type: ${userData['auth_type']}), NOT setting Discord auth');
           // Clear any stale data
           _isAuthenticated = false;
           _userInfo = null;
@@ -145,7 +154,8 @@ class DiscordAuthService extends ChangeNotifier {
         final newUri = uri.replace(
           queryParameters: {
             ...uri.queryParameters,
-            'state': 'mobile', // Use state parameter to identify mobile platform
+            'state':
+                'mobile', // Use state parameter to identify mobile platform
           },
         );
         authUrl = newUri.toString();
@@ -220,19 +230,26 @@ class DiscordAuthService extends ChangeNotifier {
 
         // Initialize and register FCM token after successful OAuth login
         try {
-          debugPrint('📱 Initializing notification service after OAuth login...');
+          debugPrint(
+              '📱 Initializing notification service after OAuth login...');
           final notificationService = NotificationService();
           await notificationService.initialize();
 
-          if (notificationService.hasPermission && notificationService.fcmToken != null) {
-            debugPrint('📱 FCM permission already granted, registering token...');
-            final success = await notificationService.registerWithBackend(_apiService);
-            debugPrint('📱 FCM token registration: ${success ? "SUCCESS ✅" : "FAILED ❌"}');
+          if (notificationService.hasPermission &&
+              notificationService.fcmToken != null) {
+            debugPrint(
+                '📱 FCM permission already granted, registering token...');
+            final success =
+                await notificationService.registerWithBackend(_apiService);
+            debugPrint(
+                '📱 FCM token registration: ${success ? "SUCCESS ✅" : "FAILED ❌"}');
           } else {
-            debugPrint('📱 FCM permission not granted yet (will request later)');
+            debugPrint(
+                '📱 FCM permission not granted yet (will request later)');
           }
         } catch (e) {
-          debugPrint('⚠️ Error initializing notifications after OAuth login: $e');
+          debugPrint(
+              '⚠️ Error initializing notifications after OAuth login: $e');
         }
 
         debugPrint('DEBUG: OAuth login successful');
@@ -307,10 +324,13 @@ class DiscordAuthService extends ChangeNotifier {
         final notificationService = NotificationService();
         await notificationService.initialize();
 
-        if (notificationService.hasPermission && notificationService.fcmToken != null) {
+        if (notificationService.hasPermission &&
+            notificationService.fcmToken != null) {
           debugPrint('📱 FCM permission already granted, registering token...');
-          final success = await notificationService.registerWithBackend(_apiService);
-          debugPrint('📱 FCM token registration: ${success ? "SUCCESS ✅" : "FAILED ❌"}');
+          final success =
+              await notificationService.registerWithBackend(_apiService);
+          debugPrint(
+              '📱 FCM token registration: ${success ? "SUCCESS ✅" : "FAILED ❌"}');
         } else {
           debugPrint('📱 FCM permission not granted yet (will request later)');
         }

@@ -29,7 +29,6 @@ import 'settings_screen.dart';
 import 'settings/notification_settings_screen.dart';
 import 'test_screen.dart';
 import 'user_rocket_league_screen.dart';
-import 'preferences_screen.dart';
 import 'user/tickets_screen.dart';
 import 'gaming_hub_screen.dart';
 
@@ -52,7 +51,8 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
+class _HomeScreenState extends State<HomeScreen>
+    with SingleTickerProviderStateMixin {
   int _selectedIndex = -1; // -1 = show user tabs, 0+ = admin item
   bool _isDrawerVisible = false; // Start with admin rail hidden
   int _reloadCounter = 0;
@@ -82,7 +82,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     final showOnStartup = prefs.getBool('show_admin_panel_on_startup') ?? false;
 
     // Only apply if user has permission
-    final permissionService = Provider.of<PermissionService>(context, listen: false);
+    final permissionService =
+        Provider.of<PermissionService>(context, listen: false);
     if (showOnStartup && permissionService.hasPermission('all')) {
       setState(() {
         _isDrawerVisible = true;
@@ -114,7 +115,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
     // Check if token expired
     if (configService.error == 'token_expired') {
-      debugPrint('⚠️ Config load failed with token_expired - Token refresh should have handled this');
+      debugPrint(
+          '⚠️ Config load failed with token_expired - Token refresh should have handled this');
       // DON'T logout immediately - token refresh should have been attempted
       // Only logout if refresh truly failed (indicated by clearToken being called)
       // The TokenExpiredException is thrown AFTER refresh attempts
@@ -173,14 +175,16 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     items.add(NavigationItem(
       icon: Icons.sports_esports,
       label: 'Rocket\nLeague',
-      screen: UserRocketLeagueScreen(key: ValueKey('user_rocket_league_$_reloadCounter')),
+      screen: UserRocketLeagueScreen(
+          key: ValueKey('user_rocket_league_$_reloadCounter')),
     ));
 
     // Meme Generator - available to all users
     items.add(NavigationItem(
       icon: Icons.auto_awesome,
       label: 'Meme\nGen',
-      screen: MemeGeneratorScreen(key: ValueKey('meme_generator_$_reloadCounter')),
+      screen:
+          MemeGeneratorScreen(key: ValueKey('meme_generator_$_reloadCounter')),
     ));
 
     // Memes - Fetch memes from Reddit/Lemmy and post to Discord (available to all users)
@@ -216,17 +220,20 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       NavigationItem(
         icon: Icons.schedule,
         label: 'Daily\nMeme',
-        screen: DailyMemeConfigScreen(key: ValueKey('daily_meme_$_reloadCounter')),
+        screen:
+            DailyMemeConfigScreen(key: ValueKey('daily_meme_$_reloadCounter')),
       ),
       NavigationItem(
         icon: Icons.tune,
         label: 'Meme\nPrefs',
-        screen: DailyMemePreferencesScreen(key: ValueKey('daily_meme_prefs_$_reloadCounter')),
+        screen: DailyMemePreferencesScreen(
+            key: ValueKey('daily_meme_prefs_$_reloadCounter')),
       ),
       NavigationItem(
         icon: Icons.sports_esports,
         label: 'Rocket\nLeague',
-        screen: RocketLeagueConfigScreen(key: ValueKey('rocket_league_$_reloadCounter')),
+        screen: RocketLeagueConfigScreen(
+            key: ValueKey('rocket_league_$_reloadCounter')),
       ),
       NavigationItem(
         icon: Icons.confirmation_number,
@@ -263,7 +270,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     return items;
   }
 
-  List<NavigationItem> _getAllNavigationItems(PermissionService permissionService) {
+  List<NavigationItem> _getAllNavigationItems(
+      PermissionService permissionService) {
     final items = <NavigationItem>[];
 
     // Always add user features
@@ -296,8 +304,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       appBar: AppBar(
         leading: permissionService.hasPermission('all')
             ? IconButton(
-                icon: Icon(_isDrawerVisible ? Icons.admin_panel_settings : Icons.admin_panel_settings_outlined),
-                tooltip: _isDrawerVisible ? 'Hide Admin Panel' : 'Show Admin Panel',
+                icon: Icon(_isDrawerVisible
+                    ? Icons.admin_panel_settings
+                    : Icons.admin_panel_settings_outlined),
+                tooltip:
+                    _isDrawerVisible ? 'Hide Admin Panel' : 'Show Admin Panel',
                 onPressed: () {
                   setState(() {
                     _isDrawerVisible = !_isDrawerVisible;
@@ -344,15 +355,18 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           // Profile picture with bottom sheet menu (all screen sizes)
           Builder(
             builder: (context) {
-              final avatarUrl = discordAuthService.userInfo?['avatar_url'] as String?;
+              final avatarUrl =
+                  discordAuthService.userInfo?['avatar_url'] as String?;
 
               return GestureDetector(
                 onTap: () {
                   showModalBottomSheet(
                     context: context,
-                    backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+                    backgroundColor:
+                        Theme.of(context).colorScheme.surfaceContainerHigh,
                     shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                      borderRadius:
+                          BorderRadius.vertical(top: Radius.circular(20)),
                     ),
                     builder: (context) => SafeArea(
                       child: Column(
@@ -372,7 +386,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                           // User info
                           if (discordAuthService.isAuthenticated &&
                               discordAuthService.userInfo != null &&
-                              discordAuthService.userInfo!['discord_id'] != null)
+                              discordAuthService.userInfo!['discord_id'] !=
+                                  null)
                             Padding(
                               padding: const EdgeInsets.all(16.0),
                               child: Row(
@@ -384,25 +399,32 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) => const ProfileScreen(),
+                                          builder: (context) =>
+                                              const ProfileScreen(),
                                         ),
                                       );
                                     },
                                     child: avatarUrl != null
                                         ? ClipRRect(
-                                            borderRadius: BorderRadius.circular(24),
+                                            borderRadius:
+                                                BorderRadius.circular(24),
                                             child: Image.network(
                                               avatarUrl,
                                               width: 48,
                                               height: 48,
                                               fit: BoxFit.cover,
-                                              errorBuilder: (context, error, stackTrace) {
+                                              errorBuilder:
+                                                  (context, error, stackTrace) {
                                                 return Container(
                                                   width: 48,
                                                   height: 48,
-                                                  padding: const EdgeInsets.all(8),
+                                                  padding:
+                                                      const EdgeInsets.all(8),
                                                   decoration: BoxDecoration(
-                                                    color: const Color(0xFF5865F2).withValues(alpha: 0.1),
+                                                    color:
+                                                        const Color(0xFF5865F2)
+                                                            .withValues(
+                                                                alpha: 0.1),
                                                     shape: BoxShape.circle,
                                                   ),
                                                   child: const Icon(
@@ -419,7 +441,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                             height: 48,
                                             padding: const EdgeInsets.all(8),
                                             decoration: BoxDecoration(
-                                              color: const Color(0xFF5865F2).withValues(alpha: 0.1),
+                                              color: const Color(0xFF5865F2)
+                                                  .withValues(alpha: 0.1),
                                               shape: BoxShape.circle,
                                             ),
                                             child: const Icon(
@@ -437,15 +460,18 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                            builder: (context) => const ProfileScreen(),
+                                            builder: (context) =>
+                                                const ProfileScreen(),
                                           ),
                                         );
                                       },
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            discordAuthService.userInfo!['user'],
+                                            discordAuthService
+                                                .userInfo!['user'],
                                             style: const TextStyle(
                                               fontWeight: FontWeight.bold,
                                               fontSize: 16,
@@ -453,10 +479,14 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                             overflow: TextOverflow.ellipsis,
                                           ),
                                           Text(
-                                            discordAuthService.userInfo!['role_name'] ?? permissionService.role,
+                                            discordAuthService
+                                                    .userInfo!['role_name'] ??
+                                                permissionService.role,
                                             style: TextStyle(
                                               fontSize: 13,
-                                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurfaceVariant,
                                             ),
                                           ),
                                         ],
@@ -470,22 +500,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                           const Divider(height: 1),
 
                           // Menu items
-                          ListTile(
-                            leading: const Icon(Icons.tune),
-                            title: const Text('Preferences'),
-                            onTap: () {
-                              Navigator.pop(context);
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => PreferencesScreen(
-                                    key: ValueKey('preferences_$_reloadCounter'),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-
                           ListTile(
                             leading: const Icon(Icons.confirmation_number),
                             title: const Text('Tickets'),
@@ -524,7 +538,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const NotificationSettingsScreen(),
+                                  builder: (context) =>
+                                      const NotificationSettingsScreen(),
                                 ),
                               );
                             },
@@ -581,13 +596,17 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                 width: 36,
                                 height: 36,
                                 decoration: BoxDecoration(
-                                  color: Theme.of(context).colorScheme.primaryContainer,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .primaryContainer,
                                   borderRadius: BorderRadius.circular(18),
                                 ),
                                 child: Icon(
                                   Icons.person,
                                   size: 20,
-                                  color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onPrimaryContainer,
                                 ),
                               );
                             },
@@ -597,13 +616,16 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                           width: 36,
                           height: 36,
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.primaryContainer,
+                            color:
+                                Theme.of(context).colorScheme.primaryContainer,
                             borderRadius: BorderRadius.circular(18),
                           ),
                           child: Icon(
                             Icons.person,
                             size: 20,
-                            color: Theme.of(context).colorScheme.onPrimaryContainer,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onPrimaryContainer,
                           ),
                         ),
                 ),
@@ -637,7 +659,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                 size: 24,
                                 color: _selectedIndex == -1
                                     ? Theme.of(context).colorScheme.primary
-                                    : Theme.of(context).colorScheme.onSurfaceVariant,
+                                    : Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
                               ),
                               const SizedBox(height: 4),
                               Text(
@@ -646,7 +670,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                   fontSize: 11,
                                   color: _selectedIndex == -1
                                       ? Theme.of(context).colorScheme.primary
-                                      : Theme.of(context).colorScheme.onSurfaceVariant,
+                                      : Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
                                 ),
                               ),
                             ],
@@ -671,12 +697,19 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                             final item = adminItems[index];
                             final isSelected = _selectedIndex == index;
                             return InkWell(
-                              onTap: () => setState(() => _selectedIndex = index),
+                              onTap: () =>
+                                  setState(() => _selectedIndex = index),
                               child: Container(
-                                margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                                margin: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 12, horizontal: 8),
                                 decoration: BoxDecoration(
-                                  color: isSelected ? Theme.of(context).colorScheme.primaryContainer : null,
+                                  color: isSelected
+                                      ? Theme.of(context)
+                                          .colorScheme
+                                          .primaryContainer
+                                      : null,
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Column(
@@ -686,18 +719,31 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                       item.icon,
                                       size: 24,
                                       color: isSelected
-                                          ? Theme.of(context).colorScheme.onPrimaryContainer
-                                          : Theme.of(context).colorScheme.onSurfaceVariant,
+                                          ? Theme.of(context)
+                                              .colorScheme
+                                              .onPrimaryContainer
+                                          : Theme.of(context)
+                                              .colorScheme
+                                              .onSurfaceVariant,
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
                                       item.label,
                                       textAlign: TextAlign.center,
-                                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                            fontSize: item.label.contains('\n') ? 10 : 11,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelSmall
+                                          ?.copyWith(
+                                            fontSize: item.label.contains('\n')
+                                                ? 10
+                                                : 11,
                                             color: isSelected
-                                                ? Theme.of(context).colorScheme.onPrimaryContainer
-                                                : Theme.of(context).colorScheme.onSurfaceVariant,
+                                                ? Theme.of(context)
+                                                    .colorScheme
+                                                    .onPrimaryContainer
+                                                : Theme.of(context)
+                                                    .colorScheme
+                                                    .onSurfaceVariant,
                                           ),
                                     ),
                                   ],
@@ -716,7 +762,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           ],
           // Main content area
           Expanded(
-            child: _selectedIndex >= 0 && _selectedIndex < adminItems.length && permissionService.hasPermission('all')
+            child: _selectedIndex >= 0 &&
+                    _selectedIndex < adminItems.length &&
+                    permissionService.hasPermission('all')
                 ? SafeArea(child: adminItems[_selectedIndex].screen)
                 : Column(
                     children: [
@@ -724,19 +772,22 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       Expanded(
                         child: TabBarView(
                           controller: _tabController,
-                          children: userItems.map((item) => item.screen).toList(),
+                          children:
+                              userItems.map((item) => item.screen).toList(),
                         ),
                       ),
                       // Tab bar for user features (at bottom)
                       Material(
-                        color: Theme.of(context).colorScheme.surfaceContainerLow,
+                        color:
+                            Theme.of(context).colorScheme.surfaceContainerLow,
                         elevation: 1, // small elevation for tonal layering
                         child: SafeArea(
                           child: TabBar(
                             controller: _tabController,
                             isScrollable: true,
                             padding: EdgeInsets.zero,
-                            labelPadding: const EdgeInsets.symmetric(horizontal: 10),
+                            labelPadding:
+                                const EdgeInsets.symmetric(horizontal: 10),
                             tabAlignment: TabAlignment.center,
                             tabs: userItems
                                 .map((item) => Tab(
@@ -745,8 +796,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                     ))
                                 .toList(),
                             labelColor: Theme.of(context).colorScheme.primary,
-                            unselectedLabelColor: Theme.of(context).colorScheme.onSurfaceVariant,
-                            indicatorColor: Theme.of(context).colorScheme.primary,
+                            unselectedLabelColor:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
+                            indicatorColor:
+                                Theme.of(context).colorScheme.primary,
                             indicatorSize: TabBarIndicatorSize.label,
                             labelStyle: const TextStyle(
                               fontSize: 11,
@@ -775,7 +828,8 @@ class DashboardScreen extends StatefulWidget {
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> with AutomaticKeepAliveClientMixin {
+class _DashboardScreenState extends State<DashboardScreen>
+    with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true;
 
@@ -788,7 +842,8 @@ class _DashboardScreenState extends State<DashboardScreen> with AutomaticKeepAli
     super.initState();
     // Load data only if cache is empty (first time only)
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final cacheProvider = Provider.of<DataCacheProvider>(context, listen: false);
+      final cacheProvider =
+          Provider.of<DataCacheProvider>(context, listen: false);
       // Only load if cache is empty - cache will prevent duplicate requests
       if (cacheProvider.memes == null || cacheProvider.rankups == null) {
         await _loadData(force: true);
@@ -809,7 +864,8 @@ class _DashboardScreenState extends State<DashboardScreen> with AutomaticKeepAli
     });
 
     try {
-      final cacheProvider = Provider.of<DataCacheProvider>(context, listen: false);
+      final cacheProvider =
+          Provider.of<DataCacheProvider>(context, listen: false);
       await Future.wait([
         cacheProvider.loadLatestMemes(force: force),
         cacheProvider.loadLatestRankups(force: force),
@@ -908,7 +964,8 @@ class _DashboardScreenState extends State<DashboardScreen> with AutomaticKeepAli
                     if (cacheProvider.lastMemesLoad != null) ...[
                       const SizedBox(width: 12),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: Theme.of(context).colorScheme.primaryContainer,
                           borderRadius: BorderRadius.circular(12),
@@ -919,14 +976,18 @@ class _DashboardScreenState extends State<DashboardScreen> with AutomaticKeepAli
                             Icon(
                               Icons.schedule,
                               size: 14,
-                              color: Theme.of(context).colorScheme.onPrimaryContainer,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onPrimaryContainer,
                             ),
                             const SizedBox(width: 4),
                             Text(
                               cacheProvider.getCacheAge(),
                               style: TextStyle(
                                 fontSize: 12,
-                                color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onPrimaryContainer,
                               ),
                             ),
                           ],
@@ -945,7 +1006,9 @@ class _DashboardScreenState extends State<DashboardScreen> with AutomaticKeepAli
                               height: 24,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
                               ),
                             ),
                           ),
@@ -966,12 +1029,14 @@ class _DashboardScreenState extends State<DashboardScreen> with AutomaticKeepAli
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Latest Memes Section
-                      _buildMemesSection(context, isMobile, memes, isLoadingMemes),
+                      _buildMemesSection(
+                          context, isMobile, memes, isLoadingMemes),
 
                       SizedBox(height: isMobile ? 12 : 16),
 
                       // Latest Rank-Ups Section
-                      _buildRankupsSection(context, isMobile, rankups, isLoadingRankups),
+                      _buildRankupsSection(
+                          context, isMobile, rankups, isLoadingRankups),
                     ],
                   ),
                 ),
@@ -983,8 +1048,8 @@ class _DashboardScreenState extends State<DashboardScreen> with AutomaticKeepAli
     );
   }
 
-  Widget _buildMemesSection(
-      BuildContext context, bool isMobile, List<Map<String, dynamic>> memes, bool isLoadingMemes) {
+  Widget _buildMemesSection(BuildContext context, bool isMobile,
+      List<Map<String, dynamic>> memes, bool isLoadingMemes) {
     return Card(
       // Main section card - amplify tonal difference like 'How to Use' card
       // Flat, no shadow for full Monet look
@@ -1005,17 +1070,24 @@ class _DashboardScreenState extends State<DashboardScreen> with AutomaticKeepAli
                       const SizedBox(width: 8),
                       Flexible(
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 6),
                           decoration: BoxDecoration(
                             // Use same background as cache status chip (primaryContainer)
-                            color: Theme.of(context).colorScheme.primaryContainer,
+                            color:
+                                Theme.of(context).colorScheme.primaryContainer,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
                             'Latest Memes',
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleLarge
+                                ?.copyWith(
                                   fontSize: isMobile ? 18 : null,
-                                  color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onPrimaryContainer,
                                 ),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -1029,7 +1101,8 @@ class _DashboardScreenState extends State<DashboardScreen> with AutomaticKeepAli
                     onPressed: () {
                       // TODO: Navigate to full memes view
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Full memes view coming soon')),
+                        const SnackBar(
+                            content: Text('Full memes view coming soon')),
                       );
                     },
                     icon: const Icon(Icons.arrow_forward, size: 16),
@@ -1044,7 +1117,8 @@ class _DashboardScreenState extends State<DashboardScreen> with AutomaticKeepAli
               Center(
                 child: Column(
                   children: [
-                    Icon(Icons.image_not_supported, size: 48, color: Colors.grey[400]),
+                    Icon(Icons.image_not_supported,
+                        size: 48, color: Colors.grey[400]),
                     const SizedBox(height: 8),
                     Text(
                       'No memes yet',
@@ -1055,7 +1129,8 @@ class _DashboardScreenState extends State<DashboardScreen> with AutomaticKeepAli
               )
             else
               Column(
-                children: List.generate(memes.length, (i) => _buildMemeCard(context, memes[i], isMobile, i)),
+                children: List.generate(memes.length,
+                    (i) => _buildMemeCard(context, memes[i], isMobile, i)),
               ),
           ],
         ),
@@ -1063,7 +1138,8 @@ class _DashboardScreenState extends State<DashboardScreen> with AutomaticKeepAli
     );
   }
 
-  Widget _buildMemeCard(BuildContext context, Map<String, dynamic> meme, bool isMobile, int index) {
+  Widget _buildMemeCard(BuildContext context, Map<String, dynamic> meme,
+      bool isMobile, int index) {
     final imageUrl = meme['image_url'] as String?;
     final title = meme['title'] as String? ?? 'Untitled';
     final author = meme['author'] as String? ?? 'Unknown';
@@ -1075,8 +1151,8 @@ class _DashboardScreenState extends State<DashboardScreen> with AutomaticKeepAli
     // Choose a subtle tonal container that contrasts the section background.
     // Use a harmonized accent color (primaryContainer) for a friendlier, more Monet-like look.
     // This makes the cards stand out and feel more dynamic, while still being subtle.
-    final isMonet =
-        Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
+    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh !=
+        ThemeData.light().colorScheme.surfaceContainerHigh;
     final cardColor = isMonet
         ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
         : Theme.of(context).colorScheme.surface;
@@ -1100,11 +1176,13 @@ class _DashboardScreenState extends State<DashboardScreen> with AutomaticKeepAli
           if (result != null && result is Map<String, dynamic>) {
             final upvotes = result['upvotes'] as int?;
             if (upvotes != null) {
-              final cacheProvider = Provider.of<DataCacheProvider>(context, listen: false);
+              final cacheProvider =
+                  Provider.of<DataCacheProvider>(context, listen: false);
               cacheProvider.updateMemeUpvotes(
                 meme['message_id'] as String?,
                 upvotes,
-                imageUrl: meme['image_url'] as String?, // For optimistic adds with null message_id
+                imageUrl: meme['image_url']
+                    as String?, // For optimistic adds with null message_id
               );
             }
           }
@@ -1137,7 +1215,8 @@ class _DashboardScreenState extends State<DashboardScreen> with AutomaticKeepAli
                           child: Center(
                             child: CircularProgressIndicator(
                               value: loadingProgress.expectedTotalBytes != null
-                                  ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                                  ? loadingProgress.cumulativeBytesLoaded /
+                                      loadingProgress.expectedTotalBytes!
                                   : null,
                               strokeWidth: 2,
                               color: Theme.of(context).colorScheme.primary,
@@ -1153,7 +1232,8 @@ class _DashboardScreenState extends State<DashboardScreen> with AutomaticKeepAli
                             color: Colors.grey[300],
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Icon(Icons.image, size: 32, color: Colors.grey[600]),
+                          child: Icon(Icons.image,
+                              size: 32, color: Colors.grey[600]),
                         );
                       },
                     ),
@@ -1177,7 +1257,8 @@ class _DashboardScreenState extends State<DashboardScreen> with AutomaticKeepAli
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        Icon(Icons.person, size: isMobile ? 14 : 16, color: Colors.grey[600]),
+                        Icon(Icons.person,
+                            size: isMobile ? 14 : 16, color: Colors.grey[600]),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
@@ -1191,7 +1272,8 @@ class _DashboardScreenState extends State<DashboardScreen> with AutomaticKeepAli
                         ),
                       ],
                     ),
-                    if (isDaily || (requester != null && requester.isNotEmpty)) ...[
+                    if (isDaily ||
+                        (requester != null && requester.isNotEmpty)) ...[
                       const SizedBox(height: 4),
                       Row(
                         children: [
@@ -1203,10 +1285,14 @@ class _DashboardScreenState extends State<DashboardScreen> with AutomaticKeepAli
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
-                              isDaily ? 'Daily Meme' : 'Requested by $requester',
+                              isDaily
+                                  ? 'Daily Meme'
+                                  : 'Requested by $requester',
                               style: TextStyle(
                                 fontSize: isMobile ? 12 : 13,
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
                                 fontStyle: FontStyle.italic,
                               ),
                               overflow: TextOverflow.ellipsis,
@@ -1279,8 +1365,8 @@ class _DashboardScreenState extends State<DashboardScreen> with AutomaticKeepAli
     );
   }
 
-  Widget _buildRankupsSection(
-      BuildContext context, bool isMobile, List<Map<String, dynamic>> rankups, bool isLoadingRankups) {
+  Widget _buildRankupsSection(BuildContext context, bool isMobile,
+      List<Map<String, dynamic>> rankups, bool isLoadingRankups) {
     return Card(
       // Main section card - amplify tonal difference like 'How to Use' card
       // Flat, no shadow for full Monet look
@@ -1301,14 +1387,19 @@ class _DashboardScreenState extends State<DashboardScreen> with AutomaticKeepAli
                       const SizedBox(width: 8),
                       Flexible(
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 6),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.primaryContainer,
+                            color:
+                                Theme.of(context).colorScheme.primaryContainer,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
                             'Latest Rank-Ups',
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleLarge
+                                ?.copyWith(
                                   fontSize: isMobile ? 18 : null,
                                 ),
                             overflow: TextOverflow.ellipsis,
@@ -1323,7 +1414,8 @@ class _DashboardScreenState extends State<DashboardScreen> with AutomaticKeepAli
                     onPressed: () {
                       // TODO: Navigate to full rank-ups view
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Full rank-ups view coming soon')),
+                        const SnackBar(
+                            content: Text('Full rank-ups view coming soon')),
                       );
                     },
                     icon: const Icon(Icons.arrow_forward, size: 16),
@@ -1349,7 +1441,8 @@ class _DashboardScreenState extends State<DashboardScreen> with AutomaticKeepAli
               )
             else
               Column(
-                children: List.generate(rankups.length, (i) => _buildRankupCard(context, rankups[i], isMobile, i)),
+                children: List.generate(rankups.length,
+                    (i) => _buildRankupCard(context, rankups[i], isMobile, i)),
               ),
           ],
         ),
@@ -1357,7 +1450,8 @@ class _DashboardScreenState extends State<DashboardScreen> with AutomaticKeepAli
     );
   }
 
-  Widget _buildRankupCard(BuildContext context, Map<String, dynamic> rankup, bool isMobile, int index) {
+  Widget _buildRankupCard(BuildContext context, Map<String, dynamic> rankup,
+      bool isMobile, int index) {
     final user = rankup['user'] as String? ?? 'Unknown Player';
     final newRank = rankup['new_rank'] as String? ?? 'Unknown Rank';
     final oldRank = rankup['old_rank'] as String?;
@@ -1367,8 +1461,8 @@ class _DashboardScreenState extends State<DashboardScreen> with AutomaticKeepAli
     final color = rankup['color'] as int?;
 
     // Use a harmonized accent color (primaryContainer) for a friendlier, more Monet-like look.
-    final isMonet =
-        Theme.of(context).colorScheme.surfaceContainerHigh != ThemeData.light().colorScheme.surfaceContainerHigh;
+    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh !=
+        ThemeData.light().colorScheme.surfaceContainerHigh;
     final cardColor = isMonet
         ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
         : Theme.of(context).colorScheme.surface;
@@ -1398,7 +1492,9 @@ class _DashboardScreenState extends State<DashboardScreen> with AutomaticKeepAli
                       width: isMobile ? 60 : 70,
                       height: isMobile ? 60 : 70,
                       decoration: BoxDecoration(
-                        color: color != null ? Color(color).withOpacity(0.1) : cardColor,
+                        color: color != null
+                            ? Color(color).withOpacity(0.1)
+                            : cardColor,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Center(
@@ -1407,10 +1503,13 @@ class _DashboardScreenState extends State<DashboardScreen> with AutomaticKeepAli
                           height: 20,
                           child: CircularProgressIndicator(
                             value: loadingProgress.expectedTotalBytes != null
-                                ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                                ? loadingProgress.cumulativeBytesLoaded /
+                                    loadingProgress.expectedTotalBytes!
                                 : null,
                             strokeWidth: 2,
-                            color: color != null ? Color(color) : Theme.of(context).colorScheme.primary,
+                            color: color != null
+                                ? Color(color)
+                                : Theme.of(context).colorScheme.primary,
                           ),
                         ),
                       ),
@@ -1421,10 +1520,15 @@ class _DashboardScreenState extends State<DashboardScreen> with AutomaticKeepAli
                       width: isMobile ? 60 : 70,
                       height: isMobile ? 60 : 70,
                       decoration: BoxDecoration(
-                        color: color != null ? Color(color).withOpacity(0.2) : Colors.grey[300],
+                        color: color != null
+                            ? Color(color).withOpacity(0.2)
+                            : Colors.grey[300],
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Icon(Icons.emoji_events, size: 32, color: color != null ? Color(color) : Colors.grey[600]),
+                      child: Icon(Icons.emoji_events,
+                          size: 32,
+                          color:
+                              color != null ? Color(color) : Colors.grey[600]),
                     );
                   },
                 ),
@@ -1434,10 +1538,14 @@ class _DashboardScreenState extends State<DashboardScreen> with AutomaticKeepAli
                 width: isMobile ? 60 : 70,
                 height: isMobile ? 60 : 70,
                 decoration: BoxDecoration(
-                  color: color != null ? Color(color).withOpacity(0.2) : Colors.grey[300],
+                  color: color != null
+                      ? Color(color).withOpacity(0.2)
+                      : Colors.grey[300],
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(Icons.emoji_events, size: 32, color: color != null ? Color(color) : Colors.grey[600]),
+                child: Icon(Icons.emoji_events,
+                    size: 32,
+                    color: color != null ? Color(color) : Colors.grey[600]),
               ),
             SizedBox(width: isMobile ? 8 : 12),
             // Info
@@ -1521,7 +1629,8 @@ class _UserDashboard extends StatefulWidget {
   State<_UserDashboard> createState() => _UserDashboardState();
 }
 
-class _UserDashboardState extends State<_UserDashboard> with AutomaticKeepAliveClientMixin {
+class _UserDashboardState extends State<_UserDashboard>
+    with AutomaticKeepAliveClientMixin {
   bool _isLoading = false;
   List<Map<String, dynamic>> _optInRoles = [];
   Map<String, dynamic>? _rlRank;
@@ -1553,7 +1662,8 @@ class _UserDashboardState extends State<_UserDashboard> with AutomaticKeepAliveC
       if (response['success'] == true && response['profile'] != null) {
         final profile = response['profile'];
         setState(() {
-          _optInRoles = List<Map<String, dynamic>>.from(profile['opt_in_roles'] ?? []);
+          _optInRoles =
+              List<Map<String, dynamic>>.from(profile['opt_in_roles'] ?? []);
           _rlRank = profile['rl_rank'];
           _displayName = profile['display_name'];
           _avatarUrl = profile['avatar_url'];
@@ -1719,7 +1829,10 @@ class _UserDashboardState extends State<_UserDashboard> with AutomaticKeepAliveC
                           children: [
                             Text(
                               _displayName ?? widget.username,
-                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleLarge
+                                  ?.copyWith(
                                     fontWeight: FontWeight.bold,
                                     fontSize: isMobile ? 16 : 20,
                                   ),
@@ -1727,7 +1840,8 @@ class _UserDashboardState extends State<_UserDashboard> with AutomaticKeepAliveC
                             ),
                             const SizedBox(height: 4),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
                                 color: _getRoleColor().withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(16),
@@ -1744,8 +1858,13 @@ class _UserDashboardState extends State<_UserDashboard> with AutomaticKeepAliveC
                             const SizedBox(height: 4),
                             Text(
                               'ID: ${widget.discordId}',
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
                                     fontSize: isMobile ? 11 : 12,
                                   ),
                               overflow: TextOverflow.ellipsis,
@@ -1780,13 +1899,17 @@ class _UserDashboardState extends State<_UserDashboard> with AutomaticKeepAliveC
                                   width: isMobile ? 28 : 36,
                                   height: isMobile ? 28 : 36,
                                   decoration: BoxDecoration(
-                                    color: Theme.of(context).colorScheme.primaryContainer,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .primaryContainer,
                                     borderRadius: BorderRadius.circular(5),
                                   ),
                                   child: Icon(
                                     Icons.sports_esports,
                                     size: isMobile ? 16 : 18,
-                                    color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onPrimaryContainer,
                                   ),
                                 );
                               },
@@ -1797,13 +1920,17 @@ class _UserDashboardState extends State<_UserDashboard> with AutomaticKeepAliveC
                             width: isMobile ? 32 : 40,
                             height: isMobile ? 32 : 40,
                             decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.primaryContainer,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .primaryContainer,
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Icon(
                               Icons.sports_esports,
                               size: isMobile ? 18 : 20,
-                              color: Theme.of(context).colorScheme.onPrimaryContainer,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onPrimaryContainer,
                             ),
                           ),
                         SizedBox(width: isMobile ? 10 : 12),
@@ -1813,8 +1940,13 @@ class _UserDashboardState extends State<_UserDashboard> with AutomaticKeepAliveC
                             children: [
                               Text(
                                 'Rocket League',
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
                                       fontSize: isMobile ? 11 : 12,
                                       fontWeight: FontWeight.w500,
                                     ),
@@ -1822,7 +1954,10 @@ class _UserDashboardState extends State<_UserDashboard> with AutomaticKeepAliveC
                               const SizedBox(height: 2),
                               Text(
                                 _rlRank!['rank'] ?? 'Unknown',
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleMedium
+                                    ?.copyWith(
                                       fontWeight: FontWeight.bold,
                                       fontSize: isMobile ? 14 : 16,
                                     ),
@@ -1832,9 +1967,14 @@ class _UserDashboardState extends State<_UserDashboard> with AutomaticKeepAliveC
                                 const SizedBox(height: 2),
                                 Text(
                                   '${_rlRank!['platform']}: ${_rlRank!['username']}',
-                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(
                                         fontSize: isMobile ? 11 : 12,
-                                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurfaceVariant,
                                       ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -1889,19 +2029,30 @@ class _UserDashboardState extends State<_UserDashboard> with AutomaticKeepAliveC
     if (_notifications != null) {
       statCards.add(
         _StatCard(
-          icon: _notifications!['changelog_opt_in'] == true ? Icons.check_circle : Icons.cancel,
+          icon: _notifications!['changelog_opt_in'] == true
+              ? Icons.check_circle
+              : Icons.cancel,
           label: 'Changelog',
-          value: _notifications!['changelog_opt_in'] == true ? 'Opted In' : 'Opted Out',
-          color: _notifications!['changelog_opt_in'] == true ? Colors.green : Colors.grey,
+          value: _notifications!['changelog_opt_in'] == true
+              ? 'Opted In'
+              : 'Opted Out',
+          color: _notifications!['changelog_opt_in'] == true
+              ? Colors.green
+              : Colors.grey,
           isMobile: isMobile,
         ),
       );
       statCards.add(
         _StatCard(
-          icon: _notifications!['meme_opt_in'] == true ? Icons.check_circle : Icons.cancel,
+          icon: _notifications!['meme_opt_in'] == true
+              ? Icons.check_circle
+              : Icons.cancel,
           label: 'Meme Notifs',
-          value: _notifications!['meme_opt_in'] == true ? 'Opted In' : 'Opted Out',
-          color: _notifications!['meme_opt_in'] == true ? Colors.green : Colors.grey,
+          value:
+              _notifications!['meme_opt_in'] == true ? 'Opted In' : 'Opted Out',
+          color: _notifications!['meme_opt_in'] == true
+              ? Colors.green
+              : Colors.grey,
           isMobile: isMobile,
         ),
       );
@@ -1955,7 +2106,8 @@ class _UserDashboardState extends State<_UserDashboard> with AutomaticKeepAliveC
             children: statCards,
           ),
 
-        if (statCards.isNotEmpty && _optInRoles.isNotEmpty) SizedBox(height: isMobile ? 12 : 16),
+        if (statCards.isNotEmpty && _optInRoles.isNotEmpty)
+          SizedBox(height: isMobile ? 12 : 16),
 
         // Opt-In Roles Card
         if (_optInRoles.isNotEmpty)
@@ -1975,10 +2127,11 @@ class _UserDashboardState extends State<_UserDashboard> with AutomaticKeepAliveC
                       const SizedBox(width: 8),
                       Text(
                         'Opt-In Roles',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              fontSize: isMobile ? 14 : 16,
-                            ),
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: isMobile ? 14 : 16,
+                                ),
                       ),
                     ],
                   ),
@@ -1994,7 +2147,9 @@ class _UserDashboardState extends State<_UserDashboard> with AutomaticKeepAliveC
                         label: Text(
                           roleName,
                           style: TextStyle(
-                            color: roleColor.computeLuminance() > 0.5 ? Colors.black : Colors.white,
+                            color: roleColor.computeLuminance() > 0.5
+                                ? Colors.black
+                                : Colors.white,
                             fontWeight: FontWeight.w600,
                             fontSize: isMobile ? 11 : 12,
                           ),
@@ -2070,7 +2225,8 @@ class _AdminDashboard extends StatefulWidget {
   State<_AdminDashboard> createState() => _AdminDashboardState();
 }
 
-class _AdminDashboardState extends State<_AdminDashboard> with AutomaticKeepAliveClientMixin {
+class _AdminDashboardState extends State<_AdminDashboard>
+    with AutomaticKeepAliveClientMixin {
   bool _isLoading = true;
   // ignore: unused_field
   Map<String, dynamic>? _dashboardData;

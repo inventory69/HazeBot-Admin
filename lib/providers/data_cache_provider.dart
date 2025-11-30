@@ -40,7 +40,9 @@ class DataCacheProvider extends ChangeNotifier {
     }
 
     final latestLoad = _lastMemesLoad != null && _lastRankupsLoad != null
-        ? (_lastMemesLoad!.isAfter(_lastRankupsLoad!) ? _lastMemesLoad! : _lastRankupsLoad!)
+        ? (_lastMemesLoad!.isAfter(_lastRankupsLoad!)
+            ? _lastMemesLoad!
+            : _lastRankupsLoad!)
         : (_lastMemesLoad ?? _lastRankupsLoad!);
 
     final age = DateTime.now().difference(latestLoad);
@@ -61,7 +63,8 @@ class DataCacheProvider extends ChangeNotifier {
         _cachedMemes != null &&
         _lastMemesLoad != null &&
         DateTime.now().difference(_lastMemesLoad!) < _cacheDuration) {
-      debugPrint('📦 Using cached memes (age: ${DateTime.now().difference(_lastMemesLoad!).inSeconds}s)');
+      debugPrint(
+          '📦 Using cached memes (age: ${DateTime.now().difference(_lastMemesLoad!).inSeconds}s)');
       return;
     }
 
@@ -77,7 +80,8 @@ class DataCacheProvider extends ChangeNotifier {
       debugPrint('🔄 Loading latest memes from API...');
       final response = await _apiService.getLatestMemes(limit: limit);
       if (response['success'] == true) {
-        final newMemes = List<Map<String, dynamic>>.from(response['memes'] ?? []);
+        final newMemes =
+            List<Map<String, dynamic>>.from(response['memes'] ?? []);
 
         // Preserve optimistically added memes (those with timestamp < 60 seconds old)
         // These are memes we added locally that might not be in the API response yet
@@ -88,14 +92,16 @@ class DataCacheProvider extends ChangeNotifier {
             try {
               final timestamp = DateTime.parse(meme['timestamp']);
               final age = now.difference(timestamp);
-              return age.inSeconds < 60; // Keep recent optimistic adds for up to 1 minute
+              return age.inSeconds <
+                  60; // Keep recent optimistic adds for up to 1 minute
             } catch (e) {
               return false;
             }
           }).toList();
 
           if (optimisticMemes.isNotEmpty) {
-            debugPrint('🔄 Preserving ${optimisticMemes.length} optimistic meme(s)');
+            debugPrint(
+                '🔄 Preserving ${optimisticMemes.length} optimistic meme(s)');
             // Add optimistic memes that aren't in the API response yet
             for (final optimisticMeme in optimisticMemes) {
               // Check if meme exists in API by image_url AND title (most reliable)
@@ -105,7 +111,8 @@ class DataCacheProvider extends ChangeNotifier {
                   return true;
                 }
                 // Check by message_id if available (Discord memes)
-                if (optimisticMeme['message_id'] != null && apiMeme['message_id'] == optimisticMeme['message_id']) {
+                if (optimisticMeme['message_id'] != null &&
+                    apiMeme['message_id'] == optimisticMeme['message_id']) {
                   return true;
                 }
                 // Fallback: same title and similar image URL
@@ -114,7 +121,8 @@ class DataCacheProvider extends ChangeNotifier {
                   final optUrl = optimisticMeme['image_url']?.toString() ?? '';
                   if (apiUrl.isNotEmpty &&
                       optUrl.isNotEmpty &&
-                      (apiUrl.contains(optUrl.split('/').last) || optUrl.contains(apiUrl.split('/').last))) {
+                      (apiUrl.contains(optUrl.split('/').last) ||
+                          optUrl.contains(apiUrl.split('/').last))) {
                     return true;
                   }
                 }
@@ -123,9 +131,11 @@ class DataCacheProvider extends ChangeNotifier {
 
               if (!existsInApi) {
                 newMemes.insert(0, optimisticMeme);
-                debugPrint('🔄 Kept optimistic meme: ${optimisticMeme['title']}');
+                debugPrint(
+                    '🔄 Kept optimistic meme: ${optimisticMeme['title']}');
               } else {
-                debugPrint('✅ Optimistic meme already in API response: ${optimisticMeme['title']}');
+                debugPrint(
+                    '✅ Optimistic meme already in API response: ${optimisticMeme['title']}');
               }
             }
           }
@@ -135,7 +145,8 @@ class DataCacheProvider extends ChangeNotifier {
         final now = DateTime.now();
         for (final meme in newMemes) {
           final messageId = meme['message_id'] as String?;
-          if (messageId != null && _localUpvoteOverrides.containsKey(messageId)) {
+          if (messageId != null &&
+              _localUpvoteOverrides.containsKey(messageId)) {
             final override = _localUpvoteOverrides[messageId]!;
             final localUpvotes = override['upvotes'] as int;
             final timestamp = override['timestamp'] as DateTime;
@@ -152,7 +163,8 @@ class DataCacheProvider extends ChangeNotifier {
             } else {
               // Override expired, use API value
               _localUpvoteOverrides.remove(messageId);
-              debugPrint('⏰ Override expired for $messageId (${age.inSeconds}s old), using API: $apiUpvotes');
+              debugPrint(
+                  '⏰ Override expired for $messageId (${age.inSeconds}s old), using API: $apiUpvotes');
             }
           }
         }
@@ -182,7 +194,8 @@ class DataCacheProvider extends ChangeNotifier {
         _cachedRankups != null &&
         _lastRankupsLoad != null &&
         DateTime.now().difference(_lastRankupsLoad!) < _cacheDuration) {
-      debugPrint('📦 Using cached rankups (age: ${DateTime.now().difference(_lastRankupsLoad!).inSeconds}s)');
+      debugPrint(
+          '📦 Using cached rankups (age: ${DateTime.now().difference(_lastRankupsLoad!).inSeconds}s)');
       return;
     }
 
@@ -198,9 +211,11 @@ class DataCacheProvider extends ChangeNotifier {
       debugPrint('🔄 Loading latest rankups from API...');
       final response = await _apiService.getLatestRankups(limit: limit);
       if (response['success'] == true) {
-        _cachedRankups = List<Map<String, dynamic>>.from(response['rankups'] ?? []);
+        _cachedRankups =
+            List<Map<String, dynamic>>.from(response['rankups'] ?? []);
         _lastRankupsLoad = DateTime.now();
-        debugPrint('✅ Rankups loaded and cached (${_cachedRankups!.length} items)');
+        debugPrint(
+            '✅ Rankups loaded and cached (${_cachedRankups!.length} items)');
       }
     } on ApiTimeoutException {
       debugPrint('⏱️ Timeout loading rankups');
@@ -246,7 +261,8 @@ class DataCacheProvider extends ChangeNotifier {
 
     // Add the new meme at the beginning of the list
     _cachedMemes!.insert(0, memeData);
-    debugPrint('✨ Inserted meme at position 0, new length: ${_cachedMemes!.length}');
+    debugPrint(
+        '✨ Inserted meme at position 0, new length: ${_cachedMemes!.length}');
 
     // Keep only the latest items (same as API limit)
     if (_cachedMemes!.length > 10) {
@@ -258,7 +274,8 @@ class DataCacheProvider extends ChangeNotifier {
     debugPrint('✨ Updated lastMemesLoad to: $_lastMemesLoad');
     debugPrint('✨ Calling notifyListeners() now...');
     notifyListeners();
-    debugPrint('✨ notifyListeners() called! Cache now has ${_cachedMemes!.length} items');
+    debugPrint(
+        '✨ notifyListeners() called! Cache now has ${_cachedMemes!.length} items');
 
     // Schedule a background refresh after 3 seconds to sync with backend
     Future.delayed(const Duration(seconds: 3), () {
@@ -282,7 +299,8 @@ class DataCacheProvider extends ChangeNotifier {
       'upvotes': upvotes,
       'timestamp': DateTime.now(),
     };
-    debugPrint('👍 Stored local override for $messageId: $upvotes (expires in 60s)');
+    debugPrint(
+        '👍 Stored local override for $messageId: $upvotes (expires in 60s)');
 
     // Also update in current cache if available
     if (_cachedMemes != null) {
@@ -292,8 +310,9 @@ class DataCacheProvider extends ChangeNotifier {
 
         // Match by message_id OR by image_url (for optimistic adds with null message_id)
         final matchesById = cachedMeme['message_id'] == messageId;
-        final matchesByUrl =
-            imageUrl != null && cachedMeme['message_id'] == null && cachedMeme['image_url'] == imageUrl;
+        final matchesByUrl = imageUrl != null &&
+            cachedMeme['message_id'] == null &&
+            cachedMeme['image_url'] == imageUrl;
 
         if (matchesById || matchesByUrl) {
           // Update upvotes
@@ -302,10 +321,12 @@ class DataCacheProvider extends ChangeNotifier {
           // If this was an optimistic add (null message_id), update it with real ID
           if (_cachedMemes![i]['message_id'] == null && messageId != null) {
             _cachedMemes![i]['message_id'] = messageId;
-            debugPrint('👍 Updated null message_id to $messageId for optimistic meme');
+            debugPrint(
+                '👍 Updated null message_id to $messageId for optimistic meme');
           }
 
-          debugPrint('👍 Updated meme at index $i: ${_cachedMemes![i]['title']}');
+          debugPrint(
+              '👍 Updated meme at index $i: ${_cachedMemes![i]['title']}');
           updated = true;
           break;
         }
@@ -315,7 +336,8 @@ class DataCacheProvider extends ChangeNotifier {
         notifyListeners();
         debugPrint('👍 Cache updated and listeners notified');
       } else {
-        debugPrint('👍 Meme not found in current cache (will apply on next load)');
+        debugPrint(
+            '👍 Meme not found in current cache (will apply on next load)');
       }
     }
   }

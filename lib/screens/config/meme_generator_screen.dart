@@ -14,7 +14,8 @@ String getProxiedImageUrl(String originalUrl) {
       originalUrl.contains('external-preview.redd.it') ||
       originalUrl.contains('imgflip.com')) {
     // Use our backend proxy from environment
-    final proxyUrl = dotenv.env['IMAGE_PROXY_URL'] ?? '${dotenv.env['API_BASE_URL']}/proxy/image';
+    final proxyUrl = dotenv.env['IMAGE_PROXY_URL'] ??
+        '${dotenv.env['API_BASE_URL']}/proxy/image';
     final encodedUrl = Uri.encodeComponent(originalUrl);
     return '$proxyUrl?url=$encodedUrl';
   }
@@ -133,7 +134,10 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
         _filteredTemplates = _templates;
       } else {
         _filteredTemplates = _templates
-            .where((template) => template['name'].toString().toLowerCase().contains(query.toLowerCase()))
+            .where((template) => template['name']
+                .toString()
+                .toLowerCase()
+                .contains(query.toLowerCase()))
             .toList();
       }
       _currentPage = 0; // Reset to first page when searching
@@ -165,7 +169,13 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               ...List.generate(textControllers.length, (index) {
-                final labels = ['Top Text', 'Bottom Text', 'Middle Text', 'Text Box 4', 'Text Box 5'];
+                final labels = [
+                  'Top Text',
+                  'Bottom Text',
+                  'Middle Text',
+                  'Text Box 4',
+                  'Text Box 5'
+                ];
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 12.0),
                   child: TextField(
@@ -324,14 +334,17 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
       // Use the SAME format as the backend to prevent duplicates
       if (mounted) {
         debugPrint('🎨 Adding generated meme to dashboard cache...');
-        final cacheProvider = Provider.of<DataCacheProvider>(context, listen: false);
-        final discordAuth = Provider.of<DiscordAuthService>(context, listen: false);
+        final cacheProvider =
+            Provider.of<DataCacheProvider>(context, listen: false);
+        final discordAuth =
+            Provider.of<DiscordAuthService>(context, listen: false);
 
         final username = discordAuth.userInfo?['username'] ?? 'You';
 
         final memeData = {
           'image_url': _generatedMemeUrl,
-          'title': '🎨 Custom Meme: ${_selectedTemplate!['name']}', // Same format as backend
+          'title':
+              '🎨 Custom Meme: ${_selectedTemplate!['name']}', // Same format as backend
           'author': username,
           'score': 0,
           'is_custom': true,
@@ -341,7 +354,8 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
         };
         debugPrint('🎨 Meme data: $memeData');
         cacheProvider.addMemeOptimistically(memeData);
-        debugPrint('🎨 Meme added to cache, notifyListeners should have been called');
+        debugPrint(
+            '🎨 Meme added to cache, notifyListeners should have been called');
       }
     } catch (e) {
       setState(() {
@@ -356,14 +370,17 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isMobile = constraints.maxWidth < 600;
-        final isTablet = constraints.maxWidth >= 600 && constraints.maxWidth < 1200;
+        final isTablet =
+            constraints.maxWidth >= 600 && constraints.maxWidth < 1200;
         final padding = isMobile ? 12.0 : 24.0;
 
-        final totalPages = (_filteredTemplates.length / _templatesPerPage).ceil();
+        final totalPages =
+            (_filteredTemplates.length / _templatesPerPage).ceil();
         final startIdx = _currentPage * _templatesPerPage;
-        final endIdx = (startIdx + _templatesPerPage < _filteredTemplates.length)
-            ? startIdx + _templatesPerPage
-            : _filteredTemplates.length;
+        final endIdx =
+            (startIdx + _templatesPerPage < _filteredTemplates.length)
+                ? startIdx + _templatesPerPage
+                : _filteredTemplates.length;
         final pageTemplates = _filteredTemplates.sublist(startIdx, endIdx);
 
         return Scaffold(
@@ -404,10 +421,14 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
             child: Builder(
               builder: (context) {
                 // Card color based on theme (same as meme_config_screen)
-                final cardColor = (Theme.of(context).colorScheme.surfaceContainerHigh !=
-                        ThemeData.light().colorScheme.surfaceContainerHigh)
-                    ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
-                    : Theme.of(context).colorScheme.surface;
+                final cardColor =
+                    (Theme.of(context).colorScheme.surfaceContainerHigh !=
+                            ThemeData.light().colorScheme.surfaceContainerHigh)
+                        ? Theme.of(context)
+                            .colorScheme
+                            .primaryContainer
+                            .withOpacity(0.18)
+                        : Theme.of(context).colorScheme.surface;
 
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -424,7 +445,9 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.info_outline, size: isMobile ? 18 : 20, color: Colors.blue[700]),
+                          Icon(Icons.info_outline,
+                              size: isMobile ? 18 : 20,
+                              color: Colors.blue[700]),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -444,7 +467,8 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                     Card(
                       color: cardColor,
                       elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16)),
                       child: Padding(
                         padding: EdgeInsets.all(isMobile ? 16.0 : 24.0),
                         child: TextField(
@@ -483,7 +507,11 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                           padding: const EdgeInsets.all(40.0),
                           child: Column(
                             children: [
-                              Icon(Icons.search_off, size: 64, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                              Icon(Icons.search_off,
+                                  size: 64,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant),
                               const SizedBox(height: 16),
                               Text(
                                 'No templates found',
@@ -509,16 +537,21 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
                                       '📋 Template Gallery',
-                                      style:
-                                          Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleLarge
+                                          ?.copyWith(
+                                              fontWeight: FontWeight.bold),
                                     ),
                                     Text(
                                       'Page ${_currentPage + 1}/$totalPages',
-                                      style: Theme.of(context).textTheme.bodySmall,
+                                      style:
+                                          Theme.of(context).textTheme.bodySmall,
                                     ),
                                   ],
                                 ),
@@ -528,8 +561,10 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                                 GridView.builder(
                                   shrinkWrap: true,
                                   physics: const NeverScrollableScrollPhysics(),
-                                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: isMobile ? 4 : (isTablet ? 6 : 8),
+                                  gridDelegate:
+                                      SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount:
+                                        isMobile ? 4 : (isTablet ? 6 : 8),
                                     crossAxisSpacing: 4,
                                     mainAxisSpacing: 4,
                                     childAspectRatio: 0.62,
@@ -541,48 +576,79 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                                       onTap: () {
                                         setState(() {
                                           _selectedTemplate = template;
-                                          _generatedMemeUrl = null; // Clear preview
+                                          _generatedMemeUrl =
+                                              null; // Clear preview
                                         });
                                       },
                                       borderRadius: BorderRadius.circular(12),
                                       child: Card(
-                                        color: (Theme.of(context).colorScheme.surfaceContainerHigh !=
-                                                ThemeData.light().colorScheme.surfaceContainerHigh)
-                                            ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
-                                            : Theme.of(context).colorScheme.surface,
+                                        color: (Theme.of(context)
+                                                    .colorScheme
+                                                    .surfaceContainerHigh !=
+                                                ThemeData.light()
+                                                    .colorScheme
+                                                    .surfaceContainerHigh)
+                                            ? Theme.of(context)
+                                                .colorScheme
+                                                .primaryContainer
+                                                .withOpacity(0.18)
+                                            : Theme.of(context)
+                                                .colorScheme
+                                                .surface,
                                         elevation: 0,
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                                        shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(4)),
                                         margin: const EdgeInsets.all(1.0),
                                         child: Padding(
-                                          padding: const EdgeInsets.symmetric(horizontal: 1.0, vertical: 0.0),
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 1.0, vertical: 0.0),
                                           child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             mainAxisSize: MainAxisSize.max,
-                                            mainAxisAlignment: MainAxisAlignment.start,
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.start,
                                             children: [
                                               Expanded(
                                                 child: ClipRRect(
-                                                  borderRadius: BorderRadius.circular(7),
+                                                  borderRadius:
+                                                      BorderRadius.circular(7),
                                                   child: Image.network(
-                                                    getProxiedImageUrl(template['url']),
+                                                    getProxiedImageUrl(
+                                                        template['url']),
                                                     width: double.infinity,
                                                     fit: BoxFit.cover,
-                                                    loadingBuilder: (context, child, loadingProgress) {
-                                                      if (loadingProgress == null) return child;
+                                                    loadingBuilder: (context,
+                                                        child,
+                                                        loadingProgress) {
+                                                      if (loadingProgress ==
+                                                          null) return child;
                                                       return Center(
-                                                        child: CircularProgressIndicator(
-                                                          value: loadingProgress.expectedTotalBytes != null
-                                                              ? loadingProgress.cumulativeBytesLoaded /
-                                                                  loadingProgress.expectedTotalBytes!
+                                                        child:
+                                                            CircularProgressIndicator(
+                                                          value: loadingProgress
+                                                                      .expectedTotalBytes !=
+                                                                  null
+                                                              ? loadingProgress
+                                                                      .cumulativeBytesLoaded /
+                                                                  loadingProgress
+                                                                      .expectedTotalBytes!
                                                               : null,
                                                         ),
                                                       );
                                                     },
-                                                    errorBuilder: (context, error, stackTrace) {
+                                                    errorBuilder: (context,
+                                                        error, stackTrace) {
                                                       return Container(
-                                                        color: Theme.of(context).colorScheme.errorContainer,
+                                                        color: Theme.of(context)
+                                                            .colorScheme
+                                                            .errorContainer,
                                                         child: const Center(
-                                                          child: Icon(Icons.broken_image, size: 18),
+                                                          child: Icon(
+                                                              Icons
+                                                                  .broken_image,
+                                                              size: 18),
                                                         ),
                                                       );
                                                     },
@@ -591,8 +657,12 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                                               ),
                                               Text(
                                                 template['name'],
-                                                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                                      fontWeight: FontWeight.bold,
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .labelSmall
+                                                    ?.copyWith(
+                                                      fontWeight:
+                                                          FontWeight.bold,
                                                       fontSize: 9,
                                                     ),
                                                 maxLines: 2,
@@ -600,8 +670,13 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                                               ),
                                               Text(
                                                 '${template['box_count']} text boxes',
-                                                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .labelSmall
+                                                    ?.copyWith(
+                                                      color: Theme.of(context)
+                                                          .colorScheme
+                                                          .onSurfaceVariant,
                                                       fontSize: 8,
                                                     ),
                                               ),
@@ -629,14 +704,20 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                                           : null,
                                       icon: const Icon(Icons.chevron_left),
                                       style: IconButton.styleFrom(
-                                        disabledBackgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+                                        disabledBackgroundColor:
+                                            Theme.of(context)
+                                                .colorScheme
+                                                .surfaceContainerHigh,
                                       ),
                                     ),
                                     Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 16),
                                       child: Text(
                                         '${startIdx + 1}-$endIdx of ${_filteredTemplates.length}',
-                                        style: Theme.of(context).textTheme.bodyMedium,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium,
                                       ),
                                     ),
                                     IconButton.filled(
@@ -649,7 +730,10 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                                           : null,
                                       icon: const Icon(Icons.chevron_right),
                                       style: IconButton.styleFrom(
-                                        disabledBackgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                                        disabledBackgroundColor:
+                                            Theme.of(context)
+                                                .colorScheme
+                                                .surfaceContainerHighest,
                                       ),
                                     ),
                                   ],
@@ -669,40 +753,67 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                                 children: [
                                   Text(
                                     '🎨 Preview',
-                                    style:
-                                        Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleLarge
+                                        ?.copyWith(fontWeight: FontWeight.bold),
                                   ),
                                   const SizedBox(height: 12),
                                   if (_selectedTemplate != null)
                                     Card(
-                                      color: (Theme.of(context).colorScheme.surfaceContainerHigh !=
-                                              ThemeData.light().colorScheme.surfaceContainerHigh)
-                                          ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
-                                          : Theme.of(context).colorScheme.surface,
+                                      color: (Theme.of(context)
+                                                  .colorScheme
+                                                  .surfaceContainerHigh !=
+                                              ThemeData.light()
+                                                  .colorScheme
+                                                  .surfaceContainerHigh)
+                                          ? Theme.of(context)
+                                              .colorScheme
+                                              .primaryContainer
+                                              .withOpacity(0.18)
+                                          : Theme.of(context)
+                                              .colorScheme
+                                              .surface,
                                       elevation: 0,
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(16)),
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           // Preview Image
                                           ClipRRect(
-                                            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                                            borderRadius:
+                                                const BorderRadius.vertical(
+                                                    top: Radius.circular(12)),
                                             child: Image.network(
-                                              getProxiedImageUrl(_generatedMemeUrl ?? _selectedTemplate!['url']),
+                                              getProxiedImageUrl(
+                                                  _generatedMemeUrl ??
+                                                      _selectedTemplate![
+                                                          'url']),
                                               width: double.infinity,
                                               fit: BoxFit.contain,
-                                              loadingBuilder: (context, child, loadingProgress) {
+                                              loadingBuilder: (context, child,
+                                                  loadingProgress) {
                                                 if (loadingProgress == null) {
                                                   return child;
                                                 }
                                                 return Container(
                                                   height: 300,
-                                                  color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                                                  color: Theme.of(context)
+                                                      .colorScheme
+                                                      .surfaceContainerHigh,
                                                   child: Center(
-                                                    child: CircularProgressIndicator(
-                                                      value: loadingProgress.expectedTotalBytes != null
-                                                          ? loadingProgress.cumulativeBytesLoaded /
-                                                              loadingProgress.expectedTotalBytes!
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                      value: loadingProgress
+                                                                  .expectedTotalBytes !=
+                                                              null
+                                                          ? loadingProgress
+                                                                  .cumulativeBytesLoaded /
+                                                              loadingProgress
+                                                                  .expectedTotalBytes!
                                                           : null,
                                                     ),
                                                   ),
@@ -715,19 +826,29 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                                           Padding(
                                             padding: const EdgeInsets.all(20.0),
                                             child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
                                               children: [
                                                 Text(
                                                   _selectedTemplate!['name'],
-                                                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                                        fontWeight: FontWeight.bold,
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .titleLarge
+                                                      ?.copyWith(
+                                                        fontWeight:
+                                                            FontWeight.bold,
                                                       ),
                                                 ),
                                                 const SizedBox(height: 8),
                                                 Text(
                                                   '${_selectedTemplate!['box_count']} text boxes available',
-                                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .bodyMedium
+                                                      ?.copyWith(
+                                                        color: Theme.of(context)
+                                                            .colorScheme
+                                                            .onSurfaceVariant,
                                                       ),
                                                 ),
                                                 const SizedBox(height: 20),
@@ -736,73 +857,106 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                                                 SizedBox(
                                                   width: double.infinity,
                                                   child: FilledButton.icon(
-                                                    onPressed: _isGenerating ? null : _showCreateMemeDialog,
+                                                    onPressed: _isGenerating
+                                                        ? null
+                                                        : _showCreateMemeDialog,
                                                     icon: _isGenerating
                                                         ? const SizedBox(
                                                             width: 20,
                                                             height: 20,
-                                                            child: CircularProgressIndicator(
+                                                            child:
+                                                                CircularProgressIndicator(
                                                               strokeWidth: 2,
-                                                              color: Colors.white,
+                                                              color:
+                                                                  Colors.white,
                                                             ),
                                                           )
-                                                        : const Icon(Icons.create),
-                                                    label: Text(_isGenerating ? 'Generating...' : 'Create Meme'),
-                                                    style: FilledButton.styleFrom(
-                                                      padding: const EdgeInsets.symmetric(vertical: 16),
+                                                        : const Icon(
+                                                            Icons.create),
+                                                    label: Text(_isGenerating
+                                                        ? 'Generating...'
+                                                        : 'Create Meme'),
+                                                    style:
+                                                        FilledButton.styleFrom(
+                                                      padding: const EdgeInsets
+                                                          .symmetric(
+                                                          vertical: 16),
                                                     ),
                                                   ),
                                                 ),
 
-                                                if (_generatedMemeUrl != null) ...[
+                                                if (_generatedMemeUrl !=
+                                                    null) ...[
                                                   const SizedBox(height: 12),
                                                   SizedBox(
                                                     width: double.infinity,
                                                     child: FilledButton.icon(
-                                                      onPressed: (_isSendingToDiscord || _memeSentToDiscord)
+                                                      onPressed: (_isSendingToDiscord ||
+                                                              _memeSentToDiscord)
                                                           ? null
                                                           : _sendMemeToDiscord,
                                                       icon: _isSendingToDiscord
                                                           ? const SizedBox(
                                                               width: 20,
                                                               height: 20,
-                                                              child: CircularProgressIndicator(
+                                                              child:
+                                                                  CircularProgressIndicator(
                                                                 strokeWidth: 2,
-                                                                color: Colors.white,
+                                                                color: Colors
+                                                                    .white,
                                                               ),
                                                             )
                                                           : _memeSentToDiscord
-                                                              ? const Icon(Icons.check_circle)
-                                                              : const Icon(Icons.send),
+                                                              ? const Icon(Icons
+                                                                  .check_circle)
+                                                              : const Icon(
+                                                                  Icons.send),
                                                       label: Text(_isSendingToDiscord
                                                           ? 'Sending...'
                                                           : _memeSentToDiscord
                                                               ? 'Sent to Discord'
                                                               : 'Send to Discord'),
-                                                      style: FilledButton.styleFrom(
-                                                        padding: const EdgeInsets.symmetric(vertical: 16),
+                                                      style: FilledButton
+                                                          .styleFrom(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .symmetric(
+                                                                vertical: 16),
                                                       ),
                                                     ),
                                                   ),
                                                   const SizedBox(height: 12),
                                                   Container(
-                                                    padding: const EdgeInsets.all(12),
+                                                    padding:
+                                                        const EdgeInsets.all(
+                                                            12),
                                                     decoration: BoxDecoration(
-                                                      color: Colors.green.withValues(alpha: 0.1),
-                                                      borderRadius: BorderRadius.circular(8),
+                                                      color: Colors.green
+                                                          .withValues(
+                                                              alpha: 0.1),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              8),
                                                       border: Border.all(
-                                                        color: Colors.green.withValues(alpha: 0.3),
+                                                        color: Colors.green
+                                                            .withValues(
+                                                                alpha: 0.3),
                                                       ),
                                                     ),
                                                     child: Row(
                                                       children: [
-                                                        const Icon(Icons.check_circle, color: Colors.green, size: 20),
-                                                        const SizedBox(width: 8),
+                                                        const Icon(
+                                                            Icons.check_circle,
+                                                            color: Colors.green,
+                                                            size: 20),
+                                                        const SizedBox(
+                                                            width: 8),
                                                         Expanded(
                                                           child: Text(
                                                             'Meme generated! Right-click to save.',
                                                             style: TextStyle(
-                                                              color: Colors.green[800],
+                                                              color: Colors
+                                                                  .green[800],
                                                               fontSize: 12,
                                                             ),
                                                           ),
@@ -830,7 +984,8 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                       SizedBox(
                         width: double.infinity,
                         child: FilledButton.icon(
-                          onPressed: _isGenerating ? null : _showCreateMemeDialog,
+                          onPressed:
+                              _isGenerating ? null : _showCreateMemeDialog,
                           icon: _isGenerating
                               ? const SizedBox(
                                   width: 20,
@@ -841,7 +996,9 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                                   ),
                                 )
                               : const Icon(Icons.create),
-                          label: Text(_isGenerating ? 'Generating...' : 'Create Meme: ${_selectedTemplate!['name']}'),
+                          label: Text(_isGenerating
+                              ? 'Generating...'
+                              : 'Create Meme: ${_selectedTemplate!['name']}'),
                           style: FilledButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 16),
                           ),
@@ -853,16 +1010,25 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                     if (isMobile && _generatedMemeUrl != null) ...[
                       const SizedBox(height: 24),
                       Card(
-                        color: (Theme.of(context).colorScheme.surfaceContainerHigh !=
-                                ThemeData.light().colorScheme.surfaceContainerHigh)
-                            ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
+                        color: (Theme.of(context)
+                                    .colorScheme
+                                    .surfaceContainerHigh !=
+                                ThemeData.light()
+                                    .colorScheme
+                                    .surfaceContainerHigh)
+                            ? Theme.of(context)
+                                .colorScheme
+                                .primaryContainer
+                                .withOpacity(0.18)
                             : Theme.of(context).colorScheme.surface,
                         elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16)),
                         child: Column(
                           children: [
                             ClipRRect(
-                              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                              borderRadius: const BorderRadius.vertical(
+                                  top: Radius.circular(12)),
                               child: Image.network(
                                 getProxiedImageUrl(_generatedMemeUrl!),
                                 width: double.infinity,
@@ -876,8 +1042,10 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                                   SizedBox(
                                     width: double.infinity,
                                     child: FilledButton.icon(
-                                      onPressed:
-                                          (_isSendingToDiscord || _memeSentToDiscord) ? null : _sendMemeToDiscord,
+                                      onPressed: (_isSendingToDiscord ||
+                                              _memeSentToDiscord)
+                                          ? null
+                                          : _sendMemeToDiscord,
                                       icon: _isSendingToDiscord
                                           ? const SizedBox(
                                               width: 20,
@@ -896,7 +1064,8 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                                               ? 'Sent to Discord'
                                               : 'Send to Discord'),
                                       style: FilledButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(vertical: 16),
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 16),
                                       ),
                                     ),
                                   ),
@@ -904,15 +1073,18 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                                   Container(
                                     padding: const EdgeInsets.all(12),
                                     decoration: BoxDecoration(
-                                      color: Colors.green.withValues(alpha: 0.1),
+                                      color:
+                                          Colors.green.withValues(alpha: 0.1),
                                       borderRadius: BorderRadius.circular(8),
                                       border: Border.all(
-                                        color: Colors.green.withValues(alpha: 0.3),
+                                        color:
+                                            Colors.green.withValues(alpha: 0.3),
                                       ),
                                     ),
                                     child: Row(
                                       children: [
-                                        const Icon(Icons.check_circle, color: Colors.green, size: 20),
+                                        const Icon(Icons.check_circle,
+                                            color: Colors.green, size: 20),
                                         const SizedBox(width: 8),
                                         Expanded(
                                           child: Text(
@@ -940,7 +1112,8 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                       Card(
                         color: Theme.of(context).colorScheme.errorContainer,
                         elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16)),
                         child: Padding(
                           padding: const EdgeInsets.all(16.0),
                           child: Row(
@@ -954,13 +1127,17 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                                 child: Text(
                                   _errorMessage!,
                                   style: TextStyle(
-                                    color: Theme.of(context).colorScheme.onErrorContainer,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onErrorContainer,
                                   ),
                                 ),
                               ),
                               IconButton(
                                 icon: const Icon(Icons.close),
-                                color: Theme.of(context).colorScheme.onErrorContainer,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onErrorContainer,
                                 onPressed: () {
                                   setState(() {
                                     _errorMessage = null;
@@ -976,9 +1153,13 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                     // Info Card
                     const SizedBox(height: 32),
                     Card(
-                      color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .surfaceContainerHighest
+                          .withValues(alpha: 0.5),
                       elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16)),
                       child: Padding(
                         padding: const EdgeInsets.all(20.0),
                         child: Column(
@@ -994,7 +1175,10 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                                 const SizedBox(width: 12),
                                 Text(
                                   'How to Use',
-                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleMedium
+                                      ?.copyWith(
                                         fontWeight: FontWeight.bold,
                                       ),
                                 ),
@@ -1004,25 +1188,29 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                             _buildInfoRow(
                               context,
                               icon: Icons.grid_view,
-                              text: 'Browse templates in the gallery and click to select',
+                              text:
+                                  'Browse templates in the gallery and click to select',
                             ),
                             const SizedBox(height: 12),
                             _buildInfoRow(
                               context,
                               icon: Icons.search,
-                              text: 'Use the search bar to find specific templates quickly',
+                              text:
+                                  'Use the search bar to find specific templates quickly',
                             ),
                             const SizedBox(height: 12),
                             _buildInfoRow(
                               context,
                               icon: Icons.create,
-                              text: 'Click "Create Meme" to add text and generate your meme',
+                              text:
+                                  'Click "Create Meme" to add text and generate your meme',
                             ),
                             const SizedBox(height: 12),
                             _buildInfoRow(
                               context,
                               icon: Icons.download,
-                              text: 'Right-click (or long-press on mobile) the generated meme to save',
+                              text:
+                                  'Right-click (or long-press on mobile) the generated meme to save',
                             ),
                           ],
                         ),
@@ -1038,7 +1226,8 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
     );
   }
 
-  Widget _buildInfoRow(BuildContext context, {required IconData icon, required String text}) {
+  Widget _buildInfoRow(BuildContext context,
+      {required IconData icon, required String text}) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
