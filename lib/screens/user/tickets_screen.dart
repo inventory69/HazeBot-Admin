@@ -40,7 +40,7 @@ class _TicketsScreenState extends State<TicketsScreen>
       final authService = Provider.of<AuthService>(context, listen: false);
       final ticket = await authService.apiService.getTicket(ticketId);
 
-      if (mounted && ticket != null) {
+      if (mounted) {
         // Navigate to ticket detail screen
         Navigator.push(
           context,

@@ -96,6 +96,8 @@ GITHUB_REPO_URL=https://github.com/inventory69/HazeBot-Admin
 - Hero animations & smooth transitions
 - Pull-to-refresh on all lists
 
+**[📋 Complete Features List](FEATURES.md)** - Full feature documentation with details
+
 ---
 
 ## 🏗️ Architecture

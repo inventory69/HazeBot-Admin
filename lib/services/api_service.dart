@@ -75,8 +75,8 @@ class ApiService {
         _platform = kDebugMode ? 'Android (Debug)' : 'Android';
         try {
           final androidInfo = await deviceInfoPlugin.androidInfo;
-          final manufacturer = androidInfo.manufacturer ?? 'Unknown';
-          final model = androidInfo.model ?? 'Unknown';
+          final manufacturer = androidInfo.manufacturer;
+          final model = androidInfo.model;
           _deviceInfo = '$manufacturer $model';
           debugPrint('📱 Android Device: $_deviceInfo');
           debugPrint('   Manufacturer: $manufacturer');

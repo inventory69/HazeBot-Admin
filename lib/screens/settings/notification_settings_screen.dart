@@ -108,7 +108,7 @@ class _NotificationSettingsScreenState
         // Extract notifications from nested structure: profile.notifications
         final profileData = preferences?['profile'] as Map<String, dynamic>?;
         final notificationsData =
-            profileData?['notifications'] as Map<String, dynamic>?;
+            profileData != null ? profileData['notifications'] as Map<String, dynamic>? : null;
         debugPrint(
             '🔍 [NotificationSettings] Extracted notifications: $notificationsData');
 

@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 class WebSocketService {
@@ -135,7 +134,6 @@ class WebSocketService {
       final updateData = data as Map<String, dynamic>;
       final ticketId = updateData['ticket_id'] as String?;
       final eventType = updateData['event_type'] as String?;
-      final eventData = updateData['data'] as Map<String, dynamic>?;
 
       if (ticketId == null || eventType == null) {
         print('⚠️ Invalid ticket update data: $updateData');

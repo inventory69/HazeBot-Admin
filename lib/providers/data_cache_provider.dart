@@ -319,7 +319,7 @@ class DataCacheProvider extends ChangeNotifier {
           _cachedMemes![i]['upvotes'] = upvotes;
 
           // If this was an optimistic add (null message_id), update it with real ID
-          if (_cachedMemes![i]['message_id'] == null && messageId != null) {
+          if (messageId != null && _cachedMemes![i]['message_id'] == null) {
             _cachedMemes![i]['message_id'] = messageId;
             debugPrint(
                 '👍 Updated null message_id to $messageId for optimistic meme');

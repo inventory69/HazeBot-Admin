@@ -14,7 +14,6 @@ class _CogManagerScreenState extends State<CogManagerScreen> {
   List<Cog> _cogs = [];
   bool _isLoading = true;
   String? _error;
-  String? _selectedCategory;
   final ScrollController _scrollController = ScrollController();
   final Map<String, GlobalKey> _categoryKeys = {};
   final Map<String, bool> _expandedCategories = {};
@@ -196,16 +195,8 @@ class _CogManagerScreenState extends State<CogManagerScreen> {
     }
   }
 
-  void _scrollToCategory(String category) {
-    final key = _categoryKeys[category];
-    if (key?.currentContext != null) {
-      Scrollable.ensureVisible(
-        key!.currentContext!,
-        duration: const Duration(milliseconds: 500),
-        curve: Curves.easeInOut,
-        alignment: 0.1,
-      );
-    }
+  Widget _buildQuickJump() {
+    return const SizedBox.shrink();
   }
 
   Widget _buildCategoryFilter(bool isMobile) {
@@ -232,7 +223,7 @@ class _CogManagerScreenState extends State<CogManagerScreen> {
       'monitoring',
       'other'
     ];
-    final sortedCategories = categories.keys.toList()
+    categories.keys.toList()
       ..sort((a, b) {
         final aIndex = categoryOrder.indexOf(a);
         final bIndex = categoryOrder.indexOf(b);

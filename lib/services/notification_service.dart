@@ -517,28 +517,6 @@ class NotificationService {
     debugPrint('✅ Updated notification for ticket $ticketId ($count messages)');
   }
 
-  /// Clean Markdown formatting from text (for notifications)
-  String _cleanMarkdown(String text) {
-    return text
-        // Bold: **text** or __text__
-        .replaceAll(RegExp(r'\*\*(.+?)\*\*'), r'$1')
-        .replaceAll(RegExp(r'__(.+?)__'), r'$1')
-        // Italic: *text* or _text_
-        .replaceAll(RegExp(r'\*(.+?)\*'), r'$1')
-        .replaceAll(RegExp(r'_(.+?)_'), r'$1')
-        // Strikethrough: ~~text~~
-        .replaceAll(RegExp(r'~~(.+?)~~'), r'$1')
-        // Inline code: `code`
-        .replaceAll(RegExp(r'`(.+?)`'), r'$1')
-        // Links: [text](url) -> text
-        .replaceAll(RegExp(r'\[(.+?)\]\(.+?\)'), r'$1')
-        // Code blocks: ```code``` -> code
-        .replaceAll(RegExp(r'```[\s\S]*?```'), '')
-        // Headers: # text -> text
-        .replaceAll(RegExp(r'^#{1,6}\s+'), '')
-        .trim();
-  }
-
   /// Handle notification tap (from background/terminated state)
   void _handleNotificationTap(RemoteMessage message) {
     debugPrint('👆 Notification tapped: ${message.data}');

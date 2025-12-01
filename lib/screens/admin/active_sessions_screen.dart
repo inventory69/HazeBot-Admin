@@ -38,7 +38,6 @@ class _ActiveSessionsScreenState extends State<ActiveSessionsScreen> {
       final apiService = authService.apiService;
 
       // Call the admin endpoint using the base URL
-      final url = '${apiService.baseUrl}/admin/active-sessions';
       final response = await apiService.getActiveSessions();
 
       setState(() {
