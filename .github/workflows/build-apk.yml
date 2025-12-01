@@ -42,10 +42,16 @@ jobs:
             exit 1
           fi
       
-      - name: Create .env file with test API URL
+      - name: Create .env file with configuration
         run: |
           echo "API_BASE_URL=${{ secrets.API_BASE_URL }}" > .env
-          echo "✅ .env file created with API URL"
+          echo "IMAGE_PROXY_URL=${{ secrets.IMAGE_PROXY_URL }}" >> .env
+          echo "GITHUB_REPO_URL=https://github.com/inventory69/HazeBot-Admin" >> .env
+          echo "PROD_MODE=${{ secrets.PROD_MODE }}" >> .env
+          echo "✅ .env file created with configuration"
+          echo "   📦 API_BASE_URL: ${{ secrets.API_BASE_URL }}"
+          echo "   🖼️  IMAGE_PROXY_URL: ${{ secrets.IMAGE_PROXY_URL }}"
+          echo "   🔧 PROD_MODE: ${{ secrets.PROD_MODE }}"
       
       - name: Create Firebase config
         run: |

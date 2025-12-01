@@ -25,17 +25,30 @@ The workflow requires secrets for configuration. Add them in your repository:
 
 **Required Secrets:**
 
-#### `API_BASE_URL`
+#### `API_BASE_URL` (REQUIRED)
 - **Description:** API endpoint URL
 - **Value:** `https://your-api-url.com/api`
 - **Example:** `https://test-hazebot-admin.hzwd.xyz/api`
 - **Important:** No trailing slash!
 
+#### `PROD_MODE` (REQUIRED)
+- **Description:** Production mode flag
+- **Value:** `true` or `false`
+- **Example:** `true` for Production (Chillventory), `false` for Development (Testventory)
+- **Important:** Lowercase, no quotes!
+
+#### `IMAGE_PROXY_URL` (Optional)
+- **Description:** Image proxy URL for CORS-free image loading
+- **Value:** `https://your-api-url.com/api/proxy/image`
+- **Example:** `https://test-hazebot-admin.hzwd.xyz/api/proxy/image`
+
 **Steps to Add:**
 1. Click **New repository secret**
-2. Name: `API_BASE_URL`
-3. Value: Your API URL
+2. Name: e.g., `PROD_MODE`
+3. Value: e.g., `true`
 4. Click **Add secret**
+
+📚 **Detailed Setup Guide:** See [GITHUB_SECRETS_SETUP.md](docs/GITHUB_SECRETS_SETUP.md)
 
 ---
 
