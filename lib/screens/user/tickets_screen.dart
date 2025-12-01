@@ -155,9 +155,9 @@ class _TicketsScreenState extends State<TicketsScreen>
       ),
       body: TabBarView(
         controller: _tabController,
-        children: const [
-          _MyTicketsTab(),
-          _CreateTicketTab(),
+        children: [
+          const _MyTicketsTab(),
+          _CreateTicketTab(tabController: _tabController),
         ],
       ),
     );
@@ -521,7 +521,8 @@ class _MyTicketsTabState extends State<_MyTicketsTab> {
                   const SizedBox(width: 4),
                   Text(
                     ticket.createdAt != null
-                        ? timeago.format(DateTime.parse(ticket.createdAt!))
+                        ? timeago
+                            .format(DateTime.parse(ticket.createdAt!).toLocal())
                         : 'Unknown',
                     style: TextStyle(
                       fontSize: 12,
@@ -578,7 +579,9 @@ class _MyTicketsTabState extends State<_MyTicketsTab> {
 
 // Create Ticket Tab
 class _CreateTicketTab extends StatefulWidget {
-  const _CreateTicketTab();
+  final TabController tabController;
+
+  const _CreateTicketTab({required this.tabController});
 
   @override
   State<_CreateTicketTab> createState() => _CreateTicketTabState();
@@ -680,7 +683,7 @@ class _CreateTicketTabState extends State<_CreateTicketTab> {
         );
 
         // Switch to My Tickets tab
-        DefaultTabController.of(context).animateTo(0);
+        widget.tabController.animateTo(0);
       }
     } catch (e) {
       if (mounted) {
@@ -967,18 +970,49 @@ class _TicketDetailScreen extends StatelessWidget {
                 ),
                 if (ticket.initialMessage != null) ...[
                   const SizedBox(height: 12),
-                  Text(
-                    _extractSubject(ticket.initialMessage!),
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
+                  ExpansionTile(
+                    tilePadding: EdgeInsets.zero,
+                    childrenPadding: const EdgeInsets.only(top: 8),
+                    initiallyExpanded: false,
+                    title: Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          size: 18,
+                          color: colorScheme.primary,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _extractSubject(ticket.initialMessage!),
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _extractDescription(ticket.initialMessage!),
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: colorScheme.surfaceContainerHighest
+                              .withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: colorScheme.outline.withOpacity(0.2),
+                          ),
+                        ),
+                        child: Text(
+                          _extractDescription(ticket.initialMessage!),
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
                 if (ticket.assignedToName != null) ...[

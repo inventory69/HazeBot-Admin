@@ -721,7 +721,7 @@ class TicketCard extends StatelessWidget {
 
   String _formatDateTime(String isoString) {
     try {
-      final dateTime = DateTime.parse(isoString);
+      final dateTime = DateTime.parse(isoString).toLocal();
       final now = DateTime.now();
       final difference = now.difference(dateTime);
 

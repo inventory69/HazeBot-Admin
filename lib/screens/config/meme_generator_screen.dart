@@ -7,12 +7,17 @@ import '../../providers/data_cache_provider.dart';
 
 /// Helper function to proxy external images through our backend to bypass CORS
 String getProxiedImageUrl(String originalUrl) {
-  // Proxy external images (Reddit, Imgur, Imgflip)
+  // For imgflip.com, use direct URL (HTTPS works on Android)
+  // Proxy is only needed for Reddit/Imgur due to CORS
+  if (originalUrl.contains('imgflip.com')) {
+    return originalUrl; // Direct access works fine
+  }
+
+  // Proxy Reddit and Imgur images
   if (originalUrl.contains('i.redd.it') ||
       originalUrl.contains('i.imgur.com') ||
       originalUrl.contains('preview.redd.it') ||
-      originalUrl.contains('external-preview.redd.it') ||
-      originalUrl.contains('imgflip.com')) {
+      originalUrl.contains('external-preview.redd.it')) {
     // Use our backend proxy from environment
     final proxyUrl = dotenv.env['IMAGE_PROXY_URL'] ??
         '${dotenv.env['API_BASE_URL']}/proxy/image';

@@ -777,7 +777,8 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
     final isAdminMessage = message.isAdmin ||
         message.content.contains('[Admin Panel') ||
         message.role != null;
-    final isInitialMessage = message.content.contains('**Initial details');
+    final isInitialMessage = message.content.contains('**Initial details') ||
+        message.content.startsWith('**Subject:');
     final isClosingMessage =
         message.content.contains('Ticket successfully closed') ||
             message.content.contains('**Closing Message:**');
@@ -836,14 +837,19 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
                       isClosingMessage,
                     ),
                     const SizedBox(height: 6),
-                    // Message bubble
-                    _buildMessageContent(
-                      cleanContent,
-                      isAdminMessage,
-                      isClosingMessage,
-                      isSystem,
-                      message.isBot,
-                    ),
+                    // Message bubble (collapsible for initial messages)
+                    isInitialMessage
+                        ? _buildCollapsibleInitialMessage(
+                            cleanContent,
+                            colorScheme,
+                          )
+                        : _buildMessageContent(
+                            cleanContent,
+                            isAdminMessage,
+                            isClosingMessage,
+                            isSystem,
+                            message.isBot,
+                          ),
                   ],
                 ),
               ),
@@ -1020,6 +1026,76 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildCollapsibleInitialMessage(
+    String cleanContent,
+    ColorScheme colorScheme,
+  ) {
+    return Theme(
+      data: Theme.of(context).copyWith(
+        dividerColor: Colors.transparent,
+      ),
+      child: ExpansionTile(
+        tilePadding: EdgeInsets.zero,
+        childrenPadding: const EdgeInsets.only(top: 8, bottom: 4),
+        initiallyExpanded: false,
+        title: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.info_outline,
+                size: 16,
+                color: colorScheme.primary,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Initial ticket details',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+              ),
+              Text(
+                'Tap to expand',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerHighest.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: colorScheme.outline.withOpacity(0.2),
+                width: 1,
+              ),
+            ),
+            child: Text(
+              cleanContent,
+              style: const TextStyle(
+                fontSize: 14,
+                height: 1.4,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
