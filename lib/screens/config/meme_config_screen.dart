@@ -665,6 +665,7 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                           )
                         else ...[
                           DropdownButtonFormField<String>(
+                            isExpanded: true,
                             decoration: const InputDecoration(
                               labelText: 'Select Source',
                               prefixIcon: Icon(Icons.list),
@@ -675,24 +676,17 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                             items: [
                               ..._subreddits.map((sub) => DropdownMenuItem(
                                     value: sub,
-                                    child: Row(
-                                      children: [
-                                        const Icon(Icons.reddit, size: 16),
-                                        const SizedBox(width: 8),
-                                        Text('r/$sub'),
-                                      ],
+                                    child: Text(
+                                      'r/$sub',
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   )),
                               ..._lemmyCommunities
                                   .map((comm) => DropdownMenuItem(
                                         value: comm,
-                                        child: Row(
-                                          children: [
-                                            const Icon(Icons.public, size: 16),
-                                            const SizedBox(width: 8),
-                                            // ✅ Format Lemmy to user-friendly display (community@instance)
-                                            Text(formatLemmyDisplay(comm)),
-                                          ],
+                                        child: Text(
+                                          formatLemmyDisplay(comm),
+                                          overflow: TextOverflow.ellipsis,
                                         ),
                                       )),
                             ],

@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import '../models/cog.dart';
 import '../models/ticket.dart';
 import '../models/ticket_config.dart';
@@ -32,6 +33,7 @@ class ApiService {
   // App version info for session tracking
   String _appVersion = 'Unknown';
   String _platform = 'Unknown';
+  String _deviceInfo = 'Unknown';
   Completer<void>? _versionInitCompleter;
 
   Future<void> _initializeVersionInfo() async {
@@ -56,24 +58,75 @@ class ApiService {
         _appVersion = '${packageInfo.version}+${packageInfo.buildNumber}';
       }
 
-      // Determine platform
+      // Get device info
+      final deviceInfoPlugin = DeviceInfoPlugin();
+
+      // Determine platform and device info
       if (kIsWeb) {
         _platform = 'Web';
+        try {
+          final webInfo = await deviceInfoPlugin.webBrowserInfo;
+          _deviceInfo =
+              '${webInfo.browserName.name} on ${webInfo.platform ?? 'Unknown OS'}';
+        } catch (e) {
+          _deviceInfo = 'Web Browser';
+        }
       } else if (Platform.isAndroid) {
         _platform = kDebugMode ? 'Android (Debug)' : 'Android';
+        try {
+          final androidInfo = await deviceInfoPlugin.androidInfo;
+          final manufacturer = androidInfo.manufacturer ?? 'Unknown';
+          final model = androidInfo.model ?? 'Unknown';
+          _deviceInfo = '$manufacturer $model';
+          debugPrint('📱 Android Device: $_deviceInfo');
+          debugPrint('   Manufacturer: $manufacturer');
+          debugPrint('   Model: $model');
+          debugPrint('   Brand: ${androidInfo.brand}');
+          debugPrint('   Device: ${androidInfo.device}');
+          debugPrint('   Product: ${androidInfo.product}');
+        } catch (e) {
+          debugPrint('❌ Failed to get Android device info: $e');
+          _deviceInfo = 'Android Device';
+        }
       } else if (Platform.isIOS) {
         _platform = kDebugMode ? 'iOS (Debug)' : 'iOS';
+        try {
+          final iosInfo = await deviceInfoPlugin.iosInfo;
+          _deviceInfo = '${iosInfo.name} (${iosInfo.model})';
+        } catch (e) {
+          _deviceInfo = 'iOS Device';
+        }
       } else if (Platform.isWindows) {
         _platform = 'Windows';
+        try {
+          final windowsInfo = await deviceInfoPlugin.windowsInfo;
+          _deviceInfo = windowsInfo.computerName;
+        } catch (e) {
+          _deviceInfo = 'Windows PC';
+        }
       } else if (Platform.isLinux) {
         _platform = 'Linux';
+        try {
+          final linuxInfo = await deviceInfoPlugin.linuxInfo;
+          _deviceInfo = linuxInfo.prettyName;
+        } catch (e) {
+          _deviceInfo = 'Linux PC';
+        }
       } else if (Platform.isMacOS) {
         _platform = 'macOS';
+        try {
+          final macInfo = await deviceInfoPlugin.macOsInfo;
+          _deviceInfo = macInfo.computerName;
+        } catch (e) {
+          _deviceInfo = 'macOS';
+        }
       } else {
         _platform = 'Unknown';
+        _deviceInfo = 'Unknown Device';
       }
 
       debugPrint('📱 App Version: $_appVersion ($_platform)');
+      debugPrint('📱 Device Info: $_deviceInfo');
       _versionInitCompleter!.complete();
     } catch (e) {
       debugPrint('❌ Failed to get package info: $e');
@@ -254,6 +307,7 @@ class ApiService {
           'User-Agent': _userAgent,
           'X-App-Version': _appVersion,
           'X-Platform': _platform,
+          'X-Device-Info': _deviceInfo,
           if (currentToken.isNotEmpty) 'Authorization': 'Bearer $currentToken',
           ...?headers,
         };
@@ -287,6 +341,7 @@ class ApiService {
           'User-Agent': _userAgent,
           'X-App-Version': _appVersion,
           'X-Platform': _platform,
+          'X-Device-Info': _deviceInfo,
           if (currentToken.isNotEmpty) 'Authorization': 'Bearer $currentToken',
           ...?headers,
         };
@@ -322,6 +377,7 @@ class ApiService {
           'User-Agent': _userAgent,
           'X-App-Version': _appVersion,
           'X-Platform': _platform,
+          'X-Device-Info': _deviceInfo,
           if (currentToken.isNotEmpty) 'Authorization': 'Bearer $currentToken',
           ...?headers,
         };
@@ -357,6 +413,7 @@ class ApiService {
           'User-Agent': _userAgent,
           'X-App-Version': _appVersion,
           'X-Platform': _platform,
+          'X-Device-Info': _deviceInfo,
           if (currentToken.isNotEmpty) 'Authorization': 'Bearer $currentToken',
           ...?headers,
         };

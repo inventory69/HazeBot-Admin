@@ -23,6 +23,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Map<String, dynamic>? _notifications;
   Map<String, dynamic>? _customStats;
   Map<String, dynamic>? _activity;
+  String? _joinedAt;
+  String? _createdAt;
 
   @override
   void initState() {
@@ -54,6 +56,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _notifications = profile['notifications'];
           _customStats = profile['custom_stats'];
           _activity = profile['activity'];
+          _joinedAt = profile['joined_at'];
+          _createdAt = profile['created_at'];
           _isLoading = false;
         });
       } else {
@@ -95,6 +99,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
         return Icons.backpack;
       default:
         return Icons.person;
+    }
+  }
+
+  String _formatDate(String isoString) {
+    try {
+      final date = DateTime.parse(isoString);
+      final now = DateTime.now();
+      final difference = now.difference(date);
+
+      if (difference.inDays > 365) {
+        final years = (difference.inDays / 365).floor();
+        return '$years year${years > 1 ? 's' : ''} ago';
+      } else if (difference.inDays > 30) {
+        final months = (difference.inDays / 30).floor();
+        return '$months month${months > 1 ? 's' : ''} ago';
+      } else if (difference.inDays > 0) {
+        return '${difference.inDays} day${difference.inDays > 1 ? 's' : ''} ago';
+      } else {
+        return 'Today';
+      }
+    } catch (e) {
+      return 'Unknown';
     }
   }
 
@@ -273,6 +299,66 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const SizedBox(height: 16),
 
+                // Opt-In Roles (Interest Roles)
+                if (_optInRoles.isNotEmpty) ...[
+                  Card(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .primaryContainer
+                        .withOpacity(0.18),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16)),
+                    child: Padding(
+                      padding: EdgeInsets.all(isMobile ? 12 : 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '🎯 Interest Roles',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 12),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: _optInRoles.map((role) {
+                              final colorValue = role['color'] as int? ?? 0;
+                              final color = colorValue != 0
+                                  ? Color(colorValue | 0xFF000000)
+                                  : Theme.of(context).colorScheme.primary;
+                              return Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: color.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: color.withOpacity(0.5),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Text(
+                                  role['name'] ?? 'Unknown Role',
+                                  style: TextStyle(
+                                    fontSize: isMobile ? 12 : 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: color,
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+
                 // Rocket League Rank Card (if available)
                 if (_rlRank != null) ...[
                   Card(
@@ -354,6 +440,48 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ),
                             ],
                           ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+
+                // Account Details
+                if (_joinedAt != null || _createdAt != null) ...[
+                  Card(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .primaryContainer
+                        .withOpacity(0.18),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16)),
+                    child: Padding(
+                      padding: EdgeInsets.all(isMobile ? 12 : 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '📅 Account Details',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 12),
+                          if (_joinedAt != null)
+                            _StatRow(
+                              icon: Icons.group_add,
+                              label: 'Member Since',
+                              value: _formatDate(_joinedAt!),
+                            ),
+                          if (_createdAt != null)
+                            _StatRow(
+                              icon: Icons.cake,
+                              label: 'Account Created',
+                              value: _formatDate(_createdAt!),
+                            ),
                         ],
                       ),
                     ),
@@ -459,6 +587,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 // Notifications
                 if (_notifications != null) ...[
                   Card(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .primaryContainer
+                        .withOpacity(0.18),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16)),
                     child: Padding(
                       padding: EdgeInsets.all(isMobile ? 12 : 16),
                       child: Column(

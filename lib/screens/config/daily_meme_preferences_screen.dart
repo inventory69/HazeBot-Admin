@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
+import 'meme_config_screen.dart' show formatLemmyDisplay;
 
 class DailyMemePreferencesScreen extends StatefulWidget {
   const DailyMemePreferencesScreen({super.key});
@@ -628,7 +629,7 @@ class _DailyMemePreferencesScreenState
                                 ..._availableLemmy.map((community) =>
                                     CheckboxListTile(
                                       title: Text(
-                                        community,
+                                        formatLemmyDisplay(community),
                                         overflow: TextOverflow.ellipsis,
                                         maxLines: 1,
                                         style: TextStyle(

@@ -459,6 +459,8 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                               final appVersion =
                                   session['app_version'] ?? 'Unknown';
                               final platform = session['platform'] ?? 'Unknown';
+                              final deviceInfo =
+                                  session['device_info'] ?? 'Unknown';
 
                               final isRecent = secondsAgo < 30;
 
@@ -469,177 +471,192 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                                 elevation: 0,
                                 shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(16)),
-                                child: ExpansionTile(
-                                  leading: Stack(
-                                    children: [
-                                      CircleAvatar(
-                                        backgroundColor: _getRoleColor(role)
-                                            .withValues(alpha: 0.2),
-                                        child: Icon(
-                                          _getRoleIcon(role),
-                                          color: _getRoleColor(role),
-                                          size: isMobile ? 20 : 24,
+                                child: Theme(
+                                  data: Theme.of(context).copyWith(
+                                    dividerColor: Colors.transparent,
+                                  ),
+                                  child: ExpansionTile(
+                                    leading: Stack(
+                                      children: [
+                                        CircleAvatar(
+                                          backgroundColor: _getRoleColor(role)
+                                              .withValues(alpha: 0.2),
+                                          child: Icon(
+                                            _getRoleIcon(role),
+                                            color: _getRoleColor(role),
+                                            size: isMobile ? 20 : 24,
+                                          ),
                                         ),
-                                      ),
-                                      if (isRecent)
-                                        Positioned(
-                                          right: 0,
-                                          bottom: 0,
-                                          child: Container(
-                                            width: 12,
-                                            height: 12,
-                                            decoration: BoxDecoration(
-                                              color: Colors.green,
-                                              shape: BoxShape.circle,
-                                              border: Border.all(
-                                                color: Theme.of(context)
-                                                    .colorScheme
-                                                    .surface,
-                                                width: 2,
+                                        if (isRecent)
+                                          Positioned(
+                                            right: 0,
+                                            bottom: 0,
+                                            child: Container(
+                                              width: 12,
+                                              height: 12,
+                                              decoration: BoxDecoration(
+                                                color: Colors.green,
+                                                shape: BoxShape.circle,
+                                                border: Border.all(
+                                                  color: Theme.of(context)
+                                                      .colorScheme
+                                                      .surface,
+                                                  width: 2,
+                                                ),
                                               ),
                                             ),
                                           ),
-                                        ),
-                                    ],
-                                  ),
-                                  title: Text(
-                                    username,
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: isMobile ? 14 : null,
+                                      ],
                                     ),
-                                  ),
-                                  subtitle: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      const SizedBox(height: 4),
-                                      Row(
-                                        children: [
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 8, vertical: 2),
-                                            decoration: BoxDecoration(
-                                              color: _getRoleColor(role)
-                                                  .withValues(alpha: 0.2),
-                                              borderRadius:
-                                                  BorderRadius.circular(12),
-                                            ),
-                                            child: Text(
-                                              role.toUpperCase(),
-                                              style: TextStyle(
-                                                fontSize: isMobile ? 10 : 11,
-                                                fontWeight: FontWeight.bold,
-                                                color: _getRoleColor(role),
+                                    title: Text(
+                                      username,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: isMobile ? 14 : null,
+                                      ),
+                                    ),
+                                    subtitle: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const SizedBox(height: 4),
+                                        Row(
+                                          children: [
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 2),
+                                              decoration: BoxDecoration(
+                                                color: _getRoleColor(role)
+                                                    .withValues(alpha: 0.2),
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                              ),
+                                              child: Text(
+                                                role.toUpperCase(),
+                                                style: TextStyle(
+                                                  fontSize: isMobile ? 10 : 11,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: _getRoleColor(role),
+                                                ),
                                               ),
                                             ),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Icon(
-                                            _getDeviceIcon(userAgent),
-                                            size: isMobile ? 14 : 16,
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .onSurfaceVariant,
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            _getDeviceType(userAgent),
-                                            style: TextStyle(
-                                              fontSize: isMobile ? 11 : 12,
+                                            const SizedBox(width: 8),
+                                            Icon(
+                                              _getDeviceIcon(userAgent),
+                                              size: isMobile ? 14 : 16,
                                               color: Theme.of(context)
                                                   .colorScheme
                                                   .onSurfaceVariant,
                                             ),
-                                          ),
-                                        ],
-                                      ),
-                                      if (lastSeen != null) ...[
-                                        const SizedBox(height: 4),
-                                        Row(
-                                          children: [
-                                            Icon(
-                                              Icons.access_time,
-                                              size: isMobile ? 14 : 16,
-                                              color: isRecent
-                                                  ? Colors.green
-                                                  : Theme.of(context)
-                                                      .colorScheme
-                                                      .onSurfaceVariant,
-                                            ),
                                             const SizedBox(width: 4),
                                             Text(
-                                              timeago.format(
-                                                  DateTime.parse(lastSeen)
-                                                      .toLocal()),
+                                              _getDeviceType(userAgent),
                                               style: TextStyle(
                                                 fontSize: isMobile ? 11 : 12,
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .onSurfaceVariant,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        if (lastSeen != null) ...[
+                                          const SizedBox(height: 4),
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                Icons.access_time,
+                                                size: isMobile ? 14 : 16,
                                                 color: isRecent
                                                     ? Colors.green
                                                     : Theme.of(context)
                                                         .colorScheme
                                                         .onSurfaceVariant,
                                               ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                timeago.format(
+                                                    DateTime.parse(lastSeen)
+                                                        .toLocal()),
+                                                style: TextStyle(
+                                                  fontSize: isMobile ? 11 : 12,
+                                                  color: isRecent
+                                                      ? Colors.green
+                                                      : Theme.of(context)
+                                                          .colorScheme
+                                                          .onSurfaceVariant,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                    children: [
+                                      Padding(
+                                        padding: EdgeInsets.all(
+                                            isMobile ? 12.0 : 16.0),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            _buildDetailRow(
+                                              context,
+                                              Icons.fingerprint,
+                                              'Discord ID',
+                                              discordId,
+                                              isMobile,
+                                            ),
+                                            const SizedBox(height: 8),
+                                            _buildDetailRow(
+                                              context,
+                                              Icons.location_on,
+                                              'IP Address',
+                                              ip,
+                                              isMobile,
+                                            ),
+                                            const SizedBox(height: 8),
+                                            _buildDetailRow(
+                                              context,
+                                              Icons.api,
+                                              'Last Endpoint',
+                                              lastEndpoint.replaceAll('_', ' '),
+                                              isMobile,
+                                            ),
+                                            const SizedBox(height: 8),
+                                            _buildDetailRow(
+                                              context,
+                                              Icons.phone_android,
+                                              'Device',
+                                              deviceInfo,
+                                              isMobile,
+                                            ),
+                                            const SizedBox(height: 8),
+                                            _buildDetailRow(
+                                              context,
+                                              Icons.smartphone,
+                                              'App Version',
+                                              '$appVersion ($platform)',
+                                              isMobile,
+                                            ),
+                                            const SizedBox(height: 8),
+                                            _buildDetailRow(
+                                              context,
+                                              Icons.devices,
+                                              'User Agent',
+                                              userAgent.length > 50
+                                                  ? '${userAgent.substring(0, 50)}...'
+                                                  : userAgent,
+                                              isMobile,
+                                              monospace: true,
                                             ),
                                           ],
                                         ),
-                                      ],
+                                      ),
                                     ],
                                   ),
-                                  children: [
-                                    Padding(
-                                      padding: EdgeInsets.all(
-                                          isMobile ? 12.0 : 16.0),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          _buildDetailRow(
-                                            context,
-                                            Icons.fingerprint,
-                                            'Discord ID',
-                                            discordId,
-                                            isMobile,
-                                          ),
-                                          const SizedBox(height: 8),
-                                          _buildDetailRow(
-                                            context,
-                                            Icons.location_on,
-                                            'IP Address',
-                                            ip,
-                                            isMobile,
-                                          ),
-                                          const SizedBox(height: 8),
-                                          _buildDetailRow(
-                                            context,
-                                            Icons.api,
-                                            'Last Endpoint',
-                                            lastEndpoint.replaceAll('_', ' '),
-                                            isMobile,
-                                          ),
-                                          const SizedBox(height: 8),
-                                          _buildDetailRow(
-                                            context,
-                                            Icons.phone_android,
-                                            'App Version',
-                                            '$appVersion ($platform)',
-                                            isMobile,
-                                          ),
-                                          const SizedBox(height: 8),
-                                          _buildDetailRow(
-                                            context,
-                                            Icons.devices,
-                                            'User Agent',
-                                            userAgent.length > 50
-                                                ? '${userAgent.substring(0, 50)}...'
-                                                : userAgent,
-                                            isMobile,
-                                            monospace: true,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
                                 ),
                               );
                             },

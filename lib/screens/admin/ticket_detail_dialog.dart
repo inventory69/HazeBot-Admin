@@ -32,7 +32,7 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
   int _previousMessageCount = 0;
   Set<String> _seenMessageIds = {};
   int _firstNewMessageIndex = -1; // Index of first new message for divider
-  
+
   // Store AuthService reference to avoid accessing context in dispose
   late AuthService _authService;
 

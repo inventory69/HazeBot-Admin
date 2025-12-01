@@ -242,55 +242,7 @@ class _CogManagerScreenState extends State<CogManagerScreen> {
         return aIndex.compareTo(bIndex);
       });
 
-    return Container(
-      margin: EdgeInsets.only(bottom: isMobile ? 16 : 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Quick Jump',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  fontSize: isMobile ? 14 : 16,
-                ),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: sortedCategories.map((category) {
-              final count = categories[category]!;
-              final isSelected = _selectedCategory == category;
-
-              return FilterChip(
-                label: Text(
-                  '$category ($count)',
-                  style: TextStyle(
-                    fontSize: isMobile ? 12 : 13,
-                    fontWeight:
-                        isSelected ? FontWeight.bold : FontWeight.normal,
-                  ),
-                ),
-                selected: isSelected,
-                onSelected: (selected) {
-                  setState(() {
-                    _selectedCategory = selected ? category : null;
-                  });
-                  if (selected) {
-                    _scrollToCategory(category);
-                  }
-                },
-                showCheckmark: false,
-                padding: EdgeInsets.symmetric(
-                  horizontal: isMobile ? 8 : 12,
-                  vertical: isMobile ? 4 : 6,
-                ),
-              );
-            }).toList(),
-          ),
-        ],
-      ),
-    );
+    return const SizedBox.shrink();
   }
 
   List<Widget> _buildCogsByCategory(bool isMobile) {
