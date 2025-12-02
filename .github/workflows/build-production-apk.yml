@@ -1,0 +1,211 @@
+name: Build Android Production APK
+
+on:
+  push:
+    tags:
+      - 'prod-v*'  # Trigger only on tags like prod-v1.0.0
+  workflow_dispatch:  # Allow manual trigger
+    inputs:
+      version:
+        description: 'Production version (e.g., 1.0.0)'
+        required: true
+        default: '1.0.0'
+
+permissions:
+  contents: write  # Required for creating releases
+
+jobs:
+  build:
+    name: Build Production APK
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.35.7'
+          channel: 'stable'
+      
+      - name: Verify Production secrets are set
+        run: |
+          if [ -z "${{ secrets.PROD_API_BASE_URL }}" ]; then
+            echo "::error::Secret PROD_API_BASE_URL is not set!"
+            echo "Please add PROD_API_BASE_URL to your repository secrets."
+            exit 1
+          fi
+      
+      - name: Create .env file with PRODUCTION configuration
+        run: |
+          echo "API_BASE_URL=${{ secrets.PROD_API_BASE_URL }}" > .env
+          echo "IMAGE_PROXY_URL=${{ secrets.PROD_IMAGE_PROXY_URL }}" >> .env
+          echo "GITHUB_REPO_URL=https://github.com/inventory69/HazeBot-Admin" >> .env
+          echo "PROD_MODE=true" >> .env
+          echo "✅ .env file created with PRODUCTION configuration"
+          echo "   📦 API_BASE_URL: ${{ secrets.PROD_API_BASE_URL }}"
+          echo "   🖼️  IMAGE_PROXY_URL: ${{ secrets.PROD_IMAGE_PROXY_URL }}"
+          echo "   🔧 PROD_MODE: true"
+      
+      - name: Create Firebase Production config
+        run: |
+          if [ -n "${{ secrets.PROD_GOOGLE_SERVICES_JSON }}" ]; then
+            echo '${{ secrets.PROD_GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
+            echo "✅ Firebase PRODUCTION configuration created"
+          else
+            echo "::error::PROD_GOOGLE_SERVICES_JSON secret not set!"
+            exit 1
+          fi
+      
+      - name: Get dependencies
+        run: flutter pub get
+      
+      - name: Generate Production version number
+        run: |
+          # Extract version from tag or use manual input
+          if [[ "${{ github.ref }}" == refs/tags/prod-v* ]]; then
+            # Extract version from tag (prod-v1.0.0 -> 1.0.0)
+            VERSION_NAME="${{ github.ref_name }}"
+            VERSION_NAME="${VERSION_NAME#prod-v}"
+          else
+            # Use manual input
+            VERSION_NAME="${{ github.event.inputs.version }}"
+          fi
+          
+          # Use GitHub run number as build number for production
+          BUILD_NUMBER="${{ github.run_number }}"
+          
+          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
+          echo "BUILD_NUMBER=$BUILD_NUMBER" >> $GITHUB_ENV
+          echo "VERSION_TAG=v$VERSION_NAME-prod.$BUILD_NUMBER" >> $GITHUB_ENV
+          
+          echo "🚀 Generated PRODUCTION version: $VERSION_NAME+$BUILD_NUMBER"
+      
+      - name: Update pubspec.yaml with Production version
+        run: |
+          # Update version in pubspec.yaml
+          sed -i "s/^version: .*/version: ${{ env.VERSION_NAME }}+${{ env.BUILD_NUMBER }}/" pubspec.yaml
+          
+          echo "✅ Updated pubspec.yaml:"
+          grep "^version:" pubspec.yaml
+      
+      - name: Setup Android signing
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/upload-keystore.jks
+          echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" > android/key.properties
+          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/key.properties
+          echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/key.properties
+          echo "storeFile=upload-keystore.jks" >> android/key.properties
+          echo "✅ Signing configuration created"
+      
+      - name: Run tests
+        run: flutter test --no-pub
+        continue-on-error: true
+      
+      - name: Build Production APK (Release)
+        run: flutter build apk --release
+      
+      - name: Rename APK to indicate Production version
+        run: |
+          mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/hazebot-admin-production-v${{ env.VERSION_NAME }}.apk
+          echo "apk_path=build/app/outputs/flutter-apk/hazebot-admin-production-v${{ env.VERSION_NAME }}.apk" >> $GITHUB_ENV
+          echo "apk_name=hazebot-admin-production-v${{ env.VERSION_NAME }}.apk" >> $GITHUB_ENV
+      
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.apk_name }}
+          path: ${{ env.apk_path }}
+          retention-days: 90  # Keep production builds longer
+      
+      - name: Get commit info
+        run: |
+          echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          echo "COMMIT_DATE=$(git log -1 --format=%cd --date=iso-strict)" >> $GITHUB_ENV
+          
+          # Get full commit message preserving newlines
+          {
+            echo 'COMMIT_MSG<<EOF'
+            git log -1 --pretty=%B
+            echo 'EOF'
+          } >> $GITHUB_ENV
+      
+      - name: Create Production Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ env.VERSION_TAG }}
+          name: "🚀 HazeBot Admin v${{ env.VERSION_NAME }} (Production)"
+          files: ${{ env.apk_path }}
+          draft: false
+          prerelease: false
+          generate_release_notes: false
+          body: |
+            # 🚀 Production Release: HazeBot Admin v${{ env.VERSION_NAME }}
+            
+            ## Build Information
+            
+            - **Version:** ${{ env.VERSION_NAME }}+${{ env.BUILD_NUMBER }}
+            - **Build Date:** ${{ env.COMMIT_DATE }}
+            - **Commit:** ${{ env.SHORT_SHA }}
+            - **Environment:** 🟢 **PRODUCTION**
+            
+            ---
+            
+            ## 📋 Changes
+            
+            ${{ env.COMMIT_MSG }}
+            
+            ---
+            
+            ## 📦 Download & Installation
+            
+            ### Download
+            Download `hazebot-admin-production-v${{ env.VERSION_NAME }}.apk` from the assets below.
+            
+            ### Installation Steps
+            1. Download the APK from the assets section
+            2. Enable "Install from unknown sources" in Android settings
+            3. Open the downloaded APK file
+            4. Follow the installation prompts
+            5. Login with your Discord account
+            
+            ---
+            
+            ## ⚙️ Configuration
+            
+            - ✅ Configured for **PRODUCTION** environment
+            - ✅ Connected to production API server
+            - ✅ Push notifications enabled
+            - ✅ Firebase analytics enabled
+            
+            ---
+            
+            ## 🔄 Updating from Test Version
+            
+            If you have the test version installed:
+            1. Uninstall the test version first (different signing key)
+            2. Install this production version
+            3. Login again with your credentials
+            
+            ---
+            
+            ## 📱 Obtanium Support
+            
+            This release is compatible with Obtanium. The app will automatically detect updates.
+            
+            **Obtanium URL:** `https://github.com/inventory69/HazeBot-Admin`
+            
+            ---
+            
+            ## 🆘 Support
+            
+            For issues or questions, please open an issue on GitHub or contact support in Discord.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

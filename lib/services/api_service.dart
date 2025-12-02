@@ -28,12 +28,14 @@ class ApiService {
   factory ApiService() => _instance;
   ApiService._internal() {
     _initializeVersionInfo();
+    _generateSessionId();
   }
 
   // App version info for session tracking
   String _appVersion = 'Unknown';
   String _platform = 'Unknown';
   String _deviceInfo = 'Unknown';
+  String _sessionId = 'Unknown';
   Completer<void>? _versionInitCompleter;
 
   Future<void> _initializeVersionInfo() async {
@@ -132,6 +134,16 @@ class ApiService {
       debugPrint('❌ Failed to get package info: $e');
       _versionInitCompleter!.complete();
     }
+  }
+
+  /// Generate a unique session ID when the app starts
+  /// This creates a new session for analytics tracking
+  void _generateSessionId() {
+    // Create unique session ID: timestamp + random component
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final random = (timestamp * 31) % 1000000; // Simple random component
+    _sessionId = '${timestamp}_$random';
+    debugPrint('📊 Session ID: $_sessionId');
   }
 
   static String get _staticBaseUrl =>
@@ -308,6 +320,7 @@ class ApiService {
           'X-App-Version': _appVersion,
           'X-Platform': _platform,
           'X-Device-Info': _deviceInfo,
+          'X-Session-ID': _sessionId,
           if (currentToken.isNotEmpty) 'Authorization': 'Bearer $currentToken',
           ...?headers,
         };
@@ -342,6 +355,7 @@ class ApiService {
           'X-App-Version': _appVersion,
           'X-Platform': _platform,
           'X-Device-Info': _deviceInfo,
+          'X-Session-ID': _sessionId,
           if (currentToken.isNotEmpty) 'Authorization': 'Bearer $currentToken',
           ...?headers,
         };
@@ -378,6 +392,7 @@ class ApiService {
           'X-App-Version': _appVersion,
           'X-Platform': _platform,
           'X-Device-Info': _deviceInfo,
+          'X-Session-ID': _sessionId,
           if (currentToken.isNotEmpty) 'Authorization': 'Bearer $currentToken',
           ...?headers,
         };
@@ -414,6 +429,7 @@ class ApiService {
           'X-App-Version': _appVersion,
           'X-Platform': _platform,
           'X-Device-Info': _deviceInfo,
+          'X-Session-ID': _sessionId,
           if (currentToken.isNotEmpty) 'Authorization': 'Bearer $currentToken',
           ...?headers,
         };

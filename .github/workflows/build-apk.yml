@@ -147,37 +147,55 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ env.VERSION_TAG }}
-          name: ${{ env.VERSION_TAG }}
+          name: "🧪 Test Build ${{ env.BUILD_NUMBER }}"
           files: ${{ env.apk_path }}
           draft: false
-          prerelease: false
+          prerelease: true  # Mark as pre-release to distinguish from production
           generate_release_notes: false
           body: |
-            ## Build ${{ env.BUILD_NUMBER }}
+            # 🧪 Test Build ${{ env.BUILD_NUMBER }}
             
-            **Version:** ${{ env.VERSION_NAME }}+${{ env.BUILD_NUMBER }}
-            **Build Date:** ${{ env.COMMIT_DATE }}
-            **Commit:** ${{ env.SHORT_SHA }}
+            ## Build Information
             
-            ### Changes
+            - **Version:** ${{ env.VERSION_NAME }}+${{ env.BUILD_NUMBER }}
+            - **Build Date:** ${{ env.COMMIT_DATE }}
+            - **Commit:** ${{ env.SHORT_SHA }}
+            - **Environment:** ⚠️ **TEST**
+            
+            ---
+            
+            ## 📋 Changes
+            
             ${{ env.COMMIT_MSG }}
             
             ---
             
-            ### 📦 Download
+            ## 📦 Download & Installation
             
-            Download `hazebot-admin-test-release.apk` below
+            ### Download
+            Download `hazebot-admin-test-release.apk` from the assets below.
             
-            ### 📱 Installation
-            
-            1. Download the APK from the assets below
-            2. Enable "Install from unknown sources" on your Android device
-            3. Install the APK
-            4. Login with your credentials
+            ### Installation Steps
+            1. Download the APK from the assets section
+            2. Enable "Install from unknown sources" in Android settings
+            3. Open the downloaded APK file
+            4. Follow the installation prompts
+            5. Login with your test credentials
             
             ---
             
-            ⚠️ **Test build** configured with test API URL
+            ## ⚠️ Configuration
+            
+            - ⚠️ This is a **TEST BUILD**
+            - ⚠️ Connected to **TEST API server**
+            - ⚠️ For testing purposes only
+            - ⚠️ May contain experimental features
+            
+            ---
+            
+            ## 🚀 Production Version
+            
+            For the stable production version, look for releases marked with 🚀 **Production**.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
