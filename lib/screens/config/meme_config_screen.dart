@@ -21,7 +21,15 @@ String formatLemmyDisplay(String community) {
   return community;
 }
 
-/// Helper function to proxy external images through our backend to bypass CORS
+/// ❌ DEPRECATED: Image proxy not needed anymore
+/// Backend already converts Reddit/Imgur URLs to HTTPS Discord CDN URLs
+/// before returning them to the frontend. Direct URL usage works fine.
+/// 
+/// Historical note: This was needed when backend returned raw Reddit HTTP URLs,
+/// but now the bot uploads images to Discord and returns CDN URLs (HTTPS).
+/// 
+/// Keep this code for reference in case we need it again in the future.
+/*
 String getProxiedImageUrl(String originalUrl) {
   // Proxy external images (Reddit, Imgur, Imgflip)
   if (originalUrl.contains('i.redd.it') ||
@@ -38,6 +46,7 @@ String getProxiedImageUrl(String originalUrl) {
   // For other URLs, return as-is
   return originalUrl;
 }
+*/
 
 class MemeConfigScreen extends StatefulWidget {
   const MemeConfigScreen({super.key});
@@ -416,9 +425,9 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // Meme Image
+                                // Meme Image (direct URL - no proxy needed, backend returns HTTPS Discord CDN URLs)
                                 Image.network(
-                                  getProxiedImageUrl(_randomMemeData!['url']),
+                                  _randomMemeData!['url'],
                                   width: double.infinity,
                                   fit: BoxFit.contain,
                                   loadingBuilder:
@@ -740,8 +749,9 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
+                                // Direct URL - no proxy needed, backend returns HTTPS Discord CDN URLs
                                 Image.network(
-                                  getProxiedImageUrl(_sourceMemeData!['url']),
+                                  _sourceMemeData!['url'],
                                   width: double.infinity,
                                   fit: BoxFit.contain,
                                   loadingBuilder:
