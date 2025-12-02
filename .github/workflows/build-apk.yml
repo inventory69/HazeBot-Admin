@@ -2,11 +2,9 @@ name: Build Android Test APK
 
 on:
   push:
-    branches: [ main ]
-    tags:
-      - 'v*'
+    branches: [ test ]  # Trigger only on test branch
   pull_request:
-    branches: [ main ]
+    branches: [ main, test ]
   workflow_dispatch:  # Allow manual trigger
 
 permissions:
@@ -143,7 +141,7 @@ jobs:
           } >> $GITHUB_ENV
       
       - name: Create Tag and Release
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/test'
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ env.VERSION_TAG }}
