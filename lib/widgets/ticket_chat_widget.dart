@@ -57,6 +57,9 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
   // ✅ Store AuthService reference to avoid context access in dispose
   AuthService? _authService;
 
+  // ✅ Track if we need to reload messages after app resume
+  bool _wasDisconnectedWhilePaused = false;
+
   @override
   void initState() {
     super.initState();
@@ -65,29 +68,35 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
     // ✅ 1. Initialize cache service
     _cacheService.ensureInitialized();
 
-    // ✅ 2. Load current user ID first
-    _loadCurrentUser();
-
-    // ✅ 3. Try cache FIRST (synchronous, instant render)
+    // ✅ 2. Try cache FIRST (synchronous, instant render)
     _loadCachedMessagesSync();
 
-    // ✅ 4. Setup WebSocket (before API call)
-    _setupWebSocketListener();
+    // ✅ 3. Load current user ID FIRST, then setup WebSocket
+    _initializeWithUser();
 
-    // ✅ 5. Dismiss notifications
+    // ✅ 4. Dismiss notifications
     _dismissNotifications();
 
-    // ✅ 6. Setup listeners
+    // ✅ 5. Setup listeners
     _setupKeyboardListener();
     _setupScrollListener();
 
-    // ✅ 7. INSTANT PRE-SCROLL (Telegram-style estimated position)
+    // ✅ 6. INSTANT PRE-SCROLL (Telegram-style estimated position)
     SchedulerBinding.instance.addPostFrameCallback((_) {
       _performInitialScroll();
     });
 
-    // ✅ 8. Load from API (in background, updates cache)
+    // ✅ 7. Load from API (in background, updates cache)
     _loadMessages();
+  }
+
+  /// Load user ID first, then setup WebSocket with user tracking
+  Future<void> _initializeWithUser() async {
+    // CRITICAL: Load user ID BEFORE joining WebSocket room
+    await _loadCurrentUser();
+
+    // Now join WebSocket with user ID for push notification suppression
+    _setupWebSocketListener();
   }
 
   @override
@@ -127,6 +136,44 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
     } catch (e) {
       // Widget was disposed during execution - safe to ignore
       return;
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // ✅ Guard: Check if authService is initialized
+    if (_authService == null) return;
+
+    // ✅ CRITICAL: Leave ticket room when app goes to background
+    // This ensures push notifications are re-enabled when user is not actively viewing
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
+      debugPrint(
+          '📱 App paused/inactive - leaving ticket room to re-enable push notifications');
+
+      // Track if WebSocket is disconnected during pause (we might miss messages)
+      _wasDisconnectedWhilePaused = !_authService!.wsService.isConnected;
+
+      _authService!.wsService.leaveTicket(
+        widget.ticket.ticketId,
+        userId: _currentUserDiscordId,
+      );
+    } else if (state == AppLifecycleState.resumed) {
+      debugPrint(
+          '📱 App resumed - rejoining ticket room to suppress push notifications');
+
+      // ✅ If WebSocket was disconnected, reload messages from API to catch missed ones
+      if (_wasDisconnectedWhilePaused) {
+        debugPrint(
+            '📱 WebSocket was disconnected during pause - reloading messages to catch up');
+        _loadMessages();
+        _wasDisconnectedWhilePaused = false;
+      }
+
+      _authService!.wsService.joinTicket(
+        widget.ticket.ticketId,
+        userId: _currentUserDiscordId,
+      );
     }
   }
 
@@ -259,8 +306,12 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
     _authService = Provider.of<AuthService>(context, listen: false);
     final wsService = _authService!.wsService;
 
-    // Join ticket room
-    wsService.joinTicket(widget.ticket.ticketId);
+    // Join ticket room with user ID for push notification suppression
+    wsService.joinTicket(
+      widget.ticket.ticketId,
+      userId:
+          _currentUserDiscordId, // ✅ Suppress push notifications while viewing
+    );
 
     // Listen for new messages and history
     wsService.onTicketUpdate(widget.ticket.ticketId, (data) {
@@ -348,7 +399,16 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
   void _handleNewMessage(Map<String, dynamic> messageData) {
     if (!mounted) return;
 
-    final newMessage = TicketMessage.fromJson(messageData);
+    // ✅ FIX: Use display_content if available (for messages sent via app)
+    // Backend sends both 'content' (formatted for Discord) and 'display_content' (original)
+    final displayContent = messageData['display_content'] as String? ??
+        messageData['content'] as String;
+
+    // Create message with cleaned content for display
+    final cleanedMessageData = Map<String, dynamic>.from(messageData);
+    cleanedMessageData['content'] = displayContent;
+
+    final newMessage = TicketMessage.fromJson(cleanedMessageData);
 
     // ✅ FIX: Check if message already exists (prevent duplicates)
     if (_seenMessageIds.contains(newMessage.id)) {
@@ -396,8 +456,12 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
 
   @override
   void dispose() {
-    // Leave WebSocket ticket room (use stored reference to avoid context access)
-    _authService?.wsService.leaveTicket(widget.ticket.ticketId);
+    // Leave WebSocket ticket room with user ID to re-enable push notifications
+    _authService?.wsService.leaveTicket(
+      widget.ticket.ticketId,
+      userId:
+          _currentUserDiscordId, // ✅ Re-enable push notifications when leaving
+    );
 
     WidgetsBinding.instance.removeObserver(this); // ✅ Remove observer
     _messageController.dispose();
@@ -613,8 +677,16 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
       );
 
       if (mounted) {
-        // Convert Map to TicketMessage
-        final newMessage = TicketMessage.fromJson(newMessageData);
+        // ✅ FIX: Use display_content for optimistic cache (original content without prefix)
+        // Backend returns both 'content' (formatted for Discord) and 'display_content' (original)
+        final displayContent = newMessageData['display_content'] as String? ??
+            newMessageData['content'] as String;
+
+        // Create message with cleaned content for immediate display
+        final optimisticMessageData = Map<String, dynamic>.from(newMessageData);
+        optimisticMessageData['content'] = displayContent;
+
+        final newMessage = TicketMessage.fromJson(optimisticMessageData);
 
         // ✅ FIX: Add to seen IDs immediately (before WebSocket arrives)
         _seenMessageIds.add(newMessage.id);
@@ -920,7 +992,8 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Avatar
-              _buildAvatar(message, isAdminMessage, isClosingMessage, isSystem, isUserMessageFromApp),
+              _buildAvatar(message, isAdminMessage, isClosingMessage, isSystem,
+                  isUserMessageFromApp),
               const SizedBox(width: 12),
               // Message content
               Expanded(

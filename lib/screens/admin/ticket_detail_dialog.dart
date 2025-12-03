@@ -23,7 +23,7 @@ class TicketDetailDialog extends StatefulWidget {
 }
 
 class _TicketDetailDialogState extends State<TicketDetailDialog>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   late TabController _tabController;
   List<TicketMessage> _messages = [];
   bool _isLoadingMessages = false;
@@ -36,11 +36,19 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
   int _firstNewMessageIndex = -1; // Index of first new message for divider
 
   // Store AuthService reference to avoid accessing context in dispose
-  late AuthService _authService;
+  AuthService? _authService; // ✅ Nullable to avoid LateInitializationError
+  String? _currentUserDiscordId; // ✅ For push notification suppression
+  bool _wasDisconnectedWhilePaused = false; // ✅ Track if we missed messages
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance
+        .addObserver(this); // ✅ Observe app lifecycle changes
+
+    // Load current user ID for push notification suppression
+    _loadCurrentUser();
+
     _tabController = TabController(
       length: 2,
       vsync: this,
@@ -59,8 +67,8 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
       }
     });
 
-    // Set up WebSocket listener for real-time updates
-    _setupWebSocketListener();
+    // ✅ CRITICAL: Load user ID FIRST, then setup WebSocket
+    _initializeWithUser();
 
     // If opening to chat tab, load messages immediately
     if (widget.initialTab == 1) {
@@ -68,12 +76,74 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
     }
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // ✅ Guard: Check if authService is initialized before accessing
+    if (_authService == null) return;
+
+    // ✅ CRITICAL: Leave ticket room when app goes to background
+    // This ensures push notifications are re-enabled when user is not actively viewing
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
+      debugPrint(
+          '📱 App paused/inactive - leaving ticket room to re-enable push notifications');
+
+      // Track if WebSocket is disconnected during pause (we might miss messages)
+      _wasDisconnectedWhilePaused = !_authService!.wsService.isConnected;
+
+      _authService!.wsService.leaveTicket(
+        widget.ticket.ticketId,
+        userId: _currentUserDiscordId,
+      );
+    } else if (state == AppLifecycleState.resumed) {
+      debugPrint(
+          '📱 App resumed - rejoining ticket room to suppress push notifications');
+
+      // ✅ If WebSocket was disconnected, reload messages from API to catch missed ones
+      if (_wasDisconnectedWhilePaused) {
+        debugPrint(
+            '📱 WebSocket was disconnected during pause - reloading messages');
+        _loadMessages();
+        _wasDisconnectedWhilePaused = false;
+      }
+
+      _authService!.wsService.joinTicket(
+        widget.ticket.ticketId,
+        userId: _currentUserDiscordId,
+      );
+    }
+  }
+
+  /// Load user ID first, then setup WebSocket with user tracking
+  Future<void> _initializeWithUser() async {
+    // CRITICAL: Load user ID BEFORE joining WebSocket room
+    await _loadCurrentUser();
+
+    // Now join WebSocket with user ID for push notification suppression
+    _setupWebSocketListener();
+  }
+
+  /// Load current user's Discord ID for push notification suppression
+  Future<void> _loadCurrentUser() async {
+    try {
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final userData = await authService.apiService.getCurrentUser();
+      _currentUserDiscordId = userData['discord_id']?.toString();
+      debugPrint('👤 Current user Discord ID: $_currentUserDiscordId');
+    } catch (e) {
+      debugPrint('⚠️ Could not load current user ID: $e');
+    }
+  }
+
   void _setupWebSocketListener() {
     _authService = Provider.of<AuthService>(context, listen: false);
-    final wsService = _authService.wsService;
+    final wsService = _authService!.wsService;
 
-    // Join ticket room
-    wsService.joinTicket(widget.ticket.ticketId);
+    // Join ticket room with user ID for push notification suppression
+    wsService.joinTicket(
+      widget.ticket.ticketId,
+      userId: _currentUserDiscordId, // ✅ Suppress push while viewing
+    );
 
     // Listen for new messages
     wsService.onTicketUpdate(widget.ticket.ticketId, (data) {
@@ -127,8 +197,15 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
 
   @override
   void dispose() {
-    // Leave WebSocket ticket room using stored reference
-    _authService.wsService.leaveTicket(widget.ticket.ticketId);
+    WidgetsBinding.instance.removeObserver(this); // ✅ Remove observer
+
+    // Leave WebSocket ticket room with user ID to re-enable push notifications
+    if (_authService != null) {
+      _authService!.wsService.leaveTicket(
+        widget.ticket.ticketId,
+        userId: _currentUserDiscordId, // ✅ Re-enable push when leaving
+      );
+    }
 
     _tabController.dispose();
     _messageController.dispose();

@@ -284,10 +284,11 @@ class _NotificationSettingsScreenState
             debugPrint('📱 No FCM token yet, getting one...');
             await notificationService.requestPermissionAndRegister();
           }
-          
+
           if (notificationService.fcmToken != null) {
             debugPrint('📱 Registering FCM token with backend...');
-            await notificationService.registerWithBackend(authService.apiService);
+            await notificationService
+                .registerWithBackend(authService.apiService);
           }
         }
       } else {

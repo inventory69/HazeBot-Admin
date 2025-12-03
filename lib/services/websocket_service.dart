@@ -9,6 +9,9 @@ class WebSocketService {
   final Map<String, List<Function(Map<String, dynamic>)>> _ticketListeners = {};
   bool _isConnected = false;
 
+  // ✅ Track joined tickets with user IDs for cleanup on disconnect
+  final Map<String, String?> _joinedTickets = {}; // ticketId -> userId
+
   bool get isConnected => _isConnected;
 
   /// Initialize WebSocket connection
@@ -79,6 +82,28 @@ class WebSocketService {
   void disconnect() {
     if (_socket != null) {
       print('🔌 Disconnecting WebSocket');
+
+      // ✅ CRITICAL: Leave all joined tickets BEFORE disconnecting
+      // This ensures backend receives leave_ticket events and clears active_ticket_viewers
+      if (_joinedTickets.isNotEmpty) {
+        print(
+            '🧹 Leaving ${_joinedTickets.length} ticket room(s) before disconnect...');
+        for (var entry in _joinedTickets.entries) {
+          final ticketId = entry.key;
+          final userId = entry.value;
+
+          final data = {'ticket_id': ticketId};
+          if (userId != null) {
+            data['user_id'] = userId;
+          }
+
+          _socket!.emit('leave_ticket', data);
+          print(
+              '🎫 Left ticket room: $ticketId${userId != null ? " (user: $userId)" : ""}');
+        }
+        _joinedTickets.clear();
+      }
+
       _socket!.disconnect();
       _socket!.dispose();
       _socket = null;
@@ -88,14 +113,25 @@ class WebSocketService {
   }
 
   /// Join a ticket room to receive updates
-  void joinTicket(String ticketId) {
+  /// [userId] - Discord user ID to suppress push notifications for this user
+  void joinTicket(String ticketId, {String? userId}) {
     if (_socket == null || !_socket!.connected) {
       print('⚠️ Cannot join ticket: WebSocket not connected');
       return;
     }
 
-    print('🎫 Joining ticket room: $ticketId');
-    _socket!.emit('join_ticket', {'ticket_id': ticketId});
+    print(
+        '🎫 Joining ticket room: $ticketId${userId != null ? " (user: $userId)" : ""}');
+
+    final data = {'ticket_id': ticketId};
+    if (userId != null) {
+      data['user_id'] = userId; // ✅ Send user_id to suppress push notifications
+    }
+
+    // ✅ Track this ticket as joined (for cleanup on disconnect)
+    _joinedTickets[ticketId] = userId;
+
+    _socket!.emit('join_ticket', data);
 
     _socket!.once('joined_ticket', (data) {
       print('✅ Joined ticket room: $data');
@@ -103,13 +139,25 @@ class WebSocketService {
   }
 
   /// Leave a ticket room
-  void leaveTicket(String ticketId) {
+  /// [userId] - Discord user ID to re-enable push notifications for this user
+  void leaveTicket(String ticketId, {String? userId}) {
     if (_socket == null || !_socket!.connected) {
       return;
     }
 
-    print('🎫 Leaving ticket room: $ticketId');
-    _socket!.emit('leave_ticket', {'ticket_id': ticketId});
+    print(
+        '🎫 Leaving ticket room: $ticketId${userId != null ? " (user: $userId)" : ""}');
+
+    final data = {'ticket_id': ticketId};
+    if (userId != null) {
+      data['user_id'] =
+          userId; // ✅ Send user_id to re-enable push notifications
+    }
+
+    _socket!.emit('leave_ticket', data);
+
+    // ✅ Remove from joined tickets tracking
+    _joinedTickets.remove(ticketId);
 
     _ticketListeners.remove(ticketId);
   }

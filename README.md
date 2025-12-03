@@ -34,7 +34,7 @@ Feature-rich admin panel with hybrid navigation combining user features for comm
 
 - **Flutter SDK 3.0+** - [Install](https://docs.flutter.dev/get-started/install)
 - **HazeBot Bot + API Server** - Running and accessible
-  - 📖 **[HazeBot Setup Guide](https://github.com/inventory69/HazeBot/blob/main/BOT_SETUP.md)** - Complete bot installation instructions
+  - 📖 **[HazeBot Setup Guide](https://github.com/inventory69/HazeBot/blob/main/docs/BOT_SETUP.md)** - Complete bot installation instructions
 
 ### Setup
 
@@ -85,8 +85,8 @@ GITHUB_REPO_URL=https://github.com/inventory69/HazeBot-Admin
 ### ⚙️ Admin Features (Admin Only)
 - **Configuration** - Bot settings (channels, roles, memes, RL)
 - **Cog Manager** - Load/unload/reload bot cogs
-- **Tickets** - Manage support tickets
-- **Monitoring** - Active user sessions
+- **Tickets** - Real-time chat with WebSocket, claim/assign/close actions
+- **Monitoring** - Active user sessions with analytics
 - **Logs** - Bot logs with filtering
 
 ### 🎨 UI/UX
@@ -95,6 +95,9 @@ GITHUB_REPO_URL=https://github.com/inventory69/HazeBot-Admin
 - Dark/Light mode with system sync
 - Hero animations & smooth transitions
 - Pull-to-refresh on all lists
+- Real-time WebSocket updates for tickets
+- Smart push notification suppression
+- Message caching for instant loading
 
 **[📋 Complete Features List](FEATURES.md)** - Full feature documentation with details
 
@@ -117,8 +120,10 @@ GITHUB_REPO_URL=https://github.com/inventory69/HazeBot-Admin
 - **Local State** - StatefulWidget for screens
 - **Provider** - Theme and authentication
 - **mounted checks** - Before setState() in async
+- **WebSocket Service** - Real-time ticket updates
+- **Message Cache** - Persistent message storage
 
-**[🏗️ Detailed Architecture](../HazeBot/ARCHITECTURE.md)**
+**[🏗️ Detailed Architecture](https://github.com/inventory69/HazeBot/blob/main/docs/ARCHITECTURE.md)**
 
 ---
 
@@ -151,7 +156,7 @@ flutter build linux --release
 - 🔥 **[Firebase](FIREBASE_SETUP.md)** - Push notifications
 - 🔧 **[Setup Checklist](SETUP_CHECKLIST.md)** - Verification
 - 🚀 **[GitHub Actions](GITHUB_ACTIONS.md)** - CI/CD
-- 🤖 **[HazeBot](../HazeBot/README.md)** - Bot & API
+- 🤖 **[HazeBot Backend](https://github.com/inventory69/HazeBot)** - Bot & API
 
 ---
 
