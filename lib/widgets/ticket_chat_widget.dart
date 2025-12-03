@@ -262,7 +262,7 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
     // Join ticket room
     wsService.joinTicket(widget.ticket.ticketId);
 
-    // Listen for new messages
+    // Listen for new messages and history
     wsService.onTicketUpdate(widget.ticket.ticketId, (data) {
       final eventType = data['event_type'] as String?;
 
@@ -271,6 +271,76 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
         if (messageData != null) {
           _handleNewMessage(messageData);
         }
+      } else if (eventType == 'message_history') {
+        final messagesData = data['data'] as List<dynamic>?;
+        if (messagesData != null) {
+          _handleMessageHistory(messagesData);
+        }
+      }
+    });
+  }
+
+  void _handleMessageHistory(List<dynamic> messagesData) {
+    if (!mounted) return;
+
+    debugPrint('📜 Processing ${messagesData.length} messages from history');
+
+    final historyMessages = messagesData
+        .map((json) => TicketMessage.fromJson(json as Map<String, dynamic>))
+        .toList();
+
+    // Merge with existing messages, avoiding duplicates
+    final existingIds = _seenMessageIds;
+    final newMessages =
+        historyMessages.where((msg) => !existingIds.contains(msg.id)).toList();
+
+    if (newMessages.isEmpty) {
+      debugPrint('✅ No new messages in history (all already loaded)');
+      // Even if no NEW messages, update cache to ensure consistency
+      // This ensures history overwrites any stale/incomplete cached data
+      final currentCached =
+          _cacheService.getCachedMessages(widget.ticket.ticketId);
+      if (currentCached == null ||
+          historyMessages.length >= currentCached.length) {
+        _cacheService.cacheMessages(widget.ticket.ticketId, _messages);
+        debugPrint(
+            '💾 Cache synced with current state: ${_messages.length} messages');
+      }
+      return;
+    }
+
+    debugPrint('📥 Adding ${newMessages.length} new messages from history');
+
+    setState(() {
+      // Add new messages
+      _messages.addAll(newMessages);
+
+      // Sort by timestamp (oldest first)
+      _messages.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+
+      // Update seen IDs
+      for (final msg in newMessages) {
+        _seenMessageIds.add(msg.id);
+      }
+
+      _previousMessageCount = _messages.length;
+    });
+
+    // Only update cache if we have MORE messages now (don't overwrite with incomplete history)
+    final currentCached =
+        _cacheService.getCachedMessages(widget.ticket.ticketId);
+    if (currentCached == null || _messages.length >= currentCached.length) {
+      _cacheService.cacheMessages(widget.ticket.ticketId, _messages);
+      debugPrint('💾 Cache updated: ${_messages.length} messages');
+    } else {
+      debugPrint(
+          '💾 Cache NOT updated: current has fewer messages (${_messages.length} vs ${currentCached.length})');
+    }
+
+    // Scroll to bottom after loading history
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _scrollToBottom(animate: false);
       }
     });
   }
@@ -777,12 +847,25 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
     final isAdminMessage = message.isAdmin ||
         message.content.contains('[Admin Panel') ||
         message.role != null;
+
+    // Check if it's a user message sent via app (has [username]: prefix but is bot message)
+    final isUserMessageFromApp = message.isBot &&
+        message.content.startsWith('**[') &&
+        !message.content.startsWith('**[Admin Panel') &&
+        message.content.contains(']:**');
+
     final isInitialMessage = message.content.contains('**Initial details') ||
         message.content.startsWith('**Subject:');
     final isClosingMessage =
         message.content.contains('Ticket successfully closed') ||
             message.content.contains('**Closing Message:**');
-    final isSystem = message.isBot && !isAdminMessage;
+
+    // System message = bot message that's not admin, not user from app, not initial, not closing
+    final isSystem = message.isBot &&
+        !isAdminMessage &&
+        !isUserMessageFromApp &&
+        !isInitialMessage &&
+        !isClosingMessage;
 
     // Clean content
     String cleanContent = message.content;
@@ -793,6 +876,15 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
           .firstMatch(cleanContent);
       if (match != null) {
         cleanContent = match.group(1) ?? cleanContent;
+      }
+    }
+
+    // Clean user message from app (remove [username]: prefix)
+    if (isUserMessageFromApp) {
+      final match = RegExp(r'\[([^\]]+)\]:\s*(.+)', dotAll: true)
+          .firstMatch(cleanContent);
+      if (match != null) {
+        cleanContent = match.group(2) ?? cleanContent;
       }
     }
 
@@ -812,6 +904,12 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
       if (match != null) {
         displayName = match.group(1) ?? message.authorName;
       }
+    } else if (isUserMessageFromApp) {
+      // Extract username from [username]: format
+      final match = RegExp(r'\[([^\]]+)\]:').firstMatch(message.content);
+      if (match != null) {
+        displayName = match.group(1) ?? message.authorName;
+      }
     }
 
     return Stack(
@@ -822,7 +920,7 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Avatar
-              _buildAvatar(message, isAdminMessage, isClosingMessage, isSystem),
+              _buildAvatar(message, isAdminMessage, isClosingMessage, isSystem, isUserMessageFromApp),
               const SizedBox(width: 12),
               // Message content
               Expanded(
@@ -849,6 +947,7 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
                             isClosingMessage,
                             isSystem,
                             message.isBot,
+                            isUserMessageFromApp,
                           ),
                   ],
                 ),
@@ -879,6 +978,7 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
     bool isAdminMessage,
     bool isClosingMessage,
     bool isSystem,
+    bool isUserMessageFromApp,
   ) {
     final colorScheme = Theme.of(context).colorScheme;
     final avatarUrl = message.authorAvatar;
@@ -901,11 +1001,13 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
             errorBuilder: (context, error, stackTrace) {
               return Center(
                 child: Icon(
-                  message.isBot
-                      ? Icons.smart_toy
-                      : isAdminMessage
-                          ? Icons.admin_panel_settings
-                          : Icons.person,
+                  isUserMessageFromApp
+                      ? Icons.person
+                      : message.isBot
+                          ? Icons.smart_toy
+                          : isAdminMessage
+                              ? Icons.admin_panel_settings
+                              : Icons.person,
                   size: 18,
                   color: colorScheme.onSurfaceVariant,
                 ),
@@ -939,11 +1041,13 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
                   ? colorScheme.tertiaryContainer
                   : colorScheme.secondaryContainer,
       child: Icon(
-        message.isBot
-            ? Icons.smart_toy
-            : isAdminMessage
-                ? Icons.admin_panel_settings
-                : Icons.person,
+        isUserMessageFromApp
+            ? Icons.person
+            : message.isBot
+                ? Icons.smart_toy
+                : isAdminMessage
+                    ? Icons.admin_panel_settings
+                    : Icons.person,
         size: 20,
         color: isClosingMessage
             ? Colors.green
@@ -1105,6 +1209,7 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
     bool isClosingMessage,
     bool isSystem,
     bool isBot,
+    bool isUserMessageFromApp,
   ) {
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -1117,7 +1222,11 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
                 ? colorScheme.primaryContainer.withOpacity(0.3)
                 : isSystem
                     ? colorScheme.surfaceContainerHighest.withOpacity(0.5)
-                    : colorScheme.surfaceContainerHigh,
+                    : isUserMessageFromApp
+                        ? colorScheme.primaryContainer.withOpacity(0.3)
+                        : !isBot
+                            ? colorScheme.primaryContainer.withOpacity(0.3)
+                            : colorScheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(12),
         border: isClosingMessage
             ? Border.all(
@@ -1129,12 +1238,17 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
                     color: colorScheme.primary.withOpacity(0.3),
                     width: 1,
                   )
-                : !isBot
+                : isUserMessageFromApp
                     ? Border.all(
                         color: colorScheme.outline.withOpacity(0.3),
                         width: 1,
                       )
-                    : null,
+                    : !isBot
+                        ? Border.all(
+                            color: colorScheme.outline.withOpacity(0.3),
+                            width: 1,
+                          )
+                        : null,
       ),
       child: Text(
         cleanContent,

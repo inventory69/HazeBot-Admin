@@ -60,6 +60,11 @@ class WebSocketService {
         _handleTicketUpdate(data);
       });
 
+      _socket!.on('message_history', (data) {
+        print('📜 Received message history: ${data}');
+        _handleMessageHistory(data);
+      });
+
       _socket!.on('error', (error) {
         print('❌ WebSocket error: $error');
       });
@@ -156,6 +161,43 @@ class WebSocketService {
       }
     } catch (e) {
       print('❌ Error handling ticket update: $e');
+    }
+  }
+
+  /// Handle message history from server
+  void _handleMessageHistory(dynamic data) {
+    try {
+      final historyData = data as Map<String, dynamic>;
+      final ticketId = historyData['ticket_id'] as String?;
+      final messages = historyData['messages'] as List<dynamic>?;
+
+      if (ticketId == null || messages == null) {
+        print('⚠️ Invalid message history data: $historyData');
+        return;
+      }
+
+      print(
+          '📜 Processing message history for ticket $ticketId: ${messages.length} messages');
+
+      // Convert to proper format and notify listeners
+      final updateData = {
+        'ticket_id': ticketId,
+        'event_type': 'message_history',
+        'data': messages,
+      };
+
+      // Notify all listeners for this ticket
+      if (_ticketListeners.containsKey(ticketId)) {
+        for (final listener in _ticketListeners[ticketId]!) {
+          try {
+            listener(updateData);
+          } catch (e) {
+            print('❌ Error in message history listener: $e');
+          }
+        }
+      }
+    } catch (e) {
+      print('❌ Error handling message history: $e');
     }
   }
 }

@@ -276,11 +276,19 @@ class _NotificationSettingsScreenState
           }
         }
 
-        // Register/Re-register token with backend
-        if (notificationService.hasPermission &&
-            notificationService.fcmToken != null) {
-          debugPrint('📱 Registering FCM token with backend...');
-          await notificationService.registerWithBackend(authService.apiService);
+        // ✅ FIX: Always register token with backend when master toggle is ON
+        // This ensures token is re-registered after fresh login/app reinstall
+        if (notificationService.hasPermission) {
+          if (notificationService.fcmToken == null) {
+            // No token yet - get it now
+            debugPrint('📱 No FCM token yet, getting one...');
+            await notificationService.requestPermissionAndRegister();
+          }
+          
+          if (notificationService.fcmToken != null) {
+            debugPrint('📱 Registering FCM token with backend...');
+            await notificationService.registerWithBackend(authService.apiService);
+          }
         }
       } else {
         // User disabled notifications - unregister token from backend
@@ -618,6 +626,30 @@ class _NotificationSettingsScreenState
                     ),
                   ),
 
+                  const SizedBox(height: 24),
+
+                  // Save Button for Push Notifications
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: _isSaving ? null : _saveSettings,
+                      icon: _isSaving
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Icon(Icons.save),
+                      label: Text(_isSaving ? 'Saving...' : 'Save Settings'),
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                    ),
+                  ),
+
                   const SizedBox(height: 32),
 
                   // ============================================
@@ -812,30 +844,6 @@ class _NotificationSettingsScreenState
                             ),
                           ),
                         ],
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // Save button
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton.icon(
-                      onPressed: _isSaving ? null : _saveSettings,
-                      icon: _isSaving
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Icon(Icons.save),
-                      label: Text(_isSaving ? 'Saving...' : 'Save Settings'),
-                      style: FilledButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
                     ),
                   ),

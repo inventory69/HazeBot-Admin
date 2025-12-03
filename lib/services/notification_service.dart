@@ -295,13 +295,20 @@ class NotificationService {
   Future<void> _setupMessaging() async {
     if (_firebaseMessaging == null) return;
 
-    // Get FCM token
-    _fcmToken = await _firebaseMessaging!.getToken();
-    debugPrint('🔑 FCM Token: $_fcmToken');
+    // ✅ FIX: Try to reuse cached token first (prevents generating new token on every login)
+    final cachedToken = await _loadTokenFromPrefs();
+    if (cachedToken != null) {
+      debugPrint('📂 Reusing cached FCM token from previous session');
+      _fcmToken = cachedToken;
+    } else {
+      // Get new FCM token only if no cached token exists
+      _fcmToken = await _firebaseMessaging!.getToken();
+      debugPrint('🔑 Generated new FCM Token: $_fcmToken');
 
-    // ✅ FIX: Save token to SharedPreferences for persistence
-    if (_fcmToken != null) {
-      await _saveTokenToPrefs(_fcmToken!);
+      // Save token to SharedPreferences for persistence
+      if (_fcmToken != null) {
+        await _saveTokenToPrefs(_fcmToken!);
+      }
     }
 
     // Listen to token refresh
