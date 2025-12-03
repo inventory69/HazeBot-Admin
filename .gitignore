@@ -61,3 +61,4 @@ android/app/keystore.b64
 android/app/google-services.json
 ios/Runner/GoogleService-Info.plist
 lib/firebase_options.dart
+android/app/keystore-base64.txt
