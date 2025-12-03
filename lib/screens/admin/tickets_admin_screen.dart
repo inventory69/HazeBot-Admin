@@ -5,7 +5,14 @@ import '../../models/ticket_config.dart';
 import 'ticket_detail_dialog.dart';
 
 class TicketsAdminScreen extends StatefulWidget {
-  const TicketsAdminScreen({super.key});
+  final String? initialTicketId; // Ticket to open automatically
+  final int initialTab; // Which tab to open in dialog (0=Details, 1=Chat)
+
+  const TicketsAdminScreen({
+    super.key,
+    this.initialTicketId,
+    this.initialTab = 0,
+  });
 
   @override
   State<TicketsAdminScreen> createState() => _TicketsAdminScreenState();
@@ -19,6 +26,49 @@ class _TicketsAdminScreenState extends State<TicketsAdminScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+
+    // If initialTicketId provided, open that ticket after build
+    if (widget.initialTicketId != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _openTicketById(widget.initialTicketId!);
+      });
+    }
+  }
+
+  /// Open a specific ticket by ID
+  Future<void> _openTicketById(String ticketId) async {
+    try {
+      final apiService = ApiService();
+      final ticket = await apiService.getTicket(ticketId);
+
+      if (mounted) {
+        debugPrint('📱 Auto-opening ticket dialog for ${ticket.ticketId}');
+        showDialog(
+          context: context,
+          builder: (context) => TicketDetailDialog(
+            ticket: ticket,
+            initialTab: widget.initialTab,
+            onUpdate: () {
+              debugPrint('🔄 Admin ticket updated from notification');
+              // Refresh tickets list if needed
+              final state =
+                  context.findAncestorStateOfType<_TicketsListTabState>();
+              state?._loadTickets();
+            },
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('❌ Error opening ticket from notification: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not open ticket: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override

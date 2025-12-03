@@ -19,10 +19,12 @@ class WebSocketService {
     }
 
     try {
-      // Remove /api from baseUrl if present and ensure we have the base URL
-      // baseUrl is like: https://test-hazebot-admin.hzwd.xyz/api
-      // We need: https://test-hazebot-admin.hzwd.xyz
-      final wsUrl = baseUrl.replaceAll('/api', '');
+      // Remove trailing /api from baseUrl if present
+      // baseUrl is like: https://api.haze.pro/api
+      // We need: https://api.haze.pro
+      final wsUrl = baseUrl.endsWith('/api')
+          ? baseUrl.substring(0, baseUrl.length - 4)
+          : baseUrl;
       print('🔌 Connecting to WebSocket: $wsUrl');
 
       _socket = IO.io(

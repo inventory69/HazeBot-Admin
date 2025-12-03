@@ -106,35 +106,18 @@ Future<bool> _isUserAdmin(BuildContext context) async {
 
 /// Navigate to admin dialog for other users' tickets
 void _navigateToAdminDialog(BuildContext context, Ticket ticket) {
-  // ✅ FIX: Use push instead of pushReplacement to preserve navigation stack
-  // This allows admins to go back to the previous screen after closing the dialog
-  debugPrint('📱 Navigating to admin screen with ticket dialog');
+  // Navigate to admin screen with initialTicketId to auto-open ticket
+  debugPrint('📱 Navigating to admin screen with ticket dialog (Chat tab)');
 
-  Navigator.of(context)
-      .push(
+  Navigator.of(context).push(
     MaterialPageRoute(
-      builder: (context) => const TicketsAdminScreen(),
+      builder: (context) => TicketsAdminScreen(
+        initialTicketId: ticket.ticketId,
+        initialTab: 1, // Open Chat tab (0 = Details, 1 = Chat)
+      ),
       settings: const RouteSettings(name: '/admin/tickets'),
     ),
-  )
-      .then((_) {
-    // After navigation, show the ticket dialog
-    if (context.mounted) {
-      Future.delayed(const Duration(milliseconds: 300), () {
-        if (context.mounted) {
-          showDialog(
-            context: context,
-            builder: (context) => TicketDetailDialog(
-              ticket: ticket,
-              onUpdate: () {
-                debugPrint('🔄 Admin ticket updated from notification');
-              },
-            ),
-          );
-        }
-      });
-    }
-  });
+  );
 }
 
 /// Navigate to ticket detail dialog (for admins)
@@ -154,16 +137,15 @@ void _navigateToTicket(BuildContext context, Ticket ticket) {
 
 /// Navigate to ticket chat screen (for regular users)
 void _navigateToTicketChat(BuildContext context, Ticket ticket) {
-  // Import the ticket detail screen from tickets_screen.dart
-  // Since _TicketDetailScreen is private, we need to use the public route
-  // Navigate directly to the chat by pushing a new screen
+  // Navigate to user tickets screen with initialTicketId
+  // This will automatically open the ticket detail screen with chat
+  debugPrint(
+      '📱 Navigating to user ticket screen (opening ticket ${ticket.ticketId})');
+
   Navigator.of(context).push(
     MaterialPageRoute(
-      builder: (context) {
-        // We'll use a simple approach: navigate to TicketsScreen first,
-        // then it will auto-open the ticket via initialTicketId
-        return TicketsScreen(initialTicketId: ticket.ticketId);
-      },
+      builder: (context) => TicketsScreen(initialTicketId: ticket.ticketId),
+      settings: const RouteSettings(name: '/tickets'),
     ),
   );
 }

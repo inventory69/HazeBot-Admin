@@ -24,10 +24,10 @@ String formatLemmyDisplay(String community) {
 /// ❌ DEPRECATED: Image proxy not needed anymore
 /// Backend already converts Reddit/Imgur URLs to HTTPS Discord CDN URLs
 /// before returning them to the frontend. Direct URL usage works fine.
-/// 
+///
 /// Historical note: This was needed when backend returned raw Reddit HTTP URLs,
 /// but now the bot uploads images to Discord and returns CDN URLs (HTTPS).
-/// 
+///
 /// Keep this code for reference in case we need it again in the future.
 /*
 String getProxiedImageUrl(String originalUrl) {

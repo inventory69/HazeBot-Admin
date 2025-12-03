@@ -9,11 +9,13 @@ import '../../widgets/ticket_chat_widget.dart';
 class TicketDetailDialog extends StatefulWidget {
   final Ticket ticket;
   final VoidCallback onUpdate;
+  final int initialTab; // 0 = Details, 1 = Chat
 
   const TicketDetailDialog({
     super.key,
     required this.ticket,
     required this.onUpdate,
+    this.initialTab = 0, // Default to Details tab
   });
 
   @override
@@ -39,7 +41,11 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(
+      length: 2,
+      vsync: this,
+      initialIndex: widget.initialTab, // Use initialTab parameter
+    );
     _tabController.addListener(() {
       if (_tabController.index == 1) {
         if (_messages.isEmpty) {
@@ -55,6 +61,11 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
 
     // Set up WebSocket listener for real-time updates
     _setupWebSocketListener();
+
+    // If opening to chat tab, load messages immediately
+    if (widget.initialTab == 1) {
+      _loadMessages();
+    }
   }
 
   void _setupWebSocketListener() {
