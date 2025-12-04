@@ -29,6 +29,7 @@ class ApiService {
   ApiService._internal() {
     _initializeVersionInfo();
     _generateSessionId();
+    _initializeBaseUrl(); // Cache base URL on first initialization
   }
 
   // App version info for session tracking
@@ -164,18 +165,23 @@ class ApiService {
   //      Example: https://api.haze.pro/api/tickets
   // ============================================================================
 
-  static String get _staticBaseUrl {
+  static String? _cachedBaseUrl; // Cache to prevent log spam
+
+  void _initializeBaseUrl() {
+    if (_cachedBaseUrl != null) return; // Already initialized
+    
     if (kIsWeb) {
       // WEB: Relative URLs - nginx proxies transparently
+      _cachedBaseUrl = '/api'; // Relative to current host (admin.haze.pro)
       debugPrint('🌐 Platform: WEB - Using relative URLs (nginx proxy)');
-      return '/api'; // Relative to current host (admin.haze.pro)
     } else {
       // MOBILE: Direct connection to api.haze.pro
-      final url = dotenv.env['API_BASE_URL'] ?? 'http://localhost:5070/api';
-      debugPrint('📱 Platform: MOBILE - Using direct URL: $url');
-      return url;
+      _cachedBaseUrl = dotenv.env['API_BASE_URL'] ?? 'http://localhost:5070/api';
+      debugPrint('📱 Platform: MOBILE - Using direct URL: $_cachedBaseUrl');
     }
   }
+
+  static String get _staticBaseUrl => _cachedBaseUrl ?? '/api';
 
   String get baseUrl => _staticBaseUrl;
 
@@ -1709,12 +1715,19 @@ class TokenExpiredException implements Exception {
 }
 
 // Helper function to proxy external images through backend to bypass CORS
+// Only applies proxy on Web platform - Mobile can load images directly
 String getProxiedImageUrl(String imageUrl) {
   // If URL is already proxied, return as-is
   if (imageUrl.contains('/api/proxy/image')) {
     return imageUrl;
   }
 
+  // Mobile: Return original URL (no CORS restrictions)
+  if (!kIsWeb) {
+    return imageUrl;
+  }
+
+  // Web: Proxy through backend to bypass CORS
   final apiBaseUrl = ApiService._staticBaseUrl.replaceFirst('/api', '');
   final encodedUrl = Uri.encodeComponent(imageUrl);
   return '$apiBaseUrl/api/proxy/image?url=$encodedUrl';
