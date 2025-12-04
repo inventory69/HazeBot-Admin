@@ -334,12 +334,17 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
 
     // Listen for new messages and history
     wsService.onTicketUpdate(widget.ticket.ticketId, (data) {
+      debugPrint('🎯 TicketChatWidget received update: ${data['event_type']}');
       final eventType = data['event_type'] as String?;
 
       if (eventType == 'new_message') {
         final messageData = data['data'] as Map<String, dynamic>?;
+        debugPrint('📦 Message data: ${messageData != null ? "VALID" : "NULL"}');
         if (messageData != null) {
+          debugPrint('✅ Calling _handleNewMessage()');
           _handleNewMessage(messageData);
+        } else {
+          debugPrint('❌ messageData is NULL!');
         }
       } else if (eventType == 'message_history') {
         final messagesData = data['data'] as List<dynamic>?;
@@ -441,7 +446,11 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
   }
 
   void _handleNewMessage(Map<String, dynamic> messageData) {
-    if (!mounted) return;
+    debugPrint('🔍 _handleNewMessage called, mounted=$mounted');
+    if (!mounted) {
+      debugPrint('❌ Widget not mounted, skipping');
+      return;
+    }
 
     // ✅ FIX: Use display_content if available (for messages sent via app)
     // Backend sends both 'content' (formatted for Discord) and 'display_content' (original)
@@ -453,6 +462,7 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
     cleanedMessageData['content'] = displayContent;
 
     final newMessage = TicketMessage.fromJson(cleanedMessageData);
+    debugPrint('📝 New message parsed: ${newMessage.id} from ${newMessage.authorName}');
 
     // ✅ FIX: Check if message already exists (prevent duplicates)
     if (_seenMessageIds.contains(newMessage.id)) {
@@ -468,6 +478,9 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
           '⏭️ Skipping own message from WebSocket: ${newMessage.id} (already added optimistically)');
       return;
     }
+    
+    debugPrint('✅ Message passes all checks, adding to list');
+
 
     final oldCount = _messages.length;
 
