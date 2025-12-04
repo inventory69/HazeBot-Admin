@@ -100,10 +100,12 @@ class _HomeScreenState extends State<HomeScreen>
   Future<void> _pingServer() async {
     // Ping server to register session (works for all users)
     try {
-      await ApiService().ping();
-      debugPrint('Session ping successful');
+      debugPrint('📊 Sending session ping to ${ApiService().baseUrl}/ping');
+      debugPrint('📊 Session ID: ${ApiService()._sessionId}');
+      final response = await ApiService().ping();
+      debugPrint('✅ Session ping successful: $response');
     } catch (e) {
-      debugPrint('Session ping failed: $e');
+      debugPrint('❌ Session ping failed: $e');
       // Don't show error to user - this is just for session tracking
     }
   }
