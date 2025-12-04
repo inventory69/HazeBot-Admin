@@ -147,7 +147,10 @@ class WebSocketService {
       _socket!.dispose();
       _socket = null;
       _isConnected = false;
-      _ticketListeners.clear();
+      // ✅ FIX: Do NOT clear listeners on disconnect!
+      // Listeners are callbacks registered by widgets and should persist across reconnects
+      // They will automatically work again when socket reconnects
+      // _ticketListeners.clear(); // ❌ REMOVED - this caused messages to not arrive after reconnect
     }
   }
 
@@ -241,6 +244,7 @@ class WebSocketService {
 
       // Notify all listeners for this ticket
       if (_ticketListeners.containsKey(ticketId)) {
+        print('✅ Found ${_ticketListeners[ticketId]!.length} listener(s) for ticket $ticketId');
         for (final listener in _ticketListeners[ticketId]!) {
           try {
             listener(updateData);
@@ -248,6 +252,8 @@ class WebSocketService {
             print('❌ Error in ticket listener: $e');
           }
         }
+      } else {
+        print('⚠️ No listeners found for ticket $ticketId! Available tickets: ${_ticketListeners.keys.toList()}');
       }
     } catch (e) {
       print('❌ Error handling ticket update: $e');
