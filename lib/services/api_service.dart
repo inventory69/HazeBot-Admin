@@ -38,6 +38,9 @@ class ApiService {
   String _sessionId = 'Unknown';
   Completer<void>? _versionInitCompleter;
 
+  // Public getter for session ID
+  String get sessionId => _sessionId;
+
   Future<void> _initializeVersionInfo() async {
     if (_versionInitCompleter != null) {
       return _versionInitCompleter!.future;

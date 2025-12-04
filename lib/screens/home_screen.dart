@@ -101,7 +101,7 @@ class _HomeScreenState extends State<HomeScreen>
     // Ping server to register session (works for all users)
     try {
       debugPrint('📊 Sending session ping to ${ApiService().baseUrl}/ping');
-      debugPrint('📊 Session ID: ${ApiService()._sessionId}');
+      debugPrint('📊 Session ID: ${ApiService().sessionId}');
       final response = await ApiService().ping();
       debugPrint('✅ Session ping successful: $response');
     } catch (e) {
