@@ -17,8 +17,10 @@ class WebSocketService {
 
   /// Initialize WebSocket connection
   void connect(String baseUrl) {
+    print('🔌 WebSocket connect() called with baseUrl: $baseUrl');
+    
     if (_socket != null && _socket!.connected) {
-      print('🔌 WebSocket already connected');
+      print('🔌 WebSocket already connected - skipping');
       return;
     }
 

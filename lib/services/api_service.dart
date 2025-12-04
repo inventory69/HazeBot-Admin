@@ -29,7 +29,6 @@ class ApiService {
   ApiService._internal() {
     _initializeVersionInfo();
     _generateSessionId();
-    _initializeBaseUrl(); // Cache base URL on first initialization
   }
 
   // App version info for session tracking
@@ -166,22 +165,29 @@ class ApiService {
   // ============================================================================
 
   static String? _cachedBaseUrl; // Cache to prevent log spam
+  static bool _baseUrlLogged = false; // Track if we've logged the platform detection
 
-  void _initializeBaseUrl() {
-    if (_cachedBaseUrl != null) return; // Already initialized
-    
-    if (kIsWeb) {
-      // WEB: Relative URLs - nginx proxies transparently
-      _cachedBaseUrl = '/api'; // Relative to current host (admin.haze.pro)
-      debugPrint('🌐 Platform: WEB - Using relative URLs (nginx proxy)');
-    } else {
-      // MOBILE: Direct connection to api.haze.pro
-      _cachedBaseUrl = dotenv.env['API_BASE_URL'] ?? 'http://localhost:5070/api';
-      debugPrint('📱 Platform: MOBILE - Using direct URL: $_cachedBaseUrl');
+  static String get _staticBaseUrl {
+    if (_cachedBaseUrl == null) {
+      // Lazy initialization on first access
+      if (kIsWeb) {
+        // WEB: Relative URLs - nginx proxies transparently
+        _cachedBaseUrl = '/api'; // Relative to current host (admin.haze.pro)
+        if (!_baseUrlLogged) {
+          debugPrint('🌐 Platform: WEB - Using relative URLs (nginx proxy)');
+          _baseUrlLogged = true;
+        }
+      } else {
+        // MOBILE: Direct connection to api.haze.pro
+        _cachedBaseUrl = dotenv.env['API_BASE_URL'] ?? 'http://localhost:5070/api';
+        if (!_baseUrlLogged) {
+          debugPrint('📱 Platform: MOBILE - Using direct URL: $_cachedBaseUrl');
+          _baseUrlLogged = true;
+        }
+      }
     }
+    return _cachedBaseUrl!;
   }
-
-  static String get _staticBaseUrl => _cachedBaseUrl ?? '/api';
 
   String get baseUrl => _staticBaseUrl;
 
