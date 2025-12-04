@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
+import '../../services/api_service.dart';
 
 class RocketLeagueConfigScreen extends StatefulWidget {
   const RocketLeagueConfigScreen({super.key});
@@ -1184,7 +1185,7 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
                                             borderRadius:
                                                 BorderRadius.circular(12),
                                             child: Image.network(
-                                              _testStats!['highest_icon_url'],
+                                              getProxiedImageUrl(_testStats!['highest_icon_url']),
                                               width: 80,
                                               height: 80,
                                               fit: BoxFit.contain,
@@ -1256,7 +1257,7 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
                                             borderRadius:
                                                 BorderRadius.circular(12),
                                             child: Image.network(
-                                              _testStats!['highest_icon_url'],
+                                              getProxiedImageUrl(_testStats!['highest_icon_url']),
                                               width: 100,
                                               height: 100,
                                               fit: BoxFit.contain,
@@ -1575,7 +1576,7 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
         children: [
           if (iconUrl != null)
             Image.network(
-              iconUrl,
+              getProxiedImageUrl(iconUrl),
               width: iconSize,
               height: iconSize,
               fit: BoxFit.contain,
@@ -1685,7 +1686,7 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: Image.network(
-                  iconUrl,
+                  getProxiedImageUrl(iconUrl),
                   fit: BoxFit.contain,
                   errorBuilder: (context, error, stackTrace) => Icon(
                     Icons.sports_esports,

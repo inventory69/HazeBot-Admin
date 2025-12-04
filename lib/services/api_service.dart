@@ -144,10 +144,38 @@ class ApiService {
     final random = (timestamp * 31) % 1000000; // Simple random component
     _sessionId = '${timestamp}_$random';
     debugPrint('📊 Session ID: $_sessionId');
+    
+    // Debug: Show environment detection
+    debugPrint('🔧 Environment Detection:');
+    debugPrint('   Platform: ${kIsWeb ? 'WEB' : 'MOBILE'}');
+    debugPrint('   Base URL: $_staticBaseUrl');
+    if (kIsWeb) {
+      debugPrint('   Origin: ${Uri.base.origin}');
+      debugPrint('   ✅ Using nginx proxy (relative URLs)');
+    }
   }
 
-  static String get _staticBaseUrl =>
-      dotenv.env['API_BASE_URL'] ?? 'http://localhost:5070/api';
+  // ============================================================================
+  // ENVIRONMENT DETECTION: Web vs Mobile
+  // ============================================================================
+  // WEB: Uses relative URLs (nginx proxies to api.haze.pro)
+  //      Example: admin.haze.pro/api/tickets → nginx → api.haze.pro/api/tickets
+  // MOBILE: Uses direct URLs to api.haze.pro
+  //      Example: https://api.haze.pro/api/tickets
+  // ============================================================================
+
+  static String get _staticBaseUrl {
+    if (kIsWeb) {
+      // WEB: Relative URLs - nginx proxies transparently
+      debugPrint('🌐 Platform: WEB - Using relative URLs (nginx proxy)');
+      return '/api'; // Relative to current host (admin.haze.pro)
+    } else {
+      // MOBILE: Direct connection to api.haze.pro
+      final url = dotenv.env['API_BASE_URL'] ?? 'http://localhost:5070/api';
+      debugPrint('📱 Platform: MOBILE - Using direct URL: $url');
+      return url;
+    }
+  }
 
   String get baseUrl => _staticBaseUrl;
 

@@ -3,6 +3,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
 import '../../services/discord_auth_service.dart';
+import '../../services/api_service.dart' show getProxiedImageUrl;
 import '../../providers/data_cache_provider.dart';
 
 /// Format Lemmy community to user-friendly display
@@ -425,9 +426,9 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // Meme Image (direct URL - no proxy needed, backend returns HTTPS Discord CDN URLs)
+                                // Random Meme Image from Reddit/Lemmy - needs proxy for CORS
                                 Image.network(
-                                  _randomMemeData!['url'],
+                                  getProxiedImageUrl(_randomMemeData!['url']),
                                   width: double.infinity,
                                   fit: BoxFit.contain,
                                   loadingBuilder:
@@ -749,9 +750,9 @@ class _MemeConfigScreenState extends State<MemeConfigScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // Direct URL - no proxy needed, backend returns HTTPS Discord CDN URLs
+                                // Source Meme Image from Reddit/Lemmy - needs proxy for CORS
                                 Image.network(
-                                  _sourceMemeData!['url'],
+                                  getProxiedImageUrl(_sourceMemeData!['url']),
                                   width: double.infinity,
                                   fit: BoxFit.contain,
                                   loadingBuilder:

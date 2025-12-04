@@ -389,7 +389,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(8),
                                   child: Image.network(
-                                    _rlRank!['icon_url'],
+                                    getProxiedImageUrl(_rlRank!['icon_url']),
                                     width: 48,
                                     height: 48,
                                     fit: BoxFit.contain,
