@@ -23,7 +23,8 @@ class TicketDetailDialog extends StatefulWidget {
 }
 
 class _TicketDetailDialogState extends State<TicketDetailDialog>
-    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
+    with SingleTickerProviderStateMixin {
+  // ✅ REMOVED WidgetsBindingObserver - TicketChatWidget handles WebSocket lifecycle
   late TabController _tabController;
   List<TicketMessage> _messages = [];
   bool _isLoadingMessages = false;
@@ -35,19 +36,12 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
   Set<String> _seenMessageIds = {};
   int _firstNewMessageIndex = -1; // Index of first new message for divider
 
-  // Store AuthService reference to avoid accessing context in dispose
-  AuthService? _authService; // ✅ Nullable to avoid LateInitializationError
-  String? _currentUserDiscordId; // ✅ For push notification suppression
-  bool _wasDisconnectedWhilePaused = false; // ✅ Track if we missed messages
+  // ✅ REMOVED: WebSocket-related variables (now handled by TicketChatWidget)
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance
-        .addObserver(this); // ✅ Observe app lifecycle changes
-
-    // Load current user ID for push notification suppression
-    _loadCurrentUser();
+    // ✅ REMOVED: No longer observing app lifecycle - TicketChatWidget handles this
 
     _tabController = TabController(
       length: 2,
@@ -67,172 +61,15 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
       }
     });
 
-    // ✅ CRITICAL: Load user ID FIRST, then setup WebSocket
-    _initializeWithUser();
-
     // If opening to chat tab, load messages immediately
     if (widget.initialTab == 1) {
       _loadMessages();
     }
   }
 
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    // ✅ Guard: Check if authService is initialized before accessing
-    if (_authService == null) return;
-
-    // ✅ CRITICAL: Leave ticket room when app goes to background
-    // This ensures push notifications are re-enabled when user is not actively viewing
-    if (state == AppLifecycleState.paused ||
-        state == AppLifecycleState.inactive) {
-      debugPrint(
-          '📱 App paused/inactive - leaving ticket room to re-enable push notifications');
-
-      // Track if WebSocket is disconnected during pause (we might miss messages)
-      _wasDisconnectedWhilePaused = !_authService!.wsService.isConnected;
-
-      _authService!.wsService.leaveTicket(
-        widget.ticket.ticketId,
-        userId: _currentUserDiscordId,
-      );
-    } else if (state == AppLifecycleState.resumed) {
-      debugPrint(
-          '📱 App resumed - rejoining ticket room to suppress push notifications');
-
-      // ✅ If WebSocket was disconnected, reload messages from API to catch missed ones
-      if (_wasDisconnectedWhilePaused) {
-        debugPrint(
-            '📱 WebSocket was disconnected during pause - reloading messages');
-        _loadMessages();
-        _wasDisconnectedWhilePaused = false;
-      }
-
-      // ✅ FIX: Wait for WebSocket connection before joining ticket room
-      _rejoinTicketAfterReconnect();
-    }
-  }
-
-  /// Rejoin ticket room after WebSocket reconnects (with retry logic)
-  Future<void> _rejoinTicketAfterReconnect() async {
-    final connected = await _authService!.wsService.waitForConnection();
-    
-    if (connected) {
-      debugPrint('✅ WebSocket ready - joining ticket room (dialog)');
-      _authService!.wsService.joinTicket(
-        widget.ticket.ticketId,
-        userId: _currentUserDiscordId,
-      );
-    } else {
-      debugPrint('❌ WebSocket connection timeout - retrying in 2s...');
-      // Retry once after 2 seconds
-      await Future.delayed(const Duration(seconds: 2));
-      if (_authService!.wsService.isConnected) {
-        _authService!.wsService.joinTicket(
-          widget.ticket.ticketId,
-          userId: _currentUserDiscordId,
-        );
-      } else {
-        debugPrint('❌ Failed to rejoin ticket room - WebSocket not connected');
-      }
-    }
-  }
-
-  /// Load user ID first, then setup WebSocket with user tracking
-  Future<void> _initializeWithUser() async {
-    // CRITICAL: Load user ID BEFORE joining WebSocket room
-    await _loadCurrentUser();
-
-    // Now join WebSocket with user ID for push notification suppression
-    _setupWebSocketListener();
-  }
-
-  /// Load current user's Discord ID for push notification suppression
-  Future<void> _loadCurrentUser() async {
-    try {
-      final authService = Provider.of<AuthService>(context, listen: false);
-      final userData = await authService.apiService.getCurrentUser();
-      _currentUserDiscordId = userData['discord_id']?.toString();
-      debugPrint('👤 Current user Discord ID: $_currentUserDiscordId');
-    } catch (e) {
-      debugPrint('⚠️ Could not load current user ID: $e');
-    }
-  }
-
-  void _setupWebSocketListener() {
-    _authService = Provider.of<AuthService>(context, listen: false);
-    final wsService = _authService!.wsService;
-
-    // ✅ FIX: Wait for WebSocket connection before joining ticket room
-    _joinTicketWhenReady();
-
-    // Listen for new messages
-    wsService.onTicketUpdate(widget.ticket.ticketId, (data) {
-      final eventType = data['event_type'] as String?;
-
-      if (eventType == 'new_message') {
-        final messageData = data['data'] as Map<String, dynamic>?;
-        if (messageData != null) {
-          _handleNewMessage(messageData);
-        }
-      }
-    });
-  }
-
-  /// Join ticket room once WebSocket is connected (with retry logic)
-  Future<void> _joinTicketWhenReady() async {
-    final connected = await _authService!.wsService.waitForConnection();
-    
-    if (connected) {
-      debugPrint('✅ WebSocket ready - joining ticket room (dialog initial)');
-      _authService!.wsService.joinTicket(
-        widget.ticket.ticketId,
-        userId: _currentUserDiscordId,
-      );
-    } else {
-      debugPrint('⚠️ WebSocket connection timeout on initial join - retrying...');
-      // Retry once after 2 seconds
-      await Future.delayed(const Duration(seconds: 2));
-      if (_authService!.wsService.isConnected) {
-        _authService!.wsService.joinTicket(
-          widget.ticket.ticketId,
-          userId: _currentUserDiscordId,
-        );
-      } else {
-        debugPrint('❌ Failed to join ticket room - WebSocket not connected');
-      }
-    }
-  }
-
-  void _handleNewMessage(Map<String, dynamic> messageData) {
-    if (!mounted) return;
-
-    final newMessage = TicketMessage.fromJson(messageData);
-
-    // Check if message already exists
-    if (_messages.any((m) => m.id == newMessage.id)) {
-      return;
-    }
-
-    final oldCount = _messages.length;
-
-    setState(() {
-      _messages.add(newMessage);
-      _previousMessageCount = _messages.length;
-      // Mark where new messages start (if not already set)
-      if (_firstNewMessageIndex < 0) {
-        _firstNewMessageIndex = oldCount;
-      }
-    });
-
-    // Scroll behavior on messages tab
-    if (_tabController.index == 1) {
-      if (_firstNewMessageIndex >= 0) {
-        _scrollToNewMessages();
-      } else {
-        _scrollToBottom();
-      }
-    }
-  }
+  // ✅ REMOVED: All WebSocket lifecycle management
+  // TicketChatWidget (embedded in Messages tab) now handles all WebSocket operations
+  // This prevents duplicate joins/leaves and multiple lifecycle observers
 
   void _markAllAsSeen() {
     setState(() {
@@ -242,15 +79,8 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this); // ✅ Remove observer
-
-    // Leave WebSocket ticket room with user ID to re-enable push notifications
-    if (_authService != null) {
-      _authService!.wsService.leaveTicket(
-        widget.ticket.ticketId,
-        userId: _currentUserDiscordId, // ✅ Re-enable push when leaving
-      );
-    }
+    // ✅ REMOVED: No longer managing WebSocket lifecycle
+    // TicketChatWidget handles join/leave operations
 
     _tabController.dispose();
     _messageController.dispose();
