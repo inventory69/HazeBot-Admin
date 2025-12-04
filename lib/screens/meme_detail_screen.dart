@@ -210,7 +210,7 @@ class _MemeDetailScreenState extends State<MemeDetailScreen> {
                       maxHeight: MediaQuery.of(context).size.height * 0.7,
                     ),
                     child: Image.network(
-                      imageUrl,
+                      getProxiedImageUrl(imageUrl),
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) {
                         return Container(

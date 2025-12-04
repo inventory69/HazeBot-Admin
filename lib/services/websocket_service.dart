@@ -1,4 +1,5 @@
 import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class WebSocketService {
   static final WebSocketService _instance = WebSocketService._internal();
@@ -16,18 +17,32 @@ class WebSocketService {
 
   /// Initialize WebSocket connection
   void connect(String baseUrl) {
+    print('🔌 WebSocket connect() called with baseUrl: $baseUrl');
+    
     if (_socket != null && _socket!.connected) {
-      print('🔌 WebSocket already connected');
+      print('🔌 WebSocket already connected - skipping');
       return;
     }
 
     try {
-      // Remove trailing /api from baseUrl if present
-      // baseUrl is like: https://api.haze.pro/api
-      // We need: https://api.haze.pro
-      final wsUrl = baseUrl.endsWith('/api')
-          ? baseUrl.substring(0, baseUrl.length - 4)
-          : baseUrl;
+      // Determine WebSocket URL based on platform
+      String wsUrl;
+      
+      if (kIsWeb) {
+        // WEB: Use current origin (admin.haze.pro)
+        // WebSocket connects to same domain as the web app
+        wsUrl = Uri.base.origin; // Gets https://admin.haze.pro
+        print('🌐 WEB: Using current origin for WebSocket: $wsUrl');
+      } else {
+        // MOBILE: Direct URL - remove trailing /api if present
+        // baseUrl is like: https://api.haze.pro/api
+        // We need: https://api.haze.pro
+        wsUrl = baseUrl.endsWith('/api')
+            ? baseUrl.substring(0, baseUrl.length - 4)
+            : baseUrl;
+        print('📱 MOBILE: Using direct API URL for WebSocket: $wsUrl');
+      }
+      
       print('🔌 Connecting to WebSocket: $wsUrl');
 
       _socket = IO.io(

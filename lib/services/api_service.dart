@@ -38,6 +38,9 @@ class ApiService {
   String _sessionId = 'Unknown';
   Completer<void>? _versionInitCompleter;
 
+  // Public getter for session ID
+  String get sessionId => _sessionId;
+
   Future<void> _initializeVersionInfo() async {
     if (_versionInitCompleter != null) {
       return _versionInitCompleter!.future;
@@ -144,10 +147,50 @@ class ApiService {
     final random = (timestamp * 31) % 1000000; // Simple random component
     _sessionId = '${timestamp}_$random';
     debugPrint('📊 Session ID: $_sessionId');
+    
+    // Debug: Show environment detection
+    debugPrint('🔧 Environment Detection:');
+    debugPrint('   Platform: ${kIsWeb ? 'WEB' : 'MOBILE'}');
+    debugPrint('   Base URL: $_staticBaseUrl');
+    if (kIsWeb) {
+      debugPrint('   Origin: ${Uri.base.origin}');
+      debugPrint('   ✅ Using nginx proxy (relative URLs)');
+    }
   }
 
-  static String get _staticBaseUrl =>
-      dotenv.env['API_BASE_URL'] ?? 'http://localhost:5070/api';
+  // ============================================================================
+  // ENVIRONMENT DETECTION: Web vs Mobile
+  // ============================================================================
+  // WEB: Uses relative URLs (nginx proxies to api.haze.pro)
+  //      Example: admin.haze.pro/api/tickets → nginx → api.haze.pro/api/tickets
+  // MOBILE: Uses direct URLs to api.haze.pro
+  //      Example: https://api.haze.pro/api/tickets
+  // ============================================================================
+
+  static String? _cachedBaseUrl; // Cache to prevent log spam
+  static bool _baseUrlLogged = false; // Track if we've logged the platform detection
+
+  static String get _staticBaseUrl {
+    if (_cachedBaseUrl == null) {
+      // Lazy initialization on first access
+      if (kIsWeb) {
+        // WEB: Relative URLs - nginx proxies transparently
+        _cachedBaseUrl = '/api'; // Relative to current host (admin.haze.pro)
+        if (!_baseUrlLogged) {
+          debugPrint('🌐 Platform: WEB - Using relative URLs (nginx proxy)');
+          _baseUrlLogged = true;
+        }
+      } else {
+        // MOBILE: Direct connection to api.haze.pro
+        _cachedBaseUrl = dotenv.env['API_BASE_URL'] ?? 'http://localhost:5070/api';
+        if (!_baseUrlLogged) {
+          debugPrint('📱 Platform: MOBILE - Using direct URL: $_cachedBaseUrl');
+          _baseUrlLogged = true;
+        }
+      }
+    }
+    return _cachedBaseUrl!;
+  }
 
   String get baseUrl => _staticBaseUrl;
 
@@ -1681,12 +1724,19 @@ class TokenExpiredException implements Exception {
 }
 
 // Helper function to proxy external images through backend to bypass CORS
+// Only applies proxy on Web platform - Mobile can load images directly
 String getProxiedImageUrl(String imageUrl) {
   // If URL is already proxied, return as-is
   if (imageUrl.contains('/api/proxy/image')) {
     return imageUrl;
   }
 
+  // Mobile: Return original URL (no CORS restrictions)
+  if (!kIsWeb) {
+    return imageUrl;
+  }
+
+  // Web: Proxy through backend to bypass CORS
   final apiBaseUrl = ApiService._staticBaseUrl.replaceFirst('/api', '');
   final encodedUrl = Uri.encodeComponent(imageUrl);
   return '$apiBaseUrl/api/proxy/image?url=$encodedUrl';

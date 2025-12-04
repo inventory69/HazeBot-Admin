@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
+import '../services/api_service.dart';
 
 class UserRocketLeagueScreen extends StatefulWidget {
   const UserRocketLeagueScreen({super.key});
@@ -913,7 +914,7 @@ class _UserRocketLeagueScreenState extends State<UserRocketLeagueScreen> {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(8),
                     child: Image.network(
-                      _testStats!['highest_icon_url'],
+                      getProxiedImageUrl(_testStats!['highest_icon_url']),
                       width: isMobile ? 48 : 64,
                       height: isMobile ? 48 : 64,
                       fit: BoxFit.contain,
@@ -1170,7 +1171,7 @@ class _UserRocketLeagueScreenState extends State<UserRocketLeagueScreen> {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: Image.network(
-                  iconUrl,
+                  getProxiedImageUrl(iconUrl),
                   fit: BoxFit.contain,
                   errorBuilder: (context, error, stackTrace) => Icon(
                     Icons.sports_esports,

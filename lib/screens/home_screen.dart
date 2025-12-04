@@ -6,7 +6,7 @@ import '../services/auth_service.dart';
 import '../services/discord_auth_service.dart';
 import '../services/permission_service.dart';
 import '../services/config_service.dart';
-import '../services/api_service.dart';
+import '../services/api_service.dart' show ApiService, getProxiedImageUrl, ApiException, ApiConnectionException, ApiTimeoutException, TokenExpiredException;
 import '../providers/data_cache_provider.dart';
 import '../utils/app_config.dart';
 import '../widgets/api_error_widget.dart';
@@ -18,7 +18,7 @@ import 'config/roles_config_screen.dart';
 import 'config/meme_config_screen.dart';
 import 'config/daily_meme_config_screen.dart';
 import 'config/daily_meme_preferences_screen.dart';
-import 'config/meme_generator_screen.dart';
+import 'config/meme_generator_screen.dart' hide getProxiedImageUrl;
 import 'config/rocket_league_config_screen.dart';
 import 'config/texts_config_screen.dart';
 import 'config/cog_manager_screen.dart';
@@ -101,10 +101,9 @@ class _HomeScreenState extends State<HomeScreen>
     // Ping server to register session (works for all users)
     try {
       await ApiService().ping();
-      debugPrint('Session ping successful');
     } catch (e) {
-      debugPrint('Session ping failed: $e');
       // Don't show error to user - this is just for session tracking
+      debugPrint('Session ping failed: $e');
     }
   }
 
@@ -1199,7 +1198,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(8),
                     child: Image.network(
-                      imageUrl,
+                      getProxiedImageUrl(imageUrl),
                       width: isMobile ? 80 : 100,
                       height: isMobile ? 80 : 100,
                       fit: BoxFit.cover,
@@ -1482,7 +1481,7 @@ class _DashboardScreenState extends State<DashboardScreen>
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: Image.network(
-                  thumbnail,
+                  getProxiedImageUrl(thumbnail),
                   width: isMobile ? 60 : 70,
                   height: isMobile ? 60 : 70,
                   fit: BoxFit.contain,
@@ -1890,7 +1889,7 @@ class _UserDashboardState extends State<_UserDashboard>
                           ClipRRect(
                             borderRadius: BorderRadius.circular(5),
                             child: Image.network(
-                              _rlRank!['icon_url'],
+                              getProxiedImageUrl(_rlRank!['icon_url']),
                               width: isMobile ? 28 : 36,
                               height: isMobile ? 28 : 36,
                               fit: BoxFit.contain,
