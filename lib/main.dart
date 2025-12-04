@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:dynamic_color/dynamic_color.dart';
@@ -80,8 +81,12 @@ class _HazeBotAdminAppState extends State<HazeBotAdminApp>
         if (state == AppLifecycleState.paused ||
             state == AppLifecycleState.inactive) {
           // App going to background - disconnect WebSocket
-          debugPrint('📱 App paused/inactive - disconnecting WebSocket');
-          discordAuthService.wsService.disconnect();
+          // ✅ FIX: Web should NOT disconnect on inactive (tab switch)
+          // Only mobile needs disconnect (app minimized)
+          if (!kIsWeb) {
+            debugPrint('📱 App paused/inactive - disconnecting WebSocket');
+            discordAuthService.wsService.disconnect();
+          }
         } else if (state == AppLifecycleState.resumed) {
           // App coming to foreground - reconnect if authenticated
           if (discordAuthService.isAuthenticated) {

@@ -95,7 +95,7 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
     // CRITICAL: Load user ID BEFORE joining WebSocket room
     await _loadCurrentUser();
 
-    // Now join WebSocket with user ID for push notification suppression
+    // Now join WebSocket with user ID for push notification suppression (async)
     _setupWebSocketListener();
   }
 
@@ -170,10 +170,33 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
         _wasDisconnectedWhilePaused = false;
       }
 
+      // ✅ FIX: Wait for WebSocket connection before joining ticket room
+      _rejoinTicketAfterReconnect();
+    }
+  }
+
+  /// Rejoin ticket room after WebSocket reconnects (with retry logic)
+  Future<void> _rejoinTicketAfterReconnect() async {
+    final connected = await _authService!.wsService.waitForConnection();
+    
+    if (connected) {
+      debugPrint('✅ WebSocket ready - joining ticket room');
       _authService!.wsService.joinTicket(
         widget.ticket.ticketId,
         userId: _currentUserDiscordId,
       );
+    } else {
+      debugPrint('❌ WebSocket connection timeout - retrying in 2s...');
+      // Retry once after 2 seconds
+      await Future.delayed(const Duration(seconds: 2));
+      if (_authService!.wsService.isConnected) {
+        _authService!.wsService.joinTicket(
+          widget.ticket.ticketId,
+          userId: _currentUserDiscordId,
+        );
+      } else {
+        debugPrint('❌ Failed to rejoin ticket room - WebSocket not connected');
+      }
     }
   }
 
@@ -306,12 +329,8 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
     _authService = Provider.of<AuthService>(context, listen: false);
     final wsService = _authService!.wsService;
 
-    // Join ticket room with user ID for push notification suppression
-    wsService.joinTicket(
-      widget.ticket.ticketId,
-      userId:
-          _currentUserDiscordId, // ✅ Suppress push notifications while viewing
-    );
+    // ✅ FIX: Wait for WebSocket connection before joining ticket room
+    _joinTicketWhenReady();
 
     // Listen for new messages and history
     wsService.onTicketUpdate(widget.ticket.ticketId, (data) {
@@ -329,6 +348,31 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
         }
       }
     });
+  }
+
+  /// Join ticket room once WebSocket is connected (with retry logic)
+  Future<void> _joinTicketWhenReady() async {
+    final connected = await _authService!.wsService.waitForConnection();
+    
+    if (connected) {
+      debugPrint('✅ WebSocket ready - joining ticket room (initial)');
+      _authService!.wsService.joinTicket(
+        widget.ticket.ticketId,
+        userId: _currentUserDiscordId,
+      );
+    } else {
+      debugPrint('⚠️ WebSocket connection timeout on initial join - retrying...');
+      // Retry once after 2 seconds
+      await Future.delayed(const Duration(seconds: 2));
+      if (_authService!.wsService.isConnected) {
+        _authService!.wsService.joinTicket(
+          widget.ticket.ticketId,
+          userId: _currentUserDiscordId,
+        );
+      } else {
+        debugPrint('❌ Failed to join ticket room - WebSocket not connected');
+      }
+    }
   }
 
   void _handleMessageHistory(List<dynamic> messagesData) {
