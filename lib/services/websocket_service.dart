@@ -57,6 +57,7 @@ class WebSocketService {
       _socket!.onConnect((_) {
         print('✅ WebSocket connected');
         _isConnected = true;
+        print('✅ WebSocket connection established');
       });
 
       _socket!.onDisconnect((_) {
@@ -153,7 +154,9 @@ class WebSocketService {
   /// Join a ticket room to receive updates
   /// [userId] - Discord user ID to suppress push notifications for this user
   void joinTicket(String ticketId, {String? userId}) {
-    if (_socket == null || !_socket!.connected) {
+    // ✅ FIX: Use _isConnected (same as waitForConnection) instead of _socket!.connected
+    // This avoids race condition where onConnect fired but socket.io internal state not yet updated
+    if (_socket == null || !_isConnected) {
       print('⚠️ Cannot join ticket: WebSocket not connected');
       return;
     }
@@ -179,7 +182,8 @@ class WebSocketService {
   /// Leave a ticket room
   /// [userId] - Discord user ID to re-enable push notifications for this user
   void leaveTicket(String ticketId, {String? userId}) {
-    if (_socket == null || !_socket!.connected) {
+    // ✅ FIX: Use _isConnected for consistency
+    if (_socket == null || !_isConnected) {
       return;
     }
 
