@@ -141,17 +141,10 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // ✅ Guard: Check if authService is initialized
     if (_authService == null) return;
 
-    // ✅ CRITICAL: Leave ticket room when app goes to background
-    // This ensures push notifications are re-enabled when user is not actively viewing
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.inactive) {
-      debugPrint(
-          '📱 App paused/inactive - leaving ticket room to re-enable push notifications');
-
-      // Track if WebSocket is disconnected during pause (we might miss messages)
       _wasDisconnectedWhilePaused = !_authService!.wsService.isConnected;
 
       _authService!.wsService.leaveTicket(
@@ -159,18 +152,12 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
         userId: _currentUserDiscordId,
       );
     } else if (state == AppLifecycleState.resumed) {
-      debugPrint(
-          '📱 App resumed - rejoining ticket room to suppress push notifications');
-
-      // ✅ If WebSocket was disconnected, reload messages from API to catch missed ones
+      // Reload messages if we were disconnected
       if (_wasDisconnectedWhilePaused) {
-        debugPrint(
-            '📱 WebSocket was disconnected during pause - reloading messages to catch up');
         _loadMessages();
         _wasDisconnectedWhilePaused = false;
       }
 
-      // ✅ FIX: Wait for WebSocket connection before joining ticket room
       _rejoinTicketAfterReconnect();
     }
   }
@@ -180,13 +167,11 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
     final connected = await _authService!.wsService.waitForConnection();
     
     if (connected) {
-      debugPrint('✅ WebSocket ready - joining ticket room');
       _authService!.wsService.joinTicket(
         widget.ticket.ticketId,
         userId: _currentUserDiscordId,
       );
     } else {
-      debugPrint('❌ WebSocket connection timeout - retrying in 2s...');
       // Retry once after 2 seconds
       await Future.delayed(const Duration(seconds: 2));
       if (_authService!.wsService.isConnected) {
@@ -194,8 +179,6 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
           widget.ticket.ticketId,
           userId: _currentUserDiscordId,
         );
-      } else {
-        debugPrint('❌ Failed to rejoin ticket room - WebSocket not connected');
       }
     }
   }
@@ -334,17 +317,12 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
 
     // Listen for new messages and history
     wsService.onTicketUpdate(widget.ticket.ticketId, (data) {
-      debugPrint('🎯 TicketChatWidget received update: ${data['event_type']}');
       final eventType = data['event_type'] as String?;
 
       if (eventType == 'new_message') {
         final messageData = data['data'] as Map<String, dynamic>?;
-        debugPrint('📦 Message data: ${messageData != null ? "VALID" : "NULL"}');
         if (messageData != null) {
-          debugPrint('✅ Calling _handleNewMessage()');
           _handleNewMessage(messageData);
-        } else {
-          debugPrint('❌ messageData is NULL!');
         }
       } else if (eventType == 'message_history') {
         final messagesData = data['data'] as List<dynamic>?;
@@ -360,13 +338,11 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
     final connected = await _authService!.wsService.waitForConnection();
     
     if (connected) {
-      debugPrint('✅ WebSocket ready - joining ticket room (initial)');
       _authService!.wsService.joinTicket(
         widget.ticket.ticketId,
         userId: _currentUserDiscordId,
       );
     } else {
-      debugPrint('⚠️ WebSocket connection timeout on initial join - retrying...');
       // Retry once after 2 seconds
       await Future.delayed(const Duration(seconds: 2));
       if (_authService!.wsService.isConnected) {
@@ -374,8 +350,6 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
           widget.ticket.ticketId,
           userId: _currentUserDiscordId,
         );
-      } else {
-        debugPrint('❌ Failed to join ticket room - WebSocket not connected');
       }
     }
   }
@@ -446,40 +420,26 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
   }
 
   void _handleNewMessage(Map<String, dynamic> messageData) {
-    debugPrint('🔍 _handleNewMessage called, mounted=$mounted');
-    if (!mounted) {
-      debugPrint('❌ Widget not mounted, skipping');
-      return;
-    }
+    if (!mounted) return;
 
-    // ✅ FIX: Use display_content if available (for messages sent via app)
-    // Backend sends both 'content' (formatted for Discord) and 'display_content' (original)
     final displayContent = messageData['display_content'] as String? ??
         messageData['content'] as String;
 
-    // Create message with cleaned content for display
     final cleanedMessageData = Map<String, dynamic>.from(messageData);
     cleanedMessageData['content'] = displayContent;
 
     final newMessage = TicketMessage.fromJson(cleanedMessageData);
-    debugPrint('📝 New message parsed: ${newMessage.id} from ${newMessage.authorName}');
 
-    // ✅ FIX: Check if message already exists (prevent duplicates)
+    // Check if message already exists (prevent duplicates)
     if (_seenMessageIds.contains(newMessage.id)) {
-      debugPrint('⚠️ Duplicate message ignored: ${newMessage.id}');
       return;
     }
 
-    // ✅ FIX: Skip own messages from WebSocket (already added optimistically)
-    // This prevents duplicate messages when user sends a message
+    // Skip own messages from WebSocket (already added optimistically)
     if (_currentUserDiscordId != null &&
         newMessage.authorId == _currentUserDiscordId) {
-      debugPrint(
-          '⏭️ Skipping own message from WebSocket: ${newMessage.id} (already added optimistically)');
       return;
     }
-    
-    debugPrint('✅ Message passes all checks, adding to list');
 
 
     final oldCount = _messages.length;
@@ -498,16 +458,9 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
     // ✅ Update cache (fire-and-forget)
     _cacheService.appendMessage(widget.ticket.ticketId, newMessage);
 
-    // ✅ IMPROVED: Smart scroll behavior based on user position
-    // - If user is at bottom: auto-scroll to new message
-    // - If user scrolled up: don't interrupt their reading
+    // Smart scroll behavior based on user position
     if (_isUserAtBottom) {
-      debugPrint('📩 New message arrived, user at bottom → auto-scrolling');
       _scrollToBottom(animate: true);
-    } else {
-      debugPrint(
-          '📩 New message arrived, user scrolled up → not auto-scrolling');
-      // Optional: Could show a "New messages" badge here
     }
   }
 

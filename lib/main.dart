@@ -80,17 +80,14 @@ class _HazeBotAdminAppState extends State<HazeBotAdminApp>
 
         if (state == AppLifecycleState.paused ||
             state == AppLifecycleState.inactive) {
-          // App going to background - disconnect WebSocket
-          // ✅ FIX: Web should NOT disconnect on inactive (tab switch)
-          // Only mobile needs disconnect (app minimized)
+          // Web should NOT disconnect on inactive (tab switch)
+          // Only mobile disconnects when app goes to background
           if (!kIsWeb) {
-            debugPrint('📱 App paused/inactive - disconnecting WebSocket');
             discordAuthService.wsService.disconnect();
           }
         } else if (state == AppLifecycleState.resumed) {
-          // App coming to foreground - reconnect if authenticated
+          // Reconnect if authenticated
           if (discordAuthService.isAuthenticated) {
-            debugPrint('📱 App resumed - reconnecting WebSocket');
             final baseUrl = dotenv.env['API_BASE_URL'] ?? '';
             if (baseUrl.isNotEmpty) {
               discordAuthService.wsService.connect(baseUrl);

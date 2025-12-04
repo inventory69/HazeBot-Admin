@@ -17,10 +17,7 @@ class WebSocketService {
 
   /// Initialize WebSocket connection
   void connect(String baseUrl) {
-    print('🔌 WebSocket connect() called with baseUrl: $baseUrl');
-    
     if (_socket != null && _socket!.connected) {
-      print('🔌 WebSocket already connected - skipping');
       return;
     }
 
@@ -30,20 +27,13 @@ class WebSocketService {
       
       if (kIsWeb) {
         // WEB: Use current origin (admin.haze.pro)
-        // WebSocket connects to same domain as the web app
-        wsUrl = Uri.base.origin; // Gets https://admin.haze.pro
-        print('🌐 WEB: Using current origin for WebSocket: $wsUrl');
+        wsUrl = Uri.base.origin;
       } else {
         // MOBILE: Direct URL - remove trailing /api if present
-        // baseUrl is like: https://api.haze.pro/api
-        // We need: https://api.haze.pro
         wsUrl = baseUrl.endsWith('/api')
             ? baseUrl.substring(0, baseUrl.length - 4)
             : baseUrl;
-        print('📱 MOBILE: Using direct API URL for WebSocket: $wsUrl');
       }
-      
-      print('🔌 Connecting to WebSocket: $wsUrl');
 
       _socket = IO.io(
         wsUrl,
@@ -55,13 +45,10 @@ class WebSocketService {
       );
 
       _socket!.onConnect((_) {
-        print('✅ WebSocket connected');
         _isConnected = true;
-        print('✅ WebSocket connection established');
       });
 
       _socket!.onDisconnect((_) {
-        print('❌ WebSocket disconnected');
         _isConnected = false;
       });
 
@@ -71,16 +58,14 @@ class WebSocketService {
       });
 
       _socket!.on('connected', (data) {
-        print('📡 Server confirmed connection: $data');
+        // Server confirmed connection
       });
 
       _socket!.on('ticket_update', (data) {
-        print('📨 Received ticket update: $data');
         _handleTicketUpdate(data);
       });
 
       _socket!.on('message_history', (data) {
-        print('📜 Received message history: ${data}');
         _handleMessageHistory(data);
       });
 
@@ -120,13 +105,8 @@ class WebSocketService {
   /// Disconnect WebSocket
   void disconnect() {
     if (_socket != null) {
-      print('🔌 Disconnecting WebSocket');
-
-      // ✅ CRITICAL: Leave all joined tickets BEFORE disconnecting
-      // This ensures backend receives leave_ticket events and clears active_ticket_viewers
+      // Leave all joined tickets BEFORE disconnecting
       if (_joinedTickets.isNotEmpty) {
-        print(
-            '🧹 Leaving ${_joinedTickets.length} ticket room(s) before disconnect...');
         for (var entry in _joinedTickets.entries) {
           final ticketId = entry.key;
           final userId = entry.value;
@@ -137,8 +117,6 @@ class WebSocketService {
           }
 
           _socket!.emit('leave_ticket', data);
-          print(
-              '🎫 Left ticket room: $ticketId${userId != null ? " (user: $userId)" : ""}');
         }
         _joinedTickets.clear();
       }
@@ -157,53 +135,33 @@ class WebSocketService {
   /// Join a ticket room to receive updates
   /// [userId] - Discord user ID to suppress push notifications for this user
   void joinTicket(String ticketId, {String? userId}) {
-    // ✅ FIX: Use _isConnected (same as waitForConnection) instead of _socket!.connected
-    // This avoids race condition where onConnect fired but socket.io internal state not yet updated
     if (_socket == null || !_isConnected) {
-      print('⚠️ Cannot join ticket: WebSocket not connected');
       return;
     }
 
-    print(
-        '🎫 Joining ticket room: $ticketId${userId != null ? " (user: $userId)" : ""}');
-
     final data = {'ticket_id': ticketId};
     if (userId != null) {
-      data['user_id'] = userId; // ✅ Send user_id to suppress push notifications
+      data['user_id'] = userId;
     }
 
-    // ✅ Track this ticket as joined (for cleanup on disconnect)
     _joinedTickets[ticketId] = userId;
-
     _socket!.emit('join_ticket', data);
-
-    _socket!.once('joined_ticket', (data) {
-      print('✅ Joined ticket room: $data');
-    });
   }
 
   /// Leave a ticket room
   /// [userId] - Discord user ID to re-enable push notifications for this user
   void leaveTicket(String ticketId, {String? userId}) {
-    // ✅ FIX: Use _isConnected for consistency
     if (_socket == null || !_isConnected) {
       return;
     }
 
-    print(
-        '🎫 Leaving ticket room: $ticketId${userId != null ? " (user: $userId)" : ""}');
-
     final data = {'ticket_id': ticketId};
     if (userId != null) {
-      data['user_id'] =
-          userId; // ✅ Send user_id to re-enable push notifications
+      data['user_id'] = userId;
     }
 
     _socket!.emit('leave_ticket', data);
-
-    // ✅ Remove from joined tickets tracking
     _joinedTickets.remove(ticketId);
-
     _ticketListeners.remove(ticketId);
   }
 
@@ -214,7 +172,6 @@ class WebSocketService {
       _ticketListeners[ticketId] = [];
     }
     _ticketListeners[ticketId]!.add(callback);
-    print('👂 Added listener for ticket: $ticketId');
   }
 
   /// Remove ticket update listener
@@ -236,15 +193,11 @@ class WebSocketService {
       final eventType = updateData['event_type'] as String?;
 
       if (ticketId == null || eventType == null) {
-        print('⚠️ Invalid ticket update data: $updateData');
         return;
       }
 
-      print('📡 Processing $eventType for ticket $ticketId');
-
       // Notify all listeners for this ticket
       if (_ticketListeners.containsKey(ticketId)) {
-        print('✅ Found ${_ticketListeners[ticketId]!.length} listener(s) for ticket $ticketId');
         for (final listener in _ticketListeners[ticketId]!) {
           try {
             listener(updateData);
@@ -252,8 +205,6 @@ class WebSocketService {
             print('❌ Error in ticket listener: $e');
           }
         }
-      } else {
-        print('⚠️ No listeners found for ticket $ticketId! Available tickets: ${_ticketListeners.keys.toList()}');
       }
     } catch (e) {
       print('❌ Error handling ticket update: $e');
@@ -268,12 +219,8 @@ class WebSocketService {
       final messages = historyData['messages'] as List<dynamic>?;
 
       if (ticketId == null || messages == null) {
-        print('⚠️ Invalid message history data: $historyData');
         return;
       }
-
-      print(
-          '📜 Processing message history for ticket $ticketId: ${messages.length} messages');
 
       // Convert to proper format and notify listeners
       final updateData = {
