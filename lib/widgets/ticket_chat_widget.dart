@@ -95,7 +95,7 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
     // CRITICAL: Load user ID BEFORE joining WebSocket room
     await _loadCurrentUser();
 
-    // Now join WebSocket with user ID for push notification suppression
+    // Now join WebSocket with user ID for push notification suppression (async)
     _setupWebSocketListener();
   }
 
@@ -170,10 +170,33 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
         _wasDisconnectedWhilePaused = false;
       }
 
+      // ✅ FIX: Wait for WebSocket connection before joining ticket room
+      _rejoinTicketAfterReconnect();
+    }
+  }
+
+  /// Rejoin ticket room after WebSocket reconnects (with retry logic)
+  Future<void> _rejoinTicketAfterReconnect() async {
+    final connected = await _authService!.wsService.waitForConnection();
+    
+    if (connected) {
+      debugPrint('✅ WebSocket ready - joining ticket room');
       _authService!.wsService.joinTicket(
         widget.ticket.ticketId,
         userId: _currentUserDiscordId,
       );
+    } else {
+      debugPrint('❌ WebSocket connection timeout - retrying in 2s...');
+      // Retry once after 2 seconds
+      await Future.delayed(const Duration(seconds: 2));
+      if (_authService!.wsService.isConnected) {
+        _authService!.wsService.joinTicket(
+          widget.ticket.ticketId,
+          userId: _currentUserDiscordId,
+        );
+      } else {
+        debugPrint('❌ Failed to rejoin ticket room - WebSocket not connected');
+      }
     }
   }
 
@@ -306,21 +329,22 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
     _authService = Provider.of<AuthService>(context, listen: false);
     final wsService = _authService!.wsService;
 
-    // Join ticket room with user ID for push notification suppression
-    wsService.joinTicket(
-      widget.ticket.ticketId,
-      userId:
-          _currentUserDiscordId, // ✅ Suppress push notifications while viewing
-    );
+    // ✅ FIX: Wait for WebSocket connection before joining ticket room
+    _joinTicketWhenReady();
 
     // Listen for new messages and history
     wsService.onTicketUpdate(widget.ticket.ticketId, (data) {
+      debugPrint('🎯 TicketChatWidget received update: ${data['event_type']}');
       final eventType = data['event_type'] as String?;
 
       if (eventType == 'new_message') {
         final messageData = data['data'] as Map<String, dynamic>?;
+        debugPrint('📦 Message data: ${messageData != null ? "VALID" : "NULL"}');
         if (messageData != null) {
+          debugPrint('✅ Calling _handleNewMessage()');
           _handleNewMessage(messageData);
+        } else {
+          debugPrint('❌ messageData is NULL!');
         }
       } else if (eventType == 'message_history') {
         final messagesData = data['data'] as List<dynamic>?;
@@ -329,6 +353,31 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
         }
       }
     });
+  }
+
+  /// Join ticket room once WebSocket is connected (with retry logic)
+  Future<void> _joinTicketWhenReady() async {
+    final connected = await _authService!.wsService.waitForConnection();
+    
+    if (connected) {
+      debugPrint('✅ WebSocket ready - joining ticket room (initial)');
+      _authService!.wsService.joinTicket(
+        widget.ticket.ticketId,
+        userId: _currentUserDiscordId,
+      );
+    } else {
+      debugPrint('⚠️ WebSocket connection timeout on initial join - retrying...');
+      // Retry once after 2 seconds
+      await Future.delayed(const Duration(seconds: 2));
+      if (_authService!.wsService.isConnected) {
+        _authService!.wsService.joinTicket(
+          widget.ticket.ticketId,
+          userId: _currentUserDiscordId,
+        );
+      } else {
+        debugPrint('❌ Failed to join ticket room - WebSocket not connected');
+      }
+    }
   }
 
   void _handleMessageHistory(List<dynamic> messagesData) {
@@ -397,7 +446,11 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
   }
 
   void _handleNewMessage(Map<String, dynamic> messageData) {
-    if (!mounted) return;
+    debugPrint('🔍 _handleNewMessage called, mounted=$mounted');
+    if (!mounted) {
+      debugPrint('❌ Widget not mounted, skipping');
+      return;
+    }
 
     // ✅ FIX: Use display_content if available (for messages sent via app)
     // Backend sends both 'content' (formatted for Discord) and 'display_content' (original)
@@ -409,6 +462,7 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
     cleanedMessageData['content'] = displayContent;
 
     final newMessage = TicketMessage.fromJson(cleanedMessageData);
+    debugPrint('📝 New message parsed: ${newMessage.id} from ${newMessage.authorName}');
 
     // ✅ FIX: Check if message already exists (prevent duplicates)
     if (_seenMessageIds.contains(newMessage.id)) {
@@ -424,6 +478,9 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
           '⏭️ Skipping own message from WebSocket: ${newMessage.id} (already added optimistically)');
       return;
     }
+    
+    debugPrint('✅ Message passes all checks, adding to list');
+
 
     final oldCount = _messages.length;
 

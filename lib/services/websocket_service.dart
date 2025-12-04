@@ -57,6 +57,7 @@ class WebSocketService {
       _socket!.onConnect((_) {
         print('✅ WebSocket connected');
         _isConnected = true;
+        print('✅ WebSocket connection established');
       });
 
       _socket!.onDisconnect((_) {
@@ -93,6 +94,29 @@ class WebSocketService {
     }
   }
 
+  /// Wait for WebSocket to connect
+  /// Returns true if connected, false if timeout
+  Future<bool> waitForConnection({Duration timeout = const Duration(seconds: 5)}) async {
+    if (isConnected) {
+      print('✅ Already connected');
+      return true;
+    }
+
+    print('⏳ Waiting for WebSocket connection...');
+    final start = DateTime.now();
+    
+    while (!isConnected) {
+      if (DateTime.now().difference(start) > timeout) {
+        print('❌ WebSocket connection timeout after ${timeout.inSeconds}s');
+        return false;
+      }
+      await Future.delayed(const Duration(milliseconds: 100));
+    }
+    
+    print('✅ WebSocket connection established');
+    return true;
+  }
+
   /// Disconnect WebSocket
   void disconnect() {
     if (_socket != null) {
@@ -123,14 +147,19 @@ class WebSocketService {
       _socket!.dispose();
       _socket = null;
       _isConnected = false;
-      _ticketListeners.clear();
+      // ✅ FIX: Do NOT clear listeners on disconnect!
+      // Listeners are callbacks registered by widgets and should persist across reconnects
+      // They will automatically work again when socket reconnects
+      // _ticketListeners.clear(); // ❌ REMOVED - this caused messages to not arrive after reconnect
     }
   }
 
   /// Join a ticket room to receive updates
   /// [userId] - Discord user ID to suppress push notifications for this user
   void joinTicket(String ticketId, {String? userId}) {
-    if (_socket == null || !_socket!.connected) {
+    // ✅ FIX: Use _isConnected (same as waitForConnection) instead of _socket!.connected
+    // This avoids race condition where onConnect fired but socket.io internal state not yet updated
+    if (_socket == null || !_isConnected) {
       print('⚠️ Cannot join ticket: WebSocket not connected');
       return;
     }
@@ -156,7 +185,8 @@ class WebSocketService {
   /// Leave a ticket room
   /// [userId] - Discord user ID to re-enable push notifications for this user
   void leaveTicket(String ticketId, {String? userId}) {
-    if (_socket == null || !_socket!.connected) {
+    // ✅ FIX: Use _isConnected for consistency
+    if (_socket == null || !_isConnected) {
       return;
     }
 
@@ -214,6 +244,7 @@ class WebSocketService {
 
       // Notify all listeners for this ticket
       if (_ticketListeners.containsKey(ticketId)) {
+        print('✅ Found ${_ticketListeners[ticketId]!.length} listener(s) for ticket $ticketId');
         for (final listener in _ticketListeners[ticketId]!) {
           try {
             listener(updateData);
@@ -221,6 +252,8 @@ class WebSocketService {
             print('❌ Error in ticket listener: $e');
           }
         }
+      } else {
+        print('⚠️ No listeners found for ticket $ticketId! Available tickets: ${_ticketListeners.keys.toList()}');
       }
     } catch (e) {
       print('❌ Error handling ticket update: $e');
