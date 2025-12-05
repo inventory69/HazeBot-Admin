@@ -206,4 +206,21 @@ HazeBot-Admin/
 
 ---
 
-For more info, see [Firebase Cloud Messaging Docs](https://firebase.google.com/docs/cloud-messaging)
+## 🔗 Next Steps
+
+- 🔨 [Building Guide](BUILDING.md) - Build for all platforms with Firebase
+- 🧪 [Development Guide](DEVELOPMENT.md) - Development workflows
+- 🏠 [Documentation Index](README.md) - All documentation
+
+**Related Resources:**
+- [Firebase Cloud Messaging Docs](https://firebase.google.com/docs/cloud-messaging) - Official FCM documentation
+- [Flutter Firebase Messaging](https://pub.dev/packages/firebase_messaging) - Flutter plugin docs
+- 🤖 [HazeBot Backend](https://github.com/inventory69/HazeBot) - Backend notification setup
+
+---
+
+## 🆘 Getting Help
+
+- **Firebase Issues:** Check troubleshooting section above
+- **Flutter Questions:** [Flutter Firebase Setup](https://firebase.google.com/docs/flutter/setup)
+- **Project Questions:** Open an issue on [GitHub](https://github.com/YOUR_USERNAME/HazeBot-Admin/issues)

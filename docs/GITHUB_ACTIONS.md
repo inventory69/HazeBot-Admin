@@ -48,7 +48,7 @@ The workflow requires secrets for configuration. Add them in your repository:
 3. Value: e.g., `true`
 4. Click **Add secret**
 
-📚 **Detailed Setup Guide:** See [GITHUB_SECRETS_SETUP.md](docs/GITHUB_SECRETS_SETUP.md)
+📚 **Detailed Setup Guide:** See [GITHUB_SECRETS_SETUP.md](GITHUB_SECRETS_SETUP.md)
 
 ---
 
@@ -436,6 +436,12 @@ VERSION_TAG="v$(date +'%Y.%m.%d')-build-${{ github.run_number }}"
 
 ## 📚 Additional Resources
 
+**Related Documentation:**
+- [GITHUB_SECRETS_SETUP.md](GITHUB_SECRETS_SETUP.md) - Configure repository secrets
+- [BUILDING.md](BUILDING.md) - Local build instructions
+- [APK_DOWNLOAD.md](APK_DOWNLOAD.md) - Download and install guide
+- [Documentation Index](README.md) - All documentation
+
 **GitHub Actions Documentation:**
 - [Workflow Syntax](https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions)
 - [Secrets Management](https://docs.github.com/en/actions/security-guides/encrypted-secrets)
@@ -467,15 +473,25 @@ jobs:
 
 ---
 
+## 🔗 Next Steps
+
+- 📱 [APK Download Guide](APK_DOWNLOAD.md) - Install the built APK
+- 🔑 [GitHub Secrets Setup](GITHUB_SECRETS_SETUP.md) - Configure secrets
+- 🔨 [Building Guide](BUILDING.md) - Local build instructions
+- 🏠 [Documentation Index](README.md) - All documentation
+
+---
+
 ## 🆘 Support
 
 **Issues?** 
-- GitHub Issues: https://github.com/inventory69/HazeBot-Admin/issues
+- GitHub Issues: `https://github.com/YOUR_USERNAME/HazeBot-Admin/issues`
 - Include workflow run URL and error logs
 
 **Questions?**
-- Review [README.md](README.md)
+- Review [Documentation Index](README.md)
 - Check [APK_DOWNLOAD.md](APK_DOWNLOAD.md)
+- See [GITHUB_SECRETS_SETUP.md](GITHUB_SECRETS_SETUP.md)
 
 ---
 

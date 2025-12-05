@@ -104,8 +104,8 @@ Choose download option above and save APK to your device.
 ### API URL Setup
 
 **Pre-configured APKs:**
-- Test builds: `https://test-hazebot-admin.hzwd.xyz/api`
-- Production builds: Your production API URL
+- Test builds: Connect to your test/staging API
+- Production builds: Connect to your production API URL
 
 **Manual Configuration:**
 1. Open app
@@ -115,8 +115,8 @@ Choose download option above and save APK to your device.
 5. Save and return to login
 
 **API URL Examples:**
-- **Local Testing:** `http://10.0.2.2:5070/api` (emulator)
-- **LAN Testing:** `http://192.168.1.100:5070/api` (physical device)
+- **Local Testing (Emulator):** `http://10.0.2.2:5070/api`
+- **Local Testing (Device):** `http://YOUR_LOCAL_IP:5070/api` (find with `ip addr` or `ifconfig`)
 - **Production:** `https://your-domain.com/api`
 
 ### API Configuration
@@ -249,15 +249,26 @@ Creates versioned release alongside automated builds.
 
 ---
 
+## 🔗 Next Steps
+
+After installing:
+- 🔧 [Setup Checklist](SETUP_CHECKLIST.md) - Complete setup verification
+- 🔥 [Firebase Setup](FIREBASE_SETUP.md) - Enable push notifications (optional)
+- 📋 [Features](FEATURES.md) - Explore what the app can do
+- 🏠 [Documentation Index](README.md) - All documentation
+
+---
+
 ## 🆘 Support
 
 **Problems?** Open an issue:
-- GitHub Issues: https://github.com/inventory69/HazeBot-Admin/issues
+- GitHub Issues: `https://github.com/YOUR_USERNAME/HazeBot-Admin/issues`
 - Include: Android version, APK version, error messages
 
 **Questions?**
-- Check [README.md](README.md) for full documentation
-- Review [SETUP_CHECKLIST.md](SETUP_CHECKLIST.md)
+- Check [Documentation Index](README.md) for all guides
+- Review [Setup Checklist](SETUP_CHECKLIST.md) for configuration
+- See [Troubleshooting section](#-troubleshooting) above
 
 ---
 

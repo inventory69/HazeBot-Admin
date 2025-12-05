@@ -574,8 +574,22 @@ docs: update setup instructions
 
 ---
 
-## Next Steps
+## 🔗 Next Steps
 
-- 🏠 [Back to README](README.md)
-- 🔨 [Building Guide](BUILDING.md)
-- 🏗️ [Architecture](../HazeBot/ARCHITECTURE.md)
+- 🔨 [Building Guide](BUILDING.md) - Build for all platforms
+- 📋 [Features](FEATURES.md) - Understand existing features
+- 🔥 [Firebase Setup](FIREBASE_SETUP.md) - Configure notifications
+- 🏠 [Documentation Index](README.md) - All documentation
+
+**Related Resources:**
+- 🤖 [HazeBot Backend](https://github.com/inventory69/HazeBot) - Bot & API server
+- 📖 [HazeBot API](https://github.com/inventory69/HazeBot/blob/main/api/README.md) - REST API reference
+- 🏗️ [Flutter Documentation](https://docs.flutter.dev) - Official Flutter guides
+
+---
+
+## 🆘 Getting Help
+
+- **Development Issues:** Check troubleshooting section above
+- **Flutter Questions:** [Flutter Documentation](https://docs.flutter.dev)
+- **Project Questions:** Open an issue on [GitHub](https://github.com/YOUR_USERNAME/HazeBot-Admin/issues)

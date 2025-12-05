@@ -98,6 +98,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for details on contributing to this project.
+Report bugs and request features via [GitHub Issues](https://github.com/YOUR_USERNAME/HazeBot-Admin/issues).
 
-Report bugs and request features via [GitHub Issues](https://github.com/inventory69/HazeBot-Admin/issues).
+See the main [README](../README.md#-contributing) for contribution guidelines.
+
+---
+
+## 🔗 Documentation
+
+- 📖 [Documentation Index](README.md) - All documentation
+- 📋 [Features](FEATURES.md) - Complete feature list
+- 🔨 [Building](BUILDING.md) - Build instructions
+- 🏠 [Main README](../README.md) - Project overview
