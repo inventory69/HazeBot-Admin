@@ -115,10 +115,10 @@ jobs:
           echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
           echo "COMMIT_DATE=$(git log -1 --format=%cd --date=iso-strict)" >> $GITHUB_ENV
           
-          # Get full commit message preserving newlines
+          # Get full commit message preserving newlines and emojis (UTF-8)
           {
             echo 'COMMIT_MSG<<EOF'
-            git log -1 --pretty=%B
+            git -c core.quotepath=false log -1 --pretty=%B
             echo 'EOF'
           } >> $GITHUB_ENV
       
