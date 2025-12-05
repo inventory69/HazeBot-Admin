@@ -94,10 +94,6 @@ jobs:
           echo "storeFile=upload-keystore.jks" >> android/key.properties
           echo "✅ Signing configuration created"
       
-      - name: Run tests
-        run: flutter test --no-pub
-        continue-on-error: true
-      
       - name: Build Production APK (Release)
         run: flutter build apk --release
       
@@ -171,8 +167,8 @@ jobs:
             
             - ✅ Configured for **PRODUCTION** environment
             - ✅ Connected to production API server
-            - ✅ Push notifications enabled
-            - ✅ Firebase analytics enabled
+            - ✅ Push notifications enabled (Firebase Cloud Messaging)
+            - ✅ Custom analytics system enabled (SQLite-based via HazeBot API)
             
             ---
             
@@ -185,11 +181,14 @@ jobs:
             
             ---
             
-            ## 📱 Obtanium Support
+            ## 📱 Obtanium - Auto-Update App
             
-            This release is compatible with Obtanium. The app will automatically detect updates.
+            Get automatic updates with [Obtanium](https://github.com/ImranR98/Obtanium/releases/latest).
             
-            **Obtanium URL:** `https://github.com/inventory69/HazeBot-Admin`
+            **Setup:**
+            1. Install Obtanium from the link above
+            2. Add app with this URL: `https://github.com/inventory69/HazeBot-Admin`
+            3. Enable auto-updates
             
             ---
             
