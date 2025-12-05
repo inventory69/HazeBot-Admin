@@ -324,11 +324,11 @@ Output: `build/web/`
 **Deploy to:**
 - Static hosting (Netlify, Vercel, GitHub Pages)
 - Own server with nginx/Apache
-- Use `spa_server.py` for local testing
+- Use `python3 scripts/spa_server.py --dir build/web` for local testing
 
 - [ ] Web build successful
 - [ ] Static files generated
-- [ ] Tested locally with `spa_server.py`
+- [ ] Tested locally with `python3 scripts/spa_server.py --dir build/web`
 - [ ] Deployed to hosting
 
 ### Android APK
@@ -617,9 +617,16 @@ Once all items are checked:
 ---
 
 **Need Help?**
-- GitHub Issues: https://github.com/inventory69/HazeBot-Admin/issues
-- Documentation: [README.md](README.md)
-- Backend Setup: [HazeBot README](https://github.com/inventory69/HazeBot)
+- GitHub Issues: `https://github.com/YOUR_USERNAME/HazeBot-Admin/issues`
+- Documentation: [Documentation Index](README.md)
+- Backend Setup: [HazeBot Repository](https://github.com/inventory69/HazeBot)
+- Backend Docs: [HazeBot Documentation](https://github.com/inventory69/HazeBot/blob/main/docs/README.md)
+
+**Related Guides:**
+- 🔨 [Building Guide](BUILDING.md) - Build for all platforms
+- 🔥 [Firebase Setup](FIREBASE_SETUP.md) - Push notifications
+- 🚀 [GitHub Actions](GITHUB_ACTIONS.md) - CI/CD pipeline
+- 🧪 [Development Guide](DEVELOPMENT.md) - Development workflows
 
 ---
 

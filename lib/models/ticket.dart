@@ -17,6 +17,7 @@ class Ticket {
   final String? assignedToName;
   final String? assignedToAvatar;
   final String? initialMessage;
+  final int reopenCount;
 
   Ticket({
     required this.ticketId,
@@ -37,6 +38,7 @@ class Ticket {
     this.assignedToName,
     this.assignedToAvatar,
     this.initialMessage,
+    this.reopenCount = 0,
   });
 
   factory Ticket.fromJson(Map<String, dynamic> json) {
@@ -59,6 +61,7 @@ class Ticket {
       assignedToName: json['assigned_to_name'] as String?,
       assignedToAvatar: json['assigned_to_avatar'] as String?,
       initialMessage: json['initial_message'] as String?,
+      reopenCount: json['reopen_count'] as int? ?? 0,
     );
   }
 
@@ -82,6 +85,7 @@ class Ticket {
       'assigned_to_name': assignedToName,
       'assigned_to_avatar': assignedToAvatar,
       'initial_message': initialMessage,
+      'reopen_count': reopenCount,
     };
   }
 

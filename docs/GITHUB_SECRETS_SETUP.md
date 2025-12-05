@@ -34,7 +34,7 @@ Die GitHub Actions Workflow benötigt folgende Secrets, um die App korrekt zu ba
 ## ⚙️ Secrets hinzufügen
 
 ### Schritt 1: GitHub Repository öffnen
-1. Gehe zu deinem Repository: https://github.com/inventory69/HazeBot-Admin
+1. Gehe zu deinem Repository: `https://github.com/YOUR_USERNAME/HazeBot-Admin`
 2. Klicke auf **Settings** (Zahnrad-Symbol)
 3. In der linken Sidebar: **Secrets and variables** → **Actions**
 
@@ -151,6 +151,7 @@ PROD_MODE=false  # Verwende false für lokale Entwicklung
 
 ## 📚 Siehe auch
 
-- [build-apk.yml](.github/workflows/build-apk.yml) - GitHub Actions Workflow
-- [app_config.dart](lib/utils/app_config.dart) - PROD_MODE Logik
-- [.env.example](.env.example) - Environment Variables Beispiel
+- [GITHUB_ACTIONS.md](GITHUB_ACTIONS.md) - Vollständige CI/CD Dokumentation
+- [BUILDING.md](BUILDING.md) - Build-Anweisungen
+- [SETUP_CHECKLIST.md](SETUP_CHECKLIST.md) - Setup-Checkliste
+- [Documentation Index](README.md) - Alle Dokumentationen

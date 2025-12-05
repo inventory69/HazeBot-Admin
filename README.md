@@ -24,7 +24,7 @@ Feature-rich admin panel with hybrid navigation combining user features for comm
 
 💡 **Pro Tip:** Use [Obtainium](https://github.com/ImranR98/Obtainium) for automatic updates!
 
-**[📱 Installation Guide](APK_DOWNLOAD.md)** | **[🔧 Setup Checklist](SETUP_CHECKLIST.md)**
+**[📱 Installation Guide](docs/APK_DOWNLOAD.md)** | **[🔧 Setup Checklist](docs/SETUP_CHECKLIST.md)**
 
 ---
 
@@ -66,10 +66,10 @@ GITHUB_REPO_URL=https://github.com/inventory69/HazeBot-Admin
 **API URL Examples:**
 - Local Web: `http://localhost:5070/api`
 - Android Emulator: `http://10.0.2.2:5070/api`
-- Android Device: `http://YOUR_PC_IP:5070/api`
+- Android Device: `http://YOUR_LOCAL_IP:5070/api`
 - Production: `https://your-domain.com/api`
 
-**[📖 Detailed Setup Guide](SETUP_CHECKLIST.md)**
+**[📖 Detailed Setup Guide](docs/SETUP_CHECKLIST.md)**
 
 ---
 
@@ -99,7 +99,7 @@ GITHUB_REPO_URL=https://github.com/inventory69/HazeBot-Admin
 - Smart push notification suppression
 - Message caching for instant loading
 
-**[📋 Complete Features List](FEATURES.md)** - Full feature documentation with details
+**[📋 Complete Features List](docs/FEATURES.md)** - Full feature documentation with details
 
 ---
 
@@ -144,19 +144,28 @@ flutter build apk --split-per-abi --release
 flutter build linux --release
 ```
 
-**[📖 Complete Build Guide](BUILDING.md)**
+**[📖 Complete Build Guide](docs/BUILDING.md)**
 
 ---
 
 ## 📚 Documentation
 
-- 📱 **[APK Download](APK_DOWNLOAD.md)** - Android installation
-- 🔨 **[Building](BUILDING.md)** - Build for all platforms
-- 🧪 **[Development](DEVELOPMENT.md)** - Dev workflows & patterns
-- 🔥 **[Firebase](FIREBASE_SETUP.md)** - Push notifications
-- 🔧 **[Setup Checklist](SETUP_CHECKLIST.md)** - Verification
-- 🚀 **[GitHub Actions](GITHUB_ACTIONS.md)** - CI/CD
-- 🤖 **[HazeBot Backend](https://github.com/inventory69/HazeBot)** - Bot & API
+**[📖 Documentation Index](docs/README.md)** - Complete documentation overview
+
+**Quick Links:**
+- 📱 **[APK Download](docs/APK_DOWNLOAD.md)** - Android installation
+- 🔧 **[Setup Checklist](docs/SETUP_CHECKLIST.md)** - Quick setup verification
+- 🔨 **[Building](docs/BUILDING.md)** - Build for all platforms
+- 🧪 **[Development](docs/DEVELOPMENT.md)** - Dev workflows & patterns
+- 🔥 **[Firebase Setup](docs/FIREBASE_SETUP.md)** - Push notifications
+- 🚀 **[GitHub Actions](docs/GITHUB_ACTIONS.md)** - CI/CD pipeline
+- 📋 **[Features](docs/FEATURES.md)** - Complete feature list
+- 📝 **[Changelog](docs/CHANGELOG.md)** - Version history
+
+**Related:**
+- 🤖 **[HazeBot Backend](https://github.com/inventory69/HazeBot)** - Bot & API server
+- 📖 **[HazeBot Docs](https://github.com/inventory69/HazeBot/blob/main/docs/README.md)** - Backend documentation
+- 🔌 **[HazeBot API](https://github.com/inventory69/HazeBot/blob/main/api/README.md)** - REST API reference
 
 ---
 
@@ -174,7 +183,7 @@ dart format .         # Format code
 flutter test          # Run tests
 ```
 
-**[📖 Development Guide](DEVELOPMENT.md)**
+**[📖 Development Guide](docs/DEVELOPMENT.md)**
 
 ---
 

@@ -26,13 +26,11 @@ flutter build web --release --pwa-strategy=none
 ### Test Locally
 
 ```bash
-# Navigate to build directory
+# Start local server (port 8080)
+python3 scripts/spa_server.py --dir build/web --port 8080
+
+# Or navigate to build directory and use Python's built-in server
 cd build/web
-
-# Start local server (port 8000)
-python3 ../../../spa_server.py
-
-# Or use Python's built-in server
 python3 -m http.server 8000
 ```
 
@@ -343,9 +341,77 @@ Run: `./build.sh`
 
 ---
 
-## Next Steps
+## �️ Build Scripts
 
-- 📱 [APK Installation Guide](APK_DOWNLOAD.md)
-- 🔥 [Firebase Setup](FIREBASE_SETUP.md)
-- 🚀 [GitHub Actions CI/CD](GITHUB_ACTIONS.md)
-- 🏠 [Back to README](README.md)
+The `scripts/` directory contains helper scripts for building and development:
+
+### spa_server.py
+**Purpose:** Minimal SPA (Single Page Application) server for testing web builds locally.
+
+**Usage:**
+```bash
+# Serve web build
+python3 scripts/spa_server.py --dir build/web --port 8080
+
+# Custom directory and port
+python3 scripts/spa_server.py --dir path/to/build --port 3000
+```
+
+**Features:**
+- Serves static files from build directory
+- Falls back to `index.html` for client-side routing
+- Perfect for testing web builds before deployment
+
+### generate_adaptive_icons.sh
+**Purpose:** Generate Android adaptive launcher icons from a source PNG.
+
+**Requirements:**
+- ImageMagick (`sudo apt-get install imagemagick`)
+- Source image: `app_icon_source.png` in project root
+
+**Usage:**
+```bash
+# Run from project root
+./scripts/generate_adaptive_icons.sh
+```
+
+**Output:**
+- Foreground/background layers for all densities (mdpi, hdpi, xhdpi, xxhdpi, xxxhdpi)
+- XML descriptors in `mipmap-anydpi-v26/`
+- Adaptive icons for Android 8.0+ (API 26)
+
+### create_notification_icon.sh
+**Purpose:** Create monochrome notification icons for Android status bar.
+
+**Requirements:**
+- ImageMagick
+- Existing launcher icon in `android/app/src/main/res/mipmap-xxxhdpi/`
+
+**Usage:**
+```bash
+# Run from project root
+./scripts/create_notification_icon.sh
+```
+
+**Output:**
+- White monochrome icons in `drawable-*/` directories
+- All densities: 24dp (mdpi) to 96dp (xxxhdpi)
+- Ready for Android notification system
+
+---
+
+## �🔗 Next Steps
+
+- 📱 [APK Installation Guide](APK_DOWNLOAD.md) - Install built APKs
+- 🔥 [Firebase Setup](FIREBASE_SETUP.md) - Configure push notifications
+- 🚀 [GitHub Actions](GITHUB_ACTIONS.md) - Automated CI/CD builds
+- 🧪 [Development Guide](DEVELOPMENT.md) - Development workflows
+- 🏠 [Documentation Index](README.md) - All documentation
+
+---
+
+## 🆘 Getting Help
+
+- **Build Issues:** Check troubleshooting section above
+- **Platform-Specific:** Review [Flutter Documentation](https://docs.flutter.dev/deployment)
+- **Questions:** Open an issue on [GitHub](https://github.com/YOUR_USERNAME/HazeBot-Admin/issues)

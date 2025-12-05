@@ -889,22 +889,159 @@ class _CreateTicketTabState extends State<_CreateTicketTab> {
 }
 
 // Ticket Detail Screen (for users) - using shared TicketChatWidget
-class _TicketDetailScreen extends StatelessWidget {
+class _TicketDetailScreen extends StatefulWidget {
   final Ticket ticket;
 
   const _TicketDetailScreen({required this.ticket});
+
+  @override
+  State<_TicketDetailScreen> createState() => _TicketDetailScreenState();
+}
+
+class _TicketDetailScreenState extends State<_TicketDetailScreen> {
+  late Ticket _ticket;
+  bool _isProcessing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _ticket = widget.ticket;
+  }
+
+  Future<void> _closeTicket() async {
+    // Show close message dialog
+    final closeMessage = await showDialog<String>(
+      context: context,
+      builder: (context) => _CloseMessageDialog(),
+    );
+
+    if (closeMessage == null) return; // User cancelled
+
+    setState(() => _isProcessing = true);
+
+    try {
+      final authService = Provider.of<AuthService>(context, listen: false);
+      await authService.apiService.closeTicket(
+        _ticket.ticketId,
+        closeMessage: closeMessage.isEmpty ? null : closeMessage,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✅ Ticket closed successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context); // Go back to ticket list
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isProcessing = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to close ticket: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _reopenTicket() async {
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Reopen Ticket'),
+        content: Text(
+          'Do you want to reopen this ticket?\n\n'
+          'Reopens remaining: ${3 - _ticket.reopenCount}/3',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Reopen'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    setState(() => _isProcessing = true);
+
+    try {
+      final authService = Provider.of<AuthService>(context, listen: false);
+      await authService.apiService.reopenTicket(_ticket.ticketId);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✅ Ticket reopened successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context); // Go back to ticket list
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isProcessing = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to reopen ticket: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final statusColor =
-        ticket.status.toLowerCase() == 'open' ? Colors.green : Colors.grey;
+        _ticket.status.toLowerCase() == 'open' ? Colors.green : Colors.grey;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Ticket #${ticket.ticketNum}'),
+        title: Text('Ticket #${_ticket.ticketNum}'),
         backgroundColor: colorScheme.surface,
+        actions: [
+          // Show Close button for open tickets
+          if (_ticket.isOpen && !_isProcessing)
+            IconButton(
+              onPressed: _closeTicket,
+              icon: const Icon(Icons.lock),
+              tooltip: 'Close Ticket',
+              color: Colors.red[700],
+            ),
+          // Show Reopen button for closed tickets (if limit not reached)
+          if (_ticket.isClosed && _ticket.reopenCount < 3 && !_isProcessing)
+            IconButton(
+              onPressed: _reopenTicket,
+              icon: const Icon(Icons.lock_open),
+              tooltip: 'Reopen Ticket',
+              color: Colors.blue[700],
+            ),
+          // Show loading indicator when processing
+          if (_isProcessing)
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+            ),
+        ],
       ),
       body: Column(
         children: [
@@ -925,7 +1062,7 @@ class _TicketDetailScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
-                        ticket.type,
+                        _ticket.type,
                         style: TextStyle(
                           color: colorScheme.onPrimaryContainer,
                           fontSize: 12,
@@ -948,7 +1085,7 @@ class _TicketDetailScreen extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            ticket.status.toLowerCase() == 'open'
+                            _ticket.status.toLowerCase() == 'open'
                                 ? Icons.circle
                                 : Icons.check_circle,
                             color: statusColor,
@@ -956,7 +1093,7 @@ class _TicketDetailScreen extends StatelessWidget {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            ticket.status,
+                            _ticket.status,
                             style: TextStyle(
                               color: statusColor,
                               fontSize: 12,
@@ -968,7 +1105,69 @@ class _TicketDetailScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-                if (ticket.initialMessage != null) ...[
+                // Show reopen count badge if ticket has been reopened
+                if (_ticket.isClosed && _ticket.reopenCount > 0) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.orange[50],
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: Colors.orange[300]!),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          size: 14,
+                          color: Colors.orange[700],
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Reopened ${_ticket.reopenCount}/3 times',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.orange[900],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                // Show limit reached warning
+                if (_ticket.isClosed && _ticket.reopenCount >= 3) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.red[50],
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: Colors.red[300]!),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.warning_amber,
+                          size: 14,
+                          color: Colors.red[700],
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Reopen limit reached (3/3)',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.red[900],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                if (_ticket.initialMessage != null) ...[
                   const SizedBox(height: 12),
                   ExpansionTile(
                     tilePadding: EdgeInsets.zero,
@@ -984,7 +1183,7 @@ class _TicketDetailScreen extends StatelessWidget {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            _extractSubject(ticket.initialMessage!),
+                            _extractSubject(_ticket.initialMessage!),
                             style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
@@ -1006,30 +1205,10 @@ class _TicketDetailScreen extends StatelessWidget {
                           ),
                         ),
                         child: Text(
-                          _extractDescription(ticket.initialMessage!),
+                          _extractDescription(_ticket.initialMessage!),
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: colorScheme.onSurfaceVariant,
                           ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-                if (ticket.assignedToName != null) ...[
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.person,
-                        size: 16,
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Assigned to: ${ticket.assignedToName}',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -1044,7 +1223,7 @@ class _TicketDetailScreen extends StatelessWidget {
           // Chat widget (full screen mode)
           Expanded(
             child: TicketChatWidget(
-              ticket: ticket,
+              ticket: _ticket,
               isFullScreen: true,
             ),
           ),
@@ -1064,5 +1243,49 @@ class _TicketDetailScreen extends StatelessWidget {
         RegExp(r'\*\*Description:\*\*\s*\n(.+)', dotAll: true, multiLine: true)
             .firstMatch(initialMessage);
     return descMatch?.group(1)?.trim() ?? '';
+  }
+}
+
+// Old duplicate removed below (was causing the error)
+
+// Close Message Dialog
+class _CloseMessageDialog extends StatelessWidget {
+  final TextEditingController _controller = TextEditingController();
+
+  _CloseMessageDialog();
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Close Ticket'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text('Add an optional closing message:'),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _controller,
+            decoration: const InputDecoration(
+              hintText:
+                  'e.g., Issue resolved, let me know if you need more help.',
+              border: OutlineInputBorder(),
+            ),
+            maxLines: 3,
+            maxLength: 500,
+            autofocus: true,
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, _controller.text),
+          child: const Text('Close Ticket'),
+        ),
+      ],
+    );
   }
 }
