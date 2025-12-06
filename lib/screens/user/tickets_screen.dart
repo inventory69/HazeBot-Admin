@@ -1013,8 +1013,8 @@ class _TicketDetailScreenState extends State<_TicketDetailScreen> {
         title: Text('Ticket #${_ticket.ticketNum}'),
         backgroundColor: colorScheme.surface,
         actions: [
-          // Show Close button for open tickets
-          if (_ticket.isOpen && !_isProcessing)
+          // Show Close button for open and claimed tickets
+          if (!_ticket.isClosed && !_isProcessing)
             IconButton(
               onPressed: _closeTicket,
               icon: const Icon(Icons.lock),
