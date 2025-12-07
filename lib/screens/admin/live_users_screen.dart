@@ -684,41 +684,39 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                                                     width: 1,
                                                   ),
                                                 ),
-                                                child: Row(
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
                                                   children: [
-                                                    Icon(
-                                                      Icons.info_outline,
-                                                      color: Colors.blue,
-                                                      size: isMobile ? 20 : 24,
+                                                    Row(
+                                                      children: [
+                                                        Icon(
+                                                          Icons.info_outline,
+                                                          color: Colors.blue,
+                                                          size: isMobile ? 20 : 24,
+                                                        ),
+                                                        const SizedBox(width: 8),
+                                                        Text(
+                                                          'Uptime Kuma Monitor',
+                                                          style: TextStyle(
+                                                            fontWeight: FontWeight.bold,
+                                                            fontSize: isMobile ? 13 : 14,
+                                                            color: Colors.blue,
+                                                          ),
+                                                        ),
+                                                      ],
                                                     ),
-                                                    const SizedBox(width: 12),
-                                                    Expanded(
-                                                      child: Column(
-                                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                                        children: [
-                                                          Text(
-                                                            'Uptime Kuma Monitor',
-                                                            style: TextStyle(
-                                                              fontWeight: FontWeight.bold,
-                                                              fontSize: isMobile ? 13 : 14,
-                                                              color: Colors.blue,
-                                                            ),
-                                                          ),
-                                                          const SizedBox(height: 4),
-                                                          Text(
-                                                            'This session represents an automated monitoring system checking service availability.',
-                                                            style: TextStyle(
-                                                              fontSize: isMobile ? 11 : 12,
-                                                              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                                            ),
-                                                          ),
-                                                        ],
+                                                    const SizedBox(height: 8),
+                                                    Text(
+                                                      'This session represents an automated monitoring system.',
+                                                      style: TextStyle(
+                                                        fontSize: isMobile ? 11 : 12,
+                                                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                                                       ),
                                                     ),
                                                   ],
                                                 ),
                                               ),
-                                              const SizedBox(height: 16),
+                                              const SizedBox(height: 12),
                                               _buildDetailRow(
                                                 context,
                                                 Icons.monitor_heart,
@@ -734,7 +732,7 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                                                 monitorStatus.toUpperCase(),
                                                 isMobile,
                                               ),
-                                              const SizedBox(height: 8),
+                                              const SizedBox(height: 12),
                                             ],
                                             _buildDetailRow(
                                               context,
@@ -760,22 +758,24 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                                               isMobile,
                                             ),
                                             const SizedBox(height: 8),
-                                            _buildDetailRow(
-                                              context,
-                                              Icons.phone_android,
-                                              'Device',
-                                              deviceInfo,
-                                              isMobile,
-                                            ),
-                                            const SizedBox(height: 8),
-                                            _buildDetailRow(
-                                              context,
-                                              Icons.smartphone,
-                                              'App Version',
-                                              '$appVersion ($platform)',
-                                              isMobile,
-                                            ),
-                                            const SizedBox(height: 8),
+                                            if (!isMonitor) ...[
+                                              _buildDetailRow(
+                                                context,
+                                                Icons.phone_android,
+                                                'Device',
+                                                deviceInfo,
+                                                isMobile,
+                                              ),
+                                              const SizedBox(height: 8),
+                                              _buildDetailRow(
+                                                context,
+                                                Icons.smartphone,
+                                                'App Version',
+                                                '$appVersion ($platform)',
+                                                isMobile,
+                                              ),
+                                              const SizedBox(height: 8),
+                                            ],
                                             _buildDetailRow(
                                               context,
                                               Icons.devices,
