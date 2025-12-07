@@ -614,23 +614,25 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                                               ),
                                               const SizedBox(width: 8),
                                             ],
-                                            Icon(
-                                              _getDeviceIcon(userAgent),
-                                              size: isMobile ? 14 : 16,
-                                              color: Theme.of(context)
-                                                  .colorScheme
-                                                  .onSurfaceVariant,
-                                            ),
-                                            const SizedBox(width: 4),
-                                            Text(
-                                              _getDeviceType(userAgent),
-                                              style: TextStyle(
-                                                fontSize: isMobile ? 11 : 12,
+                                            if (!isMonitor) ...[
+                                              Icon(
+                                                _getDeviceIcon(userAgent),
+                                                size: isMobile ? 14 : 16,
                                                 color: Theme.of(context)
                                                     .colorScheme
                                                     .onSurfaceVariant,
                                               ),
-                                            ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                _getDeviceType(userAgent),
+                                                style: TextStyle(
+                                                  fontSize: isMobile ? 11 : 12,
+                                                  color: Theme.of(context)
+                                                      .colorScheme
+                                                      .onSurfaceVariant,
+                                                ),
+                                              ),
+                                            ],
                                           ],
                                         ),
                                         if (lastSeen != null) ...[
