@@ -384,16 +384,13 @@ class ApiService {
   /// IMPORTANT: Headers are computed inside the lambda to get fresh token after refresh
   Future<http.Response> _post(String url,
       {Map<String, String>? headers, Object? body, int timeout = 15}) async {
-    debugPrint('🔍 [_POST] Called with URL: $url');
     try {
       // Ensure version info is loaded before making requests
       await _initializeVersionInfo();
 
-      debugPrint('🔍 [_POST] Calling _requestWithRetry()...');
       final response = await _requestWithRetry(() async {
         // Read token FRESH from instance variable
         final String currentToken = _token ?? '';
-        debugPrint('🔍 [_POST] Building request with token length: ${currentToken.length}');
 
         final Map<String, String> freshHeaders = {
           'Content-Type': 'application/json',
@@ -406,30 +403,23 @@ class ApiService {
           ...?headers,
         };
 
-        debugPrint('🔍 [_POST] About to send HTTP POST...');
         final httpResponse = await http
             .post(Uri.parse(url), headers: freshHeaders, body: body)
             .timeout(
               Duration(seconds: timeout),
               onTimeout: () {
-                debugPrint('🔍 [_POST] ⏰ TIMEOUT after $timeout seconds!');
                 throw ApiTimeoutException();
               },
             );
-        debugPrint('🔍 [_POST] HTTP POST completed! Status: ${httpResponse.statusCode}');
         return httpResponse;
       });
       
-      debugPrint('🔍 [_POST] Returning response with status: ${response.statusCode}');
       return response;
-    } on SocketException catch (e) {
-      debugPrint('🔍 [_POST] ❌ SocketException: $e');
+    } on SocketException {
       throw ApiConnectionException();
-    } on TimeoutException catch (e) {
-      debugPrint('🔍 [_POST] ❌ TimeoutException: $e');
+    } on TimeoutException {
       throw ApiTimeoutException();
     } catch (e) {
-      debugPrint('🔍 [_POST] ❌ Unknown exception: $e (${e.runtimeType})');
       rethrow;
     }
   }
@@ -1613,35 +1603,14 @@ class ApiService {
   }
 
   Future<void> closeTicket(String ticketId, {String? closeMessage}) async {
-    debugPrint('🔍 [API_SERVICE] closeTicket() called');
-    debugPrint('🔍 [API_SERVICE] ticketId: $ticketId');
-    debugPrint('🔍 [API_SERVICE] closeMessage: $closeMessage');
-    debugPrint('🔍 [API_SERVICE] baseUrl: $baseUrl');
-    debugPrint('🔍 [API_SERVICE] Full URL: $baseUrl/tickets/$ticketId/close');
-    debugPrint('🔍 [API_SERVICE] Token present: ${_token != null && _token!.isNotEmpty}');
-    
-    try {
-      debugPrint('🔍 [API_SERVICE] About to call _post()...');
-      final response = await _post(
-        '$baseUrl/tickets/$ticketId/close',
-        body: jsonEncode({'close_message': closeMessage ?? ''}),
-      );
-      
-      debugPrint('🔍 [API_SERVICE] _post() returned! Status: ${response.statusCode}');
-      debugPrint('🔍 [API_SERVICE] Response body: ${response.body}');
+    final response = await _post(
+      '$baseUrl/tickets/$ticketId/close',
+      body: jsonEncode({'close_message': closeMessage ?? ''}),
+    );
 
-      if (response.statusCode != 200) {
-        final error = jsonDecode(response.body);
-        debugPrint('🔍 [API_SERVICE] ❌ Non-200 status, throwing exception: ${error['error']}');
-        throw Exception(error['error'] ?? 'Failed to close ticket');
-      }
-      
-      debugPrint('🔍 [API_SERVICE] ✅ closeTicket() completed successfully');
-    } catch (e, stackTrace) {
-      debugPrint('🔍 [API_SERVICE] ❌ Exception in closeTicket(): $e');
-      debugPrint('🔍 [API_SERVICE] Exception type: ${e.runtimeType}');
-      debugPrint('🔍 [API_SERVICE] Stack trace: $stackTrace');
-      rethrow;
+    if (response.statusCode != 200) {
+      final error = jsonDecode(response.body);
+      throw Exception(error['error'] ?? 'Failed to close ticket');
     }
   }
 

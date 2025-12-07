@@ -910,31 +910,23 @@ class _TicketDetailScreenState extends State<_TicketDetailScreen> {
   }
 
   Future<void> _closeTicket() async {
-    debugPrint('🔍 [USER SCREEN] _closeTicket() called for ticket ${_ticket.ticketId}');
-    debugPrint('🔍 [USER SCREEN] Ticket status: ${_ticket.status}');
-    
     // Show close message dialog
     final closeMessage = await showDialog<String>(
       context: context,
       builder: (context) => _CloseMessageDialog(),
     );
 
-    debugPrint('🔍 [USER SCREEN] Close message dialog result: ${closeMessage == null ? "CANCELLED" : "\"$closeMessage\""}');
-
     if (closeMessage == null) return; // User cancelled
 
     setState(() => _isProcessing = true);
-    debugPrint('🔍 [USER SCREEN] Set _isProcessing = true');
 
     try {
-      debugPrint('🔍 [USER SCREEN] Calling ApiService().closeTicket()...');
       // Use ApiService() directly like Admin Screen to bypass permission checks
       // Backend validates permissions properly (creator + admin/mod allowed)
       await ApiService().closeTicket(
         _ticket.ticketId,
         closeMessage: closeMessage.isEmpty ? null : closeMessage,
       );
-      debugPrint('🔍 [USER SCREEN] ✅ closeTicket() completed successfully!');
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -945,11 +937,7 @@ class _TicketDetailScreenState extends State<_TicketDetailScreen> {
         );
         Navigator.pop(context); // Go back to ticket list
       }
-    } catch (e, stackTrace) {
-      debugPrint('🔍 [USER SCREEN] ❌ Exception caught: $e');
-      debugPrint('🔍 [USER SCREEN] Exception type: ${e.runtimeType}');
-      debugPrint('🔍 [USER SCREEN] Stack trace: $stackTrace');
-      
+    } catch (e) {
       if (mounted) {
         setState(() => _isProcessing = false);
         ScaffoldMessenger.of(context).showSnackBar(
