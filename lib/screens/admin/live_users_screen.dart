@@ -461,6 +461,11 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                               final platform = session['platform'] ?? 'Unknown';
                               final deviceInfo =
                                   session['device_info'] ?? 'Unknown';
+                              
+                              // Monitor detection (Uptime Kuma)
+                              final isMonitor = session['is_monitor'] ?? false;
+                              final monitorType = session['monitor_type'] ?? '';
+                              final monitorStatus = session['monitor_status'] ?? '';
 
                               final isRecent = secondsAgo < 30;
 
@@ -479,15 +484,21 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                                     leading: Stack(
                                       children: [
                                         CircleAvatar(
-                                          backgroundColor: _getRoleColor(role)
-                                              .withValues(alpha: 0.2),
+                                          backgroundColor: isMonitor
+                                              ? Colors.blue.withValues(alpha: 0.2)
+                                              : _getRoleColor(role)
+                                                  .withValues(alpha: 0.2),
                                           child: Icon(
-                                            _getRoleIcon(role),
-                                            color: _getRoleColor(role),
+                                            isMonitor
+                                                ? Icons.monitor_heart
+                                                : _getRoleIcon(role),
+                                            color: isMonitor
+                                                ? Colors.blue
+                                                : _getRoleColor(role),
                                             size: isMobile ? 20 : 24,
                                           ),
                                         ),
-                                        if (isRecent)
+                                        if (isRecent && !isMonitor)
                                           Positioned(
                                             right: 0,
                                             bottom: 0,
@@ -496,6 +507,29 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                                               height: 12,
                                               decoration: BoxDecoration(
                                                 color: Colors.green,
+                                                shape: BoxShape.circle,
+                                                border: Border.all(
+                                                  color: Theme.of(context)
+                                                      .colorScheme
+                                                      .surface,
+                                                  width: 2,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        if (isMonitor)
+                                          Positioned(
+                                            right: 0,
+                                            bottom: 0,
+                                            child: Container(
+                                              width: 12,
+                                              height: 12,
+                                              decoration: BoxDecoration(
+                                                color: monitorStatus == 'up'
+                                                    ? Colors.green
+                                                    : monitorStatus == 'down'
+                                                        ? Colors.red
+                                                        : Colors.orange,
                                                 shape: BoxShape.circle,
                                                 border: Border.all(
                                                   color: Theme.of(context)
@@ -522,44 +556,83 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                                         const SizedBox(height: 4),
                                         Row(
                                           children: [
-                                            Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal: 8,
-                                                      vertical: 2),
-                                              decoration: BoxDecoration(
-                                                color: _getRoleColor(role)
-                                                    .withValues(alpha: 0.2),
-                                                borderRadius:
-                                                    BorderRadius.circular(12),
-                                              ),
-                                              child: Text(
-                                                role.toUpperCase(),
-                                                style: TextStyle(
-                                                  fontSize: isMobile ? 10 : 11,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: _getRoleColor(role),
+                                            if (isMonitor) ...[
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 8,
+                                                        vertical: 2),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.blue
+                                                      .withValues(alpha: 0.2),
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                ),
+                                                child: Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    Icon(
+                                                      Icons.monitor_heart,
+                                                      size: isMobile ? 12 : 14,
+                                                      color: Colors.blue,
+                                                    ),
+                                                    const SizedBox(width: 4),
+                                                    Text(
+                                                      monitorType.toUpperCase(),
+                                                      style: TextStyle(
+                                                        fontSize:
+                                                            isMobile ? 10 : 11,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color: Colors.blue,
+                                                      ),
+                                                    ),
+                                                  ],
                                                 ),
                                               ),
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Icon(
-                                              _getDeviceIcon(userAgent),
-                                              size: isMobile ? 14 : 16,
-                                              color: Theme.of(context)
-                                                  .colorScheme
-                                                  .onSurfaceVariant,
-                                            ),
-                                            const SizedBox(width: 4),
-                                            Text(
-                                              _getDeviceType(userAgent),
-                                              style: TextStyle(
-                                                fontSize: isMobile ? 11 : 12,
+                                              const SizedBox(width: 8),
+                                            ] else ...[
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 8,
+                                                        vertical: 2),
+                                                decoration: BoxDecoration(
+                                                  color: _getRoleColor(role)
+                                                      .withValues(alpha: 0.2),
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                ),
+                                                child: Text(
+                                                  role.toUpperCase(),
+                                                  style: TextStyle(
+                                                    fontSize: isMobile ? 10 : 11,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: _getRoleColor(role),
+                                                  ),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 8),
+                                            ],
+                                            if (!isMonitor) ...[
+                                              Icon(
+                                                _getDeviceIcon(userAgent),
+                                                size: isMobile ? 14 : 16,
                                                 color: Theme.of(context)
                                                     .colorScheme
                                                     .onSurfaceVariant,
                                               ),
-                                            ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                _getDeviceType(userAgent),
+                                                style: TextStyle(
+                                                  fontSize: isMobile ? 11 : 12,
+                                                  color: Theme.of(context)
+                                                      .colorScheme
+                                                      .onSurfaceVariant,
+                                                ),
+                                              ),
+                                            ],
                                           ],
                                         ),
                                         if (lastSeen != null) ...[
@@ -602,6 +675,55 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
                                           children: [
+                                            if (isMonitor) ...[
+                                              Container(
+                                                padding: const EdgeInsets.all(12),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.blue.withValues(alpha: 0.1),
+                                                  borderRadius: BorderRadius.circular(12),
+                                                  border: Border.all(
+                                                    color: Colors.blue.withValues(alpha: 0.3),
+                                                    width: 1,
+                                                  ),
+                                                ),
+                                                child: Row(
+                                                  children: [
+                                                    Icon(
+                                                      Icons.info_outline,
+                                                      color: Colors.blue,
+                                                      size: isMobile ? 18 : 20,
+                                                    ),
+                                                    const SizedBox(width: 8),
+                                                    Expanded(
+                                                      child: Text(
+                                                        'Automated monitoring system',
+                                                        style: TextStyle(
+                                                          fontSize: isMobile ? 11 : 12,
+                                                          color: Colors.blue,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              const SizedBox(height: 12),
+                                              _buildDetailRow(
+                                                context,
+                                                Icons.monitor_heart,
+                                                'Monitor Type',
+                                                monitorType,
+                                                isMobile,
+                                              ),
+                                              const SizedBox(height: 8),
+                                              _buildDetailRow(
+                                                context,
+                                                Icons.health_and_safety,
+                                                'Status',
+                                                monitorStatus.toUpperCase(),
+                                                isMobile,
+                                              ),
+                                              const SizedBox(height: 12),
+                                            ],
                                             _buildDetailRow(
                                               context,
                                               Icons.fingerprint,
@@ -626,22 +748,24 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                                               isMobile,
                                             ),
                                             const SizedBox(height: 8),
-                                            _buildDetailRow(
-                                              context,
-                                              Icons.phone_android,
-                                              'Device',
-                                              deviceInfo,
-                                              isMobile,
-                                            ),
-                                            const SizedBox(height: 8),
-                                            _buildDetailRow(
-                                              context,
-                                              Icons.smartphone,
-                                              'App Version',
-                                              '$appVersion ($platform)',
-                                              isMobile,
-                                            ),
-                                            const SizedBox(height: 8),
+                                            if (!isMonitor) ...[
+                                              _buildDetailRow(
+                                                context,
+                                                Icons.phone_android,
+                                                'Device',
+                                                deviceInfo,
+                                                isMobile,
+                                              ),
+                                              const SizedBox(height: 8),
+                                              _buildDetailRow(
+                                                context,
+                                                Icons.smartphone,
+                                                'App Version',
+                                                '$appVersion ($platform)',
+                                                isMobile,
+                                              ),
+                                              const SizedBox(height: 8),
+                                            ],
                                             _buildDetailRow(
                                               context,
                                               Icons.devices,
