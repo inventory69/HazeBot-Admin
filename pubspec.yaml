@@ -49,7 +49,7 @@ dependencies:
   url_launcher: ^6.2.0
   
   # Deep Links / App Links
-  app_links: ^6.3.2
+  app_links: ^6.4.1
   
   # Time Ago Formatting
   timeago: ^3.6.1

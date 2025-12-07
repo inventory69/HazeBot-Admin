@@ -33,6 +33,16 @@ jobs:
     - name: Get dependencies
       run: flutter pub get
     
+    - name: Fix app_links Gradle configuration
+      run: |
+        # Fix app_links plugin Gradle issue with Flutter 3.24
+        APP_LINKS_BUILD_GRADLE="$HOME/.pub-cache/hosted/pub.dev/app_links-6.4.1/android/build.gradle"
+        if [ -f "$APP_LINKS_BUILD_GRADLE" ]; then
+          echo "Patching app_links build.gradle..."
+          # Add compileSdk if missing
+          sed -i "s/android {/android {\n    namespace 'com.llfbandit.app_links'\n    compileSdk 34/" "$APP_LINKS_BUILD_GRADLE"
+        fi
+    
     - name: Build APK (Debug)
       run: flutter build apk --debug
     
