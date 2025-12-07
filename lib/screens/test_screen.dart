@@ -175,12 +175,12 @@ class _TestScreenState extends State<TestScreen> {
                     decoration: BoxDecoration(
                       color: Theme.of(context).colorScheme.surface,
                       borderRadius: BorderRadius.circular(8),
-                      border: Border(all: BorderSide(
+                      border: Border.all(
                         color: Theme.of(context)
                             .colorScheme
                             .outline
                             .withValues(alpha: 0.3),
-                      )),
+                      ),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
