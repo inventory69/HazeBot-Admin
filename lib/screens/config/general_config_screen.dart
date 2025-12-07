@@ -19,6 +19,10 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
   // Additional fields
   Color _pinkColor = const Color(0xFFAD1457);
   Map<String, String> _roleNames = {};
+  
+  // Status Dashboard config
+  int _statusDashboardUpdateInterval = 5;
+  bool _statusDashboardShowMonitoring = true;
 
   @override
   void initState() {
@@ -69,6 +73,13 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
         _roleNames = Map<String, String>.from(config['role_names']);
       }
 
+      // Load status dashboard config
+      if (config['status_dashboard'] != null) {
+        final statusConfig = config['status_dashboard'] as Map<String, dynamic>;
+        _statusDashboardUpdateInterval = statusConfig['update_interval_minutes'] ?? 5;
+        _statusDashboardShowMonitoring = statusConfig['show_monitoring'] ?? true;
+      }
+
       if (mounted) {
         setState(() {});
       }
@@ -110,6 +121,10 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
             _pinkColor.value & 0xFFFFFF, // Remove alpha channel (RGB only)
         'embed_footer_text': _controllers['embed_footer_text']!.text,
         'role_names': _roleNames,
+        'status_dashboard': {
+          'update_interval_minutes': _statusDashboardUpdateInterval,
+          'show_monitoring': _statusDashboardShowMonitoring,
+        },
       };
 
       await configService.updateGeneralConfig(authService.apiService, config);
@@ -888,6 +903,125 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
                                         _editRoleName(entry.key, entry.value),
                                   ))
                               .toList(),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(height: isMobile ? 12 : 16),
+
+                // Status Dashboard Card
+                Card(
+                  color: cardColor,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
+                  child: Padding(
+                    padding: EdgeInsets.all(cardPadding),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.monitor_heart,
+                                color: Colors.blue,
+                                size: isMobile ? 20 : 24),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Status Dashboard',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.copyWith(
+                                      fontSize: isMobile ? 18 : null,
+                                    ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: isMobile ? 12 : 16),
+                        // Update Interval Slider
+                        Row(
+                          children: [
+                            Icon(Icons.update,
+                                size: isMobile ? 20 : 24,
+                                color: Theme.of(context).colorScheme.primary),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Update Interval',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: isMobile ? 14 : 16,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'How often the status dashboard updates (1-60 minutes)',
+                                    style: TextStyle(
+                                      color: Colors.grey,
+                                      fontSize: isMobile ? 12 : 14,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              '$_statusDashboardUpdateInterval min',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: isMobile ? 14 : 16,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Slider(
+                          value: _statusDashboardUpdateInterval.toDouble(),
+                          min: 1,
+                          max: 60,
+                          divisions: 59,
+                          label: '$_statusDashboardUpdateInterval minutes',
+                          onChanged: (value) {
+                            setState(() {
+                              _statusDashboardUpdateInterval = value.round();
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        // Show Monitoring Switch
+                        SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          secondary: Icon(
+                            Icons.visibility,
+                            size: isMobile ? 20 : 24,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          title: Text(
+                            'Show Monitoring Data',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: isMobile ? 14 : 16,
+                            ),
+                          ),
+                          subtitle: Text(
+                            'Display Uptime Kuma monitoring status in the dashboard',
+                            style: TextStyle(
+                              fontSize: isMobile ? 12 : 14,
+                            ),
+                          ),
+                          value: _statusDashboardShowMonitoring,
+                          onChanged: (value) {
+                            setState(() {
+                              _statusDashboardShowMonitoring = value;
+                            });
+                          },
+                        ),
                       ],
                     ),
                   ),

@@ -24,6 +24,7 @@ class _ChannelsConfigScreenState extends State<ChannelsConfigScreen> {
   String? _welcomePublicChannelId;
   String? _transcriptChannelId;
   String? _ticketsCategoryId;
+  String? _statusChannelId;
 
   // Available channels and categories
   List<Map<String, dynamic>> _channels = [];
@@ -93,6 +94,7 @@ class _ChannelsConfigScreenState extends State<ChannelsConfigScreen> {
               config['welcome_public_channel_id']?.toString();
           _transcriptChannelId = config['transcript_channel_id']?.toString();
           _ticketsCategoryId = config['tickets_category_id']?.toString();
+          _statusChannelId = config['status_channel_id']?.toString();
         });
       }
     } catch (e) {
@@ -145,6 +147,8 @@ class _ChannelsConfigScreenState extends State<ChannelsConfigScreen> {
             : null,
         'tickets_category_id':
             _ticketsCategoryId != null ? int.parse(_ticketsCategoryId!) : null,
+        'status_channel_id':
+            _statusChannelId != null ? int.parse(_statusChannelId!) : null,
       };
 
       await apiService.updateChannelsConfig(config);
@@ -667,6 +671,53 @@ class _ChannelsConfigScreenState extends State<ChannelsConfigScreen> {
                             required: true,
                             isMobile: isMobile,
                           ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(height: isMobile ? 12 : 16),
+
+                // Monitoring
+                Card(
+                  color: cardColor,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
+                  child: Padding(
+                    padding: EdgeInsets.all(cardPadding),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.monitor_heart,
+                                color: Colors.blue, size: isMobile ? 20 : 24),
+                            SizedBox(width: isMobile ? 6 : 8),
+                            Expanded(
+                              child: Text(
+                                'Monitoring',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.copyWith(
+                                      fontSize: isMobile ? 18 : null,
+                                    ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: isMobile ? 12 : 16),
+                        _buildChannelDropdown(
+                          label: 'Status Channel',
+                          value: _statusChannelId,
+                          onChanged: (value) =>
+                              setState(() => _statusChannelId = value),
+                          hint: 'Live status dashboard embed',
+                          icon: Icons.dashboard,
+                          required: false,
+                          isMobile: isMobile,
                         ),
                       ],
                     ),
