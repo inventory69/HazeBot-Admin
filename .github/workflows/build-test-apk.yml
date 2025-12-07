@@ -30,6 +30,14 @@ jobs:
         flutter-version: '3.35.7'
         channel: 'stable'
     
+    - name: Create .env file for debug build
+      run: |
+        echo "API_BASE_URL=${{ secrets.API_BASE_URL }}" > .env
+        echo "IMAGE_PROXY_URL=${{ secrets.IMAGE_PROXY_URL }}" >> .env
+        echo "GITHUB_REPO_URL=https://github.com/inventory69/HazeBot-Admin" >> .env
+        echo "PROD_MODE=false" >> .env
+        echo "✅ .env file created for debug build"
+    
     - name: Get dependencies
       run: flutter pub get
     
