@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/auth_service.dart';
+import '../../services/api_service.dart';
 import '../../services/notification_service.dart';
 import '../../models/ticket.dart';
 import '../../widgets/ticket_chat_widget.dart';
@@ -920,8 +921,9 @@ class _TicketDetailScreenState extends State<_TicketDetailScreen> {
     setState(() => _isProcessing = true);
 
     try {
-      final authService = Provider.of<AuthService>(context, listen: false);
-      await authService.apiService.closeTicket(
+      // Use ApiService() directly like Admin Screen to bypass permission checks
+      // Backend validates permissions properly (creator + admin/mod allowed)
+      await ApiService().closeTicket(
         _ticket.ticketId,
         closeMessage: closeMessage.isEmpty ? null : closeMessage,
       );
@@ -949,6 +951,9 @@ class _TicketDetailScreenState extends State<_TicketDetailScreen> {
   }
 
   Future<void> _reopenTicket() async {
+    debugPrint('🔍 [USER SCREEN] _reopenTicket() called for ticket ${_ticket.ticketId}');
+    debugPrint('🔍 [USER SCREEN] Ticket status: ${_ticket.status}, reopenCount: ${_ticket.reopenCount}/3');
+    
     // Show confirmation dialog
     final confirmed = await showDialog<bool>(
       context: context,
@@ -976,8 +981,9 @@ class _TicketDetailScreenState extends State<_TicketDetailScreen> {
     setState(() => _isProcessing = true);
 
     try {
-      final authService = Provider.of<AuthService>(context, listen: false);
-      await authService.apiService.reopenTicket(_ticket.ticketId);
+      debugPrint('🔍 [USER SCREEN] Calling ApiService().reopenTicket()...');
+      // Use ApiService() directly like Admin Screen to bypass permission checks
+      await ApiService().reopenTicket(_ticket.ticketId);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -988,7 +994,11 @@ class _TicketDetailScreenState extends State<_TicketDetailScreen> {
         );
         Navigator.pop(context); // Go back to ticket list
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('🔍 [USER SCREEN] ❌ Reopen exception caught: $e');
+      debugPrint('🔍 [USER SCREEN] Exception type: ${e.runtimeType}');
+      debugPrint('🔍 [USER SCREEN] Stack trace: $stackTrace');
+      
       if (mounted) {
         setState(() => _isProcessing = false);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1013,8 +1023,8 @@ class _TicketDetailScreenState extends State<_TicketDetailScreen> {
         title: Text('Ticket #${_ticket.ticketNum}'),
         backgroundColor: colorScheme.surface,
         actions: [
-          // Show Close button for open tickets
-          if (_ticket.isOpen && !_isProcessing)
+          // Show Close button for open and claimed tickets
+          if (!_ticket.isClosed && !_isProcessing)
             IconButton(
               onPressed: _closeTicket,
               icon: const Icon(Icons.lock),

@@ -12,6 +12,7 @@ import 'services/config_service.dart';
 import 'services/theme_service.dart';
 import 'services/deep_link_service.dart';
 import 'services/notification_service.dart';
+import 'services/error_reporter.dart';
 import 'providers/data_cache_provider.dart';
 import 'utils/app_config.dart';
 import 'utils/notification_navigation.dart';
@@ -24,6 +25,9 @@ Future<void> main() async {
 
   // Load environment variables
   await dotenv.load(fileName: ".env");
+
+  // Initialize error reporter (loads device info)
+  await ErrorReporter().initialize();
 
   // Initialize Firebase & Notifications (graceful - continues even if Firebase not configured)
   try {

@@ -388,7 +388,7 @@ class ApiService {
       // Ensure version info is loaded before making requests
       await _initializeVersionInfo();
 
-      return await _requestWithRetry(() async {
+      final response = await _requestWithRetry(() async {
         // Read token FRESH from instance variable
         final String currentToken = _token ?? '';
 
@@ -403,17 +403,24 @@ class ApiService {
           ...?headers,
         };
 
-        return await http
+        final httpResponse = await http
             .post(Uri.parse(url), headers: freshHeaders, body: body)
             .timeout(
               Duration(seconds: timeout),
-              onTimeout: () => throw ApiTimeoutException(),
+              onTimeout: () {
+                throw ApiTimeoutException();
+              },
             );
+        return httpResponse;
       });
+      
+      return response;
     } on SocketException {
       throw ApiConnectionException();
     } on TimeoutException {
       throw ApiTimeoutException();
+    } catch (e) {
+      rethrow;
     }
   }
 
