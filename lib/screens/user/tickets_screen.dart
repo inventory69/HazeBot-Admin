@@ -965,6 +965,9 @@ class _TicketDetailScreenState extends State<_TicketDetailScreen> {
   }
 
   Future<void> _reopenTicket() async {
+    debugPrint('🔍 [USER SCREEN] _reopenTicket() called for ticket ${_ticket.ticketId}');
+    debugPrint('🔍 [USER SCREEN] Ticket status: ${_ticket.status}, reopenCount: ${_ticket.reopenCount}/3');
+    
     // Show confirmation dialog
     final confirmed = await showDialog<bool>(
       context: context,
@@ -1004,7 +1007,11 @@ class _TicketDetailScreenState extends State<_TicketDetailScreen> {
         );
         Navigator.pop(context); // Go back to ticket list
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('🔍 [USER SCREEN] ❌ Reopen exception caught: $e');
+      debugPrint('🔍 [USER SCREEN] Exception type: ${e.runtimeType}');
+      debugPrint('🔍 [USER SCREEN] Stack trace: $stackTrace');
+      
       if (mounted) {
         setState(() => _isProcessing = false);
         ScaffoldMessenger.of(context).showSnackBar(
