@@ -684,33 +684,21 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                                                     width: 1,
                                                   ),
                                                 ),
-                                                child: Column(
-                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                child: Row(
                                                   children: [
-                                                    Row(
-                                                      children: [
-                                                        Icon(
-                                                          Icons.info_outline,
-                                                          color: Colors.blue,
-                                                          size: isMobile ? 20 : 24,
-                                                        ),
-                                                        const SizedBox(width: 8),
-                                                        Text(
-                                                          'Uptime Kuma Monitor',
-                                                          style: TextStyle(
-                                                            fontWeight: FontWeight.bold,
-                                                            fontSize: isMobile ? 13 : 14,
-                                                            color: Colors.blue,
-                                                          ),
-                                                        ),
-                                                      ],
+                                                    Icon(
+                                                      Icons.info_outline,
+                                                      color: Colors.blue,
+                                                      size: isMobile ? 18 : 20,
                                                     ),
-                                                    const SizedBox(height: 8),
-                                                    Text(
-                                                      'This session represents an automated monitoring system.',
-                                                      style: TextStyle(
-                                                        fontSize: isMobile ? 11 : 12,
-                                                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                                    const SizedBox(width: 8),
+                                                    Expanded(
+                                                      child: Text(
+                                                        'Automated monitoring system',
+                                                        style: TextStyle(
+                                                          fontSize: isMobile ? 11 : 12,
+                                                          color: Colors.blue,
+                                                        ),
                                                       ),
                                                     ),
                                                   ],
