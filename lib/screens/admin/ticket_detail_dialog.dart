@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../../models/ticket.dart';
 import '../../models/ticket_message.dart';
 import '../../services/api_service.dart';
-import '../../services/auth_service.dart';
 import '../../widgets/ticket_chat_widget.dart';
 
 class TicketDetailDialog extends StatefulWidget {
