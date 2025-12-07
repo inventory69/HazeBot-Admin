@@ -1,0 +1,44 @@
+name: Build Test APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to build from'
+        required: true
+        default: 'check_some_things'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.inputs.branch }}
+    
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+    
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.24.5'
+        channel: 'stable'
+    
+    - name: Get dependencies
+      run: flutter pub get
+    
+    - name: Build APK (Debug)
+      run: flutter build apk --debug
+    
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: hazebot-admin-debug-${{ github.event.inputs.branch }}
+        path: build/app/outputs/flutter-apk/app-debug.apk
+        retention-days: 7
