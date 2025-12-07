@@ -926,13 +926,10 @@ class _TicketDetailScreenState extends State<_TicketDetailScreen> {
     debugPrint('🔍 [USER SCREEN] Set _isProcessing = true');
 
     try {
-      debugPrint('🔍 [USER SCREEN] Getting AuthService from Provider...');
-      final authService = Provider.of<AuthService>(context, listen: false);
-      debugPrint('🔍 [USER SCREEN] AuthService obtained: ${authService != null}');
-      debugPrint('🔍 [USER SCREEN] ApiService available: ${authService.apiService != null}');
-      
-      debugPrint('🔍 [USER SCREEN] Calling apiService.closeTicket()...');
-      await authService.apiService.closeTicket(
+      debugPrint('🔍 [USER SCREEN] Calling ApiService().closeTicket()...');
+      // Use ApiService() directly like Admin Screen to bypass permission checks
+      // Backend validates permissions properly (creator + admin/mod allowed)
+      await ApiService().closeTicket(
         _ticket.ticketId,
         closeMessage: closeMessage.isEmpty ? null : closeMessage,
       );
@@ -995,8 +992,9 @@ class _TicketDetailScreenState extends State<_TicketDetailScreen> {
     setState(() => _isProcessing = true);
 
     try {
-      final authService = Provider.of<AuthService>(context, listen: false);
-      await authService.apiService.reopenTicket(_ticket.ticketId);
+      debugPrint('🔍 [USER SCREEN] Calling ApiService().reopenTicket()...');
+      // Use ApiService() directly like Admin Screen to bypass permission checks
+      await ApiService().reopenTicket(_ticket.ticketId);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
