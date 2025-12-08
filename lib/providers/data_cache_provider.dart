@@ -83,9 +83,9 @@ class DataCacheProvider extends ChangeNotifier {
         final newMemes =
             List<Map<String, dynamic>>.from(response['memes'] ?? []);
 
-        // Preserve optimistically added memes (those with timestamp < 60 seconds old)
+        // Preserve optimistically added memes (those with timestamp < 5 minutes old)
         // These are memes we added locally that might not be in the API response yet
-        // Discord indexing can take 10-60 seconds, so we keep them longer
+        // Backend caches responses for 5 minutes, so we match that TTL
         if (_cachedMemes != null && _cachedMemes!.isNotEmpty) {
           final now = DateTime.now();
           final optimisticMemes = _cachedMemes!.where((meme) {
@@ -93,7 +93,7 @@ class DataCacheProvider extends ChangeNotifier {
               final timestamp = DateTime.parse(meme['timestamp']);
               final age = now.difference(timestamp);
               return age.inSeconds <
-                  60; // Keep recent optimistic adds for up to 1 minute
+                  300; // Keep recent optimistic adds for up to 5 minutes (matches backend cache)
             } catch (e) {
               return false;
             }
