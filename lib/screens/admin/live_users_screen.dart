@@ -467,6 +467,9 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                               final isMonitor = session['is_monitor'] ?? false;
                               final monitorType = session['monitor_type'] ?? '';
                               final monitorStatus = session['monitor_status'] ?? '';
+                              
+                              // Emulator detection
+                              final isEmulator = session['is_emulator'] ?? false;
 
                               final isRecent = secondsAgo < 30;
 
@@ -617,7 +620,9 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                                             ],
                                             if (!isMonitor) ...[
                                               Icon(
-                                                _getDeviceIcon(userAgent),
+                                                isEmulator
+                                                    ? Icons.laptop_chromebook
+                                                    : _getDeviceIcon(userAgent),
                                                 size: isMobile ? 14 : 16,
                                                 color: Theme.of(context)
                                                     .colorScheme
@@ -625,7 +630,9 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                                               ),
                                               const SizedBox(width: 4),
                                               Text(
-                                                _getDeviceType(userAgent),
+                                                isEmulator
+                                                    ? 'Emulator'
+                                                    : _getDeviceType(userAgent),
                                                 style: TextStyle(
                                                   fontSize: isMobile ? 11 : 12,
                                                   color: Theme.of(context)
@@ -752,9 +759,13 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                                             if (!isMonitor) ...[
                                               _buildDetailRow(
                                                 context,
-                                                Icons.phone_android,
+                                                isEmulator
+                                                    ? Icons.laptop_chromebook
+                                                    : Icons.phone_android,
                                                 'Device',
-                                                deviceInfo,
+                                                isEmulator
+                                                    ? '$deviceInfo (Emulator)'
+                                                    : deviceInfo,
                                                 isMobile,
                                               ),
                                               const SizedBox(height: 8),
