@@ -211,6 +211,18 @@ class ErrorReporter {
   }) async {
     final apiService = ApiService();
     
+    // Get current user info if available
+    String? userId;
+    String? username;
+    try {
+      final userData = await apiService.getCurrentUser();
+      userId = userData['discord_id']?.toString();
+      username = userData['username']?.toString() ?? userData['global_name']?.toString();
+    } catch (e) {
+      debugPrint('[ERROR REPORTER] Could not fetch user info: $e');
+      // Continue without user info - better to send error without user than not send at all
+    }
+    
     final report = {
       'user_consented': true,
       'error': {
@@ -219,7 +231,11 @@ class ErrorReporter {
         'stackTrace': stackTrace?.toString() ?? '',
         'timestamp': DateTime.now().toIso8601String(),
       },
-      'context': additionalContext ?? {},
+      'context': {
+        ...?additionalContext,
+        if (userId != null) 'user_id': userId,
+        if (username != null) 'username': username,
+      },
       'logs': _logBuffer,
       'device': {
         'platform': _platform ?? 'Unknown',

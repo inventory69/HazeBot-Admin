@@ -23,8 +23,9 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _loadActiveSessions();
-    // Auto-refresh every 5 seconds
-    _refreshTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+    // 📊 ANALYTICS FIX: Auto-refresh every 30 seconds (reduced from 5s)
+    // This reduces polling spam from 720 calls/hour to 120 calls/hour (83% reduction)
+    _refreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
       if (mounted) {
         _loadActiveSessions(silent: true);
       }
