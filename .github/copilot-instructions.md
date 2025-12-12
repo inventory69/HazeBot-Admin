@@ -1,311 +1,295 @@
-# GitHub Copilot Code Review Instructions - HazeBot-Admin
+# HazeBot-Admin Copilot Instructions
 
-## Review Philosophy
-- Only comment when you have HIGH CONFIDENCE (>80%) that an issue exists
-- Be concise: one sentence per comment when possible
-- Focus on actionable feedback, not observations
-- When reviewing text, only comment on clarity issues if the text is genuinely confusing or could lead to errors. "Could be clearer" is not the same as "is confusing" - stay silent unless HIGH confidence it will cause problems
+## Architecture Overview
 
-## Priority Areas (Review These)
+**HazeBot-Admin** is a cross-platform Flutter app (Web primary, Android, Linux Desktop) providing admin interface and user features for HazeBot Discord bot.
 
-### Security & Safety
-- JWT token exposure or improper storage (should use SharedPreferences)
-- Credential exposure or hardcoded API keys
-- Missing input validation on user-entered data
-- Improper error handling that could leak sensitive info
-- API calls without authentication headers
-- Missing token refresh logic
-- Insecure HTTP instead of HTTPS in production
+### Hybrid Navigation Model
+- **Bottom Tabs (All Users):** HazeHub, Gaming Hub, Rocket League, Memes, Profile
+- **Admin Rail (Admin Only):** Config, Cogs, Tickets, Monitoring, Logs
+- Admin rail slides out on desktop/tablet, bottom nav on mobile
+- Role-based visibility: Admin sees everything, regular users see only bottom tabs
 
-### Correctness Issues
-- Logic errors that could cause crashes or incorrect behavior
-- Race conditions in async code
-- Memory leaks (unclosed streams, controllers not disposed)
-- Missing `mounted` checks before `setState()` in async callbacks
-- Incorrect navigation that could cause stack overflow
-- Off-by-one errors in pagination or list indexing
-- Missing null checks on optional API responses
-- BuildContext used across async gaps
-- Improper use of deprecated Flutter APIs
-- Missing error handling in API calls (try-catch)
-- State updates after widget disposal
+### Project Structure
+```
+lib/
+├── main.dart                 # Entry point, theme setup, MaterialApp
+├── screens/                  # Full-page screens (home, login, individual features)
+├── widgets/                  # Reusable components (cards, buttons, dialogs)
+├── services/                 # API client, auth, WebSocket, notifications
+├── providers/                # State management (Provider pattern)
+├── models/                   # Data classes (User, Ticket, Config, etc.)
+└── utils/                    # Helpers (constants, theme, formatters)
+```
 
-### Architecture & Patterns
-- Code that violates Material Design 3 patterns
-- Breaking Android 16 Monet Surface Hierarchy (wrong surface colors)
-- Inconsistent responsive design (missing mobile/tablet/desktop breakpoints)
-- Missing const constructors where possible (performance issue)
-- Improper StatefulWidget/StatelessWidget choice
-- Not following established navigation patterns (Hybrid TabBar + Rail)
-- Breaking theme-aware color usage (hardcoded colors instead of theme colors)
-- Missing RefreshIndicator on lists
-- Not using established widgets (should reuse existing widgets)
+## State Management: Provider Pattern
 
-## Project-Specific Context
+All app state is managed via **Provider** package. Key providers:
+- `AuthProvider` - JWT token, user info, login/logout, role checking
+- `TicketProvider` - Ticket list, WebSocket connection, real-time messages
+- `ConfigProvider` - Bot configuration, channel/role IDs, feature toggles
+- `ThemeProvider` - Dark/Light mode, Material You dynamic colors
 
-### Frontend (Flutter/Dart)
-- **Technology**: Flutter 3.x, Material Design 3, Provider State Management
-- **Target Platforms**: Web (primary), Android (secondary), Linux Desktop
-- **Architecture**: Hybrid Navigation (Bottom TabBar for users + Navigation Rail for admins)
-
-- **Core Files**:
-  - `lib/main.dart` - App Entry Point with Dynamic Color support
-  - `lib/screens/home_screen.dart` - Hybrid Navigation System
-  - `lib/services/api_service.dart` - All API calls (300+ lines)
-  - `lib/services/auth_service.dart` - JWT Authentication
-  - `lib/services/theme_service.dart` - Theme management
-  - `lib/models/` - Data models (Ticket, TicketConfig, etc.)
-  - `lib/widgets/` - Reusable widgets (CogCard, etc.)
-
-- **Navigation System**:
-  - Bottom TabBar: HazeHub, Gaming Hub, Rocket League, Meme Gen, Memes (for ALL users)
-  - Navigation Rail: Admin Panel (hidden by default, only for admins)
-  - Admin Icon in AppBar toggles Rail visibility
-  - Profile avatar in AppBar opens Bottom Sheet Menu
-
-- **API Integration**:
-  - Base URL from environment variable (`.env`)
-  - JWT token in Authorization header (Bearer)
-  - Automatic token refresh with 5-min buffer
-  - Session tracking on backend
-  - User-Agent header: "Testventory/Chillventory" with device info
-
-- **State Management**:
-  - Local state with StatefulWidget for most screens
-  - Provider for theme/auth (minimal, no unnecessary global state)
-  - `mounted` checks before setState() in async callbacks
-  - Dispose controllers/streams in dispose() method
-
-- **Error Handling**:
-  - Try-catch around all API calls
-  - Loading states: `_isLoading`, `_error`
-  - Error widgets with retry buttons
-  - Empty state widgets with helpful messages
-  - SnackBars for user feedback (success/error)
-
-### Material Design 3 & Android 16 Monet
-
-**CRITICAL: Surface Hierarchy** (most common mistake):
+**Pattern:**
 ```dart
-// Scaffold Background (lowest level)
-scaffoldBackgroundColor: colorScheme.surface
+// Define provider
+class MyProvider extends ChangeNotifier {
+  void updateValue() {
+    // ... change state
+    notifyListeners(); // Triggers UI rebuild
+  }
+}
 
-// Section Cards (e.g., "Latest Items", category containers)
-Card(
-  color: colorScheme.surfaceContainerLow,
-  elevation: 0,  // Flat design per Android 16
+// Register in main.dart
+MultiProvider(
+  providers: [
+    ChangeNotifierProvider(create: (_) => MyProvider()),
+  ],
+  child: MyApp(),
 )
 
-// Content Cards (items within sections)
-Card(
-  color: colorScheme.surfaceContainerHigh,
-  elevation: 0,
+// Consume in widgets
+Consumer<MyProvider>(
+  builder: (context, provider, child) => Text(provider.value),
 )
+// OR
+Provider.of<MyProvider>(context, listen: false).updateValue();
+```
 
-// Input Fields (highest level)
-TextField(
-  decoration: InputDecoration(
-    filled: true,
-    fillColor: colorScheme.surfaceContainerHighest,
-  ),
+## API Integration
+
+### API Service (`services/api_service.dart`)
+Singleton service handling all HTTP requests to HazeBot API.
+
+**Key Methods:**
+- `login(username, password)` - Basic auth, returns JWT token
+- `loginWithDiscord(code)` - OAuth2 flow, exchanges code for token
+- `get/post/put/delete(endpoint, {data, headers})` - Generic REST methods
+- Auto-adds JWT token to Authorization header if available
+
+**Platform-Aware URLs:**
+- Web: `API_BASE_URL` from `.env`
+- Android Emulator: `http://10.0.2.2:5070/api`
+- Android Device: Requires local network IP (e.g., `http://192.168.1.100:5070/api`)
+
+### Image Proxy Pattern
+Discord CDN images require authorization. API provides `/api/proxy/image?url=<encoded_url>` endpoint.
+
+**Usage:**
+```dart
+Image.network(
+  '${Config.imageProxyUrl}?url=${Uri.encodeComponent(discordImageUrl)}',
+  headers: {'Authorization': 'Bearer $token'},
 )
 ```
 
-**Theme Colors** (NEVER hardcode):
-- Use `Theme.of(context).colorScheme.primary` instead of `Colors.blue`
-- Use `Theme.of(context).textTheme.titleLarge` instead of hardcoded font sizes
-- Exceptions: Status colors (Colors.red for errors, Colors.green for success)
+## WebSocket (Real-Time Tickets)
 
-**Responsive Design**:
+### Connection Management (`services/websocket_service.dart`)
+Socket.IO client for real-time ticket updates.
+
+**Events:**
+- `connect` - Establish connection with JWT auth
+- `join_ticket` - Subscribe to specific ticket room
+- `ticket_message` - Receive/send chat messages
+- `ticket_closed` - Handle ticket closure
+- `disconnect` - Clean up on logout/app close
+
+**Pattern:**
 ```dart
-LayoutBuilder(
-  builder: (context, constraints) {
-    final isMobile = constraints.maxWidth < 600;
-    final isTablet = constraints.maxWidth < 900;
-    final padding = isMobile ? 12.0 : 24.0;
-    
-    return Padding(
-      padding: EdgeInsets.all(padding),
-      // ...
+socketService.connect(token);
+socketService.on('ticket_message', (data) {
+  // Update TicketProvider with new message
+  ticketProvider.addMessage(data);
+});
+socketService.emit('join_ticket', {'ticket_id': ticketId});
+```
+
+**Smart Notification Suppression:** When viewing a ticket, suppress push notifications for that ticket to avoid duplicate alerts.
+
+## Material Design 3 (Android 16 Monet)
+
+### Dynamic Color Theming
+Uses `dynamic_color` package to extract system colors (Android 12+).
+
+**Implementation (`main.dart`):**
+```dart
+DynamicColorBuilder(
+  builder: (lightDynamic, darkDynamic) {
+    return MaterialApp(
+      theme: ThemeData(
+        colorScheme: lightDynamic ?? fallbackLightScheme,
+        useMaterial3: true,
+      ),
+      darkTheme: ThemeData(
+        colorScheme: darkDynamic ?? fallbackDarkScheme,
+        useMaterial3: true,
+      ),
     );
   },
 )
 ```
 
-### Code Quality Standards
+**Custom Themes:** When dynamic colors unavailable (Web, iOS), fallback to custom `ColorScheme` with pastel pink/purple theme.
 
-**Formatting**:
-- `flutter analyze` - Analyze code
-- `dart format .` - Format code
-- Always use const constructors where possible
-- Line length: 120 characters (analysis_options.yaml)
+## Firebase Cloud Messaging (FCM)
 
-**Common Patterns**:
+### Push Notifications (`services/notification_service.dart`)
+Handles foreground notifications and token management.
+
+**Setup:**
+1. Initialize Firebase: `Firebase.initializeApp()`
+2. Request permission: `FirebaseMessaging.instance.requestPermission()`
+3. Get token: `FirebaseMessaging.instance.getToken()`
+4. Send token to API: `POST /api/fcm/register {token, device_info}`
+
+**Foreground Handling:**
 ```dart
-// API Call Pattern
-Future<void> _loadData() async {
-  try {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
-    
-    final result = await ApiService().getData();
-    
-    if (mounted) {
-      setState(() {
-        _data = result['data'] ?? [];
-        _isLoading = false;
-      });
-    }
-  } catch (e) {
-    if (mounted) {
-      setState(() {
-        _error = e.toString();
-        _isLoading = false;
-      });
-    }
+FirebaseMessaging.onMessage.listen((message) {
+  // Show local notification using flutter_local_notifications
+  _showLocalNotification(message.notification!);
+});
+```
+
+**Background/Terminated:** Handled by Firebase natively (Android system notifications).
+
+## Deep Linking (Discord OAuth2 Callback)
+
+### App Links (`app_links` package)
+Handles `admin.haze.pro/discord/callback?code=...` deep links for OAuth2.
+
+**Implementation (`main.dart`):**
+```dart
+final appLinks = AppLinks();
+appLinks.uriLinkStream.listen((uri) {
+  if (uri.path.contains('/discord/callback')) {
+    final code = uri.queryParameters['code'];
+    authProvider.loginWithDiscord(code);
   }
-}
+});
 ```
 
-### Recent Patterns to Follow
+**Android Setup:** Configured in `android/app/src/main/AndroidManifest.xml` with intent filters.
 
-**Version 3.8 Updates**:
-- Modular API architecture with Blueprint pattern
-- All API calls via `ApiService()` methods
-- User-Agent header in all requests
-- Proper loading states with `CircularProgressIndicator`
-- RefreshIndicator on all lists
-- Collapsible UI (Categories and Cards)
-- Local state updates (no full screen reloads)
-- Async action handlers with `Future<void> Function()` callbacks
+## Common Patterns
 
-**Ticket System Pattern** (Version 3.5):
-- Two-tab layout: Manage + Configuration
-- Status filtering with chips
-- Detail dialogs with nested tabs (Details + Messages)
-- Action buttons with confirmation dialogs
-- Monet surface hierarchy throughout
+### Creating New Screen
+1. Create file in `screens/{feature}_screen.dart`
+2. Use `Scaffold` with `AppBar` and body
+3. Consume providers with `Consumer` or `Provider.of`
+4. Add route to `main.dart` MaterialApp routes
 
-**Cog Manager Pattern** (Version 3.7):
-- Collapsible cards (expanded state per card)
-- Collapsible categories (expanded state per category)
-- Quick jump filter with count badges
-- Local status updates (no API reload on action)
-- Async action handlers with loading states
+### Adding API Endpoint
+1. Add method to `services/api_service.dart`
+2. Handle response/errors, return typed model
+3. Update provider to call new method
+4. Trigger with `notifyListeners()` to update UI
 
-## CI Pipeline Context
+### Handling Forms
+```dart
+final _formKey = GlobalKey<FormState>();
 
-**Important**: Reviews happen before build/tests complete. Do not flag issues that automated checks will catch.
-
-### What Our Checks Do
-
-**Flutter/Dart checks** (currently manual, should be automated):
-- `flutter analyze` - Static analysis
-- `dart format --set-exit-if-changed .` - Format check
-- `flutter build web --release --pwa-strategy=none` - Web build
-- `flutter build apk` - Android build (currently has issues)
-
-**Key setup**:
-- Uses `.env` for environment variables (never committed)
-- Firebase config in `android/app/google-services.json` (never committed)
-- Material Design 3 with dynamic_color package
-- Web deployment via `spa_server.py` (serves build/web/)
-
-**Testing strategy**:
-- Manual testing on Web (Chrome/Firefox)
-- Manual testing on Linux Desktop
-- Android testing on device (APK builds have issues)
-- Hard refresh required after web build (Ctrl+Shift+R) due to browser caching
-
-## Skip These (Low Value)
-
-Do not comment on:
-- **Style/formatting** - dart format handles this
-- **Analysis warnings** - flutter analyze handles this
-- **Missing dependencies** - pubspec.yaml and pub get handle this
-- **Minor naming suggestions** - unless truly confusing
-- **Suggestions to add comments** - for self-documenting code
-- **Refactoring suggestions** - unless there's a clear bug or maintainability issue
-- **Multiple issues in one comment** - choose the single most critical issue
-- **Logging suggestions** - we don't need excessive logging in production
-- **Pedantic accuracy in text** - unless it would cause actual confusion or errors
-
-## Response Format
-
-When you identify an issue:
-1. **State the problem** (1 sentence)
-2. **Why it matters** (1 sentence, only if not obvious)
-3. **Suggested fix** (code snippet or specific action)
-
-Example:
-```
-Missing `mounted` check before setState(). Add `if (mounted)` to prevent setState on disposed widget.
+Form(
+  key: _formKey,
+  child: Column(
+    children: [
+      TextFormField(
+        validator: (value) => value!.isEmpty ? 'Required' : null,
+      ),
+      ElevatedButton(
+        onPressed: () {
+          if (_formKey.currentState!.validate()) {
+            // Submit form
+          }
+        },
+      ),
+    ],
+  ),
+)
 ```
 
-## When to Stay Silent
+## Development Workflows
 
-If you're uncertain whether something is an issue, don't comment. False positives create noise and reduce trust in the review process.
+### Running Locally
+```bash
+# Web (hot reload, fast iteration)
+flutter run -d chrome
 
-## Project Standards (from AI_PROJECT_INSTRUCTIONS.md)
+# Android (emulator or device)
+flutter run -d android
 
-### Screen Creation Checklist
+# Linux Desktop
+flutter run -d linux
+```
 
-**ALWAYS include**:
-1. Scaffold with transparent AppBar (`Colors.transparent`)
-2. LayoutBuilder for responsive design
-3. Loading state with CircularProgressIndicator
-4. Error state with retry button
-5. Empty state with helpful icon/text
-6. RefreshIndicator on lists
-7. Try-catch on all API calls
-8. `mounted` checks before setState() in async
-9. Monet Surface Hierarchy (correct surface colors)
-10. Theme-aware colors (no hardcoded colors)
+**Environment Configuration:**
+1. Copy `.env.example` to `.env`
+2. Set `API_BASE_URL` for target environment (local/prod)
+3. For Android device, use local network IP: `http://192.168.1.X:5070/api`
 
-### API Integration Checklist
+### Building Production APK
+```bash
+# Release build (minified, obfuscated)
+flutter build apk --release
 
-**Frontend (Flutter)**:
-- API Service method in `api_service.dart`
-- Uses `_get()/_post()/_put()/_delete()` wrappers
-- Token automatically in headers
-- Error handling with try-catch
-- `mounted` check before setState()
-- Loading state management
-- User feedback (SnackBars)
+# Output: build/app/outputs/flutter-apk/app-release.apk
+```
 
-**Naming Conventions**:
-- API methods: `getFeatureData()`, `createFeatureItem()`, `updateFeatureItem()`
-- State variables: `_isLoading`, `_error`, `_data`
-- Private methods: `_loadData()`, `_handleAction()`
+**GitHub Actions:** `.github/workflows/build-production-apk.yml` auto-builds on push to `main`, creates GitHub release with APK artifact.
 
-### Common Mistakes to Avoid
+### Code Quality
+```bash
+flutter analyze           # Static analysis
+flutter test              # Run unit tests (if any)
+dart format lib/          # Auto-format code
+```
 
-1. **Wrong Surface Colors**: Using `surfaceContainerHigh` for section cards (should be `surfaceContainerLow`)
-2. **Hardcoded Colors**: Using `Colors.blue` instead of `colorScheme.primary`
-3. **Missing Mounted Check**: setState() after async without `if (mounted)`
-4. **No Loading State**: API calls without `_isLoading` indicator
-5. **Wrong Responsive Breakpoints**: Using fixed sizes instead of `constraints.maxWidth < 600`
-6. **Elevation > 0**: Should always use `elevation: 0` (Flat Design per Android 16)
-7. **Missing const**: Not using `const` constructors where possible
-8. **No Error Handling**: API calls without try-catch
-9. **BuildContext Across Async**: Using context after await without checking mounted
-10. **Disposed Controllers**: Not disposing TextEditingController/StreamController
+## Testing Strategy
 
-### Files to NEVER Commit
+- **No formal test suite:** Manual testing on Web + Android
+- **Test Users:** Use test credentials in HazeBot test environment
+- **API Testing:** Postman collection for endpoint validation
+- **Device Testing:** Test on emulator + real Android device + Web browsers
 
-- `.env` - Contains API URLs and credentials
-- `android/app/google-services.json` - Firebase configuration
-- `build/` - Build artifacts
-- `.dart_tool/` - Dart tools cache
-- `*.lock` files (except `pubspec.lock`)
+## Deployment
 
-### Environment Variables
+### Web (admin.haze.pro)
+Deployed via `devops-scripts/scripts/deploy-hazebot-admin.sh`:
+1. `flutter build web --release`
+2. Package `build/web/` to tar.gz
+3. Upload to hzwd server
+4. Extract to `/var/www/admin.haze.pro/`
+5. NGINX serves static files with reverse proxy to API
 
-Required in `.env`:
-- `API_BASE_URL` - Backend API URL
-- `DEFAULT_USERNAME` - Dev login username
-- `DEFAULT_PASSWORD` - Dev login password
-- `IMAGE_PROXY_URL` - CORS proxy for images
-- `GITHUB_REPO_URL` - Repository URL for About screen
+### Android (APK)
+- **GitHub Releases:** Auto-published by GitHub Actions
+- **Obtainium:** Users can track releases for auto-updates
+- **Direct Download:** Link in README points to latest release
+
+## Troubleshooting
+
+### WebSocket Not Connecting
+- Check JWT token is valid (not expired)
+- Verify API URL includes protocol (`https://` not `admin.haze.pro`)
+- Confirm CORS settings in HazeBot API allow origin
+- Check Socket.IO server is running (`start_with_api.py`)
+
+### Deep Links Not Working (Android)
+- Verify `AndroidManifest.xml` has correct intent filters
+- Test with `adb shell am start -a android.intent.action.VIEW -d "https://admin.haze.pro/discord/callback?code=test"`
+- Check app is set as default handler for domain
+
+### Theme Not Loading
+- Verify `DynamicColorBuilder` in `main.dart`
+- Check `ThemeProvider` is registered in `MultiProvider`
+- Confirm Material 3 is enabled: `useMaterial3: true`
+
+### API 401 Unauthorized
+- Token expired (check JWT expiry with jwt.io)
+- Token not stored correctly in `SharedPreferences`
+- API expects `Bearer <token>` format in Authorization header
+
+### Image Proxy Issues
+- Discord CDN URLs must be URL-encoded
+- Proxy requires valid JWT token in headers
+- Fallback to placeholder if proxy fails (graceful degradation)
