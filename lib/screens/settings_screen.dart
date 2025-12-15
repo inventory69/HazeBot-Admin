@@ -171,7 +171,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
             },
           ),
           const Divider(),
-          // Error Reporting Switch
+          // Error Reporting Section
+          const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Text(
+              'Privacy',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
           SwitchListTile(
             title: const Text('Automatic Error Reporting'),
             subtitle: const Text(
