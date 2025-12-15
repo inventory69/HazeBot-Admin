@@ -35,21 +35,27 @@ class CommunityPost {
 
   /// Create CommunityPost from JSON response
   factory CommunityPost.fromJson(Map<String, dynamic> json) {
+    // Handle nested author object from backend
+    final author = json['author'] as Map<String, dynamic>?;
+    final authorId = author?['id']?.toString() ?? json['author_id']?.toString() ?? '';
+    final authorName = author?['name']?.toString() ?? json['author_name']?.toString() ?? 'Unknown';
+    final authorAvatar = author?['avatar']?.toString() ?? json['author_avatar']?.toString();
+
     return CommunityPost(
       id: json['id'] as int,
       content: json['content'] as String?,
       imageUrl: json['image_url'] as String?,
-      authorId: json['author_id'] as String,
-      authorName: json['author_name'] as String? ?? 'Unknown',
-      authorAvatar: json['author_avatar'] as String?,
+      authorId: authorId,
+      authorName: authorName,
+      authorAvatar: authorAvatar,
       postType: json['post_type'] as String? ?? 'normal',
-      isAnnouncement: (json['is_announcement'] as int?) == 1,
-      discordChannelId: json['discord_channel_id'] as String?,
-      discordMessageId: json['discord_message_id'] as String?,
+      isAnnouncement: json['is_announcement'] == true || (json['is_announcement'] as int?) == 1,
+      discordChannelId: json['discord_channel_id']?.toString(),
+      discordMessageId: json['discord_message_id']?.toString(),
       createdAt: json['created_at'] as String,
       editedAt: json['edited_at'] as String?,
       deletedAt: json['deleted_at'] as String?,
-      isDeleted: (json['is_deleted'] as int?) == 1,
+      isDeleted: json['is_deleted'] == true || (json['is_deleted'] as int?) == 1,
     );
   }
 
