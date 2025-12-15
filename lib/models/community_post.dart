@@ -41,6 +41,15 @@ class CommunityPost {
     final authorName = author?['name']?.toString() ?? json['author_name']?.toString() ?? 'Unknown';
     final authorAvatar = author?['avatar']?.toString() ?? json['author_avatar']?.toString();
 
+    // Helper to convert bool/int/null to bool
+    bool _toBool(dynamic value) {
+      if (value == null) return false;
+      if (value is bool) return value;
+      if (value is int) return value == 1;
+      if (value is String) return value.toLowerCase() == 'true' || value == '1';
+      return false;
+    }
+
     return CommunityPost(
       id: json['id'] as int,
       content: json['content'] as String?,
@@ -49,13 +58,13 @@ class CommunityPost {
       authorName: authorName,
       authorAvatar: authorAvatar,
       postType: json['post_type'] as String? ?? 'normal',
-      isAnnouncement: json['is_announcement'] == true || (json['is_announcement'] as int?) == 1,
+      isAnnouncement: _toBool(json['is_announcement']),
       discordChannelId: json['discord_channel_id']?.toString(),
       discordMessageId: json['discord_message_id']?.toString(),
       createdAt: json['created_at'] as String,
       editedAt: json['edited_at'] as String?,
       deletedAt: json['deleted_at'] as String?,
-      isDeleted: json['is_deleted'] == true || (json['is_deleted'] as int?) == 1,
+      isDeleted: _toBool(json['is_deleted']),
     );
   }
 
