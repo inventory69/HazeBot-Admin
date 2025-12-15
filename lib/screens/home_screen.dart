@@ -1739,7 +1739,9 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   Widget _buildLevelupCard(BuildContext context, Map<String, dynamic> levelup,
       bool isMobile, int index) {
-    final username = levelup['username'] as String? ?? 'Unknown User';
+    final username = levelup['display_name'] as String? ?? 
+                     levelup['username'] as String? ?? 
+                     'Unknown User';
     final newLevel = levelup['new_level'] as int? ?? 0;
     final oldLevel = levelup['old_level'] as int?;
     final tierName = levelup['tier_name'] as String? ?? 'common';
@@ -1771,33 +1773,15 @@ class _DashboardScreenState extends State<DashboardScreen>
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Level Badge (circular)
-            Container(
-              width: isMobile ? 60 : 70,
-              height: isMobile ? 60 : 70,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: parsedTierColor != null
-                      ? [parsedTierColor, parsedTierColor.withOpacity(0.6)]
-                      : [
-                          Theme.of(context).colorScheme.primary,
-                          Theme.of(context).colorScheme.primary.withOpacity(0.6)
-                        ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
-              child: Center(
-                child: Text(
-                  '$newLevel',
-                  style: TextStyle(
-                    fontSize: isMobile ? 24 : 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
+            // User Avatar
+            CircleAvatar(
+              radius: isMobile ? 30 : 35,
+              backgroundImage: levelup['avatar_url'] != null
+                  ? NetworkImage(levelup['avatar_url'])
+                  : null,
+              child: levelup['avatar_url'] == null
+                  ? const Icon(Icons.person, size: 32)
+                  : null,
             ),
             const SizedBox(width: 12),
             // User Info
