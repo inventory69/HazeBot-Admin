@@ -1391,6 +1391,18 @@ class ApiService {
     }
   }
 
+  Future<Map<String, dynamic>> resetXpConfig() async {
+    final response = await _post('$baseUrl/config/xp/reset');
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else if (response.statusCode == 401) {
+      throw TokenExpiredException('Token has expired or is invalid');
+    } else {
+      throw Exception('Failed to reset XP config: ${response.statusCode}');
+    }
+  }
+
   // ===== MEME REACTIONS ENDPOINTS =====
 
   Future<Map<String, dynamic>> upvoteMeme(String messageId) async {

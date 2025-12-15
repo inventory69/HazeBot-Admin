@@ -77,8 +77,8 @@ class _XpConfigScreenState extends State<XpConfigScreen> {
             final activityXp = config['activity_xp'];
             _messageSentController.text = activityXp['message_sent'].toString();
             _imageSentController.text = activityXp['image_sent'].toString();
-            _memeFetchedController.text = activityXp['meme_fetched'].toString();
-            _memeGeneratedController.text = activityXp['meme_generated'].toString();
+            _memeFetchedController.text = activityXp['meme_fetch'].toString();
+            _memeGeneratedController.text = activityXp['meme_generate'].toString();
             _ticketCreatedController.text = activityXp['ticket_created'].toString();
             _ticketResolvedController.text = activityXp['ticket_resolved'].toString();
             _gameRequestController.text = activityXp['game_request'].toString();
@@ -128,8 +128,8 @@ class _XpConfigScreenState extends State<XpConfigScreen> {
         'activity_xp': {
           'message_sent': int.parse(_messageSentController.text),
           'image_sent': int.parse(_imageSentController.text),
-          'meme_fetched': int.parse(_memeFetchedController.text),
-          'meme_generated': int.parse(_memeGeneratedController.text),
+          'meme_fetch': int.parse(_memeFetchedController.text),
+          'meme_generate': int.parse(_memeGeneratedController.text),
           'ticket_created': int.parse(_ticketCreatedController.text),
           'ticket_resolved': int.parse(_ticketResolvedController.text),
           'game_request': int.parse(_gameRequestController.text),
@@ -163,6 +163,68 @@ class _XpConfigScreenState extends State<XpConfigScreen> {
     } finally {
       if (mounted) {
         setState(() => _isSaving = false);
+      }
+    }
+  }
+
+  Future<void> _resetToDefaults() async {
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Reset to Defaults?'),
+        content: const Text(
+          'This will reset all XP system settings to their default values. '
+          'This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            child: const Text('Reset'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    if (mounted) {
+      setState(() => _isLoading = true);
+    }
+
+    try {
+      final authService = Provider.of<AuthService>(context, listen: false);
+      
+      // Call API to reset to defaults
+      final response = await authService.apiService.resetXpConfig();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Configuration reset to defaults successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        
+        // Reload config
+        await _loadConfig();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error resetting configuration: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
       }
     }
   }
@@ -209,7 +271,7 @@ class _XpConfigScreenState extends State<XpConfigScreen> {
   Widget _buildActivityXpSection() {
     return Card(
       elevation: 0,
-      color: Colors.transparent,
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -281,7 +343,7 @@ class _XpConfigScreenState extends State<XpConfigScreen> {
   Widget _buildLevelCalculationSection() {
     return Card(
       elevation: 0,
-      color: Colors.transparent,
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -357,7 +419,7 @@ class _XpConfigScreenState extends State<XpConfigScreen> {
   Widget _buildCooldownsSection() {
     return Card(
       elevation: 0,
-      color: Colors.transparent,
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -399,7 +461,7 @@ class _XpConfigScreenState extends State<XpConfigScreen> {
   Widget _buildTiersSection() {
     return Card(
       elevation: 0,
-      color: Colors.transparent,
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -421,7 +483,14 @@ class _XpConfigScreenState extends State<XpConfigScreen> {
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 16),
-            ..._levelTiers.entries.map((entry) {
+            // Sort tiers by min_level descending (50 -> 1, Legendary -> Common)
+            ...(_levelTiers.entries.toList()
+              ..sort((a, b) {
+                final aLevel = (a.value as Map<String, dynamic>)['min_level'] as int? ?? 0;
+                final bLevel = (b.value as Map<String, dynamic>)['min_level'] as int? ?? 0;
+                return bLevel.compareTo(aLevel); // Descending order
+              })
+            ).map((entry) {
               final tierName = entry.key;
               final tierData = entry.value as Map<String, dynamic>;
               final emoji = tierData['emoji'] as String? ?? '⭐';
@@ -518,22 +587,39 @@ class _XpConfigScreenState extends State<XpConfigScreen> {
   }
 
   Widget _buildSaveButton() {
-    return SizedBox(
-      width: double.infinity,
-      child: FilledButton.icon(
-        onPressed: _isSaving ? null : _saveConfig,
-        icon: _isSaving
-            ? const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            : const Icon(Icons.save),
-        label: Text(_isSaving ? 'Saving...' : 'Save Configuration'),
-        style: FilledButton.styleFrom(
-          padding: const EdgeInsets.all(16),
+    return Column(
+      children: [
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton.icon(
+            onPressed: _isSaving ? null : _saveConfig,
+            icon: _isSaving
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.save),
+            label: Text(_isSaving ? 'Saving...' : 'Save Configuration'),
+            style: FilledButton.styleFrom(
+              padding: const EdgeInsets.all(16),
+            ),
+          ),
         ),
-      ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: _isLoading || _isSaving ? null : _resetToDefaults,
+            icon: const Icon(Icons.restore),
+            label: const Text('Reset to Defaults'),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.all(16),
+              foregroundColor: Colors.red,
+            ),
+          ),
+        ),
+      ],
     );
   }
 

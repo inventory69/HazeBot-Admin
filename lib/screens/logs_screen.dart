@@ -65,21 +65,11 @@ class _LogsScreenState extends State<LogsScreen> {
       if (mounted) {
         setState(() {
           _logs = List<Map<String, dynamic>>.from(result['logs'] ?? []);
-          // NICHT mehr reversed! → Chronologisch (älteste oben, neueste unten)
           _availableCogs = List<String>.from(result['available_cogs'] ?? []);
           debugPrint(
               'Available cogs loaded: $_availableCogs (${_availableCogs.length} cogs)');
         });
-        
-        // Auto-scroll zu neuesten Log (unten) nach dem Build
-        // Use Future.delayed to ensure ListView is fully rendered
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          Future.delayed(const Duration(milliseconds: 300), () {
-            if (_scrollController.hasClients && mounted) {
-              _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-            }
-          });
-        });
+        // No need to scroll! ListView with reverse: true starts at bottom automatically
       }
     } catch (e) {
       if (mounted) {
@@ -534,9 +524,12 @@ class _LogsScreenState extends State<LogsScreen> {
                           ? const Center(child: Text('No logs found'))
                           : ListView.builder(
                               controller: _scrollController,
+                              reverse: true, // Start at bottom (newest logs)
                               itemCount: _logs.length,
                               itemBuilder: (context, index) {
-                                final log = _logs[index];
+                                // Reverse index to show newest logs at bottom
+                                final reversedIndex = _logs.length - 1 - index;
+                                final log = _logs[reversedIndex];
                                 final level = log['level'] ?? 'INFO';
                                 final timestamp = log['timestamp'] ?? '';
                                 final message = log['message'] ?? '';
@@ -545,17 +538,17 @@ class _LogsScreenState extends State<LogsScreen> {
                                 final cogName = _extractCogName(message);
                                 final cogColor = _getCogColor(cogName);
                                 final isSelected =
-                                    _selectedIndices.contains(index);
+                                    _selectedIndices.contains(reversedIndex);
 
                                 return InkWell(
                                   onTap: _isSelectionMode
-                                      ? () => _toggleSelection(index)
+                                      ? () => _toggleSelection(reversedIndex)
                                       : null,
                                   onLongPress: () {
                                     if (_isSelectionMode) {
-                                      _toggleSelection(index);
+                                      _toggleSelection(reversedIndex);
                                     } else {
-                                      _enterSelectionMode(index);
+                                      _enterSelectionMode(reversedIndex);
                                     }
                                   },
                                   child: Card(
@@ -595,7 +588,7 @@ class _LogsScreenState extends State<LogsScreen> {
                                               child: Checkbox(
                                                 value: isSelected,
                                                 onChanged: (_) =>
-                                                    _toggleSelection(index),
+                                                    _toggleSelection(reversedIndex),
                                               ),
                                             ),
                                           // Emoji + Icon
