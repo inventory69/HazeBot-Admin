@@ -417,8 +417,8 @@ class _XpConfigScreenState extends State<XpConfigScreen> {
               final tierName = entry.key;
               final tierData = entry.value as Map<String, dynamic>;
               final icon = _levelIcons[tierName] ?? '🔰';
-              final minLevel = tierData['min_level'];
-              final color = tierData['color'];
+              final minLevel = tierData['min_level'] as int? ?? 1;
+              final color = tierData['color'] as String? ?? '#808080';
 
               return Padding(
                 padding: const EdgeInsets.only(bottom: 8.0),

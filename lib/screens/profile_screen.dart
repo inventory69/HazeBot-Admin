@@ -517,8 +517,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           // Level Badge (circular, centered)
                           Center(
                             child: _buildLevelBadge(
-                              level: _xp!['level'] ?? 0,
-                              tierColor: _xp!['tier_color'],
+                              level: _xp!['level'] as int? ?? 0,
+                              tierColor: _xp!['tier_color'] as String?,
                               isMobile: isMobile,
                             ),
                           ),
@@ -568,9 +568,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           if (_xp!['total_xp'] != null &&
                               _xp!['xp_for_next_level'] != null) ...[
                             _buildProgressBar(
-                              current: _xp!['total_xp'],
-                              target: _xp!['xp_for_next_level'],
-                              tierColor: _xp!['tier_color'],
+                              current: _xp!['total_xp'] as int? ?? 0,
+                              target: _xp!['xp_for_next_level'] as int? ?? 0,
+                              tierColor: _xp!['tier_color'] as String?,
                             ),
                           ],
                         ],
