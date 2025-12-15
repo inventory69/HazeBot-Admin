@@ -1377,7 +1377,10 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> updateXpConfig(Map<String, dynamic> config) async {
-    final response = await _put('$baseUrl/config/xp', config);
+    final response = await _put(
+      '$baseUrl/config/xp',
+      body: jsonEncode(config),
+    );
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
