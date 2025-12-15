@@ -66,7 +66,7 @@ class _XpConfigScreenState extends State<XpConfigScreen> {
 
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
-      final response = await authService.apiService.getRequest('/config/xp');
+      final response = await authService.apiService.getXpConfig();
       
       if (response['success'] == true) {
         final config = response['config'];
@@ -144,12 +144,12 @@ class _XpConfigScreenState extends State<XpConfigScreen> {
         },
       };
 
-      await authService.apiService.putRequest('/config/xp', configData);
+      final response = await authService.apiService.updateXpConfig(configData);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('XP configuration saved successfully'),
+          SnackBar(
+            content: Text(response['message'] ?? 'XP configuration saved successfully'),
             backgroundColor: Colors.green,
           ),
         );

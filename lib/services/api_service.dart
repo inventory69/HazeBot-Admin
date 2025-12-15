@@ -1364,6 +1364,30 @@ class ApiService {
     }
   }
 
+  Future<Map<String, dynamic>> getXpConfig() async {
+    final response = await _get('$baseUrl/config/xp');
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else if (response.statusCode == 401) {
+      throw TokenExpiredException('Token has expired or is invalid');
+    } else {
+      throw Exception('Failed to get XP config: ${response.statusCode}');
+    }
+  }
+
+  Future<Map<String, dynamic>> updateXpConfig(Map<String, dynamic> config) async {
+    final response = await _put('$baseUrl/config/xp', config);
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else if (response.statusCode == 401) {
+      throw TokenExpiredException('Token has expired or is invalid');
+    } else {
+      throw Exception('Failed to update XP config: ${response.statusCode}');
+    }
+  }
+
   // ===== MEME REACTIONS ENDPOINTS =====
 
   Future<Map<String, dynamic>> upvoteMeme(String messageId) async {
