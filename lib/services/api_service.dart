@@ -1340,6 +1340,30 @@ class ApiService {
     }
   }
 
+  Future<Map<String, dynamic>> getLatestLevelups({int limit = 10}) async {
+    final response = await _get('$baseUrl/hazehub/latest-levelups?limit=$limit');
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else if (response.statusCode == 401) {
+      throw TokenExpiredException('Token has expired or is invalid');
+    } else {
+      throw Exception('Failed to get latest level-ups: ${response.statusCode}');
+    }
+  }
+
+  Future<Map<String, dynamic>> getLeaderboard({int limit = 50}) async {
+    final response = await _get('$baseUrl/levels/leaderboard?limit=$limit');
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else if (response.statusCode == 401) {
+      throw TokenExpiredException('Token has expired or is invalid');
+    } else {
+      throw Exception('Failed to get leaderboard: ${response.statusCode}');
+    }
+  }
+
   // ===== MEME REACTIONS ENDPOINTS =====
 
   Future<Map<String, dynamic>> upvoteMeme(String messageId) async {

@@ -1,8 +1,10 @@
+import 'dart:ui' show PlatformDispatcher;
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode, kReleaseMode;
 import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:dynamic_color/dynamic_color.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
 import 'services/auth_service.dart';
@@ -29,6 +31,47 @@ Future<void> main() async {
   // Initialize error reporter (loads device info)
   await ErrorReporter().initialize();
 
+  // ✅ FIX 2: Initialize AuthService BEFORE app starts to prevent race conditions
+  final authService = AuthService();
+  await authService.init(); // Wait for token to load before running app
+  debugPrint('✅ AuthService initialized');
+
+  // ✅ ERROR REPORTING: Global error handler for uncaught Flutter errors
+  FlutterError.onError = (FlutterErrorDetails details) {
+    // Log locally (always)
+    ErrorReporter().error(
+      details.exception.toString(),
+      context: {
+        'stackTrace': details.stack.toString(),
+        'library': details.library ?? 'unknown',
+      },
+    );
+
+    // In debug mode: print to console
+    if (kDebugMode) {
+      FlutterError.presentError(details);
+    }
+
+    // In release mode: check if auto-reporting is enabled
+    if (kReleaseMode) {
+      _checkAndSendError(details.exception, details.stack);
+    }
+  };
+
+  // ✅ ERROR REPORTING: Global error handler for async errors
+  PlatformDispatcher.instance.onError = (error, stack) {
+    ErrorReporter().error(
+      error.toString(),
+      context: {'stackTrace': stack.toString()},
+    );
+
+    if (kReleaseMode) {
+      _checkAndSendError(error, stack);
+    }
+
+    return true; // Handled
+  };
+
   // Initialize Firebase & Notifications (graceful - continues even if Firebase not configured)
   try {
     final notificationService = NotificationService();
@@ -47,11 +90,27 @@ Future<void> main() async {
     // Continue without notifications - app still works
   }
 
-  runApp(const HazeBotAdminApp());
+  runApp(HazeBotAdminApp(authService: authService));
+}
+
+/// Check if auto-reporting is enabled and send error silently
+Future<void> _checkAndSendError(dynamic error, StackTrace? stack) async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    final autoSendEnabled = prefs.getBool('auto_send_error_reports') ?? false;
+
+    if (autoSendEnabled) {
+      await ErrorReporter().sendErrorSilently(error, stackTrace: stack);
+    }
+  } catch (e) {
+    debugPrint('Failed to auto-send error: $e');
+  }
 }
 
 class HazeBotAdminApp extends StatefulWidget {
-  const HazeBotAdminApp({super.key});
+  final AuthService authService;
+  
+  const HazeBotAdminApp({super.key, required this.authService});
 
   @override
   State<HazeBotAdminApp> createState() => _HazeBotAdminAppState();
@@ -145,7 +204,7 @@ class _HazeBotAdminAppState extends State<HazeBotAdminApp>
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AuthService()),
+        ChangeNotifierProvider.value(value: widget.authService), // Use pre-initialized instance
         ChangeNotifierProvider(create: (_) => DiscordAuthService()),
         ChangeNotifierProvider(create: (_) => PermissionService()),
         ChangeNotifierProvider(create: (_) => ConfigService()),

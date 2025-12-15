@@ -23,6 +23,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Map<String, dynamic>? _notifications;
   Map<String, dynamic>? _customStats;
   Map<String, dynamic>? _activity;
+  Map<String, dynamic>? _xp;
   String? _joinedAt;
   String? _createdAt;
 
@@ -56,6 +57,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _notifications = profile['notifications'];
           _customStats = profile['custom_stats'];
           _activity = profile['activity'];
+          _xp = profile['xp'];
           _joinedAt = profile['joined_at'];
           _createdAt = profile['created_at'];
           _isLoading = false;
@@ -489,6 +491,95 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(height: 16),
                 ],
 
+                // XP & Level Section
+                if (_xp != null) ...[
+                  Card(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .primaryContainer
+                        .withOpacity(0.18),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16)),
+                    child: Padding(
+                      padding: EdgeInsets.all(isMobile ? 12 : 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '⭐ Level & Experience',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 16),
+                          // Level Badge (circular, centered)
+                          Center(
+                            child: _buildLevelBadge(
+                              level: _xp!['level'] ?? 0,
+                              tierColor: _xp!['tier_color'],
+                              isMobile: isMobile,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          // Tier Name
+                          Center(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _parseTierColor(_xp!['tier_color'])
+                                        ?.withOpacity(0.2) ??
+                                    Theme.of(context)
+                                        .colorScheme
+                                        .primaryContainer,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                (_xp!['tier'] ?? 'common')
+                                    .toString()
+                                    .toUpperCase(),
+                                style: TextStyle(
+                                  fontSize: isMobile ? 14 : 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: _parseTierColor(_xp!['tier_color']) ??
+                                      Theme.of(context).colorScheme.primary,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          // XP Stats
+                          _StatRow(
+                            icon: Icons.stars,
+                            label: 'Total XP',
+                            value: _xp!['total_xp']?.toString() ?? '0',
+                          ),
+                          _StatRow(
+                            icon: Icons.trending_up,
+                            label: 'XP for Next Level',
+                            value: _xp!['xp_for_next_level']?.toString() ?? '0',
+                          ),
+                          const SizedBox(height: 12),
+                          // Progress Bar to Next Level
+                          if (_xp!['total_xp'] != null &&
+                              _xp!['xp_for_next_level'] != null) ...[
+                            _buildProgressBar(
+                              current: _xp!['total_xp'],
+                              target: _xp!['xp_for_next_level'],
+                              tierColor: _xp!['tier_color'],
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+
                 // Activity Stats
                 if (_activity != null) ...[
                   Card(
@@ -632,6 +723,160 @@ class _ProfileScreenState extends State<ProfileScreen> {
         },
       ),
     );
+  }
+
+  Widget _buildLevelBadge({
+    required int level,
+    String? tierColor,
+    required bool isMobile,
+  }) {
+    final parsedColor = _parseTierColor(tierColor);
+    
+    return Container(
+      width: isMobile ? 100 : 120,
+      height: isMobile ? 100 : 120,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          colors: parsedColor != null
+              ? [parsedColor, parsedColor.withOpacity(0.6)]
+              : [
+                  Theme.of(context).colorScheme.primary,
+                  Theme.of(context).colorScheme.primary.withOpacity(0.6)
+                ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: (parsedColor ?? Theme.of(context).colorScheme.primary)
+                .withOpacity(0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'LEVEL',
+              style: TextStyle(
+                fontSize: isMobile ? 10 : 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.white.withOpacity(0.8),
+                letterSpacing: 1.2,
+              ),
+            ),
+            Text(
+              '$level',
+              style: TextStyle(
+                fontSize: isMobile ? 36 : 42,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                height: 1.0,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProgressBar({
+    required int current,
+    required int target,
+    String? tierColor,
+  }) {
+    final parsedColor = _parseTierColor(tierColor);
+    
+    // Calculate progress (0.0 to 1.0)
+    // For level progress, we need to calculate XP within current level
+    // current is total XP, target is XP needed for next level
+    // We need to find XP for current level to calculate progress within this level
+    final currentLevel = _xp!['level'] as int? ?? 1;
+    
+    // Calculate XP needed for current level (previous level boundary)
+    int xpForCurrentLevel = 0;
+    if (currentLevel > 1) {
+      // Simple formula: base * (multiplier ^ (level - 1))
+      // This should match Config.calculate_xp_for_next_level logic
+      for (int i = 1; i < currentLevel; i++) {
+        xpForCurrentLevel += (100 * (1.5 * i)).round();
+      }
+    }
+    
+    final xpInCurrentLevel = current - xpForCurrentLevel;
+    final xpNeededForLevel = target;
+    final progress = xpNeededForLevel > 0 
+        ? (xpInCurrentLevel / xpNeededForLevel).clamp(0.0, 1.0)
+        : 0.0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Progress to Next Level',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+            Text(
+              '${(progress * 100).toStringAsFixed(0)}%',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: parsedColor ?? Theme.of(context).colorScheme.primary,
+                  ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: LinearProgressIndicator(
+            value: progress,
+            minHeight: 10,
+            backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+            valueColor: AlwaysStoppedAnimation<Color>(
+              parsedColor ?? Theme.of(context).colorScheme.primary,
+            ),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              '$xpInCurrentLevel XP',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            Text(
+              '$xpNeededForLevel XP',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Color? _parseTierColor(String? tierColor) {
+    if (tierColor == null) return null;
+    try {
+      // Handle both #RRGGBB and 0xFFRRGGBB formats
+      if (tierColor.startsWith('#')) {
+        return Color(int.parse(tierColor.replaceFirst('#', '0xFF')));
+      } else if (tierColor.startsWith('0x')) {
+        return Color(int.parse(tierColor));
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
   }
 }
 

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'api_service.dart';
 
 enum LogLevel {
@@ -200,6 +201,38 @@ class ErrorReporter {
           ),
         );
       }
+    }
+  }
+
+  /// Send error report silently (no dialog)
+  /// Only call this if user has opted-in to automatic reporting
+  Future<void> sendErrorSilently(
+    dynamic error, {
+    StackTrace? stackTrace,
+    Map<String, dynamic>? additionalContext,
+  }) async {
+    try {
+      await _sendErrorReport(
+        error,
+        stackTrace: stackTrace,
+        additionalContext: additionalContext,
+      );
+      debugPrint('[ERROR REPORTER] Silent report sent successfully');
+    } catch (e) {
+      debugPrint('[ERROR REPORTER] Failed to send silent report: $e');
+      // Don't throw - silent failures are OK
+    }
+  }
+
+  /// Check if auto-reporting is enabled
+  Future<bool> isAutoReportingEnabled() async {
+    try {
+      // Import SharedPreferences only when needed
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      return prefs.getBool('auto_send_error_reports') ?? false;
+    } catch (e) {
+      debugPrint('[ERROR REPORTER] Failed to check auto-reporting setting: $e');
+      return false;
     }
   }
 
