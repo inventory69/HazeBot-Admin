@@ -1,15 +1,5 @@
 pluginManagement {
-    val flutterSdkPath = {
-        val properties = java.util.Properties()
-        file("local.properties").inputStream().use { properties.load(it) }
-        val flutterSdkPath = properties.getProperty("flutter.sdk")
-        require(flutterSdkPath != null) { "flutter.sdk not set in local.properties" }
-        flutterSdkPath
-    }
-    settings.ext.set("flutterSdkPath", flutterSdkPath())
-
-    includeBuild("${settings.ext.get("flutterSdkPath")}/packages/flutter_tools/gradle")
-
+    val flutterSdkPath: String by settings
     repositories {
         google()
         mavenCentral()
