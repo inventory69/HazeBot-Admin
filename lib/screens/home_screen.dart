@@ -8,10 +8,13 @@ import '../services/permission_service.dart';
 import '../services/config_service.dart';
 import '../services/api_service.dart' show ApiService, getProxiedImageUrl, ApiException, ApiConnectionException, ApiTimeoutException, TokenExpiredException;
 import '../providers/data_cache_provider.dart';
+import '../providers/community_posts_provider.dart';
 import '../utils/app_config.dart';
 import '../widgets/api_error_widget.dart';
+import '../widgets/community_post_card.dart';
 import 'meme_detail_screen.dart';
 import 'profile_screen.dart';
+import 'create_post_screen.dart';
 import 'config/general_config_screen.dart';
 import 'config/channels_config_screen.dart';
 import 'config/roles_config_screen.dart';
@@ -873,6 +876,14 @@ class _DashboardScreenState extends State<DashboardScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final cacheProvider =
           Provider.of<DataCacheProvider>(context, listen: false);
+      final postsProvider =
+          Provider.of<CommunityPostsProvider>(context, listen: false);
+      
+      // Load community posts if cache is empty
+      if (postsProvider.posts.isEmpty) {
+        postsProvider.loadPosts();
+      }
+      
       // Only load if cache is empty - cache will prevent duplicate requests
       if (cacheProvider.memes == null || cacheProvider.rankups == null) {
         await _loadData(force: true);
@@ -895,10 +906,14 @@ class _DashboardScreenState extends State<DashboardScreen>
     try {
       final cacheProvider =
           Provider.of<DataCacheProvider>(context, listen: false);
+      final postsProvider =
+          Provider.of<CommunityPostsProvider>(context, listen: false);
+      
       await Future.wait([
         cacheProvider.loadLatestMemes(force: force),
         cacheProvider.loadLatestRankups(force: force),
         cacheProvider.loadLatestLevelups(force: force),
+        postsProvider.loadPosts(force: force),
       ]);
 
       // Success - clear any error state
@@ -1060,6 +1075,11 @@ class _DashboardScreenState extends State<DashboardScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Community Posts Section (NEW - at the top!)
+                      _buildCommunityPostsSection(context, isMobile),
+
+                      SizedBox(height: isMobile ? 12 : 16),
+
                       // Latest Memes Section
                       _buildMemesSection(
                           context, isMobile, memes, isLoadingMemes),
@@ -1081,6 +1101,215 @@ class _DashboardScreenState extends State<DashboardScreen>
               ),
             );
           },
+        );
+      },
+    );
+  }
+
+  Widget _buildCommunityPostsSection(BuildContext context, bool isMobile) {
+    return Consumer<CommunityPostsProvider>(
+      builder: (context, postsProvider, child) {
+        final posts = postsProvider.posts.take(5).toList(); // Show max 5 posts
+        final isLoading = postsProvider.isLoading;
+        final hasError = postsProvider.error != null;
+        // ✅ ALL users can create posts (not just admins/mods)
+        final canCreate = true;
+
+        return Card(
+          color: Colors.transparent,
+          elevation: 0,
+          child: Padding(
+            padding: EdgeInsets.all(isMobile ? 12 : 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Flexible(
+                      child: Row(
+                        children: [
+                          Icon(Icons.forum, size: isMobile ? 20 : 24),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.primaryContainer,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                'Community Posts',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.copyWith(
+                                      fontSize: isMobile ? 18 : null,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onPrimaryContainer,
+                                    ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (canCreate)
+                      ElevatedButton.icon(
+                        onPressed: () async {
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const CreatePostScreen(),
+                            ),
+                          );
+                          // Reload posts if a new post was created
+                          if (result == true && mounted) {
+                            postsProvider.refreshPosts();
+                          }
+                        },
+                        icon: const Icon(Icons.add, size: 18),
+                        label: Text(isMobile ? 'New' : 'New Post'),
+                        style: ElevatedButton.styleFrom(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isMobile ? 12 : 16,
+                            vertical: isMobile ? 8 : 12,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                if (isLoading && posts.isEmpty)
+                  const Center(child: CircularProgressIndicator())
+                else if (hasError && posts.isEmpty)
+                  Center(
+                    child: Column(
+                      children: [
+                        Icon(Icons.error_outline,
+                            size: 48, color: Colors.grey[400]),
+                        const SizedBox(height: 8),
+                        Text(
+                          postsProvider.error ?? 'Failed to load posts',
+                          style: TextStyle(color: Colors.grey[600]),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 8),
+                        TextButton.icon(
+                          onPressed: () => postsProvider.refreshPosts(),
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  )
+                else if (posts.isEmpty)
+                  Center(
+                    child: Column(
+                      children: [
+                        Icon(Icons.forum_outlined,
+                            size: 48, color: Colors.grey[400]),
+                        const SizedBox(height: 8),
+                        Text(
+                          'No community posts yet',
+                          style: TextStyle(color: Colors.grey[600]),
+                        ),
+                        if (canCreate) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            'Be the first to share something!',
+                            style: TextStyle(
+                              color: Colors.grey[500],
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  )
+                else
+                  Column(
+                    children: posts.map((post) {
+                      final authService = Provider.of<AuthService>(context, listen: false);
+                      final permissionService = Provider.of<PermissionService>(context, listen: false);
+                      final currentUserId = authService.userId;
+                      final canEdit = post.authorId == currentUserId && post.isEditable;
+                      final canDelete = post.authorId == currentUserId || 
+                                       permissionService.hasPermission('all') ||
+                                       permissionService.hasPermission('mod');
+
+                      return Padding(
+                        padding: EdgeInsets.only(bottom: isMobile ? 8 : 12),
+                        child: CommunityPostCard(
+                          post: post,
+                          canEdit: canEdit,
+                          canDelete: canDelete,
+                          onEdit: canEdit ? () {
+                            // TODO: Navigate to edit screen
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Edit functionality coming soon'),
+                              ),
+                            );
+                          } : null,
+                          onDelete: canDelete ? () async {
+                            // Show confirmation dialog
+                            final confirmed = await showDialog<bool>(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text('Delete Post'),
+                                content: const Text(
+                                  'Are you sure you want to delete this post? This action cannot be undone.',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context, false),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context, true),
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: Colors.red,
+                                    ),
+                                    child: const Text('Delete'),
+                                  ),
+                                ],
+                              ),
+                            );
+
+                            if (confirmed == true && mounted) {
+                              try {
+                                await postsProvider.deletePost(post.id);
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Post deleted successfully'),
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  );
+                                }
+                              } catch (e) {
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Failed to delete post: $e'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              }
+                            }
+                          } : null,
+                        ),
+                      );
+                    }).toList(),
+                  ),
+              ],
+            ),
+          ),
         );
       },
     );

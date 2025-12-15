@@ -60,6 +60,12 @@ dependencies:
   
   # Local Notifications for Foreground
   flutter_local_notifications: ^18.0.1
+  
+  # Image Caching
+  cached_network_image: ^3.3.1
+  
+  # Image Picker
+  image_picker: ^1.0.7
 
 dev_dependencies:
   flutter_test:

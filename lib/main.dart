@@ -16,6 +16,7 @@ import 'services/deep_link_service.dart';
 import 'services/notification_service.dart';
 import 'services/error_reporter.dart';
 import 'providers/data_cache_provider.dart';
+import 'providers/community_posts_provider.dart';
 import 'utils/app_config.dart';
 import 'utils/notification_navigation.dart';
 
@@ -210,6 +211,7 @@ class _HazeBotAdminAppState extends State<HazeBotAdminApp>
         ChangeNotifierProvider(create: (_) => ConfigService()),
         ChangeNotifierProvider(create: (_) => ThemeService()),
         ChangeNotifierProvider(create: (_) => DataCacheProvider()),
+        ChangeNotifierProvider(create: (_) => CommunityPostsProvider()),
       ],
       child: Consumer<ThemeService>(
         builder: (context, themeService, _) {
