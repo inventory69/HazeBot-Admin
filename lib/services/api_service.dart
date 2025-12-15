@@ -1392,7 +1392,10 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> resetXpConfig() async {
-    final response = await _post('$baseUrl/config/xp/reset');
+    final response = await _post(
+      '$baseUrl/config/xp/reset',
+      body: jsonEncode({}), // Send empty JSON object to satisfy Content-Type header
+    );
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
