@@ -36,6 +36,7 @@ class CommunityPostsProvider extends ChangeNotifier {
   bool get isDeleting => _isDeleting;
   bool get hasMore => _hasMore;
   String? get lastError => _lastError;
+  String? get error => _lastError; // Alias for consistency
   DateTime? get lastLoad => _lastLoad;
 
   /// Check if cache is fresh

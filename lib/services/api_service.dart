@@ -210,6 +210,25 @@ class ApiService {
     _token = null;
   }
 
+  /// Get headers with current token and device info
+  /// Used by external services that need to make authenticated requests
+  Future<Map<String, String>> getHeaders() async {
+    // Ensure version info is loaded
+    await _initializeVersionInfo();
+    
+    final String currentToken = _token ?? '';
+    
+    return {
+      'Content-Type': 'application/json',
+      'User-Agent': _userAgent,
+      'X-App-Version': _appVersion,
+      'X-Platform': _platform,
+      'X-Device-Info': _deviceInfo,
+      'X-Session-ID': _sessionId,
+      if (currentToken.isNotEmpty) 'Authorization': 'Bearer $currentToken',
+    };
+  }
+
   // REMOVED: No proactive token expiration check
   // Token is only refreshed when backend returns 401
   // This is simpler and more reliable

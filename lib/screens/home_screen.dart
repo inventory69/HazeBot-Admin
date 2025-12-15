@@ -1233,11 +1233,11 @@ class _DashboardScreenState extends State<DashboardScreen>
                 else
                   Column(
                     children: posts.map((post) {
-                      final authService = Provider.of<AuthService>(context, listen: false);
+                      final discordAuthService = Provider.of<DiscordAuthService>(context, listen: false);
                       final permissionService = Provider.of<PermissionService>(context, listen: false);
-                      final currentUserId = authService.userId;
-                      final canEdit = post.authorId == currentUserId && post.isEditable;
-                      final canDelete = post.authorId == currentUserId || 
+                      final currentUserId = discordAuthService.userInfo?['discord_id']?.toString();
+                      final canEdit = currentUserId != null && post.authorId == currentUserId && post.isEditable;
+                      final canDelete = (currentUserId != null && post.authorId == currentUserId) || 
                                        permissionService.hasPermission('all') ||
                                        permissionService.hasPermission('mod');
 
