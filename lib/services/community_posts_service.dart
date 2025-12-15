@@ -35,7 +35,7 @@ class CommunityPostsService {
         if (includeDeleted) 'include_deleted': 'true',
       };
 
-      final uri = Uri.parse('${_apiService.baseUrl}/api/posts')
+      final uri = Uri.parse('${_apiService.baseUrl}/posts')
           .replace(queryParameters: queryParams);
 
       final response = await http.get(
@@ -104,7 +104,7 @@ class CommunityPostsService {
 
       final response = await http
           .post(
-            Uri.parse('${_apiService.baseUrl}/api/posts'),
+            Uri.parse('${_apiService.baseUrl}/posts'),
             headers: await _apiService.getHeaders(),
             body: json.encode(body),
           )
@@ -181,7 +181,7 @@ class CommunityPostsService {
 
       final response = await http
           .put(
-            Uri.parse('${_apiService.baseUrl}/api/posts/$postId'),
+            Uri.parse('${_apiService.baseUrl}/posts/$postId'),
             headers: await _apiService.getHeaders(),
             body: json.encode(body),
           )
@@ -227,7 +227,7 @@ class CommunityPostsService {
     try {
       final response = await http
           .delete(
-            Uri.parse('${_apiService.baseUrl}/api/posts/$postId'),
+            Uri.parse('${_apiService.baseUrl}/posts/$postId'),
             headers: await _apiService.getHeaders(),
           )
           .timeout(
