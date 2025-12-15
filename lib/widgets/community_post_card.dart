@@ -4,7 +4,7 @@ import '../models/community_post.dart';
 import '../services/community_posts_service.dart';
 
 /// Reusable widget to display a community post
-/// Shows author info, content, image, and action buttons
+/// Styled to match HazeHub meme/rankup/levelup cards
 class CommunityPostCard extends StatelessWidget {
   final CommunityPost post;
   final VoidCallback? onEdit;
@@ -12,6 +12,7 @@ class CommunityPostCard extends StatelessWidget {
   final bool canEdit;
   final bool canDelete;
   final bool showActions;
+  final bool isMobile;
 
   const CommunityPostCard({
     super.key,
@@ -21,208 +22,202 @@ class CommunityPostCard extends StatelessWidget {
     this.canEdit = false,
     this.canDelete = false,
     this.showActions = true,
+    this.isMobile = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
     
-    // Determine card color based on post type
-    Color? cardColor;
+    // Match meme card styling: subtle tonal container
+    final isMonet = colorScheme.surfaceContainerHigh !=
+        ThemeData.light().colorScheme.surfaceContainerHigh;
+    
+    // Special coloring for announcements
+    Color cardColor;
     if (post.isAnnouncement) {
-      cardColor = Colors.orange.withOpacity(0.1);
-    } else if (post.postType == 'admin') {
-      cardColor = Colors.blue.withOpacity(0.05);
+      cardColor = Colors.orange.withOpacity(0.12);
+    } else {
+      cardColor = isMonet
+          ? colorScheme.primaryContainer.withOpacity(0.18)
+          : colorScheme.surface;
     }
 
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       color: cardColor,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header: Author info and actions
-            Row(
-              children: [
-                // Author Avatar
-                CircleAvatar(
-                  radius: 20,
-                  backgroundColor: colorScheme.primary,
-                  child: post.authorAvatar != null
-                      ? CachedNetworkImage(
-                          imageUrl: post.authorAvatar!,
-                          imageBuilder: (context, imageProvider) => Container(
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              image: DecorationImage(
-                                image: imageProvider,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                          placeholder: (context, url) => const Center(
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                          errorWidget: (context, url, error) => Icon(
-                            Icons.person,
-                            color: colorScheme.onPrimary,
-                          ),
-                        )
-                      : Icon(
-                          Icons.person,
-                          color: colorScheme.onPrimary,
+      margin: EdgeInsets.only(bottom: isMobile ? 8 : 12),
+      elevation: 0, // Flat card like memes
+      child: InkWell(
+        onTap: null, // TODO: Navigate to detail view if needed
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: EdgeInsets.all(isMobile ? 8 : 12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Image thumbnail (if exists) - matches meme card layout
+              if (post.hasImage)
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: CachedNetworkImage(
+                    imageUrl: CommunityPostsService().getImageUrl(post.imageUrl!),
+                    width: isMobile ? 80 : 100,
+                    height: isMobile ? 80 : 100,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Container(
+                      width: isMobile ? 80 : 100,
+                      height: isMobile ? 80 : 100,
+                      decoration: BoxDecoration(
+                        color: cardColor,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: colorScheme.primary,
                         ),
+                      ),
+                    ),
+                    errorWidget: (context, url, error) => Container(
+                      width: isMobile ? 80 : 100,
+                      height: isMobile ? 80 : 100,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(Icons.image, size: 32, color: Colors.grey[600]),
+                    ),
+                  ),
                 ),
-                const SizedBox(width: 12),
-
-                // Author name and timestamp
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
+              
+              SizedBox(width: isMobile ? 8 : 12),
+              
+              // Content area
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Author row with announcement badge
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Icon(Icons.person,
+                                  size: isMobile ? 14 : 16, color: Colors.grey[600]),
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  post.authorName,
+                                  style: TextStyle(
+                                    fontSize: isMobile ? 12 : 13,
+                                    color: Colors.grey[700],
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Action buttons
+                        if (showActions && (canEdit || canDelete)) ...[
+                          if (canEdit && post.isEditable)
+                            IconButton(
+                              icon: const Icon(Icons.edit, size: 18),
+                              onPressed: onEdit,
+                              tooltip: 'Edit',
+                              padding: const EdgeInsets.all(4),
+                              constraints: const BoxConstraints(),
+                              color: colorScheme.primary,
+                            ),
+                          if (canDelete)
+                            IconButton(
+                              icon: const Icon(Icons.delete, size: 18),
+                              onPressed: onDelete,
+                              tooltip: 'Delete',
+                              padding: const EdgeInsets.all(4),
+                              constraints: const BoxConstraints(),
+                              color: Colors.red,
+                            ),
+                        ],
+                      ],
+                    ),
+                    
+                    // Announcement badge + timestamp
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        if (post.isAnnouncement) ...[
+                          Icon(
+                            Icons.campaign,
+                            size: isMobile ? 14 : 16,
+                            color: Colors.orange,
+                          ),
+                          const SizedBox(width: 4),
                           Text(
-                            post.authorName,
-                            style: textTheme.titleSmall?.copyWith(
+                            'Announcement',
+                            style: TextStyle(
+                              fontSize: isMobile ? 11 : 12,
+                              color: Colors.orange,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          if (post.isAnnouncement) ...[
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.orange,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Text(
-                                '📢 Announcement',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ],
+                          const SizedBox(width: 8),
                         ],
-                      ),
-                      Text(
-                        post.formattedDate,
-                        style: textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                      if (post.wasEdited)
-                        Text(
-                          '(edited)',
-                          style: textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-
-                // Action buttons
-                if (showActions) ...[
-                  if (canEdit && post.isEditable)
-                    IconButton(
-                      icon: const Icon(Icons.edit, size: 20),
-                      onPressed: onEdit,
-                      tooltip: 'Edit post',
-                      color: colorScheme.primary,
-                    ),
-                  if (canDelete)
-                    IconButton(
-                      icon: const Icon(Icons.delete, size: 20),
-                      onPressed: onDelete,
-                      tooltip: 'Delete post',
-                      color: Colors.red,
-                    ),
-                ],
-              ],
-            ),
-
-            // Content
-            if (post.hasContent) ...[
-              const SizedBox(height: 12),
-              Text(
-                post.content!,
-                style: textTheme.bodyMedium,
-              ),
-            ],
-
-            // Image
-            if (post.hasImage) ...[
-              const SizedBox(height: 12),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: CachedNetworkImage(
-                  imageUrl: CommunityPostsService().getImageUrl(post.imageUrl!),
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                  placeholder: (context, url) => Container(
-                    height: 200,
-                    color: colorScheme.surfaceVariant,
-                    child: const Center(
-                      child: CircularProgressIndicator(),
-                    ),
-                  ),
-                  errorWidget: (context, url, error) => Container(
-                    height: 200,
-                    color: colorScheme.errorContainer,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.broken_image,
-                          size: 48,
-                          color: colorScheme.onErrorContainer,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Failed to load image',
-                          style: TextStyle(
-                            color: colorScheme.onErrorContainer,
+                        Flexible(
+                          child: Text(
+                            '${post.formattedDate}${post.wasEdited ? ' (edited)' : ''}',
+                            style: TextStyle(
+                              fontSize: isMobile ? 11 : 12,
+                              color: Colors.grey[600],
+                              fontStyle: post.wasEdited ? FontStyle.italic : null,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
                     ),
-                  ),
+                    
+                    // Content text
+                    if (post.hasContent) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        post.content!,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              fontSize: isMobile ? 14 : 15,
+                            ),
+                        maxLines: post.hasImage ? 2 : 4,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                    
+                    // Discord indicator (subtle)
+                    if (post.discordMessageId != null) ...[
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.discord,
+                            size: 12,
+                            color: colorScheme.onSurfaceVariant.withOpacity(0.4),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Posted in Discord',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: colorScheme.onSurfaceVariant.withOpacity(0.4),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
                 ),
               ),
             ],
-
-            // Discord info (for debugging)
-            if (post.discordMessageId != null) ...[
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Icon(
-                    Icons.discord,
-                    size: 14,
-                    color: colorScheme.onSurfaceVariant.withOpacity(0.5),
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Posted in Discord',
-                    style: textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant.withOpacity(0.5),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ],
+          ),
         ),
       ),
     );

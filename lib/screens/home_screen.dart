@@ -1245,6 +1245,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                         padding: EdgeInsets.only(bottom: isMobile ? 8 : 12),
                         child: CommunityPostCard(
                           post: post,
+                          isMobile: isMobile,
                           canEdit: canEdit,
                           canDelete: canDelete,
                           onEdit: canEdit ? () {
