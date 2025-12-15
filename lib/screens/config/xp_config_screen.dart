@@ -85,13 +85,13 @@ class _XpConfigScreenState extends State<XpConfigScreen> {
 
             // Level Calculation
             final levelCalc = config['level_calculation'];
-            _baseXpController.text = levelCalc['base_xp'].toString();
-            _multiplierController.text = levelCalc['multiplier'].toString();
+            _baseXpController.text = levelCalc['base_xp_per_level'].toString();
+            _multiplierController.text = levelCalc['xp_multiplier'].toString();
 
             // Cooldowns
             final cooldowns = config['cooldowns'];
-            _messageController.text = cooldowns['message'].toString();
-            _imageController.text = cooldowns['image'].toString();
+            _messageController.text = cooldowns['message_cooldown'].toString();
+            _imageController.text = cooldowns['meme_fetch_cooldown'].toString();
 
             // Tiers and Icons
             _levelTiers = Map<String, dynamic>.from(config['level_tiers']);
@@ -135,12 +135,12 @@ class _XpConfigScreenState extends State<XpConfigScreen> {
           'game_request': int.parse(_gameRequestController.text),
         },
         'level_calculation': {
-          'base_xp': int.parse(_baseXpController.text),
-          'multiplier': double.parse(_multiplierController.text),
+          'base_xp_per_level': int.parse(_baseXpController.text),
+          'xp_multiplier': double.parse(_multiplierController.text),
         },
         'cooldowns': {
-          'message': int.parse(_messageController.text),
-          'image': int.parse(_imageController.text),
+          'message_cooldown': int.parse(_messageController.text),
+          'meme_fetch_cooldown': int.parse(_imageController.text),
         },
       };
 
@@ -208,6 +208,8 @@ class _XpConfigScreenState extends State<XpConfigScreen> {
 
   Widget _buildActivityXpSection() {
     return Card(
+      elevation: 0,
+      color: Colors.transparent,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -278,6 +280,8 @@ class _XpConfigScreenState extends State<XpConfigScreen> {
 
   Widget _buildLevelCalculationSection() {
     return Card(
+      elevation: 0,
+      color: Colors.transparent,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -352,6 +356,8 @@ class _XpConfigScreenState extends State<XpConfigScreen> {
 
   Widget _buildCooldownsSection() {
     return Card(
+      elevation: 0,
+      color: Colors.transparent,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -375,14 +381,14 @@ class _XpConfigScreenState extends State<XpConfigScreen> {
             const SizedBox(height: 16),
             _buildXpTextField(
               controller: _messageController,
-              label: '⏱️ Message Cooldown',
+              label: '💬 Message Cooldown',
               tooltip: 'Cooldown between message XP gains (seconds)',
             ),
             const SizedBox(height: 12),
             _buildXpTextField(
               controller: _imageController,
-              label: '⏱️ Image Cooldown',
-              tooltip: 'Cooldown between image XP gains (seconds)',
+              label: '😂 Meme Fetch Cooldown',
+              tooltip: 'Cooldown between meme fetch XP gains (seconds)',
             ),
           ],
         ),
@@ -392,6 +398,8 @@ class _XpConfigScreenState extends State<XpConfigScreen> {
 
   Widget _buildTiersSection() {
     return Card(
+      elevation: 0,
+      color: Colors.transparent,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -416,28 +424,23 @@ class _XpConfigScreenState extends State<XpConfigScreen> {
             ..._levelTiers.entries.map((entry) {
               final tierName = entry.key;
               final tierData = entry.value as Map<String, dynamic>;
-              final icon = _levelIcons[tierName] ?? '🔰';
+              final emoji = tierData['emoji'] as String? ?? '⭐';
               final minLevel = tierData['min_level'] as int? ?? 1;
               final color = tierData['color'] as String? ?? '#808080';
 
               return Padding(
                 padding: const EdgeInsets.only(bottom: 8.0),
                 child: ListTile(
-                  title: Row(
-                    children: [
-                      Text(
-                        icon,
-                        style: const TextStyle(fontSize: 24),
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        tierName.toUpperCase(),
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: _getColorFromHex(color),
-                        ),
-                      ),
-                    ],
+                  leading: Text(
+                    emoji,
+                    style: const TextStyle(fontSize: 28),
+                  ),
+                  title: Text(
+                    tierName.toUpperCase(),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: _getColorFromHex(color),
+                    ),
                   ),
                   subtitle: Text('Level $minLevel+'),
                   tileColor: Theme.of(context).colorScheme.surfaceVariant,

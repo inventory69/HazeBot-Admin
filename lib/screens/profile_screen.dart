@@ -565,10 +565,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                           const SizedBox(height: 12),
                           // Progress Bar to Next Level
-                          if (_xp!['total_xp'] != null &&
+                          if (_xp!['xp_in_current_level'] != null &&
                               _xp!['xp_for_next_level'] != null) ...[
                             _buildProgressBar(
-                              current: _xp!['total_xp'] as int? ?? 0,
+                              current: _xp!['xp_in_current_level'] as int? ?? 0,
                               target: _xp!['xp_for_next_level'] as int? ?? 0,
                               tierColor: _xp!['tier_color'] as String?,
                             ),
