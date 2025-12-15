@@ -97,15 +97,42 @@ class CommunityPostCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Author row with announcement badge
+                    // Author row with avatar
                     Row(
                       children: [
                         Expanded(
                           child: Row(
                             children: [
-                              Icon(Icons.person,
-                                  size: isMobile ? 14 : 16, color: Colors.grey[600]),
-                              const SizedBox(width: 4),
+                              // Small avatar (like in meme cards with author icon)
+                              CircleAvatar(
+                                radius: isMobile ? 12 : 14,
+                                backgroundColor: colorScheme.primaryContainer,
+                                child: post.authorAvatar != null
+                                    ? ClipOval(
+                                        child: CachedNetworkImage(
+                                          imageUrl: post.authorAvatar!,
+                                          width: isMobile ? 24 : 28,
+                                          height: isMobile ? 24 : 28,
+                                          fit: BoxFit.cover,
+                                          placeholder: (context, url) => Icon(
+                                            Icons.person,
+                                            size: isMobile ? 14 : 16,
+                                            color: colorScheme.onPrimaryContainer,
+                                          ),
+                                          errorWidget: (context, url, error) => Icon(
+                                            Icons.person,
+                                            size: isMobile ? 14 : 16,
+                                            color: colorScheme.onPrimaryContainer,
+                                          ),
+                                        ),
+                                      )
+                                    : Icon(
+                                        Icons.person,
+                                        size: isMobile ? 14 : 16,
+                                        color: colorScheme.onPrimaryContainer,
+                                      ),
+                              ),
+                              const SizedBox(width: 6),
                               Flexible(
                                 child: Text(
                                   post.authorName,
