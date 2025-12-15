@@ -20,12 +20,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
   String _version = 'Loading...';
   String _buildNumber = '';
   bool _showAdminPanelOnStartup = false;
+  bool _autoSendErrors = false;
 
   @override
   void initState() {
     super.initState();
     _loadPackageInfo();
     _loadShowAdminPanelSetting();
+    _loadErrorReportingSetting();
+  }
+
+  Future<void> _loadErrorReportingSetting() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _autoSendErrors = prefs.getBool('auto_send_error_reports') ?? false;
+    });
   }
 
   Future<void> _loadShowAdminPanelSetting() async {
@@ -156,11 +165,99 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       }
                     },
                   ),
-                  const Divider(),
                 ],
               );
             },
           ),
+          const Divider(),
+          // Error Reporting Section
+          const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Text(
+              'Privacy',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          SwitchListTile(
+            title: const Text('Automatic Error Reporting'),
+            subtitle: const Text(
+              'Help us improve the app by automatically sending anonymous error reports',
+            ),
+            secondary: const Icon(Icons.bug_report),
+            value: _autoSendErrors,
+            onChanged: (value) async {
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.setBool('auto_send_error_reports', value);
+
+              setState(() {
+                _autoSendErrors = value;
+              });
+
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      value
+                          ? 'Automatic error reporting enabled'
+                          : 'Automatic error reporting disabled',
+                    ),
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              }
+            },
+          ),
+          // Privacy Info (Expandable)
+          ListTile(
+            leading: const Icon(Icons.privacy_tip),
+            title: const Text('What gets sent?'),
+            trailing: const Icon(Icons.info_outline, size: 20),
+            onTap: () {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Error Report Contents'),
+                  content: const SingleChildScrollView(
+                    child: Text(
+                      '✓ Error message and type\n'
+                      '✓ Stack trace (crash location)\n'
+                      '✓ App version and device info\n'
+                      '✓ Recent actions (last 100 logs)\n'
+                      '✓ Your username (for follow-up)\n'
+                      '\n'
+                      '✗ NO passwords or sensitive data\n'
+                      '✗ NO message content\n'
+                      '✗ NO personal information',
+                      style: TextStyle(fontSize: 14),
+                    ),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Got it'),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+          if (kDebugMode) ...[
+            // Test Error Report Button (nur in Debug Mode)
+            ListTile(
+              leading: const Icon(Icons.science),
+              title: const Text('Test Error Report'),
+              subtitle: const Text('Send a test error to verify reporting works'),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              onTap: () {
+                Navigator.pushNamed(context, '/test');
+              },
+            ),
+          ],
+          const Divider(),
+          const SizedBox(height: 16),
           const Padding(
             padding: EdgeInsets.all(16.0),
             child: Text(

@@ -20,11 +20,13 @@ import 'config/daily_meme_config_screen.dart';
 import 'config/daily_meme_preferences_screen.dart';
 import 'config/meme_generator_screen.dart' hide getProxiedImageUrl;
 import 'config/rocket_league_config_screen.dart';
+import 'config/xp_config_screen.dart';
 import 'config/texts_config_screen.dart';
 import 'config/cog_manager_screen.dart';
 import 'admin/live_users_screen.dart';
 import 'admin/tickets_admin_screen.dart';
 import 'logs_screen.dart';
+// Leaderboard removed - functionality moved to profile screen
 import 'settings_screen.dart';
 import 'settings/notification_settings_screen.dart';
 import 'test_screen.dart';
@@ -116,9 +118,24 @@ class _HomeScreenState extends State<HomeScreen>
     if (configService.error == 'token_expired') {
       debugPrint(
           '⚠️ Config load failed with token_expired - Token refresh should have handled this');
-      // DON'T logout immediately - token refresh should have been attempted
-      // Only logout if refresh truly failed (indicated by clearToken being called)
-      // The TokenExpiredException is thrown AFTER refresh attempts
+      
+      // Check if this is an auth error (401/403)
+      final errorString = configService.error.toString().toLowerCase();
+      final isAuthError = errorString.contains('unauthorized') ||
+                          errorString.contains('403') ||
+                          errorString.contains('401') ||
+                          errorString.contains('token_expired');
+      
+      if (!isAuthError) {
+        // Not an auth error, just increment counter
+        if (mounted) {
+          setState(() {
+            _reloadCounter++;
+          });
+        }
+        return;
+      }
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -130,7 +147,7 @@ class _HomeScreenState extends State<HomeScreen>
               ],
             ),
             backgroundColor: Colors.orange,
-            duration: const Duration(seconds: 2),
+            duration: const Duration(seconds: 3),
             action: SnackBarAction(
               label: 'Retry',
               textColor: Colors.white,
@@ -140,12 +157,20 @@ class _HomeScreenState extends State<HomeScreen>
             ),
           ),
         );
+        
         // Give token refresh a chance - retry after a short delay
         await Future.delayed(const Duration(seconds: 1));
         await _loadConfig(); // Retry loading config
+        
+        // ✅ FIX 1: If retry successful, clear any error state
+        if (configService.error != 'token_expired' && mounted) {
+          setState(() {
+            _reloadCounter++; // Force rebuild to clear any error UI
+          });
+        }
       }
     } else if (mounted) {
-      // Increment counter to force screen rebuild
+      // ✅ FIX 1: Config loaded successfully, clear any error state
       setState(() {
         _reloadCounter++;
       });
@@ -233,6 +258,11 @@ class _HomeScreenState extends State<HomeScreen>
         label: 'Rocket\nLeague',
         screen: RocketLeagueConfigScreen(
             key: ValueKey('rocket_league_$_reloadCounter')),
+      ),
+      NavigationItem(
+        icon: Icons.stars,
+        label: 'XP\nSystem',
+        screen: XpConfigScreen(key: ValueKey('xp_config_$_reloadCounter')),
       ),
       NavigationItem(
         icon: Icons.confirmation_number,
@@ -868,6 +898,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       await Future.wait([
         cacheProvider.loadLatestMemes(force: force),
         cacheProvider.loadLatestRankups(force: force),
+        cacheProvider.loadLatestLevelups(force: force),
       ]);
 
       // Success - clear any error state
@@ -930,11 +961,13 @@ class _DashboardScreenState extends State<DashboardScreen>
       builder: (context, cacheProvider, child) {
         final memes = cacheProvider.memes ?? [];
         final rankups = cacheProvider.rankups ?? [];
+        final levelups = cacheProvider.levelups ?? [];
         final isLoadingMemes = cacheProvider.isLoadingMemes;
         final isLoadingRankups = cacheProvider.isLoadingRankups;
+        final isLoadingLevelups = cacheProvider.isLoadingLevelups;
 
         // Show full-screen error if initial load failed AND no cached data
-        if (_hasInitialLoadError && memes.isEmpty && rankups.isEmpty) {
+        if (_hasInitialLoadError && memes.isEmpty && rankups.isEmpty && levelups.isEmpty) {
           return Scaffold(
             appBar: AppBar(
               title: const Text('HazeHub'),
@@ -1036,6 +1069,12 @@ class _DashboardScreenState extends State<DashboardScreen>
                       // Latest Rank-Ups Section
                       _buildRankupsSection(
                           context, isMobile, rankups, isLoadingRankups),
+
+                      SizedBox(height: isMobile ? 12 : 16),
+
+                      // Latest Level-Ups Section
+                      _buildLevelupsSection(
+                          context, isMobile, levelups, isLoadingLevelups),
                     ],
                   ),
                 ),
@@ -1608,6 +1647,233 @@ class _DashboardScreenState extends State<DashboardScreen>
         ),
       ),
     );
+  }
+
+  Widget _buildLevelupsSection(BuildContext context, bool isMobile,
+      List<Map<String, dynamic>> levelups, bool isLoadingLevelups) {
+    return Card(
+      color: Colors.transparent,
+      elevation: 0,
+      child: Padding(
+        padding: EdgeInsets.all(isMobile ? 12 : 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Row(
+                    children: [
+                      Icon(Icons.emoji_events, size: isMobile ? 20 : 24),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 6),
+                          decoration: BoxDecoration(
+                            color:
+                                Theme.of(context).colorScheme.primaryContainer,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            'Latest Level-Ups',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleLarge
+                                ?.copyWith(
+                                  fontSize: isMobile ? 18 : null,
+                                ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (levelups.isNotEmpty)
+                  TextButton.icon(
+                    onPressed: () {
+                      // TODO: Navigate to full level-ups view or leaderboard
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text('Full level-ups view coming soon')),
+                      );
+                    },
+                    icon: const Icon(Icons.arrow_forward, size: 16),
+                    label: const Text('View More'),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            if (isLoadingLevelups)
+              const Center(child: CircularProgressIndicator())
+            else if (levelups.isEmpty)
+              Center(
+                child: Column(
+                  children: [
+                    Icon(Icons.emoji_events, size: 48, color: Colors.grey[400]),
+                    const SizedBox(height: 8),
+                    Text(
+                      'No level-ups yet',
+                      style: TextStyle(color: Colors.grey[600]),
+                    ),
+                  ],
+                ),
+              )
+            else
+              Column(
+                children: List.generate(levelups.length,
+                    (i) => _buildLevelupCard(context, levelups[i], isMobile, i)),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLevelupCard(BuildContext context, Map<String, dynamic> levelup,
+      bool isMobile, int index) {
+    final username = levelup['display_name'] as String? ?? 
+                     levelup['username'] as String? ?? 
+                     'Unknown User';
+    final newLevel = levelup['new_level'] as int? ?? 0;
+    final oldLevel = levelup['old_level'] as int?;
+    final tierName = levelup['tier_name'] as String? ?? 'common';
+    final tierColor = levelup['tier_color'] as String?;
+    final timestamp = levelup['timestamp'] as String?;
+
+    final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh !=
+        ThemeData.light().colorScheme.surfaceContainerHigh;
+    final cardColor = isMonet
+        ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
+        : Theme.of(context).colorScheme.surface;
+
+    // Parse tier color
+    Color? parsedTierColor;
+    if (tierColor != null) {
+      try {
+        parsedTierColor = Color(int.parse(tierColor.replaceFirst('#', '0xFF')));
+      } catch (e) {
+        parsedTierColor = null;
+      }
+    }
+
+    return Card(
+      color: cardColor,
+      margin: EdgeInsets.only(bottom: isMobile ? 8 : 12),
+      elevation: 0,
+      child: Padding(
+        padding: EdgeInsets.all(isMobile ? 8 : 12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // User Avatar
+            CircleAvatar(
+              radius: isMobile ? 30 : 35,
+              backgroundImage: levelup['avatar_url'] != null
+                  ? NetworkImage(levelup['avatar_url'])
+                  : null,
+              child: levelup['avatar_url'] == null
+                  ? const Icon(Icons.person, size: 32)
+                  : null,
+            ),
+            const SizedBox(width: 12),
+            // User Info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    username,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontSize: isMobile ? 14 : 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  if (oldLevel != null) ...[
+                    Text(
+                      'Level $oldLevel → $newLevel',
+                      style: TextStyle(
+                        fontSize: isMobile ? 13 : 14,
+                        color: parsedTierColor ?? Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ] else ...[
+                    Text(
+                      'Level $newLevel',
+                      style: TextStyle(
+                        fontSize: isMobile ? 13 : 14,
+                        color: parsedTierColor ?? Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: parsedTierColor?.withOpacity(0.2) ??
+                              Theme.of(context).colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          tierName.toUpperCase(),
+                          style: TextStyle(
+                            fontSize: isMobile ? 10 : 11,
+                            fontWeight: FontWeight.bold,
+                            color: parsedTierColor ?? Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
+                      ),
+                      if (timestamp != null) ...[
+                        const SizedBox(width: 8),
+                        Text(
+                          _formatTimestamp(timestamp),
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                fontSize: isMobile ? 11 : 12,
+                                color: Colors.grey[600],
+                              ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatTimestamp(String timestamp) {
+    try {
+      final dt = DateTime.parse(timestamp);
+      final now = DateTime.now();
+      final diff = now.difference(dt);
+
+      if (diff.inMinutes < 1) {
+        return 'Just now';
+      } else if (diff.inMinutes < 60) {
+        return '${diff.inMinutes}m ago';
+      } else if (diff.inHours < 24) {
+        return '${diff.inHours}h ago';
+      } else {
+        return '${diff.inDays}d ago';
+      }
+    } catch (e) {
+      return '';
+    }
   }
 }
 

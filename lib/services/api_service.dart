@@ -1340,6 +1340,72 @@ class ApiService {
     }
   }
 
+  Future<Map<String, dynamic>> getLatestLevelups({int limit = 10}) async {
+    final response = await _get('$baseUrl/hazehub/latest-levelups?limit=$limit');
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else if (response.statusCode == 401) {
+      throw TokenExpiredException('Token has expired or is invalid');
+    } else {
+      throw Exception('Failed to get latest level-ups: ${response.statusCode}');
+    }
+  }
+
+  Future<Map<String, dynamic>> getLeaderboard({int limit = 50}) async {
+    final response = await _get('$baseUrl/levels/leaderboard?limit=$limit');
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else if (response.statusCode == 401) {
+      throw TokenExpiredException('Token has expired or is invalid');
+    } else {
+      throw Exception('Failed to get leaderboard: ${response.statusCode}');
+    }
+  }
+
+  Future<Map<String, dynamic>> getXpConfig() async {
+    final response = await _get('$baseUrl/config/xp');
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else if (response.statusCode == 401) {
+      throw TokenExpiredException('Token has expired or is invalid');
+    } else {
+      throw Exception('Failed to get XP config: ${response.statusCode}');
+    }
+  }
+
+  Future<Map<String, dynamic>> updateXpConfig(Map<String, dynamic> config) async {
+    final response = await _put(
+      '$baseUrl/config/xp',
+      body: jsonEncode(config),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else if (response.statusCode == 401) {
+      throw TokenExpiredException('Token has expired or is invalid');
+    } else {
+      throw Exception('Failed to update XP config: ${response.statusCode}');
+    }
+  }
+
+  Future<Map<String, dynamic>> resetXpConfig() async {
+    final response = await _post(
+      '$baseUrl/config/xp/reset',
+      body: jsonEncode({}), // Send empty JSON object to satisfy Content-Type header
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else if (response.statusCode == 401) {
+      throw TokenExpiredException('Token has expired or is invalid');
+    } else {
+      throw Exception('Failed to reset XP config: ${response.statusCode}');
+    }
+  }
+
   // ===== MEME REACTIONS ENDPOINTS =====
 
   Future<Map<String, dynamic>> upvoteMeme(String messageId) async {

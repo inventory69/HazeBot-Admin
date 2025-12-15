@@ -9,14 +9,17 @@ class DataCacheProvider extends ChangeNotifier {
   // Cache timestamps
   DateTime? _lastMemesLoad;
   DateTime? _lastRankupsLoad;
+  DateTime? _lastLevelupsLoad;
 
   // Cached data
   List<Map<String, dynamic>>? _cachedMemes;
   List<Map<String, dynamic>>? _cachedRankups;
+  List<Map<String, dynamic>>? _cachedLevelups;
 
   // Loading states
   bool _isLoadingMemes = false;
   bool _isLoadingRankups = false;
+  bool _isLoadingLevelups = false;
 
   // Cache duration (how long before we refresh data)
   static const Duration _cacheDuration = Duration(minutes: 5);
@@ -28,22 +31,32 @@ class DataCacheProvider extends ChangeNotifier {
   // Getters
   List<Map<String, dynamic>>? get memes => _cachedMemes;
   List<Map<String, dynamic>>? get rankups => _cachedRankups;
+  List<Map<String, dynamic>>? get levelups => _cachedLevelups;
   bool get isLoadingMemes => _isLoadingMemes;
   bool get isLoadingRankups => _isLoadingRankups;
+  bool get isLoadingLevelups => _isLoadingLevelups;
   DateTime? get lastMemesLoad => _lastMemesLoad;
   DateTime? get lastRankupsLoad => _lastRankupsLoad;
+  DateTime? get lastLevelupsLoad => _lastLevelupsLoad;
 
   /// Get cache age in human-readable format
   String getCacheAge() {
-    if (_lastMemesLoad == null && _lastRankupsLoad == null) {
+    if (_lastMemesLoad == null && _lastRankupsLoad == null && _lastLevelupsLoad == null) {
       return 'No data loaded';
     }
 
-    final latestLoad = _lastMemesLoad != null && _lastRankupsLoad != null
-        ? (_lastMemesLoad!.isAfter(_lastRankupsLoad!)
-            ? _lastMemesLoad!
-            : _lastRankupsLoad!)
-        : (_lastMemesLoad ?? _lastRankupsLoad!);
+    // Find the latest load timestamp among all three
+    DateTime? latestLoad = _lastMemesLoad;
+    if (_lastRankupsLoad != null && (latestLoad == null || _lastRankupsLoad!.isAfter(latestLoad))) {
+      latestLoad = _lastRankupsLoad;
+    }
+    if (_lastLevelupsLoad != null && (latestLoad == null || _lastLevelupsLoad!.isAfter(latestLoad))) {
+      latestLoad = _lastLevelupsLoad;
+    }
+
+    if (latestLoad == null) {
+      return 'No data loaded';
+    }
 
     final age = DateTime.now().difference(latestLoad);
 
@@ -231,12 +244,57 @@ class DataCacheProvider extends ChangeNotifier {
     }
   }
 
+  /// Load latest level-ups (with caching)
+  Future<void> loadLatestLevelups({bool force = false, int limit = 10}) async {
+    if (!force &&
+        _cachedLevelups != null &&
+        _lastLevelupsLoad != null &&
+        DateTime.now().difference(_lastLevelupsLoad!) < _cacheDuration) {
+      debugPrint(
+          '📦 Using cached level-ups (age: ${DateTime.now().difference(_lastLevelupsLoad!).inSeconds}s)');
+      return;
+    }
+
+    if (_isLoadingLevelups) {
+      debugPrint('⏳ Level-ups already loading, skipping duplicate request');
+      return;
+    }
+
+    _isLoadingLevelups = true;
+    notifyListeners();
+
+    try {
+      debugPrint('🔄 Loading latest level-ups from API...');
+      final response = await _apiService.getLatestLevelups(limit: limit);
+      if (response['success'] == true) {
+        _cachedLevelups =
+            List<Map<String, dynamic>>.from(response['levelups'] ?? []);
+        _lastLevelupsLoad = DateTime.now();
+        debugPrint(
+            '✅ Level-ups loaded and cached (${_cachedLevelups!.length} items)');
+      }
+    } on ApiTimeoutException {
+      debugPrint('⏱️ Timeout loading level-ups');
+      rethrow; // Let UI handle it
+    } on ApiConnectionException {
+      debugPrint('📡 Connection error loading level-ups');
+      rethrow; // Let UI handle it
+    } catch (e) {
+      debugPrint('❌ Failed to load level-ups: $e');
+    } finally {
+      _isLoadingLevelups = false;
+      notifyListeners();
+    }
+  }
+
   /// Clear all caches (e.g., on logout)
   void clearCache() {
     _cachedMemes = null;
     _cachedRankups = null;
+    _cachedLevelups = null;
     _lastMemesLoad = null;
     _lastRankupsLoad = null;
+    _lastLevelupsLoad = null;
     _localUpvoteOverrides.clear();
     notifyListeners();
   }
@@ -245,6 +303,7 @@ class DataCacheProvider extends ChangeNotifier {
   void invalidateCache() {
     _lastMemesLoad = null;
     _lastRankupsLoad = null;
+    _lastLevelupsLoad = null;
     notifyListeners();
   }
 

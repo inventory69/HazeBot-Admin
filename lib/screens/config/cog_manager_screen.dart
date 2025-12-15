@@ -17,6 +17,10 @@ class _CogManagerScreenState extends State<CogManagerScreen> {
   final ScrollController _scrollController = ScrollController();
   final Map<String, GlobalKey> _categoryKeys = {};
   final Map<String, bool> _expandedCategories = {};
+  
+  // Pre-computed for ListView.builder performance
+  List<String> _sortedCategories = [];
+  Map<String, List<Cog>> _cogsByCategory = {};
 
   @override
   void initState() {
@@ -51,6 +55,29 @@ class _CogManagerScreenState extends State<CogManagerScreen> {
       setState(() {
         _cogs = cogs;
         _isLoading = false;
+        
+        // Pre-compute categories and groupings for ListView.builder
+        _cogsByCategory = <String, List<Cog>>{};
+        for (var cog in _cogs) {
+          final category = cog.category ?? 'other';
+          _cogsByCategory.putIfAbsent(category, () => []).add(cog);
+        }
+        
+        // Sort categories
+        final categoryOrder = [
+          'core', 'community', 'content', 'gaming', 'moderation',
+          'support', 'user', 'info', 'productivity', 'utility',
+          'notifications', 'monitoring', 'other'
+        ];
+        _sortedCategories = _cogsByCategory.keys.toList()
+          ..sort((a, b) {
+            final aIndex = categoryOrder.indexOf(a);
+            final bIndex = categoryOrder.indexOf(b);
+            if (aIndex == -1 && bIndex == -1) return a.compareTo(b);
+            if (aIndex == -1) return 1;
+            if (bIndex == -1) return -1;
+            return aIndex.compareTo(bIndex);
+          });
       });
     } catch (e) {
       setState(() {
@@ -234,6 +261,177 @@ class _CogManagerScreenState extends State<CogManagerScreen> {
       });
 
     return const SizedBox.shrink();
+  }
+
+  // Calculate total item count for ListView.builder
+  int _getTotalItemCount() {
+    int count = 0;
+    
+    // Header items (Title + Description + Spacing + Filter)
+    count += 4;
+    
+    // Categories + Cogs
+    for (var category in _sortedCategories) {
+      count++; // Category header
+      if (_expandedCategories[category] == true) {
+        count += _cogsByCategory[category]!.length; // Cogs (only wenn expanded)
+      }
+    }
+    
+    return count;
+  }
+
+  // Build item at specific index for ListView.builder
+  Widget _buildItemAtIndex(int index, bool isMobile) {
+    int currentIndex = 0;
+    
+    // Header: Title
+    if (index == currentIndex++) {
+      return Text(
+        'Bot Cogs',
+        style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+          fontSize: isMobile ? 24 : null,
+        ),
+      );
+    }
+    
+    // Header: Description
+    if (index == currentIndex++) {
+      return Text(
+        'Manage bot modules and extensions',
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: Colors.grey[600],
+          fontSize: isMobile ? 13 : null,
+        ),
+      );
+    }
+    
+    // Header: Spacing
+    if (index == currentIndex++) {
+      return SizedBox(height: isMobile ? 16 : 24);
+    }
+    
+    // Header: Filter
+    if (index == currentIndex++) {
+      return _buildCategoryFilter(isMobile);
+    }
+    
+    // Categories + Cogs
+    for (var category in _sortedCategories) {
+      final cogs = _cogsByCategory[category]!;
+      
+      // Category Header
+      if (index == currentIndex++) {
+        return _buildCategoryHeader(category, cogs, isMobile);
+      }
+      
+      // Cogs (only if expanded)
+      if (_expandedCategories[category] == true) {
+        for (var cog in cogs) {
+          if (index == currentIndex++) {
+            return Padding(
+              padding: EdgeInsets.only(bottom: isMobile ? 12 : 16),
+              child: CogCard(
+                cog: cog,
+                isMobile: isMobile,
+                onLoad: cog.canLoad
+                    ? () => _performCogAction(cog.name, CogAction.load)
+                    : null,
+                onUnload: (cog.canUnload && cog.name.toLowerCase() != 'apiserver')
+                    ? () => _performCogAction(cog.name, CogAction.unload)
+                    : null,
+                onReload: cog.canReload
+                    ? () => _performCogAction(cog.name, CogAction.reload)
+                    : null,
+                onShowLogs: () => _showCogLogs(cog.name),
+              ),
+            );
+          }
+        }
+      }
+    }
+    
+    return const SizedBox.shrink();
+  }
+
+  // Build category header
+  Widget _buildCategoryHeader(String category, List<Cog> cogs, bool isMobile) {
+    // Create or get key for this category
+    _categoryKeys.putIfAbsent(category, () => GlobalKey());
+    
+    // Initialize expanded state for this category (collapsed by default)
+    _expandedCategories.putIfAbsent(category, () => false);
+    
+    // Get category color based on first cog in category
+    final categoryColor = cogs.first.getCategoryColor();
+    
+    return Container(
+      key: _categoryKeys[category],
+      margin: EdgeInsets.only(
+        top: isMobile ? 8 : 16,
+        bottom: isMobile ? 8 : 12,
+      ),
+      child: InkWell(
+        onTap: () {
+          setState(() {
+            _expandedCategories[category] = !_expandedCategories[category]!;
+          });
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: isMobile ? 12 : 16,
+            vertical: isMobile ? 10 : 12,
+          ),
+          decoration: BoxDecoration(
+            color: categoryColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: categoryColor.withOpacity(0.3),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                _expandedCategories[category]!
+                    ? Icons.expand_less
+                    : Icons.expand_more,
+                color: categoryColor,
+                size: isMobile ? 20 : 24,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  category.toUpperCase(),
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: categoryColor,
+                        letterSpacing: 1.2,
+                        fontSize: isMobile ? 12 : 14,
+                      ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: categoryColor.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${cogs.length}',
+                  style: TextStyle(
+                    color: categoryColor,
+                    fontSize: isMobile ? 12 : 13,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   List<Widget> _buildCogsByCategory(bool isMobile) {
@@ -465,37 +663,11 @@ class _CogManagerScreenState extends State<CogManagerScreen> {
                         )
                       : RefreshIndicator(
                           onRefresh: _loadCogs,
-                          child: SingleChildScrollView(
+                          child: ListView.builder(
                             controller: _scrollController,
                             padding: EdgeInsets.all(padding),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Bot Cogs',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .headlineLarge
-                                      ?.copyWith(
-                                        fontSize: isMobile ? 24 : null,
-                                      ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Manage bot modules and extensions',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodyMedium
-                                      ?.copyWith(
-                                        color: Colors.grey[600],
-                                        fontSize: isMobile ? 13 : null,
-                                      ),
-                                ),
-                                SizedBox(height: isMobile ? 16 : 24),
-                                _buildCategoryFilter(isMobile),
-                                ..._buildCogsByCategory(isMobile),
-                              ],
-                            ),
+                            itemCount: _getTotalItemCount(),
+                            itemBuilder: (context, index) => _buildItemAtIndex(index, isMobile),
                           ),
                         ),
         );

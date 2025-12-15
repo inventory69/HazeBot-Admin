@@ -20,7 +20,7 @@ class _LogsScreenState extends State<LogsScreen> {
   String? _selectedCog;
   String? _selectedLevel;
   String _searchQuery = '';
-  int _limit = 500;
+  int _limit = 100; // Optimiert: 100 statt 500 für bessere Performance
   bool _autoRefresh = false;
   Timer? _refreshTimer;
 
@@ -29,6 +29,7 @@ class _LogsScreenState extends State<LogsScreen> {
   Set<int> _selectedIndices = {};
 
   final _searchController = TextEditingController();
+  final _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -43,6 +44,7 @@ class _LogsScreenState extends State<LogsScreen> {
   void dispose() {
     _refreshTimer?.cancel();
     _searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -63,11 +65,11 @@ class _LogsScreenState extends State<LogsScreen> {
       if (mounted) {
         setState(() {
           _logs = List<Map<String, dynamic>>.from(result['logs'] ?? []);
-          _logs = _logs.reversed.toList(); // Neueste zuerst
           _availableCogs = List<String>.from(result['available_cogs'] ?? []);
           debugPrint(
               'Available cogs loaded: $_availableCogs (${_availableCogs.length} cogs)');
         });
+        // No need to scroll! ListView with reverse: true starts at bottom automatically
       }
     } catch (e) {
       if (mounted) {
@@ -86,8 +88,24 @@ class _LogsScreenState extends State<LogsScreen> {
     setState(() {
       _autoRefresh = !_autoRefresh;
       if (_autoRefresh) {
-        _refreshTimer = Timer.periodic(const Duration(seconds: 5), (_) {
-          _loadLogs();
+        _refreshTimer = Timer.periodic(const Duration(seconds: 5), (_) async {
+          // Merke alte Länge und Scroll-Position
+          final oldLength = _logs.length;
+          final wasAtBottom = _scrollController.hasClients
+              ? _scrollController.position.pixels >= 
+                _scrollController.position.maxScrollExtent - 100
+              : false;
+          
+          await _loadLogs();
+          
+          // Nur auto-scrollen wenn User bereits unten war UND neue Logs gekommen sind
+          if (wasAtBottom && _logs.length > oldLength && _scrollController.hasClients) {
+            _scrollController.animateTo(
+              _scrollController.position.maxScrollExtent,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+            );
+          }
         });
       } else {
         _refreshTimer?.cancel();
@@ -444,13 +462,13 @@ class _LogsScreenState extends State<LogsScreen> {
                                 ),
                                 items: const [
                                   DropdownMenuItem(
-                                      value: 100, child: Text('100')),
+                                      value: 50, child: Text('50 logs')),
                                   DropdownMenuItem(
-                                      value: 500, child: Text('500')),
+                                      value: 100, child: Text('100 logs')),
                                   DropdownMenuItem(
-                                      value: 1000, child: Text('1000')),
+                                      value: 200, child: Text('200 logs')),
                                   DropdownMenuItem(
-                                      value: 2000, child: Text('2000')),
+                                      value: 500, child: Text('500 logs')),
                                 ],
                                 onChanged: (value) {
                                   if (value != null) {
@@ -505,9 +523,13 @@ class _LogsScreenState extends State<LogsScreen> {
                       : _logs.isEmpty
                           ? const Center(child: Text('No logs found'))
                           : ListView.builder(
+                              controller: _scrollController,
+                              reverse: true, // Start at bottom (newest logs)
                               itemCount: _logs.length,
                               itemBuilder: (context, index) {
-                                final log = _logs[index];
+                                // Reverse index to show newest logs at bottom
+                                final reversedIndex = _logs.length - 1 - index;
+                                final log = _logs[reversedIndex];
                                 final level = log['level'] ?? 'INFO';
                                 final timestamp = log['timestamp'] ?? '';
                                 final message = log['message'] ?? '';
@@ -516,17 +538,17 @@ class _LogsScreenState extends State<LogsScreen> {
                                 final cogName = _extractCogName(message);
                                 final cogColor = _getCogColor(cogName);
                                 final isSelected =
-                                    _selectedIndices.contains(index);
+                                    _selectedIndices.contains(reversedIndex);
 
                                 return InkWell(
                                   onTap: _isSelectionMode
-                                      ? () => _toggleSelection(index)
+                                      ? () => _toggleSelection(reversedIndex)
                                       : null,
                                   onLongPress: () {
                                     if (_isSelectionMode) {
-                                      _toggleSelection(index);
+                                      _toggleSelection(reversedIndex);
                                     } else {
-                                      _enterSelectionMode(index);
+                                      _enterSelectionMode(reversedIndex);
                                     }
                                   },
                                   child: Card(
@@ -566,7 +588,7 @@ class _LogsScreenState extends State<LogsScreen> {
                                               child: Checkbox(
                                                 value: isSelected,
                                                 onChanged: (_) =>
-                                                    _toggleSelection(index),
+                                                    _toggleSelection(reversedIndex),
                                               ),
                                             ),
                                           // Emoji + Icon
