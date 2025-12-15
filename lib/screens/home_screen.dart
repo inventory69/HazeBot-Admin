@@ -26,7 +26,7 @@ import 'config/cog_manager_screen.dart';
 import 'admin/live_users_screen.dart';
 import 'admin/tickets_admin_screen.dart';
 import 'logs_screen.dart';
-import 'leaderboard_screen.dart';
+// Leaderboard removed - functionality moved to profile screen
 import 'settings_screen.dart';
 import 'settings/notification_settings_screen.dart';
 import 'test_screen.dart';
@@ -278,11 +278,6 @@ class _HomeScreenState extends State<HomeScreen>
         icon: Icons.people_outline,
         label: 'Live\nUsers',
         screen: LiveUsersScreen(key: ValueKey('live_users_$_reloadCounter')),
-      ),
-      NavigationItem(
-        icon: Icons.leaderboard,
-        label: 'Leader\nboard',
-        screen: LeaderboardScreen(key: ValueKey('leaderboard_$_reloadCounter')),
       ),
       NavigationItem(
         icon: Icons.description,

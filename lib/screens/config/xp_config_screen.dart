@@ -423,16 +423,21 @@ class _XpConfigScreenState extends State<XpConfigScreen> {
               return Padding(
                 padding: const EdgeInsets.only(bottom: 8.0),
                 child: ListTile(
-                  leading: Text(
-                    icon,
-                    style: const TextStyle(fontSize: 32),
-                  ),
-                  title: Text(
-                    tierName.toUpperCase(),
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: _getColorFromHex(color),
-                    ),
+                  title: Row(
+                    children: [
+                      Text(
+                        icon,
+                        style: const TextStyle(fontSize: 24),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        tierName.toUpperCase(),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: _getColorFromHex(color),
+                        ),
+                      ),
+                    ],
                   ),
                   subtitle: Text('Level $minLevel+'),
                   tileColor: Theme.of(context).colorScheme.surfaceVariant,

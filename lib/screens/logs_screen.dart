@@ -74,7 +74,7 @@ class _LogsScreenState extends State<LogsScreen> {
         // Auto-scroll zu neuesten Log (unten) nach dem Build
         // Use Future.delayed to ensure ListView is fully rendered
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          Future.delayed(const Duration(milliseconds: 100), () {
+          Future.delayed(const Duration(milliseconds: 300), () {
             if (_scrollController.hasClients && mounted) {
               _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
             }

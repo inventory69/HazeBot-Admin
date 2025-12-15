@@ -791,23 +791,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }) {
     final parsedColor = _parseTierColor(tierColor);
     
-    // Calculate progress (0.0 to 1.0)
-    // For level progress, we need to calculate XP within current level
-    // current is total XP, target is XP needed for next level
-    // We need to find XP for current level to calculate progress within this level
-    final currentLevel = _xp!['level'] as int? ?? 1;
-    
-    // Calculate XP needed for current level (previous level boundary)
-    int xpForCurrentLevel = 0;
-    if (currentLevel > 1) {
-      // Simple formula: base * (multiplier ^ (level - 1))
-      // This should match Config.calculate_xp_for_next_level logic
-      for (int i = 1; i < currentLevel; i++) {
-        xpForCurrentLevel += (100 * (1.5 * i)).round();
-      }
-    }
-    
-    final xpInCurrentLevel = current - xpForCurrentLevel;
+    // Use xp_in_current_level from backend (already calculated server-side)
+    final xpInCurrentLevel = _xp!['xp_in_current_level'] as int? ?? current;
     final xpNeededForLevel = target;
     final progress = xpNeededForLevel > 0 
         ? (xpInCurrentLevel / xpNeededForLevel).clamp(0.0, 1.0)
