@@ -21,13 +21,14 @@ class AuthService extends ChangeNotifier {
   /// This loads the token and validates it with the backend
   Future<void> init() async {
     if (_isInitialized) return; // Already initialized
-    
+
     debugPrint('🔐 [AuthService] Initializing...');
-    
+
     await _loadToken();
     _isInitialized = true;
-    
-    debugPrint('🔐 [AuthService] Initialization complete. Authenticated: $_isAuthenticated');
+
+    debugPrint(
+        '🔐 [AuthService] Initialization complete. Authenticated: $_isAuthenticated');
   }
 
   Future<void> _loadToken() async {
@@ -36,12 +37,12 @@ class AuthService extends ChangeNotifier {
 
     if (_token != null) {
       debugPrint('🔐 [AuthService] Token found in storage');
-      
+
       _apiService.setToken(_token!);
-      
+
       // Validate token with backend
       final isValid = await validateToken();
-      
+
       if (isValid) {
         debugPrint('🔐 [AuthService] Token validation: ✅ VALID');
         _isAuthenticated = true;
@@ -66,7 +67,7 @@ class AuthService extends ChangeNotifier {
   /// Validate token with backend
   Future<bool> validateToken() async {
     if (_token == null) return false;
-    
+
     try {
       // Try to make a simple API call to check if token works
       await _apiService.ping();

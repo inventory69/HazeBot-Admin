@@ -67,10 +67,10 @@ class _XpConfigScreenState extends State<XpConfigScreen> {
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
       final response = await authService.apiService.getXpConfig();
-      
+
       if (response['success'] == true) {
         final config = response['config'];
-        
+
         if (mounted) {
           setState(() {
             // Activity XP
@@ -78,9 +78,12 @@ class _XpConfigScreenState extends State<XpConfigScreen> {
             _messageSentController.text = activityXp['message_sent'].toString();
             _imageSentController.text = activityXp['image_sent'].toString();
             _memeFetchedController.text = activityXp['meme_fetch'].toString();
-            _memeGeneratedController.text = activityXp['meme_generate'].toString();
-            _ticketCreatedController.text = activityXp['ticket_created'].toString();
-            _ticketResolvedController.text = activityXp['ticket_resolved'].toString();
+            _memeGeneratedController.text =
+                activityXp['meme_generate'].toString();
+            _ticketCreatedController.text =
+                activityXp['ticket_created'].toString();
+            _ticketResolvedController.text =
+                activityXp['ticket_resolved'].toString();
             _gameRequestController.text = activityXp['game_request'].toString();
 
             // Level Calculation
@@ -123,7 +126,7 @@ class _XpConfigScreenState extends State<XpConfigScreen> {
 
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
-      
+
       final configData = {
         'activity_xp': {
           'message_sent': int.parse(_messageSentController.text),
@@ -149,7 +152,8 @@ class _XpConfigScreenState extends State<XpConfigScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(response['message'] ?? 'XP configuration saved successfully'),
+            content: Text(
+                response['message'] ?? 'XP configuration saved successfully'),
             backgroundColor: Colors.green,
           ),
         );
@@ -201,7 +205,7 @@ class _XpConfigScreenState extends State<XpConfigScreen> {
 
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
-      
+
       // Call API to reset to defaults
       final response = await authService.apiService.resetXpConfig();
 
@@ -212,7 +216,7 @@ class _XpConfigScreenState extends State<XpConfigScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        
+
         // Reload config
         await _loadConfig();
       }
@@ -275,7 +279,7 @@ class _XpConfigScreenState extends State<XpConfigScreen> {
     final cardColor = isMonet
         ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
         : Theme.of(context).colorScheme.surface;
-    
+
     return Card(
       elevation: 0,
       color: cardColor,
@@ -354,7 +358,7 @@ class _XpConfigScreenState extends State<XpConfigScreen> {
     final cardColor = isMonet
         ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
         : Theme.of(context).colorScheme.surface;
-    
+
     return Card(
       elevation: 0,
       color: cardColor,
@@ -365,7 +369,8 @@ class _XpConfigScreenState extends State<XpConfigScreen> {
           children: [
             Row(
               children: [
-                Icon(Icons.functions, color: Theme.of(context).colorScheme.primary),
+                Icon(Icons.functions,
+                    color: Theme.of(context).colorScheme.primary),
                 const SizedBox(width: 8),
                 Text(
                   'Level Calculation',
@@ -437,7 +442,7 @@ class _XpConfigScreenState extends State<XpConfigScreen> {
     final cardColor = isMonet
         ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
         : Theme.of(context).colorScheme.surface;
-    
+
     return Card(
       elevation: 0,
       color: cardColor,
@@ -486,7 +491,7 @@ class _XpConfigScreenState extends State<XpConfigScreen> {
     final cardColor = isMonet
         ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.18)
         : Theme.of(context).colorScheme.surface;
-    
+
     return Card(
       elevation: 0,
       color: cardColor,
@@ -497,7 +502,8 @@ class _XpConfigScreenState extends State<XpConfigScreen> {
           children: [
             Row(
               children: [
-                Icon(Icons.military_tech, color: Theme.of(context).colorScheme.primary),
+                Icon(Icons.military_tech,
+                    color: Theme.of(context).colorScheme.primary),
                 const SizedBox(width: 8),
                 Text(
                   'Level Tiers',
@@ -513,12 +519,16 @@ class _XpConfigScreenState extends State<XpConfigScreen> {
             const SizedBox(height: 16),
             // Sort tiers by min_level descending (50 -> 1, Legendary -> Common)
             ...(_levelTiers.entries.toList()
-              ..sort((a, b) {
-                final aLevel = (a.value as Map<String, dynamic>)['min_level'] as int? ?? 0;
-                final bLevel = (b.value as Map<String, dynamic>)['min_level'] as int? ?? 0;
-                return bLevel.compareTo(aLevel); // Descending order
-              })
-            ).map((entry) {
+                  ..sort((a, b) {
+                    final aLevel = (a.value
+                            as Map<String, dynamic>)['min_level'] as int? ??
+                        0;
+                    final bLevel = (b.value
+                            as Map<String, dynamic>)['min_level'] as int? ??
+                        0;
+                    return bLevel.compareTo(aLevel); // Descending order
+                  }))
+                .map((entry) {
               final tierName = entry.key;
               final tierData = entry.value as Map<String, dynamic>;
               final emoji = tierData['emoji'] as String? ?? '⭐';

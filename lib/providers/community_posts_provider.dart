@@ -60,7 +60,7 @@ class CommunityPostsProvider extends ChangeNotifier {
   }
 
   /// Load posts with pagination
-  /// 
+  ///
   /// [force] - Force refresh even if cache is fresh
   /// [reset] - Reset pagination and start from beginning
   Future<void> loadPosts({bool force = false, bool reset = false}) async {
@@ -88,7 +88,8 @@ class CommunityPostsProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      debugPrint('🔄 Loading posts (offset: $_currentOffset, limit: $_currentLimit)...');
+      debugPrint(
+          '🔄 Loading posts (offset: $_currentOffset, limit: $_currentLimit)...');
 
       final result = await _service.fetchPosts(
         limit: _currentLimit,
@@ -114,7 +115,8 @@ class CommunityPostsProvider extends ChangeNotifier {
       _hasMore = newPosts.length >= _currentLimit;
 
       _lastLoad = DateTime.now();
-      debugPrint('✅ Loaded ${newPosts.length} posts (total cached: ${_posts.length})');
+      debugPrint(
+          '✅ Loaded ${newPosts.length} posts (total cached: ${_posts.length})');
     } catch (e) {
       _lastError = e.toString();
       debugPrint('❌ Error loading posts: $e');
@@ -136,7 +138,7 @@ class CommunityPostsProvider extends ChangeNotifier {
   }
 
   /// Create a new post
-  /// 
+  ///
   /// [content] - Text content (optional if image provided)
   /// [imageBase64] - Base64 encoded image (optional if content provided)
   /// [isAnnouncement] - Mark as announcement (admin/mod only)
@@ -151,7 +153,7 @@ class CommunityPostsProvider extends ChangeNotifier {
 
     try {
       debugPrint('📝 Creating post...');
-      
+
       final post = await _service.createPost(
         content: content,
         imageBase64: imageBase64,
@@ -163,7 +165,7 @@ class CommunityPostsProvider extends ChangeNotifier {
       _totalPosts++;
 
       debugPrint('✅ Post created and added to cache: #${post.id}');
-      
+
       return true;
     } catch (e) {
       _lastError = e.toString();
@@ -176,7 +178,7 @@ class CommunityPostsProvider extends ChangeNotifier {
   }
 
   /// Update an existing post
-  /// 
+  ///
   /// [postId] - ID of the post to update
   /// [content] - New content (optional)
   /// [imageBase64] - New image as base64 (optional)
@@ -191,7 +193,7 @@ class CommunityPostsProvider extends ChangeNotifier {
 
     try {
       debugPrint('✏️  Updating post #$postId...');
-      
+
       final updatedPost = await _service.updatePost(
         postId: postId,
         content: content,
@@ -205,7 +207,7 @@ class CommunityPostsProvider extends ChangeNotifier {
       }
 
       debugPrint('✅ Post updated in cache: #$postId');
-      
+
       return true;
     } catch (e) {
       _lastError = e.toString();
@@ -218,7 +220,7 @@ class CommunityPostsProvider extends ChangeNotifier {
   }
 
   /// Delete a post
-  /// 
+  ///
   /// [postId] - ID of the post to delete
   Future<bool> deletePost(int postId) async {
     _isDeleting = true;
@@ -227,7 +229,7 @@ class CommunityPostsProvider extends ChangeNotifier {
 
     try {
       debugPrint('🗑️  Deleting post #$postId...');
-      
+
       final success = await _service.deletePost(postId);
 
       if (success) {
@@ -237,7 +239,7 @@ class CommunityPostsProvider extends ChangeNotifier {
 
         debugPrint('✅ Post removed from cache: #$postId');
       }
-      
+
       return success;
     } catch (e) {
       _lastError = e.toString();

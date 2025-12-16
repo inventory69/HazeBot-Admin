@@ -249,7 +249,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ListTile(
               leading: const Icon(Icons.science),
               title: const Text('Test Error Report'),
-              subtitle: const Text('Send a test error to verify reporting works'),
+              subtitle:
+                  const Text('Send a test error to verify reporting works'),
               trailing: const Icon(Icons.arrow_forward_ios, size: 16),
               onTap: () {
                 Navigator.pushNamed(context, '/test');

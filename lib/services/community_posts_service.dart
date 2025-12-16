@@ -17,11 +17,11 @@ class CommunityPostsService {
   final ApiService _apiService = ApiService();
 
   /// Fetch posts with pagination
-  /// 
+  ///
   /// [limit] - Number of posts to fetch (default: 20)
   /// [offset] - Offset for pagination (default: 0)
   /// [includeDeleted] - Include deleted posts (admin only, default: false)
-  /// 
+  ///
   /// Returns list of [CommunityPost] and total count
   Future<Map<String, dynamic>> fetchPosts({
     int limit = 20,
@@ -38,13 +38,15 @@ class CommunityPostsService {
       final uri = Uri.parse('${_apiService.baseUrl}/posts')
           .replace(queryParameters: queryParams);
 
-      final response = await http.get(
-        uri,
-        headers: await _apiService.getHeaders(),
-      ).timeout(
-        const Duration(seconds: 15),
-        onTimeout: () => throw ApiTimeoutException(),
-      );
+      final response = await http
+          .get(
+            uri,
+            headers: await _apiService.getHeaders(),
+          )
+          .timeout(
+            const Duration(seconds: 15),
+            onTimeout: () => throw ApiTimeoutException(),
+          );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -73,11 +75,11 @@ class CommunityPostsService {
   }
 
   /// Create a new post
-  /// 
+  ///
   /// [content] - Text content (optional if image provided)
   /// [imageBase64] - Base64 encoded image (optional if content provided)
   /// [isAnnouncement] - Mark as announcement (admin/mod only)
-  /// 
+  ///
   /// Returns created [CommunityPost]
   Future<CommunityPost> createPost({
     String? content,
@@ -97,8 +99,7 @@ class CommunityPostsService {
 
       final body = {
         if (content != null && content.isNotEmpty) 'content': content,
-        if (imageBase64 != null && imageBase64.isNotEmpty)
-          'image': imageBase64,
+        if (imageBase64 != null && imageBase64.isNotEmpty) 'image': imageBase64,
         'is_announcement': isAnnouncement,
       };
 
@@ -115,7 +116,7 @@ class CommunityPostsService {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = json.decode(response.body);
-        
+
         // Create post object from response
         final post = CommunityPost(
           id: data['post_id'] as int,
@@ -151,11 +152,11 @@ class CommunityPostsService {
   }
 
   /// Update an existing post
-  /// 
+  ///
   /// [postId] - ID of the post to update
   /// [content] - New content (optional)
   /// [imageBase64] - New image as base64 (optional, use empty string to remove)
-  /// 
+  ///
   /// Returns updated [CommunityPost]
   Future<CommunityPost> updatePost({
     required int postId,
@@ -192,7 +193,7 @@ class CommunityPostsService {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        
+
         // Fetch updated post to get complete data
         final updatedPosts = await fetchPosts(limit: 1, offset: 0);
         final post = (updatedPosts['posts'] as List<CommunityPost>)
@@ -219,9 +220,9 @@ class CommunityPostsService {
   }
 
   /// Delete a post (soft delete)
-  /// 
+  ///
   /// [postId] - ID of the post to delete
-  /// 
+  ///
   /// Returns true if successful
   Future<bool> deletePost(int postId) async {
     try {

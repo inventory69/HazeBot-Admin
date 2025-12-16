@@ -147,7 +147,7 @@ class ApiService {
     final random = (timestamp * 31) % 1000000; // Simple random component
     _sessionId = '${timestamp}_$random';
     debugPrint('📊 Session ID: $_sessionId');
-    
+
     // Debug: Show environment detection
     debugPrint('🔧 Environment Detection:');
     debugPrint('   Platform: ${kIsWeb ? 'WEB' : 'MOBILE'}');
@@ -168,7 +168,8 @@ class ApiService {
   // ============================================================================
 
   static String? _cachedBaseUrl; // Cache to prevent log spam
-  static bool _baseUrlLogged = false; // Track if we've logged the platform detection
+  static bool _baseUrlLogged =
+      false; // Track if we've logged the platform detection
 
   static String get _staticBaseUrl {
     if (_cachedBaseUrl == null) {
@@ -182,7 +183,8 @@ class ApiService {
         }
       } else {
         // MOBILE: Direct connection to api.haze.pro
-        _cachedBaseUrl = dotenv.env['API_BASE_URL'] ?? 'http://localhost:5070/api';
+        _cachedBaseUrl =
+            dotenv.env['API_BASE_URL'] ?? 'http://localhost:5070/api';
         if (!_baseUrlLogged) {
           debugPrint('📱 Platform: MOBILE - Using direct URL: $_cachedBaseUrl');
           _baseUrlLogged = true;
@@ -215,9 +217,9 @@ class ApiService {
   Future<Map<String, String>> getHeaders() async {
     // Ensure version info is loaded
     await _initializeVersionInfo();
-    
+
     final String currentToken = _token ?? '';
-    
+
     return {
       'Content-Type': 'application/json',
       'User-Agent': _userAgent,
@@ -425,14 +427,14 @@ class ApiService {
         final httpResponse = await http
             .post(Uri.parse(url), headers: freshHeaders, body: body)
             .timeout(
-              Duration(seconds: timeout),
-              onTimeout: () {
-                throw ApiTimeoutException();
-              },
-            );
+          Duration(seconds: timeout),
+          onTimeout: () {
+            throw ApiTimeoutException();
+          },
+        );
         return httpResponse;
       });
-      
+
       return response;
     } on SocketException {
       throw ApiConnectionException();
@@ -1333,6 +1335,21 @@ class ApiService {
     }
   }
 
+  // Get any user's profile data by Discord ID
+  Future<Map<String, dynamic>> getUserProfileById(String userId) async {
+    final response = await _get('$baseUrl/users/$userId/profile');
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else if (response.statusCode == 401) {
+      throw TokenExpiredException('Token has expired or is invalid');
+    } else if (response.statusCode == 404) {
+      throw Exception('User not found');
+    } else {
+      throw Exception('Failed to get user profile: ${response.statusCode}');
+    }
+  }
+
   // ===== HAZEHUB ENDPOINTS =====
 
   Future<Map<String, dynamic>> getLatestMemes({int limit = 10}) async {
@@ -1360,7 +1377,8 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> getLatestLevelups({int limit = 10}) async {
-    final response = await _get('$baseUrl/hazehub/latest-levelups?limit=$limit');
+    final response =
+        await _get('$baseUrl/hazehub/latest-levelups?limit=$limit');
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -1395,7 +1413,8 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> updateXpConfig(Map<String, dynamic> config) async {
+  Future<Map<String, dynamic>> updateXpConfig(
+      Map<String, dynamic> config) async {
     final response = await _put(
       '$baseUrl/config/xp',
       body: jsonEncode(config),
@@ -1413,7 +1432,8 @@ class ApiService {
   Future<Map<String, dynamic>> resetXpConfig() async {
     final response = await _post(
       '$baseUrl/config/xp/reset',
-      body: jsonEncode({}), // Send empty JSON object to satisfy Content-Type header
+      body: jsonEncode(
+          {}), // Send empty JSON object to satisfy Content-Type header
     );
 
     if (response.statusCode == 200) {

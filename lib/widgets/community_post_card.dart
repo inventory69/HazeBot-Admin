@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import '../models/community_post.dart';
 import '../services/community_posts_service.dart';
+import '../services/api_service.dart';
+import '../screens/profile_screen.dart';
 
 /// Reusable widget to display a community post
 /// Styled to match HazeHub meme/rankup/levelup cards
-class CommunityPostCard extends StatelessWidget {
+class CommunityPostCard extends StatefulWidget {
   final CommunityPost post;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
@@ -26,22 +29,122 @@ class CommunityPostCard extends StatelessWidget {
   });
 
   @override
+  State<CommunityPostCard> createState() => _CommunityPostCardState();
+}
+
+class _CommunityPostCardState extends State<CommunityPostCard> {
+  bool _isExpanded = false;
+
+  // Calculate dynamic font size based on content length
+  double _getContentFontSize(String content, bool isMobile) {
+    final baseSize = isMobile ? 15.0 : 16.0;
+    if (content.length < 100) return baseSize + 1; // Short: 16/17
+    if (content.length < 300) return baseSize; // Medium: 15/16
+    if (content.length < 500) return baseSize - 1; // Long: 14/15
+    return baseSize - 2; // Very long: 13/14
+  }
+
+  // Check if content needs "Read More" button
+  bool _needsReadMore(String content) {
+    return content.length > 300 || content.split('\n').length > 5;
+  }
+
+  // Truncate content for "Read More" state (preserving markdown blocks)
+  String _truncateContent(String content) {
+    final lines = content.split('\n');
+
+    // Check if we need to truncate by line count
+    if (lines.length > 5) {
+      // Take first 5 lines, but check if we're inside a code block
+      final truncatedLines = lines.take(5).toList();
+      final truncatedText = truncatedLines.join('\n');
+
+      // Count opening ``` markers (multi-line code blocks)
+      final tripleBacktickCount = '```'.allMatches(truncatedText).length;
+
+      // Count single ` markers (inline code)
+      final singleBacktickCount =
+          '`'.allMatches(truncatedText).length - (tripleBacktickCount * 3);
+
+      // If odd number of triple backticks, we're inside a multi-line code block
+      if (tripleBacktickCount.isOdd) {
+        return truncatedText + '\n```\n...';
+      }
+
+      // If odd number of single backticks, we're inside inline code
+      if (singleBacktickCount.isOdd) {
+        return truncatedText + '`\n...';
+      }
+
+      return truncatedText + '\n...';
+    }
+
+    // Check if we need to truncate by character count
+    if (content.length > 300) {
+      var truncateAt = 300;
+      final substring = content.substring(0, truncateAt);
+
+      // Count opening ``` markers (multi-line code blocks)
+      final tripleBacktickCount = '```'.allMatches(substring).length;
+
+      // Count single ` markers (inline code)
+      final singleBacktickCount =
+          '`'.allMatches(substring).length - (tripleBacktickCount * 3);
+
+      // If odd number of triple backticks, we're inside a multi-line code block
+      if (tripleBacktickCount.isOdd) {
+        return substring + '\n```\n...';
+      }
+
+      // If odd number of single backticks, we're inside inline code
+      if (singleBacktickCount.isOdd) {
+        return substring + '`...';
+      }
+
+      return substring + '...';
+    }
+
+    return content;
+  }
+
+  /// Convert plain newlines to Markdown hard line breaks
+  String _prepareMarkdown(String text) {
+    // Replace single newlines with two spaces + newline (Markdown hard break)
+    // But preserve double newlines (paragraph breaks)
+    return text.replaceAllMapped(
+      RegExp(r'([^\n])\n(?!\n)'),
+      (match) => '${match.group(1)}  \n',
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final post = widget.post;
     final colorScheme = Theme.of(context).colorScheme;
-    
+
     // Match meme card styling: subtle tonal container
     final isMonet = colorScheme.surfaceContainerHigh !=
         ThemeData.light().colorScheme.surfaceContainerHigh;
-    
-    // Special coloring for announcements
+
+    // Color coding: Announcements = yellow/orange, Admin posts = pink, Normal posts = standard
     Color cardColor;
     if (post.isAnnouncement) {
+      // Announcements are yellow/orange
       cardColor = Colors.orange.withOpacity(0.12);
+    } else if (post.postType == 'admin') {
+      // Admin posts (non-announcements) are pink
+      cardColor = Colors.pink.withOpacity(0.12);
     } else {
+      // Normal user posts
       cardColor = isMonet
           ? colorScheme.primaryContainer.withOpacity(0.18)
           : colorScheme.surface;
     }
+
+    final isMobile = widget.isMobile;
+    final canEdit = widget.canEdit;
+    final canDelete = widget.canDelete;
+    final showActions = widget.showActions;
 
     return Card(
       color: cardColor,
@@ -51,7 +154,12 @@ class CommunityPostCard extends StatelessWidget {
         onTap: null, // TODO: Navigate to detail view if needed
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: EdgeInsets.all(isMobile ? 8 : 12),
+          padding: EdgeInsets.only(
+            left: isMobile ? 8 : 12,
+            right: isMobile ? 8 : 12,
+            top: isMobile ? 10 : 12,
+            bottom: isMobile ? 14 : 18,
+          ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -60,7 +168,8 @@ class CommunityPostCard extends StatelessWidget {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: CachedNetworkImage(
-                    imageUrl: CommunityPostsService().getImageUrl(post.imageUrl!),
+                    imageUrl:
+                        CommunityPostsService().getImageUrl(post.imageUrl!),
                     width: isMobile ? 80 : 100,
                     height: isMobile ? 80 : 100,
                     fit: BoxFit.cover,
@@ -85,161 +194,282 @@ class CommunityPostCard extends StatelessWidget {
                         color: Colors.grey[300],
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Icon(Icons.image, size: 32, color: Colors.grey[600]),
+                      child:
+                          Icon(Icons.image, size: 32, color: Colors.grey[600]),
                     ),
                   ),
                 ),
-              
+
               SizedBox(width: isMobile ? 8 : 12),
-              
+
               // Content area
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Stack(
                   children: [
-                    // Author row with avatar
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Row(
+                    // Main content column
+                    Padding(
+                      padding: EdgeInsets.only(
+                          right:
+                              showActions && (canEdit || canDelete) ? 60 : 0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Compact author row with avatar and role badge
+                          Row(
                             children: [
-                              // Small avatar (like in meme cards with author icon)
-                              CircleAvatar(
-                                radius: isMobile ? 12 : 14,
-                                backgroundColor: colorScheme.primaryContainer,
-                                child: post.authorAvatar != null
-                                    ? ClipOval(
-                                        child: CachedNetworkImage(
-                                          imageUrl: post.authorAvatar!,
-                                          width: isMobile ? 24 : 28,
-                                          height: isMobile ? 24 : 28,
-                                          fit: BoxFit.cover,
-                                          placeholder: (context, url) => Icon(
-                                            Icons.person,
-                                            size: isMobile ? 14 : 16,
-                                            color: colorScheme.onPrimaryContainer,
-                                          ),
-                                          errorWidget: (context, url, error) => Icon(
-                                            Icons.person,
-                                            size: isMobile ? 14 : 16,
-                                            color: colorScheme.onPrimaryContainer,
-                                          ),
-                                        ),
-                                      )
-                                    : Icon(
-                                        Icons.person,
-                                        size: isMobile ? 14 : 16,
-                                        color: colorScheme.onPrimaryContainer,
-                                      ),
+                              // Smaller avatar (more compact) - clickable
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          ProfileScreen(userId: post.authorId),
+                                    ),
+                                  );
+                                },
+                                child: CircleAvatar(
+                                  radius: isMobile ? 8 : 10,
+                                  backgroundColor: colorScheme.primaryContainer,
+                                  backgroundImage: post.authorAvatar != null &&
+                                          post.authorAvatar!.isNotEmpty
+                                      ? NetworkImage(post.authorAvatar!)
+                                      : null,
+                                  onBackgroundImageError:
+                                      post.authorAvatar != null
+                                          ? (exception, stackTrace) {
+                                              debugPrint(
+                                                  '❌ Avatar load failed for ${post.authorName}: ${post.authorAvatar}');
+                                              debugPrint('Error: $exception');
+                                            }
+                                          : null,
+                                  child: post.authorAvatar == null ||
+                                          post.authorAvatar!.isEmpty
+                                      ? Icon(
+                                          Icons.person,
+                                          size: isMobile ? 10 : 12,
+                                          color: colorScheme.onPrimaryContainer,
+                                        )
+                                      : null,
+                                ),
                               ),
-                              const SizedBox(width: 6),
+                              const SizedBox(width: 4),
+                              // Username (smaller, more subtle)
                               Flexible(
                                 child: Text(
                                   post.authorName,
                                   style: TextStyle(
-                                    fontSize: isMobile ? 12 : 13,
-                                    color: Colors.grey[700],
-                                    fontWeight: FontWeight.w600,
+                                    fontSize: isMobile ? 10 : 11,
+                                    color: Colors.grey[500],
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              // Role Badge (Admin/Mod)
+                              if (post.postType == 'admin' ||
+                                  post.postType == 'mod') ...[
+                                const SizedBox(width: 4),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 4, vertical: 1),
+                                  decoration: BoxDecoration(
+                                    color: post.postType == 'admin'
+                                        ? Colors.pink.withOpacity(0.2)
+                                        : Colors.blue.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(3),
+                                  ),
+                                  child: Text(
+                                    post.postType == 'admin' ? 'ADMIN' : 'MOD',
+                                    style: TextStyle(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.bold,
+                                      color: post.postType == 'admin'
+                                          ? Colors.pink[700]
+                                          : Colors.blue[700],
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+
+                          // Announcement badge + timestamp (very compact and subtle)
+                          const SizedBox(height: 1),
+                          Row(
+                            children: [
+                              if (post.isAnnouncement) ...[
+                                Icon(
+                                  Icons.campaign,
+                                  size: 12,
+                                  color: Colors.orange,
+                                ),
+                                const SizedBox(width: 3),
+                                Text(
+                                  'Announcement',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.orange,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                              ],
+                              Flexible(
+                                child: Text(
+                                  '${post.formattedDate}${post.wasEdited ? ' (edited)' : ''}',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.grey[500],
+                                    fontStyle: post.wasEdited
+                                        ? FontStyle.italic
+                                        : null,
                                   ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                             ],
                           ),
-                        ),
-                        // Action buttons
-                        if (showActions && (canEdit || canDelete)) ...[
-                          if (canEdit && post.isEditable)
-                            IconButton(
-                              icon: const Icon(Icons.edit, size: 18),
-                              onPressed: onEdit,
-                              tooltip: 'Edit',
-                              padding: const EdgeInsets.all(4),
-                              constraints: const BoxConstraints(),
-                              color: colorScheme.primary,
+
+                          // Content text with dynamic size and expandable (Markdown support)
+                          if (post.hasContent) ...[
+                            const SizedBox(height: 16),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                MarkdownBody(
+                                  data: _prepareMarkdown(_isExpanded ||
+                                          !_needsReadMore(post.content!)
+                                      ? post.content!
+                                      : _truncateContent(post.content!)),
+                                  styleSheet: MarkdownStyleSheet(
+                                    p: TextStyle(
+                                      fontSize: _getContentFontSize(
+                                          post.content!, isMobile),
+                                      fontWeight: FontWeight.w500,
+                                      color: colorScheme.onSurface,
+                                      height: post.content!.length > 300
+                                          ? 1.3
+                                          : 1.4,
+                                    ),
+                                    strong: TextStyle(
+                                      fontSize: _getContentFontSize(
+                                          post.content!, isMobile),
+                                      fontWeight: FontWeight.bold,
+                                      color: colorScheme.onSurface,
+                                    ),
+                                    em: TextStyle(
+                                      fontSize: _getContentFontSize(
+                                          post.content!, isMobile),
+                                      fontStyle: FontStyle.italic,
+                                      color: colorScheme.onSurface,
+                                    ),
+                                    code: TextStyle(
+                                      fontSize: _getContentFontSize(
+                                              post.content!, isMobile) -
+                                          1,
+                                      fontFamily: 'monospace',
+                                      backgroundColor:
+                                          colorScheme.surfaceContainerHighest,
+                                      color: colorScheme.onSurface,
+                                    ),
+                                    a: TextStyle(
+                                      fontSize: _getContentFontSize(
+                                          post.content!, isMobile),
+                                      color: colorScheme.primary,
+                                      decoration: TextDecoration.underline,
+                                    ),
+                                    listBullet: TextStyle(
+                                      fontSize: _getContentFontSize(
+                                          post.content!, isMobile),
+                                      color: colorScheme.onSurface,
+                                    ),
+                                  ),
+                                  onTapLink: (text, href, title) {
+                                    // TODO: Open links in browser
+                                    debugPrint('Link tapped: $href');
+                                  },
+                                ),
+                                // "Read More" / "Show Less" button
+                                if (_needsReadMore(post.content!)) ...[
+                                  const SizedBox(height: 4),
+                                  GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        _isExpanded = !_isExpanded;
+                                      });
+                                    },
+                                    child: Text(
+                                      _isExpanded ? 'Show less' : 'Read more',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: colorScheme.primary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
-                          if (canDelete)
-                            IconButton(
-                              icon: const Icon(Icons.delete, size: 18),
-                              onPressed: onDelete,
-                              tooltip: 'Delete',
-                              padding: const EdgeInsets.all(4),
-                              constraints: const BoxConstraints(),
-                              color: Colors.red,
+                          ],
+
+                          // Discord indicator (subtle)
+                          if (post.discordMessageId != null) ...[
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.discord,
+                                  size: 12,
+                                  color: colorScheme.onSurfaceVariant
+                                      .withOpacity(0.4),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Posted in Discord',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: colorScheme.onSurfaceVariant
+                                        .withOpacity(0.4),
+                                  ),
+                                ),
+                              ],
                             ),
+                          ],
                         ],
-                      ],
-                    ),
-                    
-                    // Announcement badge + timestamp
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        if (post.isAnnouncement) ...[
-                          Icon(
-                            Icons.campaign,
-                            size: isMobile ? 14 : 16,
-                            color: Colors.orange,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Announcement',
-                            style: TextStyle(
-                              fontSize: isMobile ? 11 : 12,
-                              color: Colors.orange,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                        ],
-                        Flexible(
-                          child: Text(
-                            '${post.formattedDate}${post.wasEdited ? ' (edited)' : ''}',
-                            style: TextStyle(
-                              fontSize: isMobile ? 11 : 12,
-                              color: Colors.grey[600],
-                              fontStyle: post.wasEdited ? FontStyle.italic : null,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                    
-                    // Content text
-                    if (post.hasContent) ...[
-                      const SizedBox(height: 6),
-                      Text(
-                        post.content!,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              fontSize: isMobile ? 14 : 15,
-                            ),
-                        maxLines: post.hasImage ? 2 : 4,
-                        overflow: TextOverflow.ellipsis,
                       ),
-                    ],
-                    
-                    // Discord indicator (subtle)
-                    if (post.discordMessageId != null) ...[
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.discord,
-                            size: 12,
-                            color: colorScheme.onSurfaceVariant.withOpacity(0.4),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Posted in Discord',
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: colorScheme.onSurfaceVariant.withOpacity(0.4),
-                            ),
-                          ),
-                        ],
+                    ),
+
+                    // Action buttons - fixed position in top right corner
+                    if (showActions && (canEdit || canDelete))
+                      Positioned(
+                        top: 0,
+                        right: 0,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (canEdit && post.isEditable)
+                              IconButton(
+                                icon: const Icon(Icons.edit, size: 18),
+                                onPressed: widget.onEdit,
+                                tooltip: 'Edit',
+                                padding: const EdgeInsets.all(4),
+                                constraints: const BoxConstraints(),
+                                color: colorScheme.primary,
+                              ),
+                            if (canDelete)
+                              IconButton(
+                                icon: const Icon(Icons.delete, size: 18),
+                                onPressed: widget.onDelete,
+                                tooltip: 'Delete',
+                                padding: const EdgeInsets.all(4),
+                                constraints: const BoxConstraints(),
+                                color: Colors.red,
+                              ),
+                          ],
+                        ),
                       ),
-                    ],
                   ],
                 ),
               ),

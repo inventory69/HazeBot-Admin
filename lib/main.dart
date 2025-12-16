@@ -110,7 +110,7 @@ Future<void> _checkAndSendError(dynamic error, StackTrace? stack) async {
 
 class HazeBotAdminApp extends StatefulWidget {
   final AuthService authService;
-  
+
   const HazeBotAdminApp({super.key, required this.authService});
 
   @override
@@ -205,7 +205,8 @@ class _HazeBotAdminAppState extends State<HazeBotAdminApp>
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider.value(value: widget.authService), // Use pre-initialized instance
+        ChangeNotifierProvider.value(
+            value: widget.authService), // Use pre-initialized instance
         ChangeNotifierProvider(create: (_) => DiscordAuthService()),
         ChangeNotifierProvider(create: (_) => PermissionService()),
         ChangeNotifierProvider(create: (_) => ConfigService()),

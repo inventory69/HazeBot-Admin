@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/error_reporter.dart';
 
 /// Mixin for standardized error handling across screens
-/// 
+///
 /// Usage:
 /// ```dart
 /// class _MyScreenState extends State<MyScreen> with ErrorHandlingMixin {
@@ -19,7 +19,7 @@ mixin ErrorHandlingMixin<T extends StatefulWidget> on State<T> {
   final _errorReporter = ErrorReporter();
 
   /// Handle error with automatic reporting
-  /// 
+  ///
   /// This method will:
   /// 1. Log the error locally
   /// 2. Check if auto-reporting is enabled
@@ -71,7 +71,7 @@ mixin ErrorHandlingMixin<T extends StatefulWidget> on State<T> {
 
     // Show user-friendly error message
     if (showSnackBar && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      ScaffoldMessenger.of(this.context).showSnackBar(
         SnackBar(
           content: Text('Error: ${error.toString()}'),
           backgroundColor: Colors.red,

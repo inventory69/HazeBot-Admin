@@ -92,14 +92,16 @@ class _LogsScreenState extends State<LogsScreen> {
           // Merke alte Länge und Scroll-Position
           final oldLength = _logs.length;
           final wasAtBottom = _scrollController.hasClients
-              ? _scrollController.position.pixels >= 
-                _scrollController.position.maxScrollExtent - 100
+              ? _scrollController.position.pixels >=
+                  _scrollController.position.maxScrollExtent - 100
               : false;
-          
+
           await _loadLogs();
-          
+
           // Nur auto-scrollen wenn User bereits unten war UND neue Logs gekommen sind
-          if (wasAtBottom && _logs.length > oldLength && _scrollController.hasClients) {
+          if (wasAtBottom &&
+              _logs.length > oldLength &&
+              _scrollController.hasClients) {
             _scrollController.animateTo(
               _scrollController.position.maxScrollExtent,
               duration: const Duration(milliseconds: 300),
@@ -588,7 +590,8 @@ class _LogsScreenState extends State<LogsScreen> {
                                               child: Checkbox(
                                                 value: isSelected,
                                                 onChanged: (_) =>
-                                                    _toggleSelection(reversedIndex),
+                                                    _toggleSelection(
+                                                        reversedIndex),
                                               ),
                                             ),
                                           // Emoji + Icon

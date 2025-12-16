@@ -24,7 +24,7 @@ class WebSocketService {
     try {
       // Determine WebSocket URL based on platform
       String wsUrl;
-      
+
       if (kIsWeb) {
         // WEB: Use current origin (admin.haze.pro)
         wsUrl = Uri.base.origin;
@@ -81,7 +81,8 @@ class WebSocketService {
 
   /// Wait for WebSocket to connect
   /// Returns true if connected, false if timeout
-  Future<bool> waitForConnection({Duration timeout = const Duration(seconds: 5)}) async {
+  Future<bool> waitForConnection(
+      {Duration timeout = const Duration(seconds: 5)}) async {
     if (isConnected) {
       print('✅ Already connected');
       return true;
@@ -89,7 +90,7 @@ class WebSocketService {
 
     print('⏳ Waiting for WebSocket connection...');
     final start = DateTime.now();
-    
+
     while (!isConnected) {
       if (DateTime.now().difference(start) > timeout) {
         print('❌ WebSocket connection timeout after ${timeout.inSeconds}s');
@@ -97,7 +98,7 @@ class WebSocketService {
       }
       await Future.delayed(const Duration(milliseconds: 100));
     }
-    
+
     print('✅ WebSocket connection established');
     return true;
   }

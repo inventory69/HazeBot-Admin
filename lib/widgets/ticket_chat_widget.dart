@@ -165,7 +165,7 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
   /// Rejoin ticket room after WebSocket reconnects (with retry logic)
   Future<void> _rejoinTicketAfterReconnect() async {
     final connected = await _authService!.wsService.waitForConnection();
-    
+
     if (connected) {
       _authService!.wsService.joinTicket(
         widget.ticket.ticketId,
@@ -336,7 +336,7 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
   /// Join ticket room once WebSocket is connected (with retry logic)
   Future<void> _joinTicketWhenReady() async {
     final connected = await _authService!.wsService.waitForConnection();
-    
+
     if (connected) {
       _authService!.wsService.joinTicket(
         widget.ticket.ticketId,
@@ -441,7 +441,6 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
       return;
     }
 
-
     final oldCount = _messages.length;
 
     setState(() {
@@ -541,53 +540,6 @@ class _TicketChatWidgetState extends State<TicketChatWidget>
           });
         }
       });
-    });
-  }
-
-  void _scrollToNewMessages() {
-    // ✅ FIX: Discord-style scroll to "New Messages" divider with precise positioning
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted &&
-          _scrollController.hasClients &&
-          _firstNewMessageIndex >= 0) {
-        Future.delayed(const Duration(milliseconds: 300), () {
-          if (mounted && _scrollController.hasClients) {
-            // Try to use GlobalKey for exact position
-            final dividerContext = _newMessagesDividerKey.currentContext;
-            if (dividerContext != null) {
-              // Use Scrollable.ensureVisible for precise, automatic scrolling
-              Scrollable.ensureVisible(
-                dividerContext,
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeOut,
-                alignment: 0.2, // Scroll to 20% from top (like Discord)
-              );
-              debugPrint(
-                  '✅ Scrolled to New Messages divider (precise position)');
-            } else {
-              // Fallback: Estimate position (better than before)
-              final maxScroll = _scrollController.position.maxScrollExtent;
-              final viewportHeight =
-                  _scrollController.position.viewportDimension;
-              final estimatedMessageHeight = maxScroll / _messages.length;
-              final dividerOffset =
-                  _firstNewMessageIndex * estimatedMessageHeight;
-
-              // Scroll to show divider near top (20% from top like Discord)
-              final targetPosition = (dividerOffset - (viewportHeight * 0.2))
-                  .clamp(0.0, maxScroll);
-
-              _scrollController.animateTo(
-                targetPosition,
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeOut,
-              );
-              debugPrint(
-                  '⚠️ Scrolled to New Messages divider (estimated position)');
-            }
-          }
-        });
-      }
     });
   }
 

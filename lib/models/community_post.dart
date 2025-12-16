@@ -37,9 +37,13 @@ class CommunityPost {
   factory CommunityPost.fromJson(Map<String, dynamic> json) {
     // Handle nested author object from backend
     final author = json['author'] as Map<String, dynamic>?;
-    final authorId = author?['id']?.toString() ?? json['author_id']?.toString() ?? '';
-    final authorName = author?['name']?.toString() ?? json['author_name']?.toString() ?? 'Unknown';
-    final authorAvatar = author?['avatar']?.toString() ?? json['author_avatar']?.toString();
+    final authorId =
+        author?['id']?.toString() ?? json['author_id']?.toString() ?? '';
+    final authorName = author?['name']?.toString() ??
+        json['author_name']?.toString() ??
+        'Unknown';
+    final authorAvatar =
+        author?['avatar']?.toString() ?? json['author_avatar']?.toString();
 
     // Helper to convert bool/int/null to bool
     bool _toBool(dynamic value) {
