@@ -25,9 +25,6 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
   // ✅ REMOVED WidgetsBindingObserver - TicketChatWidget handles WebSocket lifecycle
   late TabController _tabController;
   List<TicketMessage> _messages = [];
-  bool _isLoadingMessages = false;
-  bool _isSending = false;
-  String? _messageError;
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   int _previousMessageCount = 0;
@@ -136,11 +133,6 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
   }
 
   Future<void> _loadMessages() async {
-    setState(() {
-      _isLoadingMessages = true;
-      _messageError = null;
-    });
-
     try {
       final messagesData =
           await ApiService().getTicketMessages(widget.ticket.ticketId);
@@ -168,7 +160,6 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
         }
 
         _previousMessageCount = newMessageCount;
-        _isLoadingMessages = false;
       });
 
       // Scroll behavior:
@@ -182,51 +173,7 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
         _scrollToNewMessages(); // Scroll to new messages divider
       }
     } catch (e) {
-      setState(() {
-        _messageError = e.toString();
-        _isLoadingMessages = false;
-      });
-    }
-  }
-
-  Future<void> _sendMessage() async {
-    final content = _messageController.text.trim();
-    if (content.isEmpty) return;
-
-    setState(() => _isSending = true);
-
-    try {
-      await ApiService().sendTicketMessage(widget.ticket.ticketId, content);
-      _messageController.clear();
-
-      // Wait a moment for the bot to post the message
-      await Future.delayed(const Duration(milliseconds: 500));
-
-      // Reload messages
-      await _loadMessages();
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Message sent successfully'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to send message: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isSending = false);
-      }
+      debugPrint('Error loading messages: $e');
     }
   }
 
@@ -855,9 +802,8 @@ class _TicketDetailDialogState extends State<TicketDetailDialog>
 
 class _MessageCard extends StatelessWidget {
   final TicketMessage message;
-  final bool isNew;
 
-  const _MessageCard({required this.message, this.isNew = false});
+  const _MessageCard({required this.message});
 
   bool get _isAdminMessage =>
       message.isAdmin || message.content.contains('[Admin Panel');
@@ -1134,20 +1080,6 @@ class _MessageCard extends StatelessWidget {
             ],
           ),
         ),
-        // New message indicator
-        if (isNew)
-          Positioned(
-            left: 0,
-            top: 0,
-            bottom: 16,
-            child: Container(
-              width: 3,
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
       ],
     );
   }

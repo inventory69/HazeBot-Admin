@@ -14,7 +14,7 @@ class _TestScreenState extends State<TestScreen> {
 
   Future<void> _triggerTestError() async {
     setState(() => _isProcessing = true);
-    
+
     try {
       // Log some actions (buffered locally, NOT sent automatically)
       _errorReporter.info('Test button clicked', context: {
@@ -22,27 +22,26 @@ class _TestScreenState extends State<TestScreen> {
         'action': 'trigger_error',
         'timestamp': DateTime.now().toIso8601String(),
       });
-      
+
       _errorReporter.debug('Preparing to throw test exception', context: {
         'will_catch': true,
         'error_type': 'intentional',
       });
-      
+
       _errorReporter.info('Throwing exception in 1 second...');
-      
+
       await Future.delayed(const Duration(seconds: 1));
-      
+
       _errorReporter.warning('About to throw exception NOW');
-      
+
       // Intentionally throw an error
       throw Exception('This is a test error for remote logging! 🐛');
-      
     } catch (e, stackTrace) {
       _errorReporter.error('Test exception caught', context: {
         'error': e.toString(),
         'expected': true,
       });
-      
+
       // Show error dialog with consent option
       if (mounted) {
         await _errorReporter.reportError(
@@ -94,7 +93,7 @@ class _TestScreenState extends State<TestScreen> {
             ],
           ),
           const SizedBox(height: 32),
-          
+
           // Error Reporting Test Card
           Card(
             color: Theme.of(context)
@@ -117,9 +116,10 @@ class _TestScreenState extends State<TestScreen> {
                       Expanded(
                         child: Text(
                           'Remote Error Reporting Test',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
                         ),
                       ),
                     ],
@@ -137,13 +137,16 @@ class _TestScreenState extends State<TestScreen> {
                         ),
                   ),
                   const SizedBox(height: 8),
-                  _buildTestStep(context, '1', 'Logs actions locally (not sent)'),
+                  _buildTestStep(
+                      context, '1', 'Logs actions locally (not sent)'),
                   _buildTestStep(context, '2', 'Throws a test exception'),
                   _buildTestStep(context, '3', 'Shows consent dialog'),
-                  _buildTestStep(context, '4', 'If you click "Send Report": Sends to backend'),
-                  _buildTestStep(context, '5', 'Backend logs appear in HazeBot.log'),
+                  _buildTestStep(context, '4',
+                      'If you click "Send Report": Sends to backend'),
+                  _buildTestStep(
+                      context, '5', 'Backend logs appear in HazeBot.log'),
                   const SizedBox(height: 20),
-                  
+
                   // Test Button
                   SizedBox(
                     width: double.infinity,
@@ -207,13 +210,11 @@ class _TestScreenState extends State<TestScreen> {
                         const SizedBox(height: 8),
                         Text(
                           '[FLUTTER ERROR REPORT] Exception: This is a test error for remote logging! 🐛',
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall
-                              ?.copyWith(
-                                fontFamily: 'monospace',
-                                color: Theme.of(context).colorScheme.error,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    fontFamily: 'monospace',
+                                    color: Theme.of(context).colorScheme.error,
+                                  ),
                         ),
                       ],
                     ),
@@ -222,9 +223,9 @@ class _TestScreenState extends State<TestScreen> {
               ),
             ),
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           // Info Card
           Card(
             child: Padding(
@@ -243,9 +244,10 @@ class _TestScreenState extends State<TestScreen> {
                       Expanded(
                         child: Text(
                           'About Remote Error Reporting',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
                         ),
                       ),
                     ],
@@ -327,8 +329,7 @@ class _TestScreenState extends State<TestScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon,
-              size: 20, color: Theme.of(context).colorScheme.primary),
+          Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
           const SizedBox(width: 12),
           Expanded(
             child: Column(

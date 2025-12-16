@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+  final String?
+      userId; // Optional: If provided, shows that user's profile instead of own
+
+  const ProfileScreen({super.key, this.userId});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -40,7 +43,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
 
     try {
-      final response = await ApiService().getUserProfile();
+      // Load profile data - either for specific user or current user
+      final response = widget.userId != null
+          ? await ApiService().getUserProfileById(widget.userId!)
+          : await ApiService().getUserProfile();
 
       if (response['success'] == true && response['profile'] != null) {
         final profile = response['profile'];
@@ -731,7 +737,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required bool isMobile,
   }) {
     final parsedColor = _parseTierColor(tierColor);
-    
+
     return Container(
       width: isMobile ? 100 : 120,
       height: isMobile ? 100 : 120,
@@ -790,11 +796,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     String? tierColor,
   }) {
     final parsedColor = _parseTierColor(tierColor);
-    
+
     // Use xp_in_current_level from backend (already calculated server-side)
     final xpInCurrentLevel = _xp!['xp_in_current_level'] as int? ?? current;
     final xpNeededForLevel = target;
-    final progress = xpNeededForLevel > 0 
+    final progress = xpNeededForLevel > 0
         ? (xpInCurrentLevel / xpNeededForLevel).clamp(0.0, 1.0)
         : 0.0;
 
@@ -825,7 +831,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: LinearProgressIndicator(
             value: progress,
             minHeight: 10,
-            backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+            backgroundColor:
+                Theme.of(context).colorScheme.surfaceContainerHighest,
             valueColor: AlwaysStoppedAnimation<Color>(
               parsedColor ?? Theme.of(context).colorScheme.primary,
             ),

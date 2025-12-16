@@ -462,14 +462,16 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                               final platform = session['platform'] ?? 'Unknown';
                               final deviceInfo =
                                   session['device_info'] ?? 'Unknown';
-                              
+
                               // Monitor detection (Uptime Kuma)
                               final isMonitor = session['is_monitor'] ?? false;
                               final monitorType = session['monitor_type'] ?? '';
-                              final monitorStatus = session['monitor_status'] ?? '';
-                              
+                              final monitorStatus =
+                                  session['monitor_status'] ?? '';
+
                               // Emulator detection
-                              final isEmulator = session['is_emulator'] ?? false;
+                              final isEmulator =
+                                  session['is_emulator'] ?? false;
 
                               final isRecent = secondsAgo < 30;
 
@@ -489,7 +491,8 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                                       children: [
                                         CircleAvatar(
                                           backgroundColor: isMonitor
-                                              ? Colors.blue.withValues(alpha: 0.2)
+                                              ? Colors.blue
+                                                  .withValues(alpha: 0.2)
                                               : _getRoleColor(role)
                                                   .withValues(alpha: 0.2),
                                           child: Icon(
@@ -573,7 +576,8 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                                                       BorderRadius.circular(12),
                                                 ),
                                                 child: Row(
-                                                  mainAxisSize: MainAxisSize.min,
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
                                                   children: [
                                                     Icon(
                                                       Icons.monitor_heart,
@@ -610,7 +614,8 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                                                 child: Text(
                                                   role.toUpperCase(),
                                                   style: TextStyle(
-                                                    fontSize: isMobile ? 10 : 11,
+                                                    fontSize:
+                                                        isMobile ? 10 : 11,
                                                     fontWeight: FontWeight.bold,
                                                     color: _getRoleColor(role),
                                                   ),
@@ -685,12 +690,16 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                                           children: [
                                             if (isMonitor) ...[
                                               Container(
-                                                padding: const EdgeInsets.all(12),
+                                                padding:
+                                                    const EdgeInsets.all(12),
                                                 decoration: BoxDecoration(
-                                                  color: Colors.blue.withValues(alpha: 0.1),
-                                                  borderRadius: BorderRadius.circular(12),
+                                                  color: Colors.blue
+                                                      .withValues(alpha: 0.1),
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
                                                   border: Border.all(
-                                                    color: Colors.blue.withValues(alpha: 0.3),
+                                                    color: Colors.blue
+                                                        .withValues(alpha: 0.3),
                                                     width: 1,
                                                   ),
                                                 ),
@@ -706,7 +715,9 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                                                       child: Text(
                                                         'Automated monitoring system',
                                                         style: TextStyle(
-                                                          fontSize: isMobile ? 11 : 12,
+                                                          fontSize: isMobile
+                                                              ? 11
+                                                              : 12,
                                                           color: Colors.blue,
                                                         ),
                                                       ),

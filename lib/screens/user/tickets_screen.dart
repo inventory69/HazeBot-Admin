@@ -951,9 +951,11 @@ class _TicketDetailScreenState extends State<_TicketDetailScreen> {
   }
 
   Future<void> _reopenTicket() async {
-    debugPrint('🔍 [USER SCREEN] _reopenTicket() called for ticket ${_ticket.ticketId}');
-    debugPrint('🔍 [USER SCREEN] Ticket status: ${_ticket.status}, reopenCount: ${_ticket.reopenCount}/3');
-    
+    debugPrint(
+        '🔍 [USER SCREEN] _reopenTicket() called for ticket ${_ticket.ticketId}');
+    debugPrint(
+        '🔍 [USER SCREEN] Ticket status: ${_ticket.status}, reopenCount: ${_ticket.reopenCount}/3');
+
     // Show confirmation dialog
     final confirmed = await showDialog<bool>(
       context: context,
@@ -998,7 +1000,7 @@ class _TicketDetailScreenState extends State<_TicketDetailScreen> {
       debugPrint('🔍 [USER SCREEN] ❌ Reopen exception caught: $e');
       debugPrint('🔍 [USER SCREEN] Exception type: ${e.runtimeType}');
       debugPrint('🔍 [USER SCREEN] Stack trace: $stackTrace');
-      
+
       if (mounted) {
         setState(() => _isProcessing = false);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1119,8 +1121,8 @@ class _TicketDetailScreenState extends State<_TicketDetailScreen> {
                 if (_ticket.isClosed && _ticket.reopenCount > 0) ...[
                   const SizedBox(height: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: Colors.orange[50],
                       borderRadius: BorderRadius.circular(4),
@@ -1150,8 +1152,8 @@ class _TicketDetailScreenState extends State<_TicketDetailScreen> {
                 if (_ticket.isClosed && _ticket.reopenCount >= 3) ...[
                   const SizedBox(height: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: Colors.red[50],
                       borderRadius: BorderRadius.circular(4),

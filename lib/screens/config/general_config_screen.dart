@@ -19,7 +19,7 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
   // Additional fields
   Color _pinkColor = const Color(0xFFAD1457);
   Map<String, String> _roleNames = {};
-  
+
   // Status Dashboard config
   int _statusDashboardUpdateInterval = 5;
   bool _statusDashboardShowMonitoring = true;
@@ -76,8 +76,10 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
       // Load status dashboard config
       if (config['status_dashboard'] != null) {
         final statusConfig = config['status_dashboard'] as Map<String, dynamic>;
-        _statusDashboardUpdateInterval = statusConfig['update_interval_minutes'] ?? 5;
-        _statusDashboardShowMonitoring = statusConfig['show_monitoring'] ?? true;
+        _statusDashboardUpdateInterval =
+            statusConfig['update_interval_minutes'] ?? 5;
+        _statusDashboardShowMonitoring =
+            statusConfig['show_monitoring'] ?? true;
       }
 
       if (mounted) {
@@ -923,8 +925,7 @@ class _GeneralConfigScreenState extends State<GeneralConfigScreen> {
                         Row(
                           children: [
                             Icon(Icons.monitor_heart,
-                                color: Colors.blue,
-                                size: isMobile ? 20 : 24),
+                                color: Colors.blue, size: isMobile ? 20 : 24),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(

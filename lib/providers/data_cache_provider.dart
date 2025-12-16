@@ -41,16 +41,20 @@ class DataCacheProvider extends ChangeNotifier {
 
   /// Get cache age in human-readable format
   String getCacheAge() {
-    if (_lastMemesLoad == null && _lastRankupsLoad == null && _lastLevelupsLoad == null) {
+    if (_lastMemesLoad == null &&
+        _lastRankupsLoad == null &&
+        _lastLevelupsLoad == null) {
       return 'No data loaded';
     }
 
     // Find the latest load timestamp among all three
     DateTime? latestLoad = _lastMemesLoad;
-    if (_lastRankupsLoad != null && (latestLoad == null || _lastRankupsLoad!.isAfter(latestLoad))) {
+    if (_lastRankupsLoad != null &&
+        (latestLoad == null || _lastRankupsLoad!.isAfter(latestLoad))) {
       latestLoad = _lastRankupsLoad;
     }
-    if (_lastLevelupsLoad != null && (latestLoad == null || _lastLevelupsLoad!.isAfter(latestLoad))) {
+    if (_lastLevelupsLoad != null &&
+        (latestLoad == null || _lastLevelupsLoad!.isAfter(latestLoad))) {
       latestLoad = _lastLevelupsLoad;
     }
 

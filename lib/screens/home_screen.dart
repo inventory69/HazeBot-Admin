@@ -6,10 +6,21 @@ import '../services/auth_service.dart';
 import '../services/discord_auth_service.dart';
 import '../services/permission_service.dart';
 import '../services/config_service.dart';
-import '../services/api_service.dart' show ApiService, getProxiedImageUrl, ApiException, ApiConnectionException, ApiTimeoutException, TokenExpiredException;
+import '../services/api_service.dart'
+    show
+        ApiService,
+        getProxiedImageUrl,
+        ApiException,
+        ApiConnectionException,
+        ApiTimeoutException,
+        TokenExpiredException;
 import '../providers/data_cache_provider.dart';
+import '../providers/community_posts_provider.dart';
 import '../utils/app_config.dart';
 import '../widgets/api_error_widget.dart';
+import '../widgets/community_post_card.dart';
+import '../widgets/create_edit_post_sheet.dart';
+import '../utils/post_editor_helper.dart';
 import 'meme_detail_screen.dart';
 import 'profile_screen.dart';
 import 'config/general_config_screen.dart';
@@ -118,14 +129,14 @@ class _HomeScreenState extends State<HomeScreen>
     if (configService.error == 'token_expired') {
       debugPrint(
           '⚠️ Config load failed with token_expired - Token refresh should have handled this');
-      
+
       // Check if this is an auth error (401/403)
       final errorString = configService.error.toString().toLowerCase();
       final isAuthError = errorString.contains('unauthorized') ||
-                          errorString.contains('403') ||
-                          errorString.contains('401') ||
-                          errorString.contains('token_expired');
-      
+          errorString.contains('403') ||
+          errorString.contains('401') ||
+          errorString.contains('token_expired');
+
       if (!isAuthError) {
         // Not an auth error, just increment counter
         if (mounted) {
@@ -135,7 +146,7 @@ class _HomeScreenState extends State<HomeScreen>
         }
         return;
       }
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -157,11 +168,11 @@ class _HomeScreenState extends State<HomeScreen>
             ),
           ),
         );
-        
+
         // Give token refresh a chance - retry after a short delay
         await Future.delayed(const Duration(seconds: 1));
         await _loadConfig(); // Retry loading config
-        
+
         // ✅ FIX 1: If retry successful, clear any error state
         if (configService.error != 'token_expired' && mounted) {
           setState(() {
@@ -362,10 +373,10 @@ class _HomeScreenState extends State<HomeScreen>
                   const SizedBox(width: 16),
                   Flexible(
                     child: Chip(
-                      avatar: Icon(
+                      avatar: const Icon(
                         Icons.discord,
                         size: 16,
-                        color: const Color(0xFF5865F2),
+                        color: Color(0xFF5865F2),
                       ),
                       label: Text(
                         '${discordAuthService.userInfo!['user']} (${permissionService.role})',
@@ -381,6 +392,46 @@ class _HomeScreenState extends State<HomeScreen>
           },
         ),
         actions: [
+          // + New Post button
+          Consumer<PermissionService>(
+            builder: (context, permService, child) {
+              return IconButton(
+                icon: const Icon(Icons.add_circle),
+                tooltip: 'New Post',
+                onPressed: () async {
+                  final postsProvider = Provider.of<CommunityPostsProvider>(
+                      context,
+                      listen: false);
+                  final result = await showModalBottomSheet<bool>(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) => DraggableScrollableSheet(
+                      initialChildSize: 0.9,
+                      minChildSize: 0.5,
+                      maxChildSize: 0.95,
+                      builder: (context, scrollController) => Container(
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).scaffoldBackgroundColor,
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(20),
+                          ),
+                        ),
+                        child: CreateEditPostSheet(
+                          scrollController: scrollController,
+                        ),
+                      ),
+                    ),
+                  );
+                  // Reload posts if a new post was created
+                  if (result == true && mounted) {
+                    postsProvider.refreshPosts();
+                  }
+                },
+              );
+            },
+          ),
+          const SizedBox(width: 8),
           // Profile picture with bottom sheet menu (all screen sizes)
           Builder(
             builder: (context) {
@@ -873,6 +924,14 @@ class _DashboardScreenState extends State<DashboardScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final cacheProvider =
           Provider.of<DataCacheProvider>(context, listen: false);
+      final postsProvider =
+          Provider.of<CommunityPostsProvider>(context, listen: false);
+
+      // Load community posts if cache is empty
+      if (postsProvider.posts.isEmpty) {
+        postsProvider.loadPosts();
+      }
+
       // Only load if cache is empty - cache will prevent duplicate requests
       if (cacheProvider.memes == null || cacheProvider.rankups == null) {
         await _loadData(force: true);
@@ -895,10 +954,14 @@ class _DashboardScreenState extends State<DashboardScreen>
     try {
       final cacheProvider =
           Provider.of<DataCacheProvider>(context, listen: false);
+      final postsProvider =
+          Provider.of<CommunityPostsProvider>(context, listen: false);
+
       await Future.wait([
         cacheProvider.loadLatestMemes(force: force),
         cacheProvider.loadLatestRankups(force: force),
         cacheProvider.loadLatestLevelups(force: force),
+        postsProvider.loadPosts(force: force),
       ]);
 
       // Success - clear any error state
@@ -967,7 +1030,10 @@ class _DashboardScreenState extends State<DashboardScreen>
         final isLoadingLevelups = cacheProvider.isLoadingLevelups;
 
         // Show full-screen error if initial load failed AND no cached data
-        if (_hasInitialLoadError && memes.isEmpty && rankups.isEmpty && levelups.isEmpty) {
+        if (_hasInitialLoadError &&
+            memes.isEmpty &&
+            rankups.isEmpty &&
+            levelups.isEmpty) {
           return Scaffold(
             appBar: AppBar(
               title: const Text('HazeHub'),
@@ -1060,6 +1126,11 @@ class _DashboardScreenState extends State<DashboardScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Community Posts Section (NEW - at the top!)
+                      _buildCommunityPostsSection(context, isMobile),
+
+                      SizedBox(height: isMobile ? 12 : 16),
+
                       // Latest Memes Section
                       _buildMemesSection(
                           context, isMobile, memes, isLoadingMemes),
@@ -1081,6 +1152,202 @@ class _DashboardScreenState extends State<DashboardScreen>
               ),
             );
           },
+        );
+      },
+    );
+  }
+
+  Widget _buildCommunityPostsSection(BuildContext context, bool isMobile) {
+    return Consumer<CommunityPostsProvider>(
+      builder: (context, postsProvider, child) {
+        final posts = postsProvider.posts.take(5).toList(); // Show max 5 posts
+        final isLoading = postsProvider.isLoading;
+        final hasError = postsProvider.error != null;
+        // ✅ ALL users can create posts (not just admins/mods)
+        const canCreate = true;
+
+        return Card(
+          color: Colors.transparent,
+          elevation: 0,
+          child: Padding(
+            padding: EdgeInsets.all(isMobile ? 12 : 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.forum, size: isMobile ? 20 : 24),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'Community Posts',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontSize: isMobile ? 18 : null,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onPrimaryContainer,
+                            ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                if (isLoading && posts.isEmpty)
+                  const Center(child: CircularProgressIndicator())
+                else if (hasError && posts.isEmpty)
+                  Center(
+                    child: Column(
+                      children: [
+                        Icon(Icons.error_outline,
+                            size: 48, color: Colors.grey[400]),
+                        const SizedBox(height: 8),
+                        Text(
+                          postsProvider.error ?? 'Failed to load posts',
+                          style: TextStyle(color: Colors.grey[600]),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 8),
+                        TextButton.icon(
+                          onPressed: () => postsProvider.refreshPosts(),
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  )
+                else if (posts.isEmpty)
+                  Center(
+                    child: Column(
+                      children: [
+                        Icon(Icons.forum_outlined,
+                            size: 48, color: Colors.grey[400]),
+                        const SizedBox(height: 8),
+                        Text(
+                          'No community posts yet',
+                          style: TextStyle(color: Colors.grey[600]),
+                        ),
+                        if (canCreate) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            'Be the first to share something!',
+                            style: TextStyle(
+                              color: Colors.grey[500],
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  )
+                else
+                  Column(
+                    children: posts.map((post) {
+                      final discordAuthService =
+                          Provider.of<DiscordAuthService>(context,
+                              listen: false);
+                      final permissionService = Provider.of<PermissionService>(
+                          context,
+                          listen: false);
+                      final currentUserId = discordAuthService
+                          .userInfo?['discord_id']
+                          ?.toString();
+                      final canEdit = currentUserId != null &&
+                          post.authorId == currentUserId &&
+                          post.isEditable;
+                      final canDelete = (currentUserId != null &&
+                              post.authorId == currentUserId) ||
+                          permissionService.hasPermission('all') ||
+                          permissionService.hasPermission('mod');
+
+                      return Padding(
+                        padding: EdgeInsets.only(bottom: isMobile ? 8 : 12),
+                        child: CommunityPostCard(
+                          post: post,
+                          isMobile: isMobile,
+                          canEdit: canEdit,
+                          canDelete: canDelete,
+                          onEdit: canEdit
+                              ? () async {
+                                  // Open edit sheet/dialog
+                                  final result =
+                                      await showPostEditor(context, post: post);
+
+                                  // Refresh feed if post was updated
+                                  if (result == true && mounted) {
+                                    await postsProvider.refreshPosts();
+                                  }
+                                }
+                              : null,
+                          onDelete: canDelete
+                              ? () async {
+                                  // Show confirmation dialog
+                                  final confirmed = await showDialog<bool>(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: const Text('Delete Post'),
+                                      content: const Text(
+                                        'Are you sure you want to delete this post? This action cannot be undone.',
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context, false),
+                                          child: const Text('Cancel'),
+                                        ),
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context, true),
+                                          style: TextButton.styleFrom(
+                                            foregroundColor: Colors.red,
+                                          ),
+                                          child: const Text('Delete'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+
+                                  if (confirmed == true && mounted) {
+                                    try {
+                                      await postsProvider.deletePost(post.id);
+                                      if (mounted) {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                                'Post deleted successfully'),
+                                            backgroundColor: Colors.green,
+                                          ),
+                                        );
+                                      }
+                                    } catch (e) {
+                                      if (mounted) {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                                'Failed to delete post: $e'),
+                                            backgroundColor: Colors.red,
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  }
+                                }
+                              : null,
+                        ),
+                      );
+                    }).toList(),
+                  ),
+              ],
+            ),
+          ),
         );
       },
     );
@@ -1723,8 +1990,10 @@ class _DashboardScreenState extends State<DashboardScreen>
               )
             else
               Column(
-                children: List.generate(levelups.length,
-                    (i) => _buildLevelupCard(context, levelups[i], isMobile, i)),
+                children: List.generate(
+                    levelups.length,
+                    (i) =>
+                        _buildLevelupCard(context, levelups[i], isMobile, i)),
               ),
           ],
         ),
@@ -1734,9 +2003,9 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   Widget _buildLevelupCard(BuildContext context, Map<String, dynamic> levelup,
       bool isMobile, int index) {
-    final username = levelup['display_name'] as String? ?? 
-                     levelup['username'] as String? ?? 
-                     'Unknown User';
+    final username = levelup['display_name'] as String? ??
+        levelup['username'] as String? ??
+        'Unknown User';
     final newLevel = levelup['new_level'] as int? ?? 0;
     final oldLevel = levelup['old_level'] as int?;
     final tierName = levelup['tier_name'] as String? ?? 'common';
@@ -1799,7 +2068,8 @@ class _DashboardScreenState extends State<DashboardScreen>
                       'Level $oldLevel → $newLevel',
                       style: TextStyle(
                         fontSize: isMobile ? 13 : 14,
-                        color: parsedTierColor ?? Theme.of(context).colorScheme.primary,
+                        color: parsedTierColor ??
+                            Theme.of(context).colorScheme.primary,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -1808,7 +2078,8 @@ class _DashboardScreenState extends State<DashboardScreen>
                       'Level $newLevel',
                       style: TextStyle(
                         fontSize: isMobile ? 13 : 14,
-                        color: parsedTierColor ?? Theme.of(context).colorScheme.primary,
+                        color: parsedTierColor ??
+                            Theme.of(context).colorScheme.primary,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -1831,7 +2102,8 @@ class _DashboardScreenState extends State<DashboardScreen>
                           style: TextStyle(
                             fontSize: isMobile ? 10 : 11,
                             fontWeight: FontWeight.bold,
-                            color: parsedTierColor ?? Theme.of(context).colorScheme.primary,
+                            color: parsedTierColor ??
+                                Theme.of(context).colorScheme.primary,
                           ),
                         ),
                       ),
@@ -1839,10 +2111,11 @@ class _DashboardScreenState extends State<DashboardScreen>
                         const SizedBox(width: 8),
                         Text(
                           _formatTimestamp(timestamp),
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                fontSize: isMobile ? 11 : 12,
-                                color: Colors.grey[600],
-                              ),
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    fontSize: isMobile ? 11 : 12,
+                                    color: Colors.grey[600],
+                                  ),
                         ),
                       ],
                     ],

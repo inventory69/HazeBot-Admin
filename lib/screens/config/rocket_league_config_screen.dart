@@ -1185,7 +1185,8 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
                                             borderRadius:
                                                 BorderRadius.circular(12),
                                             child: Image.network(
-                                              getProxiedImageUrl(_testStats!['highest_icon_url']),
+                                              getProxiedImageUrl(_testStats![
+                                                  'highest_icon_url']),
                                               width: 80,
                                               height: 80,
                                               fit: BoxFit.contain,
@@ -1257,7 +1258,8 @@ class _RocketLeagueConfigScreenState extends State<RocketLeagueConfigScreen> {
                                             borderRadius:
                                                 BorderRadius.circular(12),
                                             child: Image.network(
-                                              getProxiedImageUrl(_testStats!['highest_icon_url']),
+                                              getProxiedImageUrl(_testStats![
+                                                  'highest_icon_url']),
                                               width: 100,
                                               height: 100,
                                               fit: BoxFit.contain,

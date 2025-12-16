@@ -16,6 +16,7 @@ import 'services/deep_link_service.dart';
 import 'services/notification_service.dart';
 import 'services/error_reporter.dart';
 import 'providers/data_cache_provider.dart';
+import 'providers/community_posts_provider.dart';
 import 'utils/app_config.dart';
 import 'utils/notification_navigation.dart';
 
@@ -109,7 +110,7 @@ Future<void> _checkAndSendError(dynamic error, StackTrace? stack) async {
 
 class HazeBotAdminApp extends StatefulWidget {
   final AuthService authService;
-  
+
   const HazeBotAdminApp({super.key, required this.authService});
 
   @override
@@ -204,12 +205,14 @@ class _HazeBotAdminAppState extends State<HazeBotAdminApp>
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider.value(value: widget.authService), // Use pre-initialized instance
+        ChangeNotifierProvider.value(
+            value: widget.authService), // Use pre-initialized instance
         ChangeNotifierProvider(create: (_) => DiscordAuthService()),
         ChangeNotifierProvider(create: (_) => PermissionService()),
         ChangeNotifierProvider(create: (_) => ConfigService()),
         ChangeNotifierProvider(create: (_) => ThemeService()),
         ChangeNotifierProvider(create: (_) => DataCacheProvider()),
+        ChangeNotifierProvider(create: (_) => CommunityPostsProvider()),
       ],
       child: Consumer<ThemeService>(
         builder: (context, themeService, _) {

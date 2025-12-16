@@ -16,7 +16,7 @@ enum LogLevel {
 }
 
 /// Error reporter service for user-consented error reporting
-/// 
+///
 /// Features:
 /// - Local log buffering (no automatic sending)
 /// - User consent dialog before sending
@@ -29,7 +29,7 @@ class ErrorReporter {
 
   final List<Map<String, dynamic>> _logBuffer = [];
   static const int _maxBufferSize = 100; // Keep last 100 logs
-  
+
   String? _appVersion;
   String? _platform;
   String? _platformVersion;
@@ -39,7 +39,7 @@ class ErrorReporter {
     try {
       final packageInfo = await PackageInfo.fromPlatform();
       _appVersion = '${packageInfo.version}+${packageInfo.buildNumber}';
-      
+
       if (kIsWeb) {
         _platform = 'Web';
         _platformVersion = 'Unknown';
@@ -54,8 +54,9 @@ class ErrorReporter {
         final iosInfo = await deviceInfo.iosInfo;
         _platformVersion = 'iOS ${iosInfo.systemVersion}';
       }
-      
-      debugPrint('[ERROR REPORTER] Initialized: $_platform $_platformVersion | App: $_appVersion');
+
+      debugPrint(
+          '[ERROR REPORTER] Initialized: $_platform $_platformVersion | App: $_appVersion');
     } catch (e) {
       debugPrint('[ERROR REPORTER] Failed to initialize: $e');
     }
@@ -243,19 +244,20 @@ class ErrorReporter {
     Map<String, dynamic>? additionalContext,
   }) async {
     final apiService = ApiService();
-    
+
     // Get current user info if available
     String? userId;
     String? username;
     try {
       final userData = await apiService.getCurrentUser();
       userId = userData['discord_id']?.toString();
-      username = userData['username']?.toString() ?? userData['global_name']?.toString();
+      username = userData['username']?.toString() ??
+          userData['global_name']?.toString();
     } catch (e) {
       debugPrint('[ERROR REPORTER] Could not fetch user info: $e');
       // Continue without user info - better to send error without user than not send at all
     }
-    
+
     final report = {
       'user_consented': true,
       'error': {
@@ -277,19 +279,23 @@ class ErrorReporter {
       },
     };
 
-    debugPrint('[ERROR REPORTER] Sending report to ${apiService.baseUrl}/debug/error-report');
-    
-    final response = await http.post(
-      Uri.parse('${apiService.baseUrl}/debug/error-report'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(report),
-    ).timeout(const Duration(seconds: 10));
+    debugPrint(
+        '[ERROR REPORTER] Sending report to ${apiService.baseUrl}/debug/error-report');
+
+    final response = await http
+        .post(
+          Uri.parse('${apiService.baseUrl}/debug/error-report'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode(report),
+        )
+        .timeout(const Duration(seconds: 10));
 
     if (response.statusCode == 200) {
       debugPrint('[ERROR REPORTER] Report sent successfully');
       clear(); // Clear buffer after successful send
     } else {
-      throw Exception('Server returned ${response.statusCode}: ${response.body}');
+      throw Exception(
+          'Server returned ${response.statusCode}: ${response.body}');
     }
   }
 }
