@@ -1824,6 +1824,38 @@ class ApiService {
       return false;
     }
   }
+
+  // ============================================================================
+  // Community Post Likes
+  // ============================================================================
+
+  Future<Map<String, dynamic>> toggleCommunityPostLike(int postId) async {
+    final response = await _post(
+      '$baseUrl/community_posts/$postId/like',
+    );
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      // Try to parse error message from response
+      try {
+        final error = jsonDecode(response.body);
+        throw Exception(error['error'] ?? 'Failed to toggle like: ${response.statusCode}');
+      } catch (_) {
+        throw Exception('Failed to toggle like: ${response.statusCode}');
+      }
+    }
+  }
+
+  Future<Map<String, dynamic>> getCommunityPostLikes(int postId) async {
+    final response = await _get(
+      '$baseUrl/community_posts/$postId/likes',
+    );
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to get likes: ${response.statusCode}');
+    }
+  }
 }
 
 // Custom exception for token expiration
@@ -1852,4 +1884,20 @@ String getProxiedImageUrl(String imageUrl) {
   final apiBaseUrl = ApiService._staticBaseUrl.replaceFirst('/api', '');
   final encodedUrl = Uri.encodeComponent(imageUrl);
   return '$apiBaseUrl/api/proxy/image?url=$encodedUrl';
+}
+
+// Helper function to build full URL for community post images
+// Community post images are now stored in Discord CDN
+// Format: https://cdn.discordapp.com/attachments/{channel_id}/{attachment_id}/{filename}
+String getCommunityPostImageUrl(String imageUrl) {
+  // If it's already a full URL (Discord CDN or external), return as-is
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    return imageUrl;
+  }
+
+  // Fallback for old relative paths (migration support)
+  // This should rarely be hit as new posts use Discord CDN
+  final apiBaseUrl = ApiService._staticBaseUrl.replaceFirst('/api', '');
+  final cleanPath = imageUrl.startsWith('/') ? imageUrl.substring(1) : imageUrl;
+  return '$apiBaseUrl/api/$cleanPath';
 }

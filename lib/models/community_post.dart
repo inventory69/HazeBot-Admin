@@ -15,6 +15,8 @@ class CommunityPost {
   final String? editedAt;
   final String? deletedAt;
   final bool isDeleted;
+  final int likeCount;
+  final bool hasLiked;
 
   CommunityPost({
     required this.id,
@@ -31,6 +33,8 @@ class CommunityPost {
     this.editedAt,
     this.deletedAt,
     this.isDeleted = false,
+    this.likeCount = 0,
+    this.hasLiked = false,
   });
 
   /// Create CommunityPost from JSON response
@@ -69,6 +73,8 @@ class CommunityPost {
       editedAt: json['edited_at'] as String?,
       deletedAt: json['deleted_at'] as String?,
       isDeleted: _toBool(json['is_deleted']),
+      likeCount: json['like_count'] as int? ?? 0,
+      hasLiked: _toBool(json['has_liked']),
     );
   }
 

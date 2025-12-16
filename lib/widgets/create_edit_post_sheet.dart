@@ -41,6 +41,52 @@ class _CreateEditPostSheetState extends State<CreateEditPostSheet> {
 
   bool get _isEditMode => widget.post != null;
 
+  /// Check if user has entered any content that would be lost
+  bool get _hasUnsavedContent {
+    final hasText = _contentController.text.trim().isNotEmpty;
+    final hasNewImage = _selectedImage != null;
+    
+    if (_isEditMode) {
+      // In edit mode, check if anything changed
+      final textChanged = _contentController.text.trim() != (widget.post!.content ?? '').trim();
+      final imageChanged = _removeExistingImage || hasNewImage;
+      return textChanged || imageChanged;
+    }
+    
+    // In create mode, any content counts
+    return hasText || hasNewImage;
+  }
+
+  /// Show confirmation dialog before closing with unsaved content
+  Future<bool> _confirmClose() async {
+    if (!_hasUnsavedContent) return true;
+    
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Änderungen verwerfen?'),
+        content: const Text(
+          'Dein Text und Bilder gehen verloren, wenn du jetzt abbrichst.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Weiter schreiben'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+            ),
+            child: const Text('Verwerfen'),
+          ),
+        ],
+      ),
+    );
+    
+    return result ?? false;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -203,8 +249,8 @@ class _CreateEditPostSheetState extends State<CreateEditPostSheet> {
                   Text(_isEditMode
                       ? '✏️ Post updated!'
                       : _isAnnouncement
-                          ? '📢 Announcement posted!'
-                          : '✨ Post created!'),
+                          ? '📢 Announcement posted! ✨ +15 XP'
+                          : '✨ Post created! +15 XP'),
                 ],
               ),
               backgroundColor: Colors.green,
@@ -254,11 +300,21 @@ class _CreateEditPostSheetState extends State<CreateEditPostSheet> {
         !_removeExistingImage &&
         _selectedImage == null;
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Header with drag handle and title
-        Container(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, dynamic result) async {
+        if (didPop) return;
+        
+        final shouldClose = await _confirmClose();
+        if (shouldClose && mounted) {
+          Navigator.pop(context);
+        }
+      },
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Header with drag handle and title
+          Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
             border: Border(
@@ -273,7 +329,12 @@ class _CreateEditPostSheetState extends State<CreateEditPostSheet> {
               // Close button
               IconButton(
                 icon: const Icon(Icons.close),
-                onPressed: _isSubmitting ? null : () => Navigator.pop(context),
+                onPressed: _isSubmitting ? null : () async {
+                  final shouldClose = await _confirmClose();
+                  if (shouldClose && mounted) {
+                    Navigator.pop(context);
+                  }
+                },
               ),
               const SizedBox(width: 8),
               // Title
@@ -694,6 +755,7 @@ class _CreateEditPostSheetState extends State<CreateEditPostSheet> {
           ),
         ),
       ],
+      ),
     );
   }
 }

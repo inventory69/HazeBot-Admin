@@ -19,10 +19,10 @@ import '../providers/community_posts_provider.dart';
 import '../utils/app_config.dart';
 import '../widgets/api_error_widget.dart';
 import '../widgets/community_post_card.dart';
+import '../widgets/create_edit_post_sheet.dart';
 import '../utils/post_editor_helper.dart';
 import 'meme_detail_screen.dart';
 import 'profile_screen.dart';
-import 'create_post_screen.dart';
 import 'config/general_config_screen.dart';
 import 'config/channels_config_screen.dart';
 import 'config/roles_config_screen.dart';
@@ -402,10 +402,25 @@ class _HomeScreenState extends State<HomeScreen>
                   final postsProvider = Provider.of<CommunityPostsProvider>(
                       context,
                       listen: false);
-                  final result = await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const CreatePostScreen(),
+                  final result = await showModalBottomSheet<bool>(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) => DraggableScrollableSheet(
+                      initialChildSize: 0.9,
+                      minChildSize: 0.5,
+                      maxChildSize: 0.95,
+                      builder: (context, scrollController) => Container(
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).scaffoldBackgroundColor,
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(20),
+                          ),
+                        ),
+                        child: CreateEditPostSheet(
+                          scrollController: scrollController,
+                        ),
+                      ),
                     ),
                   );
                   // Reload posts if a new post was created
