@@ -16,6 +16,7 @@ import '../services/api_service.dart'
         TokenExpiredException;
 import '../providers/data_cache_provider.dart';
 import '../providers/community_posts_provider.dart';
+import '../models/post_editor_result.dart';
 import '../utils/app_config.dart';
 import '../widgets/api_error_widget.dart';
 import '../widgets/community_post_card.dart';
@@ -1279,9 +1280,33 @@ class _DashboardScreenState extends State<DashboardScreen>
                                   final result =
                                       await showPostEditor(context, post: post);
 
-                                  // Refresh feed if post was updated
-                                  if (result == true && mounted) {
-                                    await postsProvider.refreshPosts();
+                                  // Handle result and refresh feed
+                                  if (result != null && mounted) {
+                                    // Show result message
+                                    if (result.success && result.message != null) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Row(
+                                            children: [
+                                              const Icon(Icons.check_circle, color: Colors.white),
+                                              const SizedBox(width: 12),
+                                              Expanded(child: Text(result.message!)),
+                                            ],
+                                          ),
+                                          backgroundColor: Colors.green,
+                                        ),
+                                      );
+                                      // Refresh feed on success
+                                      await postsProvider.refreshPosts();
+                                    } else if (!result.success && result.error != null) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text(result.error!),
+                                          backgroundColor: Colors.red,
+                                          duration: const Duration(seconds: 5),
+                                        ),
+                                      );
+                                    }
                                   }
                                 }
                               : null,
