@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/community_post.dart';
+import '../models/post_editor_result.dart';
 import '../widgets/create_edit_post_sheet.dart';
 
 /// Show post creation/editing UI in bottom sheet (mobile) or dialog (desktop)
@@ -7,15 +8,15 @@ import '../widgets/create_edit_post_sheet.dart';
 /// [context] - BuildContext
 /// [post] - Optional post to edit (null = create new post)
 ///
-/// Returns true if post was created/updated successfully
-Future<bool?> showPostEditor(BuildContext context,
+/// Returns PostEditorResult with success status and message/error
+Future<PostEditorResult?> showPostEditor(BuildContext context,
     {CommunityPost? post}) async {
   final screenWidth = MediaQuery.of(context).size.width;
   final isMobile = screenWidth < 600;
 
   if (isMobile) {
     // Mobile: Bottom Sheet with drag handle
-    return await showModalBottomSheet<bool>(
+    return await showModalBottomSheet<PostEditorResult>(
       context: context,
       isScrollControlled: true, // Allow full-height sheet
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -35,7 +36,7 @@ Future<bool?> showPostEditor(BuildContext context,
     );
   } else {
     // Desktop: Dialog with fixed size
-    return await showDialog<bool>(
+    return await showDialog<PostEditorResult>(
       context: context,
       builder: (context) => Dialog(
         backgroundColor: Theme.of(context).colorScheme.surface,

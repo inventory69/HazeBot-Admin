@@ -753,14 +753,6 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                                             const SizedBox(height: 8),
                                             _buildDetailRow(
                                               context,
-                                              Icons.location_on,
-                                              'IP Address',
-                                              ip,
-                                              isMobile,
-                                            ),
-                                            const SizedBox(height: 8),
-                                            _buildDetailRow(
-                                              context,
                                               Icons.api,
                                               'Last Endpoint',
                                               lastEndpoint.replaceAll('_', ' '),
@@ -989,12 +981,93 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
   }
 
   String _formatEndpoint(String endpoint) {
-    // Remove common prefixes and make more readable
-    return endpoint
-        .replaceAll('_', ' ')
-        .replaceAll('get ', '')
-        .replaceAll('post ', '')
-        .replaceAll('update ', '')
+    // Map API endpoints to user-friendly descriptions
+    final endpointDescriptions = {
+      // Auth & User
+      '/api/auth/discord/callback': '🔐 Logged in via Discord',
+      '/api/auth/logout': '👋 Logged out',
+      '/api/auth/validate': '✓ Session validated',
+      '/api/user/me': '👤 Viewed profile',
+      '/api/user/stats': '📊 Checked statistics',
+      '/api/user/update': '✏️ Updated profile',
+      
+      // Community Posts
+      '/api/community/posts': '📝 Viewed community posts',
+      '/api/community/posts/create': '✨ Created new post',
+      '/api/community/posts/update': '✏️ Updated post',
+      '/api/community/posts/delete': '🗑️ Deleted post',
+      '/api/community/posts/<id>': '👁️ Viewed post details',
+      
+      // Memes
+      '/api/memes': '😂 Browsed memes',
+      '/api/memes/upload': '📤 Uploaded meme',
+      '/api/memes/vote': '👍 Voted on meme',
+      '/api/memes/delete': '🗑️ Deleted meme',
+      '/api/memes/random': '🎲 Got random meme',
+      
+      // Admin & Config
+      '/api/admin/users': '👥 Viewed user list',
+      '/api/admin/analytics': '📈 Checked analytics',
+      '/api/admin/live-users': '👁️ Viewed live users',
+      '/api/config': '⚙️ Viewed config',
+      '/api/config/update': '🔧 Updated config',
+      '/api/config/channels': '📺 Viewed channels',
+      '/api/config/roles': '🎭 Viewed roles',
+      
+      // Rocket League
+      '/api/rocket-league/profile': '🚀 Viewed RL profile',
+      '/api/rocket-league/stats': '📊 Checked RL stats',
+      
+      // Notifications
+      '/api/notifications': '🔔 Checked notifications',
+      '/api/notifications/read': '✓ Marked notification read',
+      '/api/notifications/settings': '⚙️ Notification settings',
+      
+      // Tickets
+      '/api/tickets': '🎫 Viewed tickets',
+      '/api/tickets/create': '➕ Created ticket',
+      '/api/tickets/close': '✓ Closed ticket',
+      
+      // Cogs & Features
+      '/api/cogs': '🔌 Viewed bot features',
+      '/api/cogs/toggle': '🔄 Toggled feature',
+      '/api/features': '✨ Viewed features',
+      
+      // Monitoring
+      '/api/monitoring/health': '💚 Health check',
+      '/api/monitoring/metrics': '📊 Viewed metrics',
+    };
+
+    // Try exact match first
+    if (endpointDescriptions.containsKey(endpoint)) {
+      return endpointDescriptions[endpoint]!;
+    }
+
+    // Try pattern matching for dynamic IDs
+    if (endpoint.contains('/community/posts/') && 
+        endpoint.split('/').length > 4) {
+      final parts = endpoint.split('/');
+      if (parts.last == 'delete') return '🗑️ Deleted post';
+      if (parts.last == 'update') return '✏️ Updated post';
+      return '👁️ Viewed post #${parts[parts.length - 1]}';
+    }
+
+    if (endpoint.contains('/memes/') && endpoint.split('/').length > 3) {
+      return '👁️ Viewed meme details';
+    }
+
+    if (endpoint.contains('/admin/users/') && endpoint.split('/').length > 4) {
+      return '👤 Viewed user details';
+    }
+
+    // Fallback: Format endpoint nicely
+    String formatted = endpoint
+        .replaceAll('/api/', '')
+        .replaceAll('/', ' › ')
+        .replaceAll('-', ' ')
+        .replaceAll('_', ' ');
+    
+    return formatted
         .split(' ')
         .map((word) => word.isEmpty
             ? ''

@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import '../models/community_post.dart';
+import '../models/post_editor_result.dart';
 import '../providers/community_posts_provider.dart';
 import '../services/permission_service.dart';
 import 'markdown_toolbar.dart';
@@ -240,33 +241,25 @@ class _CreateEditPostSheetState extends State<CreateEditPostSheet> {
 
       if (mounted) {
         if (success) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  const Icon(Icons.check_circle, color: Colors.white),
-                  const SizedBox(width: 12),
-                  Text(_isEditMode
-                      ? '✏️ Post updated!'
-                      : _isAnnouncement
-                          ? '📢 Announcement posted! ✨ +15 XP'
-                          : '✨ Post created! +15 XP'),
-                ],
-              ),
-              backgroundColor: Colors.green,
-            ),
+          // Return success result with message
+          final message = _isEditMode
+              ? '✏️ Post updated!'
+              : _isAnnouncement
+                  ? '📢 Announcement posted! ✨ +15 XP'
+                  : '✨ Post created! +15 XP';
+          
+          Navigator.pop(
+            context,
+            PostEditorResult.success(message: message),
           );
-          Navigator.pop(context, true); // Return true = success
         } else {
-          // Show error from provider
+          // Return error result
           final error = provider.lastError ??
               (_isEditMode ? 'Failed to update post' : 'Failed to create post');
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(error),
-              backgroundColor: Colors.red,
-              duration: const Duration(seconds: 5),
-            ),
+          
+          Navigator.pop(
+            context,
+            PostEditorResult.error(error: error),
           );
         }
       }
