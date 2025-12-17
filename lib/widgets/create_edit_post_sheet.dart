@@ -241,26 +241,60 @@ class _CreateEditPostSheetState extends State<CreateEditPostSheet> {
 
       if (mounted) {
         if (success) {
-          // Return success result with message
           final message = _isEditMode
               ? '✏️ Post updated!'
               : _isAnnouncement
                   ? '📢 Announcement posted! ✨ +15 XP'
                   : '✨ Post created! +15 XP';
           
-          Navigator.pop(
-            context,
-            PostEditorResult.success(message: message),
-          );
+          // Close sheet with bool (type-safe for BottomSheet)
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              Navigator.pop(context, true);
+            }
+          });
+          
+          // Show success snackbar after sheet closes
+          Future.delayed(Duration(milliseconds: 300), () {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Row(
+                    children: [
+                      const Icon(Icons.check_circle, color: Colors.white),
+                      const SizedBox(width: 12),
+                      Expanded(child: Text(message)),
+                    ],
+                  ),
+                  backgroundColor: Colors.green,
+                  duration: const Duration(seconds: 3),
+                ),
+              );
+            }
+          });
         } else {
-          // Return error result
           final error = provider.lastError ??
               (_isEditMode ? 'Failed to update post' : 'Failed to create post');
           
-          Navigator.pop(
-            context,
-            PostEditorResult.error(error: error),
-          );
+          // Close sheet with false for error
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              Navigator.pop(context, false);
+            }
+          });
+          
+          // Show error snackbar after sheet closes
+          Future.delayed(Duration(milliseconds: 300), () {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(error),
+                  backgroundColor: Colors.red,
+                  duration: const Duration(seconds: 5),
+                ),
+              );
+            }
+          });
         }
       }
     } catch (e) {

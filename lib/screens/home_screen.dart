@@ -108,6 +108,7 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void dispose() {
     _tabController.dispose();
+    // Auto-refresh removed - cleanup not needed
     super.dispose();
   }
 
@@ -928,9 +929,10 @@ class _DashboardScreenState extends State<DashboardScreen>
       final postsProvider =
           Provider.of<CommunityPostsProvider>(context, listen: false);
 
-      // Load community posts if cache is empty
+      // Load community posts with reset
+      // Auto-refresh removed - users can manually refresh with pull-to-refresh
       if (postsProvider.posts.isEmpty) {
-        postsProvider.loadPosts();
+        postsProvider.loadPosts(reset: true);
       }
 
       // Only load if cache is empty - cache will prevent duplicate requests
@@ -962,7 +964,7 @@ class _DashboardScreenState extends State<DashboardScreen>
         cacheProvider.loadLatestMemes(force: force),
         cacheProvider.loadLatestRankups(force: force),
         cacheProvider.loadLatestLevelups(force: force),
-        postsProvider.loadPosts(force: force),
+        postsProvider.loadPosts(force: force, reset: true),
       ]);
 
       // Success - clear any error state
@@ -1281,32 +1283,10 @@ class _DashboardScreenState extends State<DashboardScreen>
                                       await showPostEditor(context, post: post);
 
                                   // Handle result and refresh feed
-                                  if (result != null && mounted) {
-                                    // Show result message
-                                    if (result.success && result.message != null) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          content: Row(
-                                            children: [
-                                              const Icon(Icons.check_circle, color: Colors.white),
-                                              const SizedBox(width: 12),
-                                              Expanded(child: Text(result.message!)),
-                                            ],
-                                          ),
-                                          backgroundColor: Colors.green,
-                                        ),
-                                      );
-                                      // Refresh feed on success
-                                      await postsProvider.refreshPosts();
-                                    } else if (!result.success && result.error != null) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          content: Text(result.error!),
-                                          backgroundColor: Colors.red,
-                                          duration: const Duration(seconds: 5),
-                                        ),
-                                      );
-                                    }
+                                  // Note: Snackbar is now shown inside the editor sheet
+                                  if (result == true && mounted) {
+                                    // Refresh feed on success
+                                    await postsProvider.refreshPosts();
                                   }
                                 }
                               : null,
