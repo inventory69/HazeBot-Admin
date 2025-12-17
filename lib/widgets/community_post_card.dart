@@ -48,12 +48,49 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
   late bool _hasLiked;
   late int _likeCount;
   bool _isLiking = false;
+  String? _freshImageUrl; // Cached fresh URL from backend
+  bool _isLoadingFreshUrl = false;
 
   @override
   void initState() {
     super.initState();
     _hasLiked = widget.post.hasLiked;
     _likeCount = widget.post.likeCount;
+  }
+
+  /// Fetch a fresh Discord CDN URL from backend when old URL expires
+  Future<void> _fetchFreshImageUrl() async {
+    if (_isLoadingFreshUrl || _freshImageUrl != null) return;
+    
+    setState(() {
+      _isLoadingFreshUrl = true;
+    });
+
+    try {
+      final response = await ApiService().apiClient.get(
+        '/community_posts/${widget.post.id}/fresh-image-url',
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data['success'] == true && data['image_url'] != null) {
+          setState(() {
+            _freshImageUrl = data['image_url'];
+            _isLoadingFreshUrl = false;
+          });
+          debugPrint('✅ [Post #${widget.post.id}] Got fresh image URL');
+          return;
+        }
+      }
+      
+      debugPrint('⚠️ [Post #${widget.post.id}] Failed to get fresh URL: ${response.statusCode}');
+    } catch (e) {
+      debugPrint('❌ [Post #${widget.post.id}] Error fetching fresh URL: $e');
+    }
+
+    setState(() {
+      _isLoadingFreshUrl = false;
+    });
   }
 
   // Calculate dynamic font size based on content length
@@ -461,57 +498,108 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
                   onTap: () => _showFullscreenImage(context, post.imageUrl!),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: Image.network(
-                      getCommunityPostImageUrl(post.imageUrl!),
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return Container(
-                          height: 200,
-                          decoration: BoxDecoration(
-                            color: cardColor,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Center(
-                            child: CircularProgressIndicator(
-                              value: loadingProgress.expectedTotalBytes != null
-                                  ? loadingProgress.cumulativeBytesLoaded /
-                                      loadingProgress.expectedTotalBytes!
-                                  : null,
-                              strokeWidth: 2,
-                              color: colorScheme.primary,
-                            ),
-                          ),
-                        );
-                      },
-                      errorBuilder: (context, error, stackTrace) {
-                        if (stackTrace != null) {
-                          debugPrint('Stack trace: $stackTrace');
+                    child: Builder(
+                      builder: (context) {
+                        debugPrint('🔍 [Post #${post.id}] Image URL raw: "${post.imageUrl}"');
+                        
+                        // Use fresh URL if available, otherwise use original
+                        final String imageUrl;
+                        if (_freshImageUrl != null) {
+                          imageUrl = _freshImageUrl!;
+                          debugPrint('🔍 [Post #${post.id}] Using FRESH URL: "$imageUrl"');
+                        } else {
+                          imageUrl = getCommunityPostImageUrl(post.imageUrl!);
+                          debugPrint('🔍 [Post #${post.id}] After getCommunityPostImageUrl: "$imageUrl"');
                         }
-                        return Container(
-                          height: 200,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[300],
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.broken_image,
-                                  size: 48, color: Colors.grey[600]),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Failed to load image',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey[600],
+                        
+                        debugPrint('🔍 [Post #${post.id}] Image size: ${post.imageUrl?.length} chars');
+                        return Image.network(
+                          imageUrl,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            final percent = loadingProgress.expectedTotalBytes != null
+                                ? ((loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!) * 100).toStringAsFixed(0)
+                                : '?';
+                            debugPrint('⏳ [Post #${post.id}] Loading: $percent% (${loadingProgress.cumulativeBytesLoaded}/${loadingProgress.expectedTotalBytes} bytes)');
+                            return Container(
+                              height: 200,
+                              decoration: BoxDecoration(
+                                color: cardColor,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    CircularProgressIndicator(
+                                      value: loadingProgress.expectedTotalBytes != null
+                                          ? loadingProgress.cumulativeBytesLoaded /
+                                              loadingProgress.expectedTotalBytes!
+                                          : null,
+                                      strokeWidth: 2,
+                                      color: colorScheme.primary,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text('Loading: $percent%'),
+                                  ],
                                 ),
                               ),
-                            ],
-                          ),
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) {
+                            debugPrint('❌ [Post #${post.id}] Image load FAILED');
+                            debugPrint('   URL: $imageUrl');
+                            debugPrint('   Error: $error');
+                            debugPrint('   Error type: ${error.runtimeType}');
+                            if (stackTrace != null) {
+                              debugPrint('   Stack: $stackTrace');
+                            }
+                            
+                            // If we haven't tried fetching a fresh URL yet, try it
+                            if (_freshImageUrl == null && !_isLoadingFreshUrl) {
+                              debugPrint('🔄 [Post #${post.id}] Attempting to fetch fresh Discord CDN URL...');
+                              _fetchFreshImageUrl();
+                            }
+                            
+                            return Container(
+                              height: 200,
+                              decoration: BoxDecoration(
+                                color: Colors.grey[300],
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    if (_isLoadingFreshUrl) ...[
+                                      const CircularProgressIndicator(),
+                                      const SizedBox(height: 8),
+                                      const Text(
+                                        'Fetching fresh image URL...',
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(fontSize: 12),
+                                      ),
+                                    ] else ...[
+                                      Icon(Icons.broken_image_outlined,
+                                          size: 48, color: Colors.red),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'Failed to load image\n${error.toString()}',
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(fontSize: 12),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
                         );
                       },
+                    ),
                     ),
                   ),
                 ),
