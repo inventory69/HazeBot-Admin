@@ -572,9 +572,12 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
                             }
                             
                             // If we haven't tried fetching a fresh URL yet, try it
+                            // Use WidgetsBinding to defer setState until after build is complete
                             if (_freshImageUrl == null && !_isLoadingFreshUrl) {
                               debugPrint('🔄 [Post #${post.id}] Attempting to fetch fresh Discord CDN URL...');
-                              _fetchFreshImageUrl();
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                _fetchFreshImageUrl();
+                              });
                             }
                             
                             return Container(
