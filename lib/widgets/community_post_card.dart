@@ -1,5 +1,9 @@
+import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/community_post.dart';
 import '../services/api_service.dart';
 import '../screens/profile_screen.dart';
@@ -67,15 +71,25 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
     });
 
     try {
-      final response = await ApiService().apiClient.get(
-        '/community_posts/${widget.post.id}/fresh-image-url',
+      final apiService = ApiService();
+      final baseUrl = dotenv.env['API_URL'] ?? 'http://localhost:5000';
+      final url = '$baseUrl/community_posts/${widget.post.id}/fresh-image-url';
+      
+      final headers = {
+        'Content-Type': 'application/json',
+        'X-Session-ID': apiService.sessionId,
+      };
+      
+      final response = await http.get(Uri.parse(url), headers: headers).timeout(
+        const Duration(seconds: 15),
+        onTimeout: () => throw TimeoutException('Request timeout'),
       );
 
       if (response.statusCode == 200) {
-        final data = response.data;
+        final data = json.decode(response.body) as Map<String, dynamic>;
         if (data['success'] == true && data['image_url'] != null) {
           setState(() {
-            _freshImageUrl = data['image_url'];
+            _freshImageUrl = data['image_url'] as String;
             _isLoadingFreshUrl = false;
           });
           debugPrint('✅ [Post #${widget.post.id}] Got fresh image URL');
@@ -599,7 +613,6 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
                           },
                         );
                       },
-                    ),
                     ),
                   ),
                 ),
