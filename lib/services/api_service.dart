@@ -1887,18 +1887,44 @@ String getProxiedImageUrl(String imageUrl) {
   return '$apiBaseUrl/api/proxy/image?url=$encodedUrl';
 }
 
-// Helper function to build full URL for community post images
-// Community post images are now stored in Discord CDN
-// Format: https://cdn.discordapp.com/attachments/{channel_id}/{attachment_id}/{filename}
-String getCommunityPostImageUrl(String imageUrl) {
-  // If it's already a full URL (Discord CDN or external), return as-is
-  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-    return imageUrl;
+/// Get optimized image URL for community post
+/// 
+/// Uses backend proxy for:
+/// - Automatic size reduction
+/// - Compression
+/// - URL expiry handling
+/// - Browser caching
+/// 
+/// Parameters:
+/// - [postId]: Database post ID
+/// - [width]: Max width in pixels (default: 800, max: 1920)
+/// - [quality]: JPEG/WebP quality 1-100 (default: 80)
+/// - [format]: 'jpeg' or 'webp' (default: 'jpeg')
+/// - [original]: If true, bypasses proxy and returns original Discord URL
+/// 
+/// Examples:
+/// ```dart
+/// // Thumbnail in card (800px, 80% quality ~150-300 KB)
+/// getCommunityPostImageUrl(postId: post.id, width: 800, quality: 80)
+/// 
+/// // Fullscreen high-res (1920px, 95% quality ~800 KB - 1.5 MB)
+/// getCommunityPostImageUrl(postId: post.id, width: 1920, quality: 95)
+/// 
+/// // Original (2.1 MB, bypasses proxy)
+/// getCommunityPostImageUrl(postId: post.id, original: true)
+/// ```
+String getCommunityPostImageUrl({
+  required int postId,
+  int width = 800,
+  int quality = 80,
+  String format = 'jpeg',
+  bool original = false,
+}) {
+  final baseUrl = ApiService._staticBaseUrl;
+  
+  if (original) {
+    return '$baseUrl/community_posts/images/$postId?original=true';
   }
-
-  // Fallback for old relative paths (migration support)
-  // This should rarely be hit as new posts use Discord CDN
-  final apiBaseUrl = ApiService._staticBaseUrl.replaceFirst('/api', '');
-  final cleanPath = imageUrl.startsWith('/') ? imageUrl.substring(1) : imageUrl;
-  return '$apiBaseUrl/api/$cleanPath';
+  
+  return '$baseUrl/community_posts/images/$postId?width=$width&quality=$quality&format=$format';
 }

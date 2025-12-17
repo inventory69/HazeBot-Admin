@@ -458,15 +458,18 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
               if (post.hasImage) ...[
                 const SizedBox(height: 16),
                 GestureDetector(
-                  onTap: () => _showFullscreenImage(context, post.imageUrl!),
+                  onTap: () => _showFullscreenImage(context, post.id),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
                     child: Image.network(
-                      getCommunityPostImageUrl(post.imageUrl!),
+                      getCommunityPostImageUrl(postId: post.id, width: 800, quality: 80),
                       fit: BoxFit.cover,
                       width: double.infinity,
                       loadingBuilder: (context, child, loadingProgress) {
                         if (loadingProgress == null) return child;
+                        final percent = loadingProgress.expectedTotalBytes != null
+                            ? ((loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!) * 100).toStringAsFixed(0)
+                            : '?';
                         return Container(
                           height: 200,
                           decoration: BoxDecoration(
@@ -474,21 +477,25 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Center(
-                            child: CircularProgressIndicator(
-                              value: loadingProgress.expectedTotalBytes != null
-                                  ? loadingProgress.cumulativeBytesLoaded /
-                                      loadingProgress.expectedTotalBytes!
-                                  : null,
-                              strokeWidth: 2,
-                              color: colorScheme.primary,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                CircularProgressIndicator(
+                                  value: loadingProgress.expectedTotalBytes != null
+                                      ? loadingProgress.cumulativeBytesLoaded /
+                                          loadingProgress.expectedTotalBytes!
+                                      : null,
+                                  strokeWidth: 2,
+                                  color: colorScheme.primary,
+                                ),
+                                const SizedBox(height: 8),
+                                Text('Loading: $percent%', style: TextStyle(fontSize: 12)),
+                              ],
                             ),
                           ),
                         );
                       },
                       errorBuilder: (context, error, stackTrace) {
-                        if (stackTrace != null) {
-                          debugPrint('Stack trace: $stackTrace');
-                        }
                         return Container(
                           height: 200,
                           decoration: BoxDecoration(
@@ -498,16 +505,9 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.broken_image,
-                                  size: 48, color: Colors.grey[600]),
+                              Icon(Icons.broken_image, size: 48, color: Colors.grey[600]),
                               const SizedBox(height: 8),
-                              Text(
-                                'Failed to load image',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
+                              Text('Image unavailable', style: TextStyle(fontSize: 12)),
                             ],
                           ),
                         );
@@ -638,8 +638,8 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
     }
   }
 
-  /// Show fullscreen image viewer
-  void _showFullscreenImage(BuildContext context, String imageUrl) {
+  /// Show fullscreen image viewer with high-res image
+  void _showFullscreenImage(BuildContext context, int postId) {
     final colorScheme = Theme.of(context).colorScheme;
 
     showDialog(
@@ -651,13 +651,17 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
         insetPadding: const EdgeInsets.all(16),
         child: Stack(
           children: [
-            // Image with pinch-to-zoom
+            // Image with pinch-to-zoom (High-res: 1920px, 95% quality)
             InteractiveViewer(
               minScale: 0.5,
               maxScale: 4.0,
               child: Center(
                 child: Image.network(
-                  getCommunityPostImageUrl(imageUrl),
+                  getCommunityPostImageUrl(
+                    postId: postId,
+                    width: 1920,
+                    quality: 95,
+                  ),
                   fit: BoxFit.contain,
                   loadingBuilder: (context, child, loadingProgress) {
                     if (loadingProgress == null) return child;
@@ -750,7 +754,7 @@ class CommunityPostCardCompact extends StatelessWidget {
                     ? ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: Image.network(
-                          getCommunityPostImageUrl(post.imageUrl!),
+                          getCommunityPostImageUrl(postId: post.id, width: 400, quality: 70),
                           width: 60,
                           height: 60,
                           fit: BoxFit.cover,
