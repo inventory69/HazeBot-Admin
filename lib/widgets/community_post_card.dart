@@ -1,12 +1,8 @@
-import 'dart:async';
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
-import 'package:http/http.dart' as http;
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/community_post.dart';
 import '../services/api_service.dart';
-import '../screens/profile_screen.dart';
+import '../screens/profile_screen.dart;
 
 /// Format timestamp to relative time (2m, 5h, 3d)
 String _formatTimestamp(String isoTimestamp) {
@@ -52,69 +48,12 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
   late bool _hasLiked;
   late int _likeCount;
   bool _isLiking = false;
-  String? _freshImageUrl; // Cached fresh URL from backend
-  bool _isLoadingFreshUrl = false;
-  bool _hasFetchedFreshUrl = false; // Track if we already tried fetching
 
   @override
   void initState() {
     super.initState();
     _hasLiked = widget.post.hasLiked;
     _likeCount = widget.post.likeCount;
-  }
-
-  /// Fetch a fresh Discord CDN URL from backend when old URL expires
-  Future<void> _fetchFreshImageUrl() async {
-    // Prevent multiple fetch attempts
-    if (_hasFetchedFreshUrl || _isLoadingFreshUrl || _freshImageUrl != null) {
-      return;
-    }
-    
-    setState(() {
-      _isLoadingFreshUrl = true;
-      _hasFetchedFreshUrl = true; // Mark that we've tried
-    });
-
-    try {
-      final apiService = ApiService();
-      // Use API_BASE_URL from .env (e.g., https://api.haze.pro/api)
-      final baseUrl = dotenv.env['API_BASE_URL'] ?? 'http://localhost:5000/api';
-      final url = '$baseUrl/community_posts/${widget.post.id}/fresh-image-url';
-      
-      final headers = {
-        'Content-Type': 'application/json',
-        'X-Session-ID': apiService.sessionId,
-      };
-      
-      final response = await http.get(Uri.parse(url), headers: headers).timeout(
-        const Duration(seconds: 5),
-        onTimeout: () => throw TimeoutException('Request timeout'),
-      );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body) as Map<String, dynamic>;
-        if (data['success'] == true && data['image_url'] != null) {
-          if (mounted) {
-            setState(() {
-              _freshImageUrl = data['image_url'] as String;
-              _isLoadingFreshUrl = false;
-            });
-            debugPrint('✅ [Post #${widget.post.id}] Got fresh image URL');
-          }
-          return;
-        }
-      }
-      
-      debugPrint('⚠️ [Post #${widget.post.id}] Failed to get fresh URL: ${response.statusCode}');
-    } catch (e) {
-      debugPrint('❌ [Post #${widget.post.id}] Error fetching fresh URL: $e');
-    }
-
-    if (mounted) {
-      setState(() {
-        _isLoadingFreshUrl = false;
-      });
-    }
   }
 
   // Calculate dynamic font size based on content length
@@ -519,111 +458,58 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
               if (post.hasImage) ...[
                 const SizedBox(height: 16),
                 GestureDetector(
-                  onTap: () => _showFullscreenImage(context, post.imageUrl!),
+                  onTap: () => _showFullscreenImage(context, post.id),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: Builder(
-                      builder: (context) {
-                        debugPrint('🔍 [Post #${post.id}] Image URL raw: "${post.imageUrl}"');
-                        
-                        // Use fresh URL if available, otherwise use original
-                        final String imageUrl;
-                        if (_freshImageUrl != null) {
-                          imageUrl = _freshImageUrl!;
-                          debugPrint('🔍 [Post #${post.id}] Using FRESH URL: "$imageUrl"');
-                        } else {
-                          imageUrl = getCommunityPostImageUrl(post.imageUrl!);
-                          debugPrint('🔍 [Post #${post.id}] After getCommunityPostImageUrl: "$imageUrl"');
-                        }
-                        
-                        debugPrint('🔍 [Post #${post.id}] Image size: ${post.imageUrl?.length} chars');
-                        return Image.network(
-                          imageUrl,
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) return child;
-                            final percent = loadingProgress.expectedTotalBytes != null
-                                ? ((loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!) * 100).toStringAsFixed(0)
-                                : '?';
-                            debugPrint('⏳ [Post #${post.id}] Loading: $percent% (${loadingProgress.cumulativeBytesLoaded}/${loadingProgress.expectedTotalBytes} bytes)');
-                            return Container(
-                              height: 200,
-                              decoration: BoxDecoration(
-                                color: cardColor,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    CircularProgressIndicator(
-                                      value: loadingProgress.expectedTotalBytes != null
-                                          ? loadingProgress.cumulativeBytesLoaded /
-                                              loadingProgress.expectedTotalBytes!
-                                          : null,
-                                      strokeWidth: 2,
-                                      color: colorScheme.primary,
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text('Loading: $percent%'),
-                                  ],
+                    child: Image.network(
+                      getCommunityPostImageUrl(postId: post.id, width: 800, quality: 80),
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        final percent = loadingProgress.expectedTotalBytes != null
+                            ? ((loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!) * 100).toStringAsFixed(0)
+                            : '?';
+                        return Container(
+                          height: 200,
+                          decoration: BoxDecoration(
+                            color: cardColor,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                CircularProgressIndicator(
+                                  value: loadingProgress.expectedTotalBytes != null
+                                      ? loadingProgress.cumulativeBytesLoaded /
+                                          loadingProgress.expectedTotalBytes!
+                                      : null,
+                                  strokeWidth: 2,
+                                  color: colorScheme.primary,
                                 ),
-                              ),
-                            );
-                          },
-                          errorBuilder: (context, error, stackTrace) {
-                            debugPrint('❌ [Post #${post.id}] Image load FAILED');
-                            debugPrint('   URL: $imageUrl');
-                            debugPrint('   Error: $error');
-                            debugPrint('   Error type: ${error.runtimeType}');
-                            if (stackTrace != null) {
-                              debugPrint('   Stack: $stackTrace');
-                            }
-                            
-                            // If we haven't tried fetching a fresh URL yet, try it
-                            // Use WidgetsBinding to defer setState until after build is complete
-                            if (!_hasFetchedFreshUrl && _freshImageUrl == null && !_isLoadingFreshUrl) {
-                              debugPrint('🔄 [Post #${post.id}] Attempting to fetch fresh Discord CDN URL...');
-                              WidgetsBinding.instance.addPostFrameCallback((_) {
-                                _fetchFreshImageUrl();
-                              });
-                            }
-                            
-                            return Container(
-                              height: 200,
-                              decoration: BoxDecoration(
-                                color: Colors.grey[300],
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    if (_isLoadingFreshUrl) ...[
-                                      const CircularProgressIndicator(),
-                                      const SizedBox(height: 8),
-                                      const Text(
-                                        'Fetching fresh image URL...',
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(fontSize: 12),
-                                      ),
-                                    ] else ...[
-                                      Icon(Icons.broken_image_outlined,
-                                          size: 48, color: Colors.red),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        'Failed to load image\n${error.toString()}',
-                                        textAlign: TextAlign.center,
-                                        style: const TextStyle(fontSize: 12),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
+                                const SizedBox(height: 8),
+                                Text('Loading: $percent%', style: TextStyle(fontSize: 12)),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          height: 200,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300],
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.broken_image, size: 48, color: Colors.grey[600]),
+                              const SizedBox(height: 8),
+                              Text('Image unavailable', style: TextStyle(fontSize: 12)),
+                            ],
+                          ),
                         );
                       },
                     ),
@@ -752,8 +638,8 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
     }
   }
 
-  /// Show fullscreen image viewer
-  void _showFullscreenImage(BuildContext context, String imageUrl) {
+  /// Show fullscreen image viewer with high-res image
+  void _showFullscreenImage(BuildContext context, int postId) {
     final colorScheme = Theme.of(context).colorScheme;
 
     showDialog(
@@ -765,13 +651,17 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
         insetPadding: const EdgeInsets.all(16),
         child: Stack(
           children: [
-            // Image with pinch-to-zoom
+            // Image with pinch-to-zoom (High-res: 1920px, 95% quality)
             InteractiveViewer(
               minScale: 0.5,
               maxScale: 4.0,
               child: Center(
                 child: Image.network(
-                  getCommunityPostImageUrl(imageUrl),
+                  getCommunityPostImageUrl(
+                    postId: postId,
+                    width: 1920,
+                    quality: 95,
+                  ),
                   fit: BoxFit.contain,
                   loadingBuilder: (context, child, loadingProgress) {
                     if (loadingProgress == null) return child;
@@ -864,7 +754,7 @@ class CommunityPostCardCompact extends StatelessWidget {
                     ? ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: Image.network(
-                          getCommunityPostImageUrl(post.imageUrl!),
+                          getCommunityPostImageUrl(postId: post.id, width: 400, quality: 70),
                           width: 60,
                           height: 60,
                           fit: BoxFit.cover,
