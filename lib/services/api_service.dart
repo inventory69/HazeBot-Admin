@@ -1839,7 +1839,8 @@ class ApiService {
       // Try to parse error message from response
       try {
         final error = jsonDecode(response.body);
-        throw Exception(error['error'] ?? 'Failed to toggle like: ${response.statusCode}');
+        throw Exception(
+            error['error'] ?? 'Failed to toggle like: ${response.statusCode}');
       } catch (_) {
         throw Exception('Failed to toggle like: ${response.statusCode}');
       }

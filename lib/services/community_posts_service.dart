@@ -122,13 +122,13 @@ class CommunityPostsService {
           id: data['post_id'] as int,
           content: content,
           imageUrl: data['image_url'] as String?,
-          authorId: data['author_id'] ?? 'unknown',
-          authorName: data['author_name'] ?? 'Unknown',
-          authorAvatar: data['author_avatar'] as String?,
+          authorId: data['author_id']?.toString() ?? 'unknown',
+          authorName: data['author_name']?.toString() ?? 'Unknown',
+          authorAvatar: data['author_avatar']?.toString(),
           postType: isAnnouncement ? 'announcement' : 'normal',
           isAnnouncement: isAnnouncement,
-          discordChannelId: data['discord_channel_id'] as String?,
-          discordMessageId: data['discord_message_id'] as String?,
+          discordChannelId: data['discord_channel_id']?.toString(),
+          discordMessageId: data['discord_message_id']?.toString(),
           createdAt: data['created_at'] as String,
           isDeleted: false,
         );
@@ -192,8 +192,6 @@ class CommunityPostsService {
           );
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-
         // Fetch updated post to get complete data
         final updatedPosts = await fetchPosts(limit: 1, offset: 0);
         final post = (updatedPosts['posts'] as List<CommunityPost>)

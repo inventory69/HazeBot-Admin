@@ -452,7 +452,6 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                                   session['discord_id'] ?? 'Unknown';
                               final lastSeen = session['last_seen'] as String?;
                               final secondsAgo = session['seconds_ago'] ?? 0;
-                              final ip = session['ip'] ?? 'Unknown';
                               final userAgent =
                                   session['user_agent'] ?? 'Unknown';
                               final lastEndpoint =
@@ -816,8 +815,17 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
   }
 
   Widget _buildRecentActivity(bool isMobile) {
-    final recentActivity =
+    final rawActivity =
         _sessionData?['recent_activity'] as List<dynamic>? ?? [];
+
+    // Filter out uninteresting endpoints (health checks, pings, auto-refresh)
+    final recentActivity = rawActivity.where((activity) {
+      final endpoint = activity['endpoint'] as String? ?? '';
+      return !endpoint.contains('ping') &&
+          !endpoint.contains('health') &&
+          !endpoint.contains('get_active_sessions');
+    }).toList();
+
     final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh !=
         ThemeData.light().colorScheme.surfaceContainerHigh;
     final cardColor = isMonet
@@ -914,48 +922,33 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  subtitle: Row(
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: _getActionColor(action).withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(4),
+                      Text(
+                        _formatEndpoint(endpoint, action),
+                        style: TextStyle(
+                          fontSize: isMobile ? 12 : 13,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w500,
                         ),
-                        child: Text(
-                          action,
-                          style: TextStyle(
-                            fontSize: isMobile ? 9 : 10,
-                            fontWeight: FontWeight.bold,
-                            color: _getActionColor(action),
-                          ),
-                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          _formatEndpoint(endpoint),
-                          style: TextStyle(
-                            fontSize: isMobile ? 11 : 12,
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                  trailing: timestamp != null
-                      ? Text(
+                      if (timestamp != null) ...[
+                        const SizedBox(height: 2),
+                        Text(
                           timeago.format(DateTime.parse(timestamp).toLocal()),
                           style: TextStyle(
                             fontSize: isMobile ? 10 : 11,
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurfaceVariant
+                                .withValues(alpha: 0.7),
                           ),
-                        )
-                      : null,
+                        ),
+                      ],
+                    ],
+                  ),
                 );
               },
             ),
@@ -964,78 +957,93 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
     );
   }
 
-  Color _getActionColor(String action) {
-    switch (action.toUpperCase()) {
-      case 'GET':
-        return Colors.blue;
-      case 'POST':
-        return Colors.green;
-      case 'PUT':
-      case 'PATCH':
-        return Colors.orange;
-      case 'DELETE':
-        return Colors.red;
-      default:
-        return Colors.grey;
-    }
-  }
+  // Color _getActionColor(String action) {
+  //   switch (action.toUpperCase()) {
+  //     case 'GET':
+  //       return Colors.blue;
+  //     case 'POST':
+  //       return Colors.green;
+  //     case 'PUT':
+  //     case 'PATCH':
+  //       return Colors.orange;
+  //     case 'DELETE':
+  //       return Colors.red;
+  //     default:
+  //       return Colors.grey;
+  //   }
+  // }
 
-  String _formatEndpoint(String endpoint) {
-    // Map API endpoints to user-friendly descriptions
+  String _formatEndpoint(String endpoint, String action) {
+    // Backend sends endpoint names without /api/ prefix (e.g., "community_posts.get_posts")
+    // Action + Endpoint combinations for precise descriptions
+    final actionKey = '${action.toUpperCase()} $endpoint';
+
+    // Endpoint name mappings (backend format: module.function_name)
     final endpointDescriptions = {
       // Auth & User
-      '/api/auth/discord/callback': '🔐 Logged in via Discord',
-      '/api/auth/logout': '👋 Logged out',
-      '/api/auth/validate': '✓ Session validated',
-      '/api/user/me': '👤 Viewed profile',
-      '/api/user/stats': '📊 Checked statistics',
-      '/api/user/update': '✏️ Updated profile',
-      
+      'auth.discord_callback': '🔐 Logged in via Discord',
+      'auth.logout': '👋 Logged out',
+      'auth.validate': '✓ Session validated',
+      'user.me': '👤 Viewed profile',
+      'user.get_stats': '📊 Checked statistics',
+      'user.update': '✏️ Updated profile',
+
       // Community Posts
-      '/api/community/posts': '📝 Viewed community posts',
-      '/api/community/posts/create': '✨ Created new post',
-      '/api/community/posts/update': '✏️ Updated post',
-      '/api/community/posts/delete': '🗑️ Deleted post',
-      '/api/community/posts/<id>': '👁️ Viewed post details',
-      
+      'community_posts.get_posts': '📝 Browsed community posts',
+      'community_posts.create_post': '✨ Created new post',
+      'community_posts.update_post': '✏️ Updated post',
+      'community_posts.delete_post': '🗑️ Deleted post',
+      'community_posts.get_post': '👁️ Viewed post details',
+      'community_posts.like_post': '❤️ Liked post',
+      'community_posts.get_likes': '👥 Viewed post likes',
+
       // Memes
-      '/api/memes': '😂 Browsed memes',
-      '/api/memes/upload': '📤 Uploaded meme',
-      '/api/memes/vote': '👍 Voted on meme',
-      '/api/memes/delete': '🗑️ Deleted meme',
-      '/api/memes/random': '🎲 Got random meme',
-      
-      // Admin & Config
-      '/api/admin/users': '👥 Viewed user list',
-      '/api/admin/analytics': '📈 Checked analytics',
-      '/api/admin/live-users': '👁️ Viewed live users',
-      '/api/config': '⚙️ Viewed config',
-      '/api/config/update': '🔧 Updated config',
-      '/api/config/channels': '📺 Viewed channels',
-      '/api/config/roles': '🎭 Viewed roles',
-      
+      'memes.get_memes': '😂 Browsed memes',
+      'memes.upload': '📤 Uploaded meme',
+      'memes.vote': '👍 Voted on meme',
+      'memes.delete': '🗑️ Deleted meme',
+      'memes.random': '🎲 Got random meme',
+      'memes.get_latest_memes': '😂 Browsed latest memes',
+
+      // Admin
+      'admin.get_users': '👥 Viewed user list',
+      'admin.get_analytics': '📈 Checked analytics',
+      'admin.get_live_users': '👁️ Viewed live users',
+      'admin.get_active_sessions': '🔄 Refreshed live users',
+
+      // Config
+      'config.get_config': '⚙️ Viewed config',
+      'config.update': '🔧 Updated config',
+      'config.get_channels': '📺 Viewed channels',
+      'config.get_roles': '🎭 Viewed roles',
+
       // Rocket League
-      '/api/rocket-league/profile': '🚀 Viewed RL profile',
-      '/api/rocket-league/stats': '📊 Checked RL stats',
-      
+      'rocket_league.get_profile': '🚀 Viewed RL profile',
+      'rocket_league.get_stats': '📊 Checked RL stats',
+
       // Notifications
-      '/api/notifications': '🔔 Checked notifications',
-      '/api/notifications/read': '✓ Marked notification read',
-      '/api/notifications/settings': '⚙️ Notification settings',
-      
+      'notifications.get_notifications': '🔔 Checked notifications',
+      'notifications.mark_read': '✓ Marked notification read',
+      'notifications.get_settings': '⚙️ Notification settings',
+
       // Tickets
-      '/api/tickets': '🎫 Viewed tickets',
-      '/api/tickets/create': '➕ Created ticket',
-      '/api/tickets/close': '✓ Closed ticket',
-      
+      'tickets.get_tickets': '🎫 Viewed tickets',
+      'tickets.create': '➕ Created ticket',
+      'tickets.close': '✓ Closed ticket',
+
       // Cogs & Features
-      '/api/cogs': '🔌 Viewed bot features',
-      '/api/cogs/toggle': '🔄 Toggled feature',
-      '/api/features': '✨ Viewed features',
-      
+      'cogs.get_cogs': '🔌 Viewed bot features',
+      'cogs.toggle': '🔄 Toggled feature',
+      'features.get_features': '✨ Viewed features',
+
       // Monitoring
-      '/api/monitoring/health': '💚 Health check',
-      '/api/monitoring/metrics': '📊 Viewed metrics',
+      'monitoring.health': '💚 Health check',
+      'monitoring.metrics': '📊 Viewed metrics',
+
+      // Data Cache
+      'data_cache.get_latest_memes': '😂 Loaded memes',
+      'data_cache.get_latest_rankups': '📊 Loaded rankups',
+      'data_cache.get_latest_levelups': '⭐ Loaded level-ups',
     };
 
     // Try exact match first
@@ -1043,21 +1051,39 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
       return endpointDescriptions[endpoint]!;
     }
 
-    // Try pattern matching for dynamic IDs
-    if (endpoint.contains('/community/posts/') && 
-        endpoint.split('/').length > 4) {
-      final parts = endpoint.split('/');
-      if (parts.last == 'delete') return '🗑️ Deleted post';
-      if (parts.last == 'update') return '✏️ Updated post';
-      return '👁️ Viewed post #${parts[parts.length - 1]}';
+    // Try with action prefix
+    if (endpointDescriptions.containsKey(actionKey)) {
+      return endpointDescriptions[actionKey]!;
     }
 
-    if (endpoint.contains('/memes/') && endpoint.split('/').length > 3) {
-      return '👁️ Viewed meme details';
+    // Pattern matching for common variations
+    if (endpoint.contains('community_posts') || endpoint.contains('posts')) {
+      if (action.toUpperCase() == 'POST') return '✨ Created new post';
+      if (action.toUpperCase() == 'PUT' || action.toUpperCase() == 'PATCH')
+        return '✏️ Updated post';
+      if (action.toUpperCase() == 'DELETE') return '🗑️ Deleted post';
+      if (endpoint.contains('like')) return '❤️ Liked post';
+      return '📝 Viewed community posts';
     }
 
-    if (endpoint.contains('/admin/users/') && endpoint.split('/').length > 4) {
-      return '👤 Viewed user details';
+    if (endpoint.contains('meme')) {
+      if (endpoint.contains('upload')) return '📤 Uploaded meme';
+      if (endpoint.contains('vote')) return '👍 Voted on meme';
+      if (endpoint.contains('random')) return '🎲 Got random meme';
+      return '😂 Browsed memes';
+    }
+
+    if (endpoint.contains('config')) {
+      if (action.toUpperCase() == 'POST' || action.toUpperCase() == 'PUT')
+        return '🔧 Updated config';
+      return '⚙️ Viewed config';
+    }
+
+    if (endpoint.contains('admin')) {
+      if (endpoint.contains('live') || endpoint.contains('session'))
+        return '👁️ Viewed live users';
+      if (endpoint.contains('analytics')) return '📈 Checked analytics';
+      return '👥 Admin panel activity';
     }
 
     // Fallback: Format endpoint nicely
@@ -1066,7 +1092,7 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
         .replaceAll('/', ' › ')
         .replaceAll('-', ' ')
         .replaceAll('_', ' ');
-    
+
     return formatted
         .split(' ')
         .map((word) => word.isEmpty

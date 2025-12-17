@@ -587,8 +587,7 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
 
     try {
       debugPrint('🔄 Toggling like for post ${widget.post.id}...');
-      final result =
-          await ApiService().toggleCommunityPostLike(widget.post.id);
+      final result = await ApiService().toggleCommunityPostLike(widget.post.id);
 
       debugPrint('✅ Like response: $result');
 
@@ -824,7 +823,9 @@ class CommunityPostCardCompact extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          post.hasLiked ? Icons.favorite : Icons.favorite_border,
+                          post.hasLiked
+                              ? Icons.favorite
+                              : Icons.favorite_border,
                           size: 14,
                           color: post.hasLiked ? Colors.red : Colors.grey,
                         ),

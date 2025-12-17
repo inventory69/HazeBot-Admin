@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../models/post_editor_result.dart';
 import '../utils/post_editor_helper.dart';
 
 /// Screen for creating a new community post
@@ -19,37 +18,13 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
 
-      final result = await showPostEditor(context);
-      
+      // Show post editor - result is now bool? (true=success, false=error, null=cancelled)
+      await showPostEditor(context);
+
       if (mounted) {
         // Pop back to previous screen
+        // Snackbar is now shown directly in the editor sheet
         Navigator.pop(context);
-        
-        // Show result message if available
-        if (result != null) {
-          if (result.success && result.message != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Row(
-                  children: [
-                    const Icon(Icons.check_circle, color: Colors.white),
-                    const SizedBox(width: 12),
-                    Expanded(child: Text(result.message!)),
-                  ],
-                ),
-                backgroundColor: Colors.green,
-              ),
-            );
-          } else if (!result.success && result.error != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(result.error!),
-                backgroundColor: Colors.red,
-                duration: const Duration(seconds: 5),
-              ),
-            );
-          }
-        }
       }
     });
   }

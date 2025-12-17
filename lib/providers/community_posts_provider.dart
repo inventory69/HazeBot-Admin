@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../models/community_post.dart';
 import '../services/community_posts_service.dart';
@@ -10,7 +11,7 @@ class CommunityPostsProvider extends ChangeNotifier {
   // Cache data
   List<CommunityPost> _posts = [];
   int _totalPosts = 0;
-  int _currentLimit = 20;
+  final int _currentLimit = 20;
   int _currentOffset = 0;
 
   // Loading states
@@ -22,7 +23,7 @@ class CommunityPostsProvider extends ChangeNotifier {
 
   // Cache metadata
   DateTime? _lastLoad;
-  static const Duration _cacheDuration = Duration(minutes: 5);
+  static const Duration _cacheDuration = Duration(seconds: 20);
 
   // Error handling
   String? _lastError;
@@ -102,10 +103,10 @@ class CommunityPostsProvider extends ChangeNotifier {
       if (reset) {
         _posts = newPosts;
       } else {
-        // Append new posts, avoiding duplicates
+        // Prepend new posts, avoiding duplicates
         for (final post in newPosts) {
           if (!_posts.any((p) => p.id == post.id)) {
-            _posts.add(post);
+            _posts.insert(0, post); // Insert at start, not end
           }
         }
       }
@@ -276,4 +277,35 @@ class CommunityPostsProvider extends ChangeNotifier {
   String getImageUrl(String imageUrl) {
     return _service.getImageUrl(imageUrl);
   }
+
+  // ============================================================================
+  // AUTO-REFRESH (DISABLED - User feedback: too annoying)
+  // Can be re-enabled later or made into a user setting
+  // ============================================================================
+
+  // /// Start automatic refresh timer
+  // /// Refreshes posts every 20 seconds when screen is active
+  // void startAutoRefresh() {
+  //   _refreshTimer?.cancel();
+  //   _refreshTimer = Timer.periodic(Duration(seconds: 20), (_) {
+  //     if (!_isLoading) {
+  //       debugPrint('🔄 Auto-refreshing community posts...');
+  //       loadPosts(force: true, reset: true);
+  //     }
+  //   });
+  //   debugPrint('✅ Auto-refresh started (20s interval)');
+  // }
+
+  // /// Stop automatic refresh timer
+  // void stopAutoRefresh() {
+  //   _refreshTimer?.cancel();
+  //   _refreshTimer = null;
+  //   debugPrint('⏹️ Auto-refresh stopped');
+  // }
+
+  // @override
+  // void dispose() {
+  //   stopAutoRefresh();
+  //   super.dispose();
+  // }
 }
