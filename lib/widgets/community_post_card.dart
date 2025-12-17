@@ -54,6 +54,7 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
   bool _isLiking = false;
   String? _freshImageUrl; // Cached fresh URL from backend
   bool _isLoadingFreshUrl = false;
+  bool _hasFetchedFreshUrl = false; // Track if we already tried fetching
 
   @override
   void initState() {
@@ -64,10 +65,14 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
 
   /// Fetch a fresh Discord CDN URL from backend when old URL expires
   Future<void> _fetchFreshImageUrl() async {
-    if (_isLoadingFreshUrl || _freshImageUrl != null) return;
+    // Prevent multiple fetch attempts
+    if (_hasFetchedFreshUrl || _isLoadingFreshUrl || _freshImageUrl != null) {
+      return;
+    }
     
     setState(() {
       _isLoadingFreshUrl = true;
+      _hasFetchedFreshUrl = true; // Mark that we've tried
     });
 
     try {
@@ -81,18 +86,20 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
       };
       
       final response = await http.get(Uri.parse(url), headers: headers).timeout(
-        const Duration(seconds: 15),
+        const Duration(seconds: 5),
         onTimeout: () => throw TimeoutException('Request timeout'),
       );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body) as Map<String, dynamic>;
         if (data['success'] == true && data['image_url'] != null) {
-          setState(() {
-            _freshImageUrl = data['image_url'] as String;
-            _isLoadingFreshUrl = false;
-          });
-          debugPrint('✅ [Post #${widget.post.id}] Got fresh image URL');
+          if (mounted) {
+            setState(() {
+              _freshImageUrl = data['image_url'] as String;
+              _isLoadingFreshUrl = false;
+            });
+            debugPrint('✅ [Post #${widget.post.id}] Got fresh image URL');
+          }
           return;
         }
       }
@@ -102,9 +109,11 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
       debugPrint('❌ [Post #${widget.post.id}] Error fetching fresh URL: $e');
     }
 
-    setState(() {
-      _isLoadingFreshUrl = false;
-    });
+    if (mounted) {
+      setState(() {
+        _isLoadingFreshUrl = false;
+      });
+    }
   }
 
   // Calculate dynamic font size based on content length
@@ -573,7 +582,7 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
                             
                             // If we haven't tried fetching a fresh URL yet, try it
                             // Use WidgetsBinding to defer setState until after build is complete
-                            if (_freshImageUrl == null && !_isLoadingFreshUrl) {
+                            if (!_hasFetchedFreshUrl && _freshImageUrl == null && !_isLoadingFreshUrl) {
                               debugPrint('🔄 [Post #${post.id}] Attempting to fetch fresh Discord CDN URL...');
                               WidgetsBinding.instance.addPostFrameCallback((_) {
                                 _fetchFreshImageUrl();
