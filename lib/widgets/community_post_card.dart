@@ -77,7 +77,8 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
 
     try {
       final apiService = ApiService();
-      final baseUrl = dotenv.env['API_URL'] ?? 'http://localhost:5000';
+      // Use API_BASE_URL from .env (e.g., https://api.haze.pro/api)
+      final baseUrl = dotenv.env['API_BASE_URL'] ?? 'http://localhost:5000/api';
       final url = '$baseUrl/community_posts/${widget.post.id}/fresh-image-url';
       
       final headers = {
