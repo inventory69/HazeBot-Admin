@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../models/post_editor_result.dart';
 import '../utils/post_editor_helper.dart';
 
 /// Screen for creating a new community post
@@ -21,7 +20,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
       // Show post editor - result is now bool? (true=success, false=error, null=cancelled)
       await showPostEditor(context);
-      
+
       if (mounted) {
         // Pop back to previous screen
         // Snackbar is now shown directly in the editor sheet

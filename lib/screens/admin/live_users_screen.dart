@@ -452,7 +452,6 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                                   session['discord_id'] ?? 'Unknown';
                               final lastSeen = session['last_seen'] as String?;
                               final secondsAgo = session['seconds_ago'] ?? 0;
-                              final ip = session['ip'] ?? 'Unknown';
                               final userAgent =
                                   session['user_agent'] ?? 'Unknown';
                               final lastEndpoint =
@@ -816,16 +815,17 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
   }
 
   Widget _buildRecentActivity(bool isMobile) {
-    final rawActivity = _sessionData?['recent_activity'] as List<dynamic>? ?? [];
-    
+    final rawActivity =
+        _sessionData?['recent_activity'] as List<dynamic>? ?? [];
+
     // Filter out uninteresting endpoints (health checks, pings, auto-refresh)
     final recentActivity = rawActivity.where((activity) {
       final endpoint = activity['endpoint'] as String? ?? '';
-      return !endpoint.contains('ping') && 
-             !endpoint.contains('health') &&
-             !endpoint.contains('get_active_sessions');
+      return !endpoint.contains('ping') &&
+          !endpoint.contains('health') &&
+          !endpoint.contains('get_active_sessions');
     }).toList();
-    
+
     final isMonet = Theme.of(context).colorScheme.surfaceContainerHigh !=
         ThemeData.light().colorScheme.surfaceContainerHigh;
     final cardColor = isMonet
@@ -940,7 +940,10 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
                           timeago.format(DateTime.parse(timestamp).toLocal()),
                           style: TextStyle(
                             fontSize: isMobile ? 10 : 11,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurfaceVariant
+                                .withValues(alpha: 0.7),
                           ),
                         ),
                       ],
@@ -954,27 +957,27 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
     );
   }
 
-  Color _getActionColor(String action) {
-    switch (action.toUpperCase()) {
-      case 'GET':
-        return Colors.blue;
-      case 'POST':
-        return Colors.green;
-      case 'PUT':
-      case 'PATCH':
-        return Colors.orange;
-      case 'DELETE':
-        return Colors.red;
-      default:
-        return Colors.grey;
-    }
-  }
+  // Color _getActionColor(String action) {
+  //   switch (action.toUpperCase()) {
+  //     case 'GET':
+  //       return Colors.blue;
+  //     case 'POST':
+  //       return Colors.green;
+  //     case 'PUT':
+  //     case 'PATCH':
+  //       return Colors.orange;
+  //     case 'DELETE':
+  //       return Colors.red;
+  //     default:
+  //       return Colors.grey;
+  //   }
+  // }
 
   String _formatEndpoint(String endpoint, String action) {
     // Backend sends endpoint names without /api/ prefix (e.g., "community_posts.get_posts")
     // Action + Endpoint combinations for precise descriptions
     final actionKey = '${action.toUpperCase()} $endpoint';
-    
+
     // Endpoint name mappings (backend format: module.function_name)
     final endpointDescriptions = {
       // Auth & User
@@ -984,7 +987,7 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
       'user.me': '👤 Viewed profile',
       'user.get_stats': '📊 Checked statistics',
       'user.update': '✏️ Updated profile',
-      
+
       // Community Posts
       'community_posts.get_posts': '📝 Browsed community posts',
       'community_posts.create_post': '✨ Created new post',
@@ -993,7 +996,7 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
       'community_posts.get_post': '👁️ Viewed post details',
       'community_posts.like_post': '❤️ Liked post',
       'community_posts.get_likes': '👥 Viewed post likes',
-      
+
       // Memes
       'memes.get_memes': '😂 Browsed memes',
       'memes.upload': '📤 Uploaded meme',
@@ -1001,42 +1004,42 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
       'memes.delete': '🗑️ Deleted meme',
       'memes.random': '🎲 Got random meme',
       'memes.get_latest_memes': '😂 Browsed latest memes',
-      
+
       // Admin
       'admin.get_users': '👥 Viewed user list',
       'admin.get_analytics': '📈 Checked analytics',
       'admin.get_live_users': '👁️ Viewed live users',
       'admin.get_active_sessions': '🔄 Refreshed live users',
-      
+
       // Config
       'config.get_config': '⚙️ Viewed config',
       'config.update': '🔧 Updated config',
       'config.get_channels': '📺 Viewed channels',
       'config.get_roles': '🎭 Viewed roles',
-      
+
       // Rocket League
       'rocket_league.get_profile': '🚀 Viewed RL profile',
       'rocket_league.get_stats': '📊 Checked RL stats',
-      
+
       // Notifications
       'notifications.get_notifications': '🔔 Checked notifications',
       'notifications.mark_read': '✓ Marked notification read',
       'notifications.get_settings': '⚙️ Notification settings',
-      
+
       // Tickets
       'tickets.get_tickets': '🎫 Viewed tickets',
       'tickets.create': '➕ Created ticket',
       'tickets.close': '✓ Closed ticket',
-      
+
       // Cogs & Features
       'cogs.get_cogs': '🔌 Viewed bot features',
       'cogs.toggle': '🔄 Toggled feature',
       'features.get_features': '✨ Viewed features',
-      
+
       // Monitoring
       'monitoring.health': '💚 Health check',
       'monitoring.metrics': '📊 Viewed metrics',
-      
+
       // Data Cache
       'data_cache.get_latest_memes': '😂 Loaded memes',
       'data_cache.get_latest_rankups': '📊 Loaded rankups',
@@ -1047,35 +1050,38 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
     if (endpointDescriptions.containsKey(endpoint)) {
       return endpointDescriptions[endpoint]!;
     }
-    
+
     // Try with action prefix
     if (endpointDescriptions.containsKey(actionKey)) {
       return endpointDescriptions[actionKey]!;
     }
-    
+
     // Pattern matching for common variations
     if (endpoint.contains('community_posts') || endpoint.contains('posts')) {
       if (action.toUpperCase() == 'POST') return '✨ Created new post';
-      if (action.toUpperCase() == 'PUT' || action.toUpperCase() == 'PATCH') return '✏️ Updated post';
+      if (action.toUpperCase() == 'PUT' || action.toUpperCase() == 'PATCH')
+        return '✏️ Updated post';
       if (action.toUpperCase() == 'DELETE') return '🗑️ Deleted post';
       if (endpoint.contains('like')) return '❤️ Liked post';
       return '📝 Viewed community posts';
     }
-    
+
     if (endpoint.contains('meme')) {
       if (endpoint.contains('upload')) return '📤 Uploaded meme';
       if (endpoint.contains('vote')) return '👍 Voted on meme';
       if (endpoint.contains('random')) return '🎲 Got random meme';
       return '😂 Browsed memes';
     }
-    
+
     if (endpoint.contains('config')) {
-      if (action.toUpperCase() == 'POST' || action.toUpperCase() == 'PUT') return '🔧 Updated config';
+      if (action.toUpperCase() == 'POST' || action.toUpperCase() == 'PUT')
+        return '🔧 Updated config';
       return '⚙️ Viewed config';
     }
-    
+
     if (endpoint.contains('admin')) {
-      if (endpoint.contains('live') || endpoint.contains('session')) return '👁️ Viewed live users';
+      if (endpoint.contains('live') || endpoint.contains('session'))
+        return '👁️ Viewed live users';
       if (endpoint.contains('analytics')) return '📈 Checked analytics';
       return '👥 Admin panel activity';
     }
@@ -1086,7 +1092,7 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
         .replaceAll('/', ' › ')
         .replaceAll('-', ' ')
         .replaceAll('_', ' ');
-    
+
     return formatted
         .split(' ')
         .map((word) => word.isEmpty

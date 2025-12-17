@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
-import '../../services/api_service.dart';
 
 class XpConfigScreen extends StatefulWidget {
   const XpConfigScreen({super.key});
@@ -24,19 +23,19 @@ class _XpConfigScreenState extends State<XpConfigScreen> {
   final _ticketCreatedController = TextEditingController();
   final _ticketResolvedController = TextEditingController();
   final _gameRequestController = TextEditingController();
-  
+
   // NEW: Meme Activities Extended
   final _memePostController = TextEditingController();
   final _memeGeneratePostController = TextEditingController();
   final _memeLikeController = TextEditingController();
-  
+
   // NEW: Rocket League XP
   final _rlAccountLinkedController = TextEditingController();
   final _rlStatsCheckedController = TextEditingController();
-  
+
   // NEW: Mod Activities Extended
   final _ticketClaimedController = TextEditingController();
-  
+
   // NEW: Community Posts & Engagement
   final _communityPostCreateController = TextEditingController();
   final _communityPostLikeController = TextEditingController();
@@ -51,7 +50,6 @@ class _XpConfigScreenState extends State<XpConfigScreen> {
 
   // Level Tier Data
   Map<String, dynamic> _levelTiers = {};
-  Map<String, String> _levelIcons = {};
   Map<String, int> _levelTierRoles = {};
 
   @override
@@ -110,16 +108,24 @@ class _XpConfigScreenState extends State<XpConfigScreen> {
             _ticketResolvedController.text =
                 activityXp['ticket_resolved'].toString();
             _gameRequestController.text = activityXp['game_request'].toString();
-            
+
             // NEW: Extended XP Rewards with fallback values
-            _memePostController.text = activityXp['meme_post']?.toString() ?? '5';
-            _memeGeneratePostController.text = activityXp['meme_generate_post']?.toString() ?? '8';
-            _memeLikeController.text = activityXp['meme_like']?.toString() ?? '2';
-            _rlAccountLinkedController.text = activityXp['rl_account_linked']?.toString() ?? '20';
-            _rlStatsCheckedController.text = activityXp['rl_stats_checked']?.toString() ?? '5';
-            _ticketClaimedController.text = activityXp['ticket_claimed']?.toString() ?? '15';
-            _communityPostCreateController.text = activityXp['community_post_create']?.toString() ?? '15';
-            _communityPostLikeController.text = activityXp['community_post_like']?.toString() ?? '2';
+            _memePostController.text =
+                activityXp['meme_post']?.toString() ?? '5';
+            _memeGeneratePostController.text =
+                activityXp['meme_generate_post']?.toString() ?? '8';
+            _memeLikeController.text =
+                activityXp['meme_like']?.toString() ?? '2';
+            _rlAccountLinkedController.text =
+                activityXp['rl_account_linked']?.toString() ?? '20';
+            _rlStatsCheckedController.text =
+                activityXp['rl_stats_checked']?.toString() ?? '5';
+            _ticketClaimedController.text =
+                activityXp['ticket_claimed']?.toString() ?? '15';
+            _communityPostCreateController.text =
+                activityXp['community_post_create']?.toString() ?? '15';
+            _communityPostLikeController.text =
+                activityXp['community_post_like']?.toString() ?? '2';
 
             // Level Calculation
             final levelCalc = config['level_calculation'];
@@ -131,12 +137,12 @@ class _XpConfigScreenState extends State<XpConfigScreen> {
             _messageController.text = cooldowns['message_cooldown'].toString();
             _imageController.text = cooldowns['meme_fetch_cooldown'].toString();
 
-            // Tiers and Icons
+            // Tiers
             _levelTiers = Map<String, dynamic>.from(config['level_tiers']);
-            _levelIcons = Map<String, String>.from(config['level_icons'] ?? {});
-            
-            // NEW: Level Tier Roles
-            _levelTierRoles = Map<String, int>.from(config['level_tier_roles'] ?? {});
+
+            // Level Tier Roles
+            _levelTierRoles =
+                Map<String, int>.from(config['level_tier_roles'] ?? {});
           });
         }
       }
@@ -180,7 +186,8 @@ class _XpConfigScreenState extends State<XpConfigScreen> {
           'rl_account_linked': int.parse(_rlAccountLinkedController.text),
           'rl_stats_checked': int.parse(_rlStatsCheckedController.text),
           'ticket_claimed': int.parse(_ticketClaimedController.text),
-          'community_post_create': int.parse(_communityPostCreateController.text),
+          'community_post_create':
+              int.parse(_communityPostCreateController.text),
           'community_post_like': int.parse(_communityPostLikeController.text),
         },
         'level_calculation': {
@@ -253,11 +260,11 @@ class _XpConfigScreenState extends State<XpConfigScreen> {
       final authService = Provider.of<AuthService>(context, listen: false);
 
       // Call API to reset to defaults
-      final response = await authService.apiService.resetXpConfig();
+      await authService.apiService.resetXpConfig();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text('Configuration reset to defaults successfully!'),
             backgroundColor: Colors.green,
           ),
@@ -337,7 +344,8 @@ class _XpConfigScreenState extends State<XpConfigScreen> {
               children: [
                 Icon(Icons.stars, color: Theme.of(context).colorScheme.primary),
                 const SizedBox(width: 8),
-                Text('Activity XP Rewards', style: Theme.of(context).textTheme.titleLarge),
+                Text('Activity XP Rewards',
+                    style: Theme.of(context).textTheme.titleLarge),
               ],
             ),
             const SizedBox(height: 8),
@@ -346,67 +354,83 @@ class _XpConfigScreenState extends State<XpConfigScreen> {
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 16),
-            
             _buildXpCategoryTile(
               title: '💬 Basic Activities',
               subtitle: '2 rewards • Messages and images',
               icon: Icons.chat_bubble_outline,
               fields: [
-                _buildCompactXpField(_messageSentController, '💬 Message Sent', 'XP for sending a message'),
-                _buildCompactXpField(_imageSentController, '🖼️ Image Sent', 'XP for sending an image'),
+                _buildCompactXpField(_messageSentController, '💬 Message Sent',
+                    'XP for sending a message'),
+                _buildCompactXpField(_imageSentController, '🖼️ Image Sent',
+                    'XP for sending an image'),
               ],
             ),
-            
             const SizedBox(height: 8),
-            
             _buildXpCategoryTile(
               title: '😂 Meme Activities',
               subtitle: '5 rewards • Fetch, generate, post, and like memes',
               icon: Icons.emoji_emotions,
               fields: [
-                _buildCompactXpField(_memeFetchedController, '😂 Meme Fetched', 'XP for fetching a meme'),
-                _buildCompactXpField(_memeGeneratedController, '🎨 Meme Generated', 'XP for generating a custom meme'),
-                _buildCompactXpField(_memePostController, '📤 Meme Posted (Fetched)', 'XP for posting a fetched meme to Discord'),
-                _buildCompactXpField(_memeGeneratePostController, '🚀 Meme Posted (Generated)', 'XP for posting a generated meme'),
-                _buildCompactXpField(_memeLikeController, '👍 Meme Liked', 'XP for liking a meme'),
+                _buildCompactXpField(_memeFetchedController, '😂 Meme Fetched',
+                    'XP for fetching a meme'),
+                _buildCompactXpField(_memeGeneratedController,
+                    '🎨 Meme Generated', 'XP for generating a custom meme'),
+                _buildCompactXpField(
+                    _memePostController,
+                    '📤 Meme Posted (Fetched)',
+                    'XP for posting a fetched meme to Discord'),
+                _buildCompactXpField(
+                    _memeGeneratePostController,
+                    '🚀 Meme Posted (Generated)',
+                    'XP for posting a generated meme'),
+                _buildCompactXpField(_memeLikeController, '👍 Meme Liked',
+                    'XP for liking a meme'),
               ],
             ),
-            
             const SizedBox(height: 8),
-            
             _buildXpCategoryTile(
               title: '✨ Community Posts',
               subtitle: '2 rewards • Create and like posts',
               icon: Icons.dynamic_feed,
               fields: [
-                _buildCompactXpField(_communityPostCreateController, '✨ Post Created', 'XP for creating a community post'),
-                _buildCompactXpField(_communityPostLikeController, '❤️ Post Liked', 'XP for liking a post'),
+                _buildCompactXpField(_communityPostCreateController,
+                    '✨ Post Created', 'XP for creating a community post'),
+                _buildCompactXpField(_communityPostLikeController,
+                    '❤️ Post Liked', 'XP for liking a post'),
               ],
             ),
-            
             const SizedBox(height: 8),
-            
             _buildXpCategoryTile(
               title: '🎫 Support & Tickets',
               subtitle: '3 rewards • Create, claim, resolve tickets',
               icon: Icons.support_agent,
               fields: [
-                _buildCompactXpField(_ticketCreatedController, '🎫 Ticket Created', 'XP for creating a support ticket'),
-                _buildCompactXpField(_ticketClaimedController, '🛡️ Ticket Claimed', 'XP for claiming a ticket (Mod only)'),
-                _buildCompactXpField(_ticketResolvedController, '✅ Ticket Resolved', 'XP for resolving a ticket (Mod only)'),
+                _buildCompactXpField(_ticketCreatedController,
+                    '🎫 Ticket Created', 'XP for creating a support ticket'),
+                _buildCompactXpField(
+                    _ticketClaimedController,
+                    '🛡️ Ticket Claimed',
+                    'XP for claiming a ticket (Mod only)'),
+                _buildCompactXpField(
+                    _ticketResolvedController,
+                    '✅ Ticket Resolved',
+                    'XP for resolving a ticket (Mod only)'),
               ],
             ),
-            
             const SizedBox(height: 8),
-            
             _buildXpCategoryTile(
               title: '🎮 Gaming',
               subtitle: '3 rewards • Game requests and Rocket League',
               icon: Icons.sports_esports,
               fields: [
-                _buildCompactXpField(_gameRequestController, '🎮 Game Request', 'XP for creating a gaming request'),
-                _buildCompactXpField(_rlAccountLinkedController, '🚀 RL Account Linked', 'One-time XP for linking Rocket League'),
-                _buildCompactXpField(_rlStatsCheckedController, '📊 RL Stats Checked', 'XP for checking RL stats'),
+                _buildCompactXpField(_gameRequestController, '🎮 Game Request',
+                    'XP for creating a gaming request'),
+                _buildCompactXpField(
+                    _rlAccountLinkedController,
+                    '🚀 RL Account Linked',
+                    'One-time XP for linking Rocket League'),
+                _buildCompactXpField(_rlStatsCheckedController,
+                    '📊 RL Stats Checked', 'XP for checking RL stats'),
               ],
             ),
           ],
@@ -414,7 +438,7 @@ class _XpConfigScreenState extends State<XpConfigScreen> {
       ),
     );
   }
-  
+
   Widget _buildXpCategoryTile({
     required String title,
     required String subtitle,
@@ -439,16 +463,19 @@ class _XpConfigScreenState extends State<XpConfigScreen> {
         ),
         initiallyExpanded: initiallyExpanded,
         tilePadding: const EdgeInsets.symmetric(horizontal: 8),
-        childrenPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        childrenPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        collapsedShape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         backgroundColor: Theme.of(context).colorScheme.surface,
-        collapsedBackgroundColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+        collapsedBackgroundColor:
+            Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
         children: fields,
       ),
     );
   }
-  
+
   Widget _buildCompactXpField(
     TextEditingController controller,
     String label,
@@ -476,7 +503,8 @@ class _XpConfigScreenState extends State<XpConfigScreen> {
                   border: OutlineInputBorder(),
                   suffixText: 'XP',
                   isDense: true,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                 ),
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -702,7 +730,8 @@ class _XpConfigScreenState extends State<XpConfigScreen> {
                           tierData['name'],
                           style: TextStyle(
                             fontSize: 13,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -719,7 +748,10 @@ class _XpConfigScreenState extends State<XpConfigScreen> {
                           tierData['description'],
                           style: TextStyle(
                             fontSize: 12,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurfaceVariant
+                                .withValues(alpha: 0.7),
                           ),
                         ),
                       if (_levelTierRoles.containsKey(tierName)) ...[

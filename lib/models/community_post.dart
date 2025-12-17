@@ -50,7 +50,7 @@ class CommunityPost {
         author?['avatar']?.toString() ?? json['author_avatar']?.toString();
 
     // Helper to convert bool/int/null to bool
-    bool _toBool(dynamic value) {
+    bool toBool(dynamic value) {
       if (value == null) return false;
       if (value is bool) return value;
       if (value is int) return value == 1;
@@ -66,15 +66,15 @@ class CommunityPost {
       authorName: authorName,
       authorAvatar: authorAvatar,
       postType: json['post_type'] as String? ?? 'normal',
-      isAnnouncement: _toBool(json['is_announcement']),
+      isAnnouncement: toBool(json['is_announcement']),
       discordChannelId: json['discord_channel_id']?.toString(),
       discordMessageId: json['discord_message_id']?.toString(),
       createdAt: json['created_at'] as String,
       editedAt: json['edited_at'] as String?,
       deletedAt: json['deleted_at'] as String?,
-      isDeleted: _toBool(json['is_deleted']),
+      isDeleted: toBool(json['is_deleted']),
       likeCount: json['like_count'] as int? ?? 0,
-      hasLiked: _toBool(json['has_liked']),
+      hasLiked: toBool(json['has_liked']),
     );
   }
 

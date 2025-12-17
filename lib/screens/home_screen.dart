@@ -10,13 +10,10 @@ import '../services/api_service.dart'
     show
         ApiService,
         getProxiedImageUrl,
-        ApiException,
         ApiConnectionException,
-        ApiTimeoutException,
-        TokenExpiredException;
+        ApiTimeoutException;
 import '../providers/data_cache_provider.dart';
 import '../providers/community_posts_provider.dart';
-import '../models/post_editor_result.dart';
 import '../utils/app_config.dart';
 import '../widgets/api_error_widget.dart';
 import '../widgets/community_post_card.dart';

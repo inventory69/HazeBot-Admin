@@ -11,7 +11,7 @@ class CommunityPostsProvider extends ChangeNotifier {
   // Cache data
   List<CommunityPost> _posts = [];
   int _totalPosts = 0;
-  int _currentLimit = 20;
+  final int _currentLimit = 20;
   int _currentOffset = 0;
 
   // Loading states
@@ -24,9 +24,6 @@ class CommunityPostsProvider extends ChangeNotifier {
   // Cache metadata
   DateTime? _lastLoad;
   static const Duration _cacheDuration = Duration(seconds: 20);
-
-  // Auto-refresh timer
-  Timer? _refreshTimer;
 
   // Error handling
   String? _lastError;
@@ -109,7 +106,7 @@ class CommunityPostsProvider extends ChangeNotifier {
         // Prepend new posts, avoiding duplicates
         for (final post in newPosts) {
           if (!_posts.any((p) => p.id == post.id)) {
-            _posts.insert(0, post);  // Insert at start, not end
+            _posts.insert(0, post); // Insert at start, not end
           }
         }
       }

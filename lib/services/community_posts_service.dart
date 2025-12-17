@@ -192,8 +192,6 @@ class CommunityPostsService {
           );
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-
         // Fetch updated post to get complete data
         final updatedPosts = await fetchPosts(limit: 1, offset: 0);
         final post = (updatedPosts['posts'] as List<CommunityPost>)
