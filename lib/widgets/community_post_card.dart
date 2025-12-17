@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import '../models/community_post.dart';
 import '../services/api_service.dart';
-import '../screens/profile_screen.dart;
+import '../screens/profile_screen.dart';
 
 /// Format timestamp to relative time (2m, 5h, 3d)
 String _formatTimestamp(String isoTimestamp) {
