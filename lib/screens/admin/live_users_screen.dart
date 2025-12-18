@@ -987,6 +987,9 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
       'user.me': '👤 Viewed profile',
       'user.get_stats': '📊 Checked statistics',
       'user.update': '✏️ Updated profile',
+      'user.get_gaming_members': '🎮 Viewed gaming members',
+      'user.get_profile': '👤 Viewed user profile',
+      'user.update_profile': '✏️ Updated user profile',
 
       // Community Posts
       'community_posts.get_posts': '📝 Browsed community posts',
@@ -994,8 +997,8 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
       'community_posts.update_post': '✏️ Updated post',
       'community_posts.delete_post': '🗑️ Deleted post',
       'community_posts.get_post': '👁️ Viewed post details',
-      'community_posts.like_post': '❤️ Liked post',
-      'community_posts.get_likes': '👥 Viewed post likes',
+      'community_posts.toggle_like_post': '❤️ Liked post',
+      'community_posts.get_post_likes': '👥 Viewed post likes',
 
       // Memes
       'memes.get_memes': '😂 Browsed memes',
@@ -1020,6 +1023,10 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
       // Rocket League
       'rocket_league.get_profile': '🚀 Viewed RL profile',
       'rocket_league.get_stats': '📊 Checked RL stats',
+      'rocket_league.get_user_rl_account': '🚀 Checked RL account',
+      'rocket_league.link_account': '🔗 Linked RL account',
+      'rocket_league.unlink_account': '🔓 Unlinked RL account',
+      'rocket_league.refresh_stats': '🔄 Refreshed RL data',
 
       // Notifications
       'notifications.get_notifications': '🔔 Checked notifications',
@@ -1044,6 +1051,7 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
       'data_cache.get_latest_memes': '😂 Loaded memes',
       'data_cache.get_latest_rankups': '📊 Loaded rankups',
       'data_cache.get_latest_levelups': '⭐ Loaded level-ups',
+      'data_cache.get_gaming_members': '🎮 Loaded gaming data',
     };
 
     // Try exact match first
@@ -1086,8 +1094,42 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
       return '👥 Admin panel activity';
     }
 
-    // Fallback: Format endpoint nicely
-    String formatted = endpoint
+    // Enhanced fallback: Try module-based pattern matching
+    final parts = endpoint.split('.');
+    if (parts.length >= 2) {
+      final module = parts[0];
+      final functionName = parts[1];
+
+      // Gaming-related endpoints
+      if (functionName.contains('gaming')) {
+        return '🎮 ${_humanizeEndpoint(functionName)}';
+      }
+      // Rocket League endpoints
+      else if (module == 'rocket_league' || functionName.contains('rl_')) {
+        return '🚀 ${_humanizeEndpoint(functionName)}';
+      }
+      // User-related
+      else if (module == 'user') {
+        return '👤 ${_humanizeEndpoint(functionName)}';
+      }
+      // Data cache
+      else if (module == 'data_cache') {
+        return '💾 ${_humanizeEndpoint(functionName)}';
+      }
+      // Generic with module icon
+      else {
+        final icon = _getModuleIcon(module);
+        return '$icon ${_humanizeEndpoint(functionName)}';
+      }
+    }
+
+    // Final fallback: Format endpoint nicely
+    return '📌 ${_humanizeEndpoint(endpoint)}';
+  }
+
+  /// Convert snake_case endpoint to Human Readable format
+  String _humanizeEndpoint(String snakeCase) {
+    String formatted = snakeCase
         .replaceAll('/api/', '')
         .replaceAll('/', ' › ')
         .replaceAll('-', ' ')
@@ -1099,6 +1141,26 @@ class _LiveUsersScreenState extends State<LiveUsersScreen>
             ? ''
             : word[0].toUpperCase() + word.substring(1).toLowerCase())
         .join(' ');
+  }
+
+  /// Get emoji icon for module
+  String _getModuleIcon(String module) {
+    const moduleIcons = {
+      'auth': '🔐',
+      'user': '👤',
+      'admin': '👑',
+      'memes': '😂',
+      'config': '⚙️',
+      'tickets': '🎫',
+      'notifications': '🔔',
+      'cogs': '🔌',
+      'monitoring': '📊',
+      'analytics': '📈',
+      'data_cache': '💾',
+      'rocket_league': '🚀',
+      'community_posts': '📝',
+    };
+    return moduleIcons[module] ?? '📌';
   }
 
   Widget _buildDetailRow(
